@@ -65,7 +65,8 @@ for cell = 1
  %                 varargout = boundedline(1:size(allAV,2),allAV,SEMallAV,'b','transparency', 0.5);      
 %                 varargout = boundedline(1:size(AVallW,2),AVallW,SEMallW,'k','transparency', 0.5);  
 %                 varargout = boundedline(1:size(allVAV,2),allVAV,SEMallVAV,'r','transparency', 0.5);  
-                    hold all;plot(smBVav,'r'); hold all;plot(smoothedAVB,'b');%plot(smRBVav,'k');plot(smRVav,'r');
+                    %hold all;plot(smoothed_5_BlueVAV,'r'); plot(smoothed_5_BlueAV,'b'); plot(smoothed_5_BlueWAV,'k');
+                    hold all;plot(smoothed_5_RedVAV,'r'); plot(smoothed_5_RedAV,'b'); plot(smoothed_5_RedWAV,'k');
 % 
 %                  varargout = boundedline(1:size(redAV,2),redAV,SEMallAVred,'b','transparency', 0.5);      
 %                 %varargout = boundedline(1:size(AVredW,2),AVredW,SEMallAVredW,'k','transparency', 0.5);
@@ -84,8 +85,8 @@ for cell = 1
             alpha(0.4)
             
             if trialType == 1 
-                plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
 %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
 %                 alpha(0.5)   
             elseif trialType == 3 
