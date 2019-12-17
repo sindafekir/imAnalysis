@@ -1,5 +1,8 @@
-function [regStacks,userInput,UIr,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration
+function [regStacks,userInput,UIr,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration(imAnDirs)
 UIr = 1;
+userInput(UIr,1) = ("imAnalysis1_functions Directory"); userInput(UIr,2) = (imAnDirs(1,:)); UIr = UIr+1;
+userInput(UIr,1) = ("imAnalysis2_functions Directory"); userInput(UIr,2) = (imAnDirs(2,:)); UIr = UIr+1;
+
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); userInput(UIr,1) = ("Is this volume imaging data? Yes = 1. Not = 0."); userInput(UIr,2) = (volIm); UIr = UIr+1;
 if volIm == 1
     splitType = input('How must the data be split? Serial Split = 0. Alternating Split = 1. '); userInput(UIr,1) = ("How must the data be split? Serial Split = 0. Alternating Split = 1."); userInput(UIr,2) = (splitType); UIr = UIr+1;
@@ -30,7 +33,8 @@ end
 channelOfInterest = input('What color channel is most relevant? Red = 0. Green = 1. '); userInput(UIr,1) = ("What color channel is most relevant?"); userInput(UIr,2) = (channelOfInterest); UIr = UIr+1;
 %% make HDF chart and get wheel data  
 disp('Making HDF Chart')
-cd('Z:/2p/matlab/functions');
+[imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
+cd(imAn1funcDir);
 [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
 userInput(UIr,1) = ("FPS"); userInput(UIr,2) = (FPS); UIr = UIr+1; 
 %% cut off HDF chart where the data is bad 

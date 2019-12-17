@@ -1,6 +1,11 @@
+% make sure we know where the functions are 
+imAnalysisDir = uigetdir('*.*','WHERE IS THE imAnalysis FOLDER? ');  
+imAn1str = '\imAnalysis1_functions';
+imAn2str = '\imAnalysis2_functions';
+imAnDirs = [imAnalysisDir,imAn1str;imAnalysisDir,imAn2str];
+
 %% register images
-cd('Z:\2p\matlab')
-[regStacks,userInput,UIr,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration;
+[regStacks,userInput,UIr,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration(imAnDirs);
 
 %% set what data you want to plot 
 dataParseType = input('What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. '); userInput(UIr,1) = ("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1."); userInput(UIr,2) = (dataParseType); UIr = UIr+1;    
@@ -308,5 +313,5 @@ for trialType = 1:size(sortedData{2}{1},2)
 end 
    
 
-%clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start
+%clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start 
 

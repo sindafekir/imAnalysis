@@ -112,7 +112,7 @@ for cell = 1
             
         end 
         %suptitle(sprintf('Z-Plane #%d. DA Terminal #%d',z,ROIinds(cell)))
-        cd('C:\Users\Sinda\Desktop\SF56_20190718\SF56_20190710_rawData');
+        %cd('C:\Users\Sinda\Desktop\SF56_20190718\SF56_20190710_rawData');
         %baseFileName = sprintf('SF56_20190718_Z%d_DAterm%d.fig',z,ROIinds(cell));
         % Specify some particular, specific folder:
         %fullFileName = fullfile('C:\Users\Sinda\Desktop\SF56_20190718\SF56_20190710_rawData', baseFileName);  

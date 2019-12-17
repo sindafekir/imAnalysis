@@ -1,6 +1,7 @@
 function [sortedData,userInput] = segmentVessels2(reg_Stacks,userInput,state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,numZplanes,ROIboundData)
 %% create vessel segmentation ROIs - rotate if needed 
-cd('Z:/2p/matlab/functions'); 
+[imAn2funcDir] = getUserInput(userInput,'imAnalysis2_functions Directory');
+cd(imAn2funcDir);
 [numROIs] = getUserInput(userInput,"How many ROIs are we making?");
 [ROIrotAngles] = getUserInput(userInput,"ROI Rotation Angles");
 
@@ -22,12 +23,10 @@ end
 %% segment the vessels, get vessel width, and check segmentation
 
 %segment the vessel (all the data) 
-cd('Z:\2p\matlab\segmentation');  
 disp('Vessel Segmentation')
 parfor Zstack = 1:length(rotStacks)
     for VROI = 1:numROIs 
         for frame = 1:size(ROIstacks{1}{1}{1},3)
-            cd('Z:/2p/matlab/segmentation');
             [BW,maskedImage] = segmentImage(ROIstacks{Zstack}{VROI}{1}(:,:,frame));
             BWstacks{Zstack}{VROI}(:,:,frame) = BW; 
         end 
@@ -35,7 +34,6 @@ parfor Zstack = 1:length(rotStacks)
 end 
 
 %get vessel width 
-cd('Z:\2p\matlab\functions');
 for Zstack = 1:length(BWstacks)
     for VROI = 1:numROIs
         [vesselDiam,bounds] = findVesWidth(BWstacks{Zstack}{VROI});
