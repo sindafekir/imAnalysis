@@ -4,8 +4,8 @@ function [Qanswer] = getUserInput(userInput,Qstring)
     isOne = cellfun(@(x)isequal(x,1),Q);
     [row,col] = find(isOne); 
     
-    if Qstring == "Where Photos Are Found"
-        Qanswer = userInput(row,col+1);        
+    if Qstring == "Where Photos Are Found" || Qstring == "imAnalysis1_functions Directory" || Qstring == "imAnalysis2_functions Directory"
+        Qanswer = userInput(row,col+1);  
     elseif Qstring ~= "Where Photos Are Found"    
         %check if there are spaces in answer (as w/ the angles)
         if sum(isspace(userInput(row,col+1))) > 0 

@@ -21,7 +21,8 @@ end
 
 %% make HDF chart and get wheel data  
 disp('Making HDF Chart')
-cd('Z:/2p/matlab/functions');
+[imAn2funcDir] = getUserInput(userInput,'imAnalysis2_functions Directory');
+cd(imAn2funcDir);
 [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
 
 %% get the images 

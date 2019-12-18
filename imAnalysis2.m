@@ -1,5 +1,5 @@
 %% register images 
-cd('Z:\2p\matlab');clear AVsortedData AVwheelData indices 
+clear AVsortedData AVwheelData indices 
 [regStacks,userInput,~,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration2(userInput);
 
 %% set what data you want to plot 
