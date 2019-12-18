@@ -1,5 +1,6 @@
 function [stackOut] = backgroundSubtraction2(stackIn,BG_ROIboundData)
 
+BG_ROIstacks = cell(1,length(stackIn));
 for stack = 1:length(stackIn)
     data = stackIn{stack};
     
@@ -17,11 +18,13 @@ for stack = 1:length(stackIn)
 end 
 
 % determine average pixel intensity of each frame in the control ROI
+BGpixInt = cell(1,length(stackIn));
 for stack = 1:length(stackIn)
     BGpixInt{stack} = mean(mean(BG_ROIstacks{stack}{1}));
 end 
 
 % do background subtraction 
+stackOut = cell(1,length(stackIn));
 for stack = 1:length(stackIn) 
     for frame = 1:size(BGpixInt{1},3)
         stackOut{stack}(:,:,frame) = (stackIn{stack}(:,:,frame)-BGpixInt{stack}(:,:,frame));

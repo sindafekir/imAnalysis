@@ -9,21 +9,13 @@ elseif volIm == 0
 end 
 [framePeriod] = getUserInput(userInput,'What is the framePeriod? ');
 [state] = getUserInput(userInput,'What teensy state does the stimulus happen in?');
-[stimLengthQ] = getUserInput(userInput,'Are all stim trains the same length in time?');
-if stimLengthQ == 1    
-    stimLengthsQ = 1; 
-    [stimTimes] = getUserInput(userInput,'Stim Time Lengths (sec)');   
-elseif stimLengthQ == 0
-    [stimLengthsQ] = getUserInput(userInput,'How many different stimulus time lengths are there?');
-    [stimTimes] = getUserInput(userInput,'Stim Time Lengths (sec)');  
-end 
 [channelOfInterest] = getUserInput(userInput,'What color channel is most relevant?'); 
 
 %% make HDF chart and get wheel data  
 disp('Making HDF Chart')
 [imAn2funcDir] = getUserInput(userInput,'imAnalysis2_functions Directory');
 cd(imAn2funcDir);
-[HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+[HDFchart,state_start_f,state_end_f,~,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
 
 %% get the images 
 disp('Importing Images')
@@ -32,11 +24,14 @@ fileList = dir('*.tif*');
 imStackDir = fileList(1).folder; userInput(UIr,1) = ("Where Photos Are Found"); userInput(UIr,2) = (imStackDir); UIr = UIr+1;
 greenStackLength = size(fileList,1)/2;
 redStackLength = size(fileList,1)/2;
+image = imread(fileList(1).name); 
+redImageStack = zeros(size(image,1),size(image,2),redStackLength);
 for frame = 1:redStackLength 
     image = imread(fileList(frame).name); 
     redImageStack(:,:,frame) = image;
 end 
 count = 1; 
+greenImageStack = zeros(size(image,1),size(image,2),greenStackLength*2);
 for frame = redStackLength+1:(greenStackLength*2) 
     image = imread(fileList(frame).name); 
     greenImageStack(:,:,count) = image;
@@ -51,13 +46,15 @@ if volIm == 1
     [gVolStack] = reorgVolStack(greenImageStack,splitType,numZplanes);
     [rZstacks] = splitStacks(redImageStack,splitType,numZplanes);
     [rVolStack] = reorgVolStack(redImageStack,splitType,numZplanes);    
-    %create average images of each z plane per channel 
-    AVr = mean(rVolStack,4);
-    AVg = mean(gVolStack,4);
+
     
     if channelOfInterest == 1
         %2D rigid registration
         disp('2D Motion Correction')
+        gRegTemplates = cell(1,size(gZstacks,2));
+        ggRegZstacks = cell(1,size(gZstacks,2));
+        rRegTemplates = cell(1,size(gZstacks,2));
+        grRegZstacks = cell(1,size(gZstacks,2));
         for Zstack = 1:size(gZstacks,2)    
             gRegTemplates{Zstack} = mean(gZstacks{Zstack},3);
             [ggRegStack,~] = registerVesStack(gZstacks{Zstack},gRegTemplates{Zstack}); % the seconds output = transformations - I'm not currently using these 
@@ -71,6 +68,8 @@ if volIm == 1
         %3D registration     
         disp('3D Motion Correction')
         %need minimum 4 planes in Z for 3D registration to work-time to interpolate
+        gVolStack5 = zeros(size(gVolStack,1),size(gVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
+        rVolStack5 = zeros(size(rVolStack,1),size(rVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
         for ind = 1:size(gVolStack,4)
             count = 1;
             for zplane = 1:size(gVolStack,3)+size(gVolStack,3)-1
@@ -104,6 +103,8 @@ if volIm == 1
    
         %get rid of extra z planes
         count = 1; 
+        ggVZstacks3 = cell(1,size(gZstacks,2));
+        grVZstacks3 = cell(1,size(gZstacks,2));
         for zPlane = 1:size(gZstacks,2)
             ggVZstacks3{zPlane} = ggVZstacks5{count};
             grVZstacks3{zPlane} = grVZstacks5{count};
@@ -120,6 +121,10 @@ if volIm == 1
     elseif channelOfInterest == 0 
         %2D rigid registration
         disp('2D Motion Correction')
+        gRegTemplates = cell(1,size(rZstacks,2));
+        rRegTemplates = cell(1,size(rZstacks,2));
+        rgRegZstacks = cell(1,size(rZstacks,2));
+        rrRegZstacks = cell(1,size(rZstacks,2));
         for Zstack = 1:size(rZstacks,2)    
             gRegTemplates{Zstack} = mean(gZstacks{Zstack},3);
             [rgRegStack,~] = registerVesStack(rZstacks{Zstack},gRegTemplates{Zstack}); % the seconds output = transformations - I'm not currently using these 
@@ -133,6 +138,8 @@ if volIm == 1
         %3D registration     
         disp('3D Motion Correction')
         %need minimum 4 planes in Z for 3D registration to work-time to interpolate
+        gVolStack5 = zeros(size(gVolStack,1),size(gVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
+        rVolStack5 = zeros(size(rVolStack,1),size(rVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
         for ind = 1:size(gVolStack,4)
             count = 1;
             for zplane = 1:size(gVolStack,3)+size(gVolStack,3)-1
@@ -166,6 +173,8 @@ if volIm == 1
    
         %get rid of extra z planes
         count = 1; 
+        rgVZstacks3 = cell(1,size(gZstacks,2));
+        rrVZstacks3 = cell(1,size(gZstacks,2));
         for zPlane = 1:size(gZstacks,2)
             rgVZstacks3{zPlane} = rgVZstacks5{count};
             rrVZstacks3{zPlane} = rrVZstacks5{count};
@@ -215,6 +224,8 @@ end
 if volIm == 1 
     if channelOfInterest == 1
         %check relationship b/w template and 2D registered images
+        ggTemp2regCorr2D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
+        grTemp2regCorr2D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
         for zPlane = 1:size(gZstacks,2)
             for ind = 1:size(ggVZstacks3{1},3)
                 ggTemp2regCorr2D(zPlane,ind) = corr2(gRegTemplates{zPlane},ggRegZstacks{zPlane}(:,:,ind));
@@ -239,7 +250,9 @@ if volIm == 1
     
         
         %check relationship b/w template and 3D registered images
-        count = 1; 
+        count = 1;
+        ggTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
+        grTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
         for zPlane = 1:size(gZstacks,2)
             for ind = 1:size(ggVZstacks3{1},3)
                 ggTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),ggVZstacks3{zPlane}(:,:,ind));
@@ -265,6 +278,8 @@ if volIm == 1
     
    elseif channelOfInterest == 0
         %check relationship b/w template and 2D registered images
+        rgTemp2regCorr2D = zeros(size(gZstacks,2),size(rgVZstacks3{1},3));
+        rrTemp2regCorr2D = zeros(size(gZstacks,2),size(rgVZstacks3{1},3));
         for zPlane = 1:size(gZstacks,2)
             for ind = 1:size(rgVZstacks3{1},3)
                 rgTemp2regCorr2D(zPlane,ind) = corr2(gRegTemplates{zPlane},rgRegZstacks{zPlane}(:,:,ind));
@@ -289,6 +304,8 @@ if volIm == 1
  
         %check relationship b/w template and 3D registered images
         count = 1; 
+        rgTemp2regCorr3D = zeros(size(gZstacks,2),size(rgVZstacks3{1},3));
+        rrTemp2regCorr3D = zeros(size(gZstacks,2),size(rgVZstacks3{1},3));
         for zPlane = 1:size(gZstacks,2)
             for ind = 1:size(rgVZstacks3{1},3)
                 rgTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),rgVZstacks3{zPlane}(:,:,ind));
@@ -316,6 +333,8 @@ elseif volIm == 0
     
     if channelOfInterest == 1
         %check relationship b/w template and 2D registered images        
+        ggTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));
+        grTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));      
         for ind = 1:size(ggRegZstacks{1},3)
             ggTemp2regCorr2D(ind) = corr2(gTemplate,ggRegZstacks{1}(:,:,ind));
             grTemp2regCorr2D(ind) = corr2(rTemplate,grRegZstacks{1}(:,:,ind));
@@ -334,6 +353,8 @@ elseif volIm == 0
     
    elseif channelOfInterest == 0
         %check relationship b/w template and 2D registered images
+        rgTemp2regCorr2D = zeros(1,size(rgRegZstacks{1},3));
+        rrTemp2regCorr2D = zeros(1,size(rgRegZstacks{1},3));
         for ind = 1:size(rgRegZstacks{1},3)
             rgTemp2regCorr2D(ind) = corr2(gTemplate,rgRegZstacks{1}(:,:,ind));
             rrTemp2regCorr2D(ind) = corr2(rTemplate,rrRegZstacks{1}(:,:,ind));

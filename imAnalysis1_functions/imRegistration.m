@@ -48,12 +48,6 @@ disp('Making HDF Chart')
 cd(imAn1funcDir);
 [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
 userInput(UIr,1) = ("FPS"); userInput(UIr,2) = (FPS); UIr = UIr+1; 
-%% cut off HDF chart where the data is bad 
-% badTrials = find(state_start_f > greenStackEndFrame);
-% if find(state_start_f > greenStackEndFrame) == true
-%     HDFchart(badTrials(1)+1:end,:) = [];
-%     TrialTypes(badTrials(1):end,:) = [];
-% end  
 
 %% get the images 
 disp('Importing Images')
@@ -69,7 +63,7 @@ for frame = 1:redStackLength
     redImageStack(:,:,frame) = image;
 end 
 count = 1; 
-greenImageStack = zeros(size(image,1),size(image,2),greenStackLength);
+greenImageStack = zeros(size(image,1),size(image,2),greenStackLength*2);
 for frame = redStackLength+1:(greenStackLength*2) 
     image = imread(fileList(frame).name); 
     greenImageStack(:,:,count) = image;
