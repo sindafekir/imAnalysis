@@ -10,6 +10,7 @@ for VROI = 1:numROIs
     [rotStacks] = rotateStack2(reg_Stacks,ROIrotAngles(VROI)); 
     
     %create your ROI and apply it to all planes in Z 
+    ROIstacks = cell(1,length(rotStacks));
     for stack = 1:length(rotStacks)   
             xmins = ROIboundData{VROI}{1};
             ymins = ROIboundData{VROI}{2};
@@ -27,12 +28,14 @@ disp('Vessel Segmentation')
 parfor Zstack = 1:length(rotStacks)
     for VROI = 1:numROIs 
         for frame = 1:size(ROIstacks{1}{1}{1},3)
-            [BW,maskedImage] = segmentImage(ROIstacks{Zstack}{VROI}{1}(:,:,frame));
+            [BW,~] = segmentImage(ROIstacks{Zstack}{VROI}{1}(:,:,frame));
             BWstacks{Zstack}{VROI}(:,:,frame) = BW; 
         end 
     end 
 end 
 
+boundaries = cell(1,length(rotStacks));
+vessel_diam = cell(1,length(rotStacks));
 %get vessel width 
 for Zstack = 1:length(BWstacks)
     for VROI = 1:numROIs
@@ -42,6 +45,8 @@ for Zstack = 1:length(BWstacks)
     end 
 end 
 
+maxVDval = zeros(length(BWstacks),numROIs);
+minVDval = zeros(length(BWstacks),numROIs);
 %remove outliers = max and min value 
 for Zstack = 1:length(BWstacks)
     for VROI = 1:numROIs
@@ -63,6 +68,11 @@ parfor Zstack = 1:length(BWstacks)
     end 
 end 
 
+dataMeds = cell(1,length(BWstacks));
+DFOF = cell(1,length(BWstacks));
+dataSlidingBLs = cell(1,length(BWstacks));
+DFOFsubSBLs = cell(1,length(BWstacks));
+zVData = cell(1,length(BWstacks));
 for z = 1:length(BWstacks)
     for VROI = 1:numROIs   
         %get median value per trace
@@ -84,6 +94,7 @@ end
 disp('Organizing Data by Trial Type')
 
 %separate the data 
+sortedData = cell(1,length(BWstacks));
 for Zstack = 1:length(BWstacks)
   for VROI = 1:numROIs
       [sorted_Data] = eventTriggeredAverages(zVData{Zstack}(VROI,:),state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);

@@ -9,6 +9,7 @@ if size(testData2,2) < size(testData,2)
 end 
 
 emptyTrials2 = cellfun(@isempty, testData2);
+testData3 = cell(1,size(testData,2));
 for trialType = 1:size(testData,2)
     if emptyTrials2(trialType) == 0 
         testData3{trialType} = horzcat(testData{trialType},testData2{trialType});    

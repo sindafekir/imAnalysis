@@ -18,12 +18,9 @@ ymax = max(y);
 width = xmax - xmin + 1;
 height = ymax - ymin + 1;
 
-
-for i=1: size(segmented_data,3) 
-    
+for i=1: size(segmented_data,3)     
     %You can now go ahead and crop the image:
     ROI_stack(:,:,i) = imcrop(segmented_data(:,:,i), [xmin ymin width height]);
-
 end 
 
 

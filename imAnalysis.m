@@ -20,6 +20,8 @@ pixIntQ = input('Do you need to measure changes in pixel intensity? Yes = 1. No 
 if pixIntQ == 1
     CaQ = input('Do you need to measure changes in calcium dynamics? Yes = 1. No = 0. '); userInput(UIr,1) = ("Do you need to measure changes in calcium dynamics? Yes = 1. No = 0."); userInput(UIr,2) = (CaQ); UIr = UIr+1; 
     BBBQ = input('Do you need to measure changes in BBB permeability? Yes = 1. No = 0. '); userInput(UIr,1) = ("Do you need to measure changes in BBB permeability? Yes = 1. No = 0."); userInput(UIr,2) = (BBBQ); UIr = UIr+1; 
+    %BBBQ is there in case I want to make ROIs for measuring change in
+    %pixel intensity of the cumStacks - this code has not been added in yet
 end 
 cumStacksQ = input('Do you want to generate cumulative pixel intensity stacks? Yes = 1. No = 0. '); userInput(UIr,1) = ("Do you want to generate cumulative pixel intensity stacks? Yes = 1. No = 0."); userInput(UIr,2) = (cumStacksQ); UIr = UIr+1; 
 
@@ -84,7 +86,7 @@ if cutOffFrameQ == 1
         end 
     end 
     
-    if cumStacksQ == 1 %dffDataFirst20s,CumDffDataFirst20s,CumData
+    if cumStacksQ == 1 
         reg___Stacks = reg_Stacks; clear reg_Stacks; 
         reg_Stacks = cell(1,numZplanes);
         for zStack = 1:numZplanes
@@ -98,7 +100,6 @@ if cutOffFrameQ == 1
     ResampedVel_wheel__data = ResampedVel_wheel_data; clear ResampedVel_wheel_data; 
     ResampedVel_wheel_data = ResampedVel_wheel__data(1:cutOffFrame);
 end 
-
 
 %% separate stacks by zPlane and trial type 
 disp('Organizing Z-Stacks by Trial Type')
@@ -120,7 +121,7 @@ elseif volIm == 0
       sortedStacks{1} = sorted_Stacks;           
 end 
         
-[sortedStacks,~] = removeEmptyCells(sortedStacks,indices);
+[sortedStacks,~,~] = removeEmptyCells(sortedStacks,indices);
 
 %below removes indices in cells where sortedStacks is blank 
 for trialType = 1:size(sortedStacks{1},2)
@@ -133,21 +134,12 @@ if cumStacksQ == 1
     [dffStacks,CumDffStacks,CumStacks] = makeCumPixStacksPerTrial(sortedStacks,FPS,numZplanes,sec_before_stim_start);
 end
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%PICK UP HERE - GO THROUGH EACH FUNCTION AND INITIATE ARRAYS - KEEP AN EYE
-%OUT FOR THE USE OF 'CELL'
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %% vessel segmentation
 if VsegQ == 1
         [sortedData,userInput,UIr,ROIboundData] = segmentVessels(reg_Stacks,volIm,UIr,userInput,state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,numZplanes);
 end 
 
-
 %% measure changes in calcium dynamics and BBB permeability 
-%EVENTUALLY ADD BBB STUFF IN 
 if pixIntQ == 1
     if CaQ == 1    
         if volIm == 1
@@ -198,6 +190,11 @@ if pixIntQ == 1
                 end 
             end 
             
+             dataMeds = cell(1,ROIinds(maxCells));
+             DFOF = cell(1,ROIinds(maxCells));
+             dataSlidingBLs = cell(1,ROIinds(maxCells));
+             DFOFsubSBLs = cell(1,ROIinds(maxCells));
+             zData = cell(1,ROIinds(maxCells));
              for ccell = 1:maxCells     
                     for z = 1:size(meanPixIntArray{ROIinds(ccell)},1)     
                         %get median value per trace
@@ -217,18 +214,12 @@ if pixIntQ == 1
 
             %sort calcium data by trial type 
             for ccell = 1:maxCells
-                for Z = 1:size(zData{ROIinds(ccell)},1)                
+                for Z = 1:size(zData{ROIinds(ccell)},1)  
                     [sortedStatArray,indices] = eventTriggeredAverages(zData{ROIinds(ccell)}(Z,:),state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);            
                     sortedData{ROIinds(ccell)}(Z,:) = sortedStatArray;
                 end                  
             end            
         end 
-    end 
-    if BBBQ == 1
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %PUT BBB SEGMENTATION CODE HERE 
-        %MAKE THE OUTPUT HERE ALSO BE sortedData 
     end 
 end
 
@@ -246,10 +237,17 @@ zWData = zscore(DVOVsubSBLs);
 %sort wheel data                    
 [sortedWheelData,~] = eventTriggeredAverages(zWData,state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);
 
-%% average dff, cum dff, and cum stacks across all trials
+%% average dff, cum dff,cum stacks across all trials, ALSO average pix intensity/vessel width data if applicable
 if cumStacksQ == 1 
+    CumDff_Stacks = cell(1,numZplanes);
+    Cum_Stacks = cell(1,numZplanes);
+    dff_Stacks = cell(1,numZplanes);
+    AVcumDffStacks = cell(1,numZplanes);
+    AVcumStacks = cell(1,numZplanes);
+    AVdffStacks = cell(1,numZplanes);
+    AVStacks = cell(1,numZplanes);
     for Z = 1:numZplanes
-        for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
+        for trialType = 1:size(sortedStacks{1},2)
             for trial = 1:length(sortedWheelData{trialType})
                 CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks{Z}{trialType}{trial};
                 Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks{Z}{trialType}{trial};
@@ -265,6 +263,8 @@ if cumStacksQ == 1
 end 
 
 if pixIntQ == 1        
+    sortedStats_Array = cell(1,ROIinds(maxCells));
+    AVsortedData = cell(1,ROIinds(maxCells));
     for ccell = 1:maxCells       
         for z = 1:size(sortedData{ROIinds(ccell)},1)
             for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
@@ -290,28 +290,125 @@ if VsegQ == 1
     end 
 end 
 
-for trialType = 1:size(sortedData{2},2)   
+sortedWheel_Data = cell(1,size(sortedStacks{1},2));
+AVwheelData = cell(1,size(sortedStacks{1},2));
+for trialType = 1:size(sortedStacks{1},2)   
     for trial = 1:length(sortedWheelData{trialType})
         sortedWheel_Data{trialType}(:,:,:,trial) = sortedWheelData{trialType}{trial};
     end 
     AVwheelData{trialType}(1,:) = mean(sortedWheel_Data{trialType},4);     
 end 
 
-%% plot 
+%% reorganize data so that the trials are grouped together by type
 
 %resort the indices 
-for trialType = 1:size(sortedData{2}{1},2) 
+ indS = cell(1,size(sortedStacks{1},2));
+ indI = cell(1,size(sortedStacks{1},2));
+ for trialType = 1:size(sortedStacks{1},2)   
     [S, I] = sort(indices{trialType});
     indS{trialType} = S;
     indI{trialType} = I;
+ end 
+
+%figure out max column of data types available 
+tTypeInds = zeros(1,size(sortedStacks{1},2));
+for trialType = 1:size(sortedStacks{1},2)
+    if ismember(uniqueTrialData(trialType,:),uniqueTrialDataTemplate,'rows') == 1 
+        [~, idx] = ismember(uniqueTrialData(trialType,:),uniqueTrialDataTemplate,'rows');
+        tTypeInds(trialType) = idx; 
+    end 
+end 
+maxTtypeInd = max(tTypeInds);
+
+%sort data into correct spot based on trial type 
+if pixIntQ == 1 
+    sortedData2 = cell(1,ROIinds(maxCells));
+    for ccell = 1:maxCells    
+        for z = 1:size(sortedData{ROIinds(ccell)},1)  
+            for trialType = 1:maxTtypeInd 
+                if ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows') == 1
+                    [~, idxStart] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows');  
+                    [~, idxFin] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialDataTemplate,'rows');
+                    
+                    indI2{idxFin} = indI{idxStart};
+                    indices2{idxFin} = indices{idxStart};                   
+                    sortedData2{ROIinds(ccell)}{z,idxFin} = sortedData{ROIinds(ccell)}{z,idxStart};                    
+                end 
+            end
+        end 
+    end 
+    indices2 = indices2';
 end 
 
+if VsegQ == 1
+    for z = 1:length(sortedData)
+        for ROI = 1:size(sortedData{1},2)
+            for trialType = 1:maxTtypeInd        
+                if ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows') == 1
+                    [~, idxStart] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows');  
+                    [~, idxFin] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialDataTemplate,'rows');
+                    
+                    indI2{idxFin} = indI{idxStart};
+                    indices2{idxFin} = indices{idxStart};                   
+                    sortedData2{z}{ROI}{idxFin} = sortedData{z}{ROI}{idxStart};                    
+                end 
+            end          
+        end 
+    end 
+    indices2 = indices2';
+end 
+
+if cumStacksQ == 1
+    sortedStacks2 = cell(1,length(sortedStacks));
+    CumStacks2 = cell(1,length(sortedStacks));
+    CumDffStacks2 = cell(1,length(sortedStacks));
+    dffStacks2 = cell(1,length(sortedStacks));
+    AVStacks2 = cell(1,length(sortedStacks));
+    AVcumStacks2 = cell(1,length(sortedStacks));
+    AVcumDffStacks2 = cell(1,length(sortedStacks));
+    AVdffStacks2 = cell(1,length(sortedStacks));
+    for z = 1:length(sortedStacks)
+        for trialType = 1:maxTtypeInd     
+            if ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows') == 1
+                [~, idxStart] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows');  
+                [~, idxFin] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialDataTemplate,'rows');
+
+                indI2{idxFin} = indI{idxStart};
+                indices2{idxFin} = indices{idxStart};                   
+                sortedStacks2{z}{idxFin} = sortedStacks{z}{idxStart};  
+                CumStacks2{z}{idxFin} = CumStacks{z}{idxStart};
+                CumDffStacks2{z}{idxFin} = CumDffStacks{z}{idxStart};
+                dffStacks2{z}{idxFin} = dffStacks{z}{idxStart};
+                AVStacks2{z}{idxFin} = AVStacks{z}{idxStart};  
+                AVcumStacks2{z}{idxFin} = AVcumStacks{z}{idxStart};
+                AVcumDffStacks2{z}{idxFin} = AVcumDffStacks{z}{idxStart};
+                AVdffStacks2{z}{idxFin} = AVdffStacks{z}{idxStart};
+            end 
+        end          
+    end 
+    indices2 = indices2';
+end 
+
+%sort wheel data into correct spot based on trial type 
+for trialType = 1:maxTtypeInd 
+    if ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows') == 1
+        [~, idxStart] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows');  
+        [~, idxFin] = ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialDataTemplate,'rows');
+                  
+        sortedWheelData2{idxFin} = sortedWheelData{idxStart};                    
+    end     
+end
+
+%% reorder trials from earliest to latest occurance in time 
 if pixIntQ == 1    
+    dataToPlot = cell(1,ROIinds(maxCells));
     for ccell = 1:maxCells  
         for z = 1:size(sortedData{ROIinds(ccell)},1)
-            for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
-                dataToPlot{ROIinds(ccell)}{z,trialType} = sortedData{ROIinds(ccell)}{z,trialType}(indI{trialType}(1:length(sortedData{ROIinds(ccell)}{z,trialType})));     
-            end        
+            for trialType = 1:maxTtypeInd 
+                if isempty(sortedData2{ROIinds(cell)}{z,trialType}) == 0
+                    dataToPlot{ROIinds(ccell)}{z,trialType} = sortedData2{ROIinds(ccell)}{z,trialType}(indI2{trialType}(1:length(sortedData{ROIinds(ccell)}{z,trialType})));     
+                end 
+            end 
         end 
     end 
 end 
@@ -319,18 +416,45 @@ end
 if VsegQ == 1  
     for z = 1:length(sortedData)
         for ROI = 1:size(sortedData{1},2)             
-            for trialType = 1:size(sortedData{1}{1},2)                          
-                dataToPlot{z}{ROI}{trialType} = sortedData{z}{ROI}{trialType}(indI{trialType});     
-            end        
+            for trialType = 1:maxTtypeInd     
+                if isempty(sortedData2{z}{ROI}{trialType}) == 0
+                    dataToPlot{z}{ROI}{trialType} = sortedData2{z}{ROI}{trialType}(indI2{trialType});     
+                end   
+            end 
         end 
     end 
-    maxCells = size(sortedData{1},2);
 end 
 
-for trialType = 1:size(sortedData{2}{1},2) 
-    wheelDataToPlot{trialType} = sortedWheelData{trialType}(indI{trialType});             
+if cumStacksQ == 1 
+    clear sortedStacks CumStacks CumDffStacks dffStacks AVStacks AVcumStacks AVcumDffStacks AVdffStacks;
+    AVStacks = AVStacks2; AVcumStacks = AVcumStacks2; AVcumDffStacks = AVcumDffStacks2; AVdffStacks = AVdffStacks2;
+    sortedStacks = cell(1,length(sortedStacks2));
+    CumStacks = cell(1,length(sortedStacks2));
+    CumDffStacks = cell(1,length(sortedStacks2));
+    dffStacks = cell(1,length(sortedStacks2));
+    for z = 1:length(sortedStacks2)        
+        for trialType = 1:maxTtypeInd     
+            if isempty(sortedStacks2{z}{trialType}) == 0
+                sortedStacks{z}{trialType} = sortedStacks2{z}{trialType}(indI2{trialType});    
+                CumStacks{z}{trialType} = CumStacks2{z}{trialType}(indI2{trialType}); 
+                CumDffStacks{z}{trialType} = CumDffStacks2{z}{trialType}(indI2{trialType}); 
+                dffStacks{z}{trialType} = dffStacks2{z}{trialType}(indI2{trialType}); 
+            end   
+        end  
+    end 
 end 
+ 
+for trialType = 1:maxTtypeInd 
+    wheelDataToPlot = cell(1,maxTtypeInd);
+    if isempty(sortedWheelData2{trialType}) == 0 
+        wheelDataToPlot{trialType} = sortedWheelData2{trialType}(indI2{trialType});  
+    end 
+end 
+
+%% clear unecessary values 
    
-
-%clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start 
-
+if cumStacksQ == 1
+    clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start sortedStacks CumStacks CumDffStacks dffStacks CumData CumDffDataFirst20s dffDataFirst20s AVcumDffStacks AVcumStacks AVdffStacks AVStacks
+elseif  VsegQ == 1 || pixIntQ == 1
+    clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start
+end 

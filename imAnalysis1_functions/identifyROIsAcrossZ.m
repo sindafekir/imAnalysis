@@ -1,5 +1,8 @@
 function [CaROImasks,userInput,ROIorders] = identifyROIsAcrossZ(reg_Stacks,userInput,UIr,numZplanes)
 
+stackAVs = cell(1,length(reg_Stacks));
+CaROImasks = cell(1,length(reg_Stacks));
+ROIorders = cell(1,length(reg_Stacks));
 for Z = 1:length(reg_Stacks)               
     %create average images per Z plane 
     stackAVs{Z} = mean(reg_Stacks{Z},3); 
@@ -17,6 +20,7 @@ for Z = 1:length(reg_Stacks)
     ROIorders{Z} = bwlabel(nm1BW2);
 end
 
+meanPixIntArray = cell(1,size(reg_Stacks,2));
 %apply mask to data and get the average pixel intensity of each terminal ROI 
 for zStack = 1:size(reg_Stacks,2)
     for frame = 1:length(reg_Stacks{zStack})
@@ -30,6 +34,7 @@ end
 %compare the GCaMP signal of each Ca ROI with eachother 
 %corr2 gives you a single correlation value for the entire vectors
 %being compared 
+ROIcorArray = cell(1,size(reg_Stacks,2));
 for zStack = 1:size(reg_Stacks,2)
     for ROI = 1:size(meanPixIntArray{zStack},1) 
          for ROIcor = 1:size(meanPixIntArray{zStack},1)
@@ -41,6 +46,8 @@ end
 %this updates the Ca ROIs based on their activity patterns and
 %location (2D) 
 count = 1;
+R = cell(1,count);
+C = cell(1,count);
 for Z = 1:size(reg_Stacks,2)
     for row = 1:size(meanPixIntArray{Z},1) 
         for col = 1:size(meanPixIntArray{Z},1) 
@@ -67,6 +74,7 @@ for zStack = 1:size(reg_Stacks,2)
 end        
 
 %3D caROI comparisons 
+ROIcorArrayAcrossZ = cell(1,numZplanes);
 for Z = 1:numZplanes
     for caROI = 1:size(meanPixIntArray{Z},1) 
         if Z < numZplanes
@@ -85,18 +93,23 @@ for Z = 1:numZplanes
 end 
 
 %find centroid of each ROI
+centroids = cell(1,numZplanes);
 for Z = 1:numZplanes
     for caROI = 1:size(meanPixIntArray{Z},1) 
         centroids{Z} = regionprops(CaROImasks{Z},'centroid');   
     end 
 end 
 
+corrIDXs = cell(1,size(ROIcorArrayAcrossZ,2));
 %find indices of correlated ROIs across Z 
 for z = 1:size(ROIcorArrayAcrossZ,2)
      [x, y] = find(ROIcorArrayAcrossZ{z} > 0.01);
      corrIDXs{z}(:,1) = x; corrIDXs{z}(:,2) = y;
 end 
 
+centroidLoc = cell(1,size(corrIDXs,2));
+centroidLoc2 = cell(1,size(corrIDXs,2));
+CorrROIdists = cell(1,size(corrIDXs,2));
 for z = 1:size(corrIDXs,2) 
     for corrROI = 1:size(corrIDXs{z},1)
         %get the locations of correlated ROIs 
@@ -117,6 +130,8 @@ end
 
 %finds ROIs that are correlated with more than one other ROI (the
 %repeats) 
+corrIDXnoRepeatsCol1 = cell(1,size(corrIDXs,2));
+corrIDXnoRepeatsCol2 = cell(1,size(corrIDXs,2));
 for z = 1:size(corrIDXs,2) 
     [noRepeatsCol1,~,~] = unique(corrIDXs{z}(:,1));
     [noRepeatsCol2,~,~] = unique(corrIDXs{z}(:,2));
@@ -133,6 +148,7 @@ for z = 1:size(corrIDXs,2)
             %find repeating ROI indices 
             repIDXs = find(corrIDXs{z}(:,1) == corrIDXnoRepeatsCol1{z}(uniqueVals));
             %get the distances 
+            dists = zeros(1,length(repIDXs));
             for repIDs = 1:length(repIDXs)
                 dists(repIDs) = corrIDXs{z}(repIDXs(repIDs),3);
             end 
@@ -183,6 +199,7 @@ end
  end 
 
  %remove rows that are full of zeros 
+ corrIDXs2 = cell(1,size(corrIDXs,2));
  for z = 1:size(corrIDXs,2)
      %this matrix is gives us the ROI pairs across Z!!! 
      corrIDXs2{z} = corrIDXs{z}(any(corrIDXs{z},2),:);
@@ -214,6 +231,7 @@ end
 
 %figure out where to start label value for ROIs that don't span
 %multiple Z planes 
+maxZ = zeros(1,length(meanPixIntArray));
 for Z = 1:length(meanPixIntArray)
     maxZ(Z) = max(max(CaROImasks{Z}));
 end 

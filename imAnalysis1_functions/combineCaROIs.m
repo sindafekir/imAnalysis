@@ -27,13 +27,13 @@ Cinds(:,1) = xC;Cinds(:,2) = yC;
 count = count + 1;
 
 %find shortest distance between correlated ROIs 
+ROIdistances = zeros(size(Rinds,1),size(Cinds,1));
 for ROI1 = 1:size(Rinds,1)
     for ROI2 = 1:size(Cinds,1)
         ROIdistances(ROI1,ROI2) = sqrt((Rinds(ROI1,1)-Cinds(ROI2,1)).^2 + (Rinds(ROI1,2)-Cinds(ROI2,2)).^2);
     end 
 end 
 minMinDist = min(min(ROIdistances));
-minDist = min(ROIdistances);
 
 %set distance threshold
 if minMinDist < avROIwidth
@@ -101,6 +101,7 @@ if minMinDist < avROIwidth
         numPix = size(closestRpixLoc3,1);
     end 
 
+    bwPixLoc = zeros(numPix,1);
     for bwPix = 1:numPix
         %x coordinate
         if closestRpixLoc3(bwPix,1) == closestCpixLoc3(bwPix,1)
