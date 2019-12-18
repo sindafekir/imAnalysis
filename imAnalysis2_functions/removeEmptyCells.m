@@ -1,4 +1,7 @@
 function [sortedStacks,indices,emptyTrialTypes] = removeEmptyCells(sortedStacks,indices)
+
+emptyTrialTypes = cell(1,length(sortedStacks));
+emptyTrials = cell(1,length(sortedStacks));
 for zStack = 1:length(sortedStacks)
     %find empty trialTypes 
     emptyTrialTypes{zStack} = cellfun(@isempty, sortedStacks{zStack});   

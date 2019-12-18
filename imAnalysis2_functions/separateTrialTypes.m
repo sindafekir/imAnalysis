@@ -6,6 +6,7 @@ function [uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f] = separate
 
 Ttypes = TrialTypes(:,2);
 %determine theoretical trial lengths (in frames) 
+theoTLengths = zeros(1,length(stimTimes));
 for L = 1:length(stimTimes)
     theoTLengths(L) = (FPS/numZplanes)*stimTimes(L);
 end 
@@ -28,6 +29,8 @@ UniqueLengthGroups = unique(lengthGroups);
 
 %remove trials that are too long (more than 10% off) = where there was probably a
 %mechanical/triggering error 
+groupRows = cell(1,length(UniqueLengthGroups));
+diffArray = zeros(length(UniqueLengthGroups),length(theoTLengths));
  for uniqueGroup = 1:length(UniqueLengthGroups)
     [groupRow, ~] = find(lengthGroups == UniqueLengthGroups(uniqueGroup));
     groupRows{uniqueGroup} = groupRow;
@@ -85,15 +88,7 @@ state_end_f = ceil(state_end_f);
 trialLengths = state_end_f - state_start_f; 
 lengths = unique(trialLengths); 
 lengths(:,2) = histc(trialLengths(:),lengths);
-%identify trial lengths that should be the same (kmeans clustering)
-if size(lengths,1) == 1 
-    lengthGroups = 1;
-    centroids = centroids(1,:);
-    UniqueLengthGroups = unique(lengthGroups);
-elseif size(lengths,1) > 1
-    [lengthGroups,centroids] = kmeans(lengths(:,1),2);
-    UniqueLengthGroups = unique(lengthGroups);
-end     
+   
 trialData = horzcat(Ttypes,trialLengths);    
 [uniqueTrialData,~,ib] = unique(trialData,'rows');
 uniqueTrialDataOcurr = accumarray(ib, 1);

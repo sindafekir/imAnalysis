@@ -369,6 +369,7 @@ end
 
 
 for trialType = 1:size(indices2,1)
+    wheelDataToPlot2 = cell(1,maxTtypeInd);
     if isempty(sortedWheelData2{trialType}) == 0 
         wheelDataToPlot2{trialType} = sortedWheelData2{trialType}(indI2{trialType});     
     end
@@ -408,6 +409,7 @@ wheelDataToPlot = wheelDataToPlot3;
 clear dataToPlot3 wheelDataToPlot3
 
 if pixIntQ == 1    
+    AVsortedData = cell(1,ROIinds(maxCells));
     for ccell = 1:maxCells  
         for z = 1:size(dataToPlot{ROIinds(ccell)},1)
             for trialType = 1:size(dataToPlot{ROIinds(ccell)},2) 
@@ -437,6 +439,7 @@ if VsegQ == 1
     maxCells = size(sortedData{1},2);
 end 
 
+AVwheelData = cell(1,length(wheelDataToPlot));
 for trialType = 1:length(wheelDataToPlot)
     if isempty(wheelDataToPlot{trialType}) == 0 
         reshapedArray = cat(3,wheelDataToPlot{trialType}{:});
@@ -447,29 +450,6 @@ end
  
 %clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS sec_before_stim_start dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate CaROImasks maxCells ROIorders ROIinds ROIboundData
 
-
- %% Filter the data (Gaussian Filter)
- %REPLACE WITH FREQUENCY FILTERING 
- %{
-% time_to_filter_by = input("How much time do you want to filter the data by? ");
-% filter_rate = FPS*time_to_filter_by; 
-% 
-% if ismember(1,TrialTypes(:,2)) == 1
-%     [T1DataNF] = filter_F_data(T1DataN,filter_rate);
-%     [T1velDataF] = filter_F_data(T1velData,filter_rate);
-% end
-% 
-% if ismember(2,TrialTypes(:,2)) == 1
-%     [T2DataNF] = filter_F_data(T2DataN,filter_rate);
-%     [T2velDataF] = filter_F_data(T2velData,filter_rate);
-% end 
-% 
-% if ismember(3,TrialTypes(:,2)) == 1
-%     [T3DataNF] = filter_F_data(T3DataN,filter_rate);
-%     [T3velDataF] = filter_F_data(T3velData,filter_rate);
-% end
-%}
- 
 
 %% plot 
 dataMin = input("data Y axis MIN: ");
@@ -485,6 +465,7 @@ plotAVDataAndRunVelocity(VdataToPlot,VAVsortedData,dataToPlot,AVsortedData,wheel
 
 %% in case the V data array is missing some trial type data and it needs to be the same size as the calcium data array for plotting 
 
+SEMVdata = cell(1,length(VAVsortedData));
 for z = 1:length(VAVsortedData)
         for ROI = 1:size(VAVsortedData{z},2)
             for trialType = 1:size(AVsortedData{2},2)
@@ -492,8 +473,7 @@ for z = 1:length(VAVsortedData)
                     for frame = 1:635
                         %VAVsortedData{z}{ROI}{trialType}(1,frame) = NaN; 
                         SEMVdata{z}{ROI}{trialType}(1,frame) = NaN;
-                    end 
-                    
+                    end                    
                 end 
             end 
         end 

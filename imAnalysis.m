@@ -445,6 +445,7 @@ if cumStacksQ == 1
 end 
  
 for trialType = 1:maxTtypeInd 
+    wheelDataToPlot = cell(1,maxTtypeInd);
     if isempty(sortedWheelData2{trialType}) == 0 
         wheelDataToPlot{trialType} = sortedWheelData2{trialType}(indI2{trialType});  
     end 

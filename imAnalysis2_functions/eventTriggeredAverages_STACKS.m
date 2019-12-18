@@ -13,6 +13,7 @@ function [sortedTrials,indices] = eventTriggeredAverages_STACKS(Tdata,state_star
         sec_after_stim_end = 0; 
     end 
   
+    sortedTrials = cell(1,length(uniqueTrialDataOcurr));
     for indGroup = 1:length(uniqueTrialDataOcurr)     
         stimOnFrames = uniqueTrialData(indGroup,2);
         
@@ -22,9 +23,7 @@ function [sortedTrials,indices] = eventTriggeredAverages_STACKS(Tdata,state_star
                 %determine trial start and end frames
                 trial_start(counter) = floor(state_start_f(indices{indGroup}(ind)) - (sec_before_stim_start*FPstack));
                 trial_end(counter) = trial_start(counter) + ((stimOnFrames+((sec_after_stim_end+sec_before_stim_start)*FPstack)));            
-                trial_end = trial_end';
-                %double check the above worked correctly = each trial is the same length
-                trial_length = trial_end - trial_start;                
+                trial_end = trial_end';              
                 counter = counter + 1;
             end     
             
@@ -45,9 +44,7 @@ function [sortedTrials,indices] = eventTriggeredAverages_STACKS(Tdata,state_star
                     %determine trial start and end frames
                     trial_start(counter) = floor(state_start_f(indices{indGroup}(ind)));
                     trial_end(counter) = trial_start(counter) + stimOnFrames;            
-                    trial_end = trial_end';
-                    %double check the above worked correctly = each trial is the same length
-                    trial_length = trial_end - trial_start;                
+                    trial_end = trial_end';               
                     counter = counter + 1;
                 end
         end

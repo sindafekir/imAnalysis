@@ -1,4 +1,6 @@
 function [TrialTypes] = determineTrialType(LED1_amp,LED2_amp,LED3_amp)
+
+TrialTypes = zeros(length(LED2_amp),2);
 for a = 1:length(LED2_amp)
     TrialTypes(a,1) = a;
      

@@ -1,18 +1,22 @@
 function [dffDataFirst20s,CumDffDataFirst20s,CumData] = makeCumPixWholeEXPstacks(FPS,reg_Stacks)
 disp('Making DF/F, cumulative pixel intensity, and cumulative DF/F stacks')
+
 %make baseline image 
+baselineIms = cell(1,length(reg_Stacks));
 for stack = 1:length(reg_Stacks)
     baselineIms{stack} = mean(reg_Stacks{stack}(:,:,1:ceil((FPS/3)*20)),3);
 end 
 
 %create df/f stack relative to the first 20 sec of the exp (before first
 %stim) 
+dffDataFirst20s = cell(1,length(reg_Stacks));
 for stack = 1:length(reg_Stacks) 
     dffDataFirst20s{stack} = (double(reg_Stacks{stack})-repmat(baselineIms{stack},[1 1 size(double(reg_Stacks{stack}),3)]))./repmat(baselineIms{stack},[1 1 size(double(reg_Stacks{stack}),3)]);
     dffDataFirst20s{stack} = int16(dffDataFirst20s{stack});
 end 
 
 %create cumulative df/f stacks normalized to baseline
+CumDffDataFirst20s = cell(1,length(reg_Stacks));
 for stack = 1:length(reg_Stacks)
     for frame = 1:size(reg_Stacks{1},3)
         if frame == 1
@@ -24,6 +28,7 @@ for stack = 1:length(reg_Stacks)
 end 
 
 %create cumulative pixel intensity stacks
+CumData = cell(1,length(reg_Stacks));
 for stack = 1:length(reg_Stacks)
     for frame = 1:size(reg_Stacks{1},3)
         if frame == 1

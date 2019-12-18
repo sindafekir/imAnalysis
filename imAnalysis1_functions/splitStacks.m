@@ -2,6 +2,7 @@ function [subStacks] = splitStacks(imageStack,splitType,numSplits)
 subStackLength = size(imageStack,3)/numSplits; 
 
 if splitType == 0 
+    subStacks = cell(1,numSplits);
     for subStack = 1:numSplits
         for subFrame = 1:subStackLength
             if subStack == 1 
@@ -14,6 +15,7 @@ if splitType == 0
     end 
                
 elseif splitType == 1   
+    subStacks = cell(1,numSplits);
     for subStack = 1:numSplits
         for subFrame = 1:subStackLength
             if subFrame == 1 

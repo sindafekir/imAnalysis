@@ -12,6 +12,7 @@ for z = 1:length(testData)
     end 
 end 
 
+testData3 = cell(1,length(testData));
 for z = 1:length(testData)
     for ROI = 1:size(testData{1},2)
         for trialType = 1:size(testData{1}{1},2)

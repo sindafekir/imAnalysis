@@ -15,6 +15,7 @@ while rotateIm == 1
     
     %if rotation is good, rotate all z stacks  
     if rotateImAsk == 0
+        rotStacks = cell(1,length(reg_Stacks));
         for stack = 1:length(reg_Stacks)  
            %if the rotation is finally good, rotate the stack 
             for frame = 1:size(reg_Stacks{stack},3)
