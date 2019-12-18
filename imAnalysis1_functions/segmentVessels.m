@@ -45,6 +45,7 @@ end
 %% segment the vessels, get vessel width, and check segmentation
 segmentVessel = 1;
 while segmentVessel == 1 
+    %=sdfdsf
     %display last image of first ROI z stacks to pick the one that is most dim
     %for making segmentation algorithm 
     disp('Pick a Z-stack to use for segmentation algorithm based on these pics.'); 
