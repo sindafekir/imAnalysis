@@ -1,11 +1,8 @@
-function [uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f] = separateTrialTypes(TrialTypes,state_start_f,state_end_f,stimTimes,numZplanes,FPS)
-    
-%NEED TO MAKE SURE UNIQUETRIALDATA AND UNIQUETRIALDATAOCCUR HAVE DATA IN
-%THE CORRECT SPOTS 
-
+function [uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f,uniqueTrialDataTemplate] = separateTrialTypes(TrialTypes,state_start_f,state_end_f,stimTimes,numZplanes,FPS,stimTypeNum)
 
 Ttypes = TrialTypes(:,2);
 %determine theoretical trial lengths (in frames) 
+theoTLengths = zeros(1,length(stimTimes));
 for L = 1:length(stimTimes)
     theoTLengths(L) = (FPS/numZplanes)*stimTimes(L);
 end 
@@ -28,6 +25,8 @@ UniqueLengthGroups = unique(lengthGroups);
 
 %remove trials that are too long (more than 10% off) = where there was probably a
 %mechanical/triggering error 
+groupRows = cell(1,length(UniqueLengthGroups));
+diffArray = zeros(length(UniqueLengthGroups),length(theoTLengths));
  for uniqueGroup = 1:length(UniqueLengthGroups)
     [groupRow, ~] = find(lengthGroups == UniqueLengthGroups(uniqueGroup));
     groupRows{uniqueGroup} = groupRow;
@@ -85,18 +84,20 @@ state_end_f = ceil(state_end_f);
 trialLengths = state_end_f - state_start_f; 
 lengths = unique(trialLengths); 
 lengths(:,2) = histc(trialLengths(:),lengths);
-%identify trial lengths that should be the same (kmeans clustering)
-if size(lengths,1) == 1 
-    lengthGroups = 1;
-    centroids = centroids(1,:);
-    UniqueLengthGroups = unique(lengthGroups);
-elseif size(lengths,1) > 1
-    [lengthGroups,centroids] = kmeans(lengths(:,1),2);
-    UniqueLengthGroups = unique(lengthGroups);
-end     
+   
 trialData = horzcat(Ttypes,trialLengths);    
 [uniqueTrialData,~,ib] = unique(trialData,'rows');
 uniqueTrialDataOcurr = accumarray(ib, 1);
 indices = accumarray(ib, find(ib), [], @(rows){rows});  %the find(ib) simply generates (1:size(a,1))'
+
+%make a template for sorting trial types later on 
+stimTypes = (1:stimTypeNum);
+stimTypesU = repmat(stimTypes,length(theoTLengths),1);
+stimTypesU = stimTypesU(:);
+theoTLengths = theoTLengths';
+theoTLengthsU = repmat(theoTLengths,stimTypeNum,1);
+
+uniqueTrialDataTemplate(:,1) = stimTypesU;
+uniqueTrialDataTemplate(:,2) = theoTLengthsU;
 
 end 

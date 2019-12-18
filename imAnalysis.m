@@ -50,16 +50,13 @@ if VsegQ == 1
 end 
 
 %% make cumulative, diff-cumulative, and DF/F stacks to output for calcium and BBB perm analysis 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%EDIT-DO SLIDING BASELINE / Z-SCORING 
+[numZplanes] = getUserInput(userInput,"How many Z planes are there?");
 [FPS] = getUserInput(userInput,"FPS"); 
 if cumStacksQ == 1  
-    [dffDataFirst20s,CumDffDataFirst20s,CumData] = makeCumPixWholeEXPstacks(FPS,reg_Stacks);
+    [dffDataFirst20s,CumDffDataFirst20s,CumData] = makeCumPixWholeEXPstacks(FPS,reg_Stacks,numZplanes,sec_before_stim_start);
 end
 
 %% make sure state start and end frames line up 
-[numZplanes] = getUserInput(userInput,"How many Z planes are there?");
 [state_start_f,state_end_f,TrialTypes] = makeSureStartEndTrialTypesLineUp(reg_Stacks,state_start_f,state_end_f,TrialTypes,numZplanes);
 
 %% resample velocity data by trial type 
@@ -71,8 +68,9 @@ end
 cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. ');  userInput(UIr,1) = ("Does the registration ever get wonky? Yes = 1. No = 0."); userInput(UIr,2) = (cutOffFrameQ); UIr = UIr+1;
 if cutOffFrameQ == 1 
     cutOffFrame = input('Beyond what frame is the registration wonky? ');  userInput(UIr,1) = ("Beyond what frame is the registration wonky?"); userInput(UIr,2) = (cutOffFrame); UIr = UIr+1;
-    if cumStacksQ == 1 || pixIntQ == 1 
+    if pixIntQ == 1 
         reg___Stacks = reg_Stacks; clear reg_Stacks; 
+        reg_Stacks = cell(1,numZplanes);
         for zStack = 1:numZplanes
             reg_Stacks{zStack} = reg___Stacks{zStack}(:,:,1:cutOffFrame);
         end 
@@ -80,9 +78,21 @@ if cutOffFrameQ == 1
     
     if VsegQ == 1
         reg___StacksVesSeg = reg_Stacks; clear reg_Stacks; 
+        reg_Stacks = cell(1,numZplanes);
         for zStack = 1:numZplanes
             reg_Stacks{zStack} = reg___StacksVesSeg{zStack}(:,:,1:cutOffFrame);
         end 
+    end 
+    
+    if cumStacksQ == 1 %dffDataFirst20s,CumDffDataFirst20s,CumData
+        reg___Stacks = reg_Stacks; clear reg_Stacks; 
+        reg_Stacks = cell(1,numZplanes);
+        for zStack = 1:numZplanes
+            reg_Stacks{zStack} = reg___Stacks{zStack}(:,:,1:cutOffFrame);
+            CumData{zStack}(:,:,cutOffFrame+1:end) = [];
+            CumDffDataFirst20s{zStack}(:,:,cutOffFrame+1:end) = [];
+            dffDataFirst20s{zStack}(:,:,cutOffFrame+1:end) = [];
+        end        
     end 
     
     ResampedVel_wheel__data = ResampedVel_wheel_data; clear ResampedVel_wheel_data; 
@@ -94,21 +104,22 @@ end
 disp('Organizing Z-Stacks by Trial Type')
 %find the diffent trial types 
 [stimTimes] = getUserInput(userInput,"Stim Time Lengths (sec)"); 
-[uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f] = separateTrialTypes(TrialTypes,state_start_f,state_end_f,stimTimes,numZplanes,FPS);
-uniqueTrialDataTemplate = uniqueTrialData; 
+[stimTypeNum] = getUserInput(userInput,"How many different kinds of stimuli were used?");
+[uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f,uniqueTrialDataTemplate] = separateTrialTypes(TrialTypes,state_start_f,state_end_f,stimTimes,numZplanes,FPS,stimTypeNum); 
 
 if volIm == 1
     %separate the Z-stacks 
+    sortedStacks = cell(1,length(reg_Stacks));
     for Zstack = 1:length(reg_Stacks)
           [sorted_Stacks,indices] = eventTriggeredAverages_STACKS(reg_Stacks{Zstack},state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);
           sortedStacks{Zstack} = sorted_Stacks;           
     end 
 elseif volIm == 0
-    %separate the Z-stacks     
+    %separate the Z-stacks      
       [sorted_Stacks,indices] = eventTriggeredAverages_STACKS2(reg_Stacks{1},state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);
       sortedStacks{1} = sorted_Stacks;           
 end 
-
+        
 [sortedStacks,~] = removeEmptyCells(sortedStacks,indices);
 
 %below removes indices in cells where sortedStacks is blank 
@@ -119,10 +130,17 @@ for trialType = 1:size(sortedStacks{1},2)
 end 
 
 if cumStacksQ == 1  
-    [dffStacks,CumDffStacks,CumStacks] = makeCumPixStacksPerTrial(sortedStacks);
-end 
+    [dffStacks,CumDffStacks,CumStacks] = makeCumPixStacksPerTrial(sortedStacks,FPS,numZplanes,sec_before_stim_start);
+end
 
-%% vessel segmentation 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%PICK UP HERE - GO THROUGH EACH FUNCTION AND INITIATE ARRAYS - KEEP AN EYE
+%OUT FOR THE USE OF 'CELL'
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+%% vessel segmentation
 if VsegQ == 1
         [sortedData,userInput,UIr,ROIboundData] = segmentVessels(reg_Stacks,volIm,UIr,userInput,state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,numZplanes);
 end 
@@ -159,48 +177,49 @@ if pixIntQ == 1
             maxCells = length(ROIinds);
             %determine change in pixel intensity sorted by cell identity
             %across Z 
-            for cell = 1:maxCells %cell starts at 2 because that's where our cell identity labels begins (see identifyROIsAcrossZ function)
+            meanPixIntArray = cell(1,ROIinds(maxCells));
+            for ccell = 1:maxCells %cell starts at 2 because that's where our cell identity labels begins (see identifyROIsAcrossZ function)
                 %find the number of z planes a cell/terminal appears in 
                 count = 1;
                 %this figures out what planes in Z each cell occurs in (cellZ)
                 for Z = 1:length(CaROImasks)                
-                    if ismember(ROIinds(cell),CaROImasks{Z}) == 1 
-                        cellInd = max(unique(ROIorders{Z}(CaROImasks{Z} == ROIinds(cell))));
+                    if ismember(ROIinds(ccell),CaROImasks{Z}) == 1 
+                        cellInd = max(unique(ROIorders{Z}(CaROImasks{Z} == ROIinds(ccell))));
                         for frame = 1:length(reg_Stacks{Z})
                             stats = regionprops(ROIorders{Z},reg_Stacks{Z}(:,:,frame),'MeanIntensity');
-                            meanPixIntArray{ROIinds(cell)}(Z,frame) = stats(cellInd).MeanIntensity;
+                            meanPixIntArray{ROIinds(ccell)}(Z,frame) = stats(cellInd).MeanIntensity;
                         end 
                     end 
                 end 
                 %turn all rows of zeros into NaNs
-                allZeroRows = find(all(meanPixIntArray{ROIinds(cell)} == 0,2));
+                allZeroRows = find(all(meanPixIntArray{ROIinds(ccell)} == 0,2));
                 for row = 1:length(allZeroRows)
-                    meanPixIntArray{ROIinds(cell)}(allZeroRows(row),:) = NaN; 
+                    meanPixIntArray{ROIinds(ccell)}(allZeroRows(row),:) = NaN; 
                 end 
             end 
             
-             for cell = 1:maxCells     
-                    for z = 1:size(meanPixIntArray{ROIinds(cell)},1)     
+             for ccell = 1:maxCells     
+                    for z = 1:size(meanPixIntArray{ROIinds(ccell)},1)     
                         %get median value per trace
-                        dataMed = nanmedian(meanPixIntArray{ROIinds(cell)}(z,:));     
-                        dataMeds{ROIinds(cell)}(z,:) = dataMed;
+                        dataMed = nanmedian(meanPixIntArray{ROIinds(ccell)}(z,:));     
+                        dataMeds{ROIinds(ccell)}(z,:) = dataMed;
                         %compute DF/F using means  
-                        DFOF{ROIinds(cell)}(z,:) = (meanPixIntArray{ROIinds(cell)}(z,:)-dataMeds{ROIinds(cell)}(z,:))./dataMeds{ROIinds(cell)}(z,:);                         
+                        DFOF{ROIinds(ccell)}(z,:) = (meanPixIntArray{ROIinds(ccell)}(z,:)-dataMeds{ROIinds(ccell)}(z,:))./dataMeds{ROIinds(ccell)}(z,:);                         
                         %get sliding baseline 
-                        [dataSlidingBL]=slidingBaseline(DFOF{ROIinds(cell)}(z,:),floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
-                        dataSlidingBLs{ROIinds(cell)}(z,:) = dataSlidingBL;                       
+                        [dataSlidingBL]=slidingBaseline(DFOF{ROIinds(ccell)}(z,:),floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
+                        dataSlidingBLs{ROIinds(ccell)}(z,:) = dataSlidingBL;                       
                         %subtract sliding baseline from DF/F
-                        DFOFsubSBLs{ROIinds(cell)}(z,:) = DFOF{ROIinds(cell)}(z,:)-dataSlidingBLs{ROIinds(cell)}(z,:);
+                        DFOFsubSBLs{ROIinds(ccell)}(z,:) = DFOF{ROIinds(ccell)}(z,:)-dataSlidingBLs{ROIinds(ccell)}(z,:);
                         %z-score data 
-                        zData{ROIinds(cell)}(z,:) = zscore(DFOFsubSBLs{ROIinds(cell)}(z,:));
+                        zData{ROIinds(ccell)}(z,:) = zscore(DFOFsubSBLs{ROIinds(ccell)}(z,:));
                     end
              end
 
             %sort calcium data by trial type 
-            for cell = 1:maxCells
-                for Z = 1:size(zData{ROIinds(cell)},1)                
-                    [sortedStatArray,indices] = eventTriggeredAverages(zData{ROIinds(cell)}(Z,:),state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);            
-                    sortedData{ROIinds(cell)}(Z,:) = sortedStatArray;
+            for ccell = 1:maxCells
+                for Z = 1:size(zData{ROIinds(ccell)},1)                
+                    [sortedStatArray,indices] = eventTriggeredAverages(zData{ROIinds(ccell)}(Z,:),state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);            
+                    sortedData{ROIinds(ccell)}(Z,:) = sortedStatArray;
                 end                  
             end            
         end 
@@ -230,7 +249,7 @@ zWData = zscore(DVOVsubSBLs);
 %% average dff, cum dff, and cum stacks across all trials
 if cumStacksQ == 1 
     for Z = 1:numZplanes
-        for trialType = 1:size(sortedData{ROIinds(cell)},2) 
+        for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
             for trial = 1:length(sortedWheelData{trialType})
                 CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks{Z}{trialType}{trial};
                 Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks{Z}{trialType}{trial};
@@ -246,13 +265,13 @@ if cumStacksQ == 1
 end 
 
 if pixIntQ == 1        
-    for cell = 1:maxCells       
-        for z = 1:size(sortedData{ROIinds(cell)},1)
-            for trialType = 1:size(sortedData{ROIinds(cell)},2) 
-                for trial = 1:length(sortedData{ROIinds(cell)}{z,trialType})
-                     sortedStats_Array{ROIinds(cell)}{z,trialType}(:,:,:,trial) = sortedData{ROIinds(cell)}{z,trialType}{trial};
+    for ccell = 1:maxCells       
+        for z = 1:size(sortedData{ROIinds(ccell)},1)
+            for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
+                for trial = 1:length(sortedData{ROIinds(ccell)}{z,trialType})
+                     sortedStats_Array{ROIinds(ccell)}{z,trialType}(:,:,:,trial) = sortedData{ROIinds(ccell)}{z,trialType}{trial};
                 end 
-                AVsortedData{ROIinds(cell)}{z,trialType}(1,:) = mean(sortedStats_Array{ROIinds(cell)}{z,trialType},4);
+                AVsortedData{ROIinds(ccell)}{z,trialType}(1,:) = mean(sortedStats_Array{ROIinds(ccell)}{z,trialType},4);
             end 
         end 
     end        
@@ -288,10 +307,10 @@ for trialType = 1:size(sortedData{2}{1},2)
 end 
 
 if pixIntQ == 1    
-    for cell = 1:maxCells  
-        for z = 1:size(sortedData{ROIinds(cell)},1)
-            for trialType = 1:size(sortedData{ROIinds(cell)},2) 
-                dataToPlot{ROIinds(cell)}{z,trialType} = sortedData{ROIinds(cell)}{z,trialType}(indI{trialType}(1:length(sortedData{ROIinds(cell)}{z,trialType})));     
+    for ccell = 1:maxCells  
+        for z = 1:size(sortedData{ROIinds(ccell)},1)
+            for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
+                dataToPlot{ROIinds(ccell)}{z,trialType} = sortedData{ROIinds(ccell)}{z,trialType}(indI{trialType}(1:length(sortedData{ROIinds(ccell)}{z,trialType})));     
             end        
         end 
     end 

@@ -1,17 +1,18 @@
-function [dffStacks,CumDffStacks,CumStacks] = makeCumPixStacksPerTrial(sortedStacks)
+function [dffStacks,CumDffStacks,CumStacks] = makeCumPixStacksPerTrial(sortedStacks,FPS,numZplanes,sec_before_stim_start)
 
 %make baseline image 
+TtypeBaselineIms = cell(1,length(sortedStacks));
 for zStack = 1:length(sortedStacks)
     for trialType = 1:length(sortedStacks{zStack})
         for stack = 1:length(sortedStacks{zStack}{trialType})
-            %sortedStacks{trialType} = sortedStacks{trialType}(~cellfun('isempty',sortedStacks{trialType}));
-            TtypeBaselineIms{zStack}{trialType}{stack} = mean(sortedStacks{zStack}{trialType}{stack}(:,:,1:ceil((FPS/3)*20)),3);
+            TtypeBaselineIms{zStack}{trialType}{stack} = mean(sortedStacks{zStack}{trialType}{stack}(:,:,1:ceil((FPS/numZplanes)*(sec_before_stim_start/2))),3);
         end   
     end 
 end 
 
 %create df/f stack relative to the first 20 sec of the exp (before first
 %stim) 
+dffStacks = cell(1,length(sortedStacks));
 for zStack = 1:length(sortedStacks)
     for trialType = 1:length(sortedStacks{zStack})
         for stack = 1:length(sortedStacks{zStack}{trialType})
@@ -22,6 +23,7 @@ for zStack = 1:length(sortedStacks)
 end 
 
 %create cumulative df/f stacks normalized to baseline
+CumDffStacks = cell(1,length(sortedStacks));
 for zStack = 1:length(sortedStacks)
     for trialType = 1:length(sortedStacks{zStack})
         for stack = 1:length(sortedStacks{zStack}{trialType})
@@ -37,6 +39,7 @@ for zStack = 1:length(sortedStacks)
 end 
 
 %create cumulative pixel intensity stacks
+CumStacks = cell(1,length(sortedStacks));
 for zStack = 1:length(sortedStacks)
     for trialType = 1:length(sortedStacks{zStack})
         for stack = 1:length(sortedStacks{zStack}{trialType})

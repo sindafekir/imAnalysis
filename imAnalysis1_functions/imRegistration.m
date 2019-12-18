@@ -12,6 +12,15 @@ elseif volIm == 0
 end 
 framePeriod = input("What is the framePeriod? "); userInput(UIr,1) = ("What is the framePeriod? "); userInput(UIr,2) = (framePeriod); UIr = UIr+1;
 state = input("What teensy state does the stimulus happen in? "); userInput(UIr,1) = ("What teensy state does the stimulus happen in?"); userInput(UIr,2) = (state); UIr = UIr+1;
+stimNumQ = input("Is there more than one stimulus type? Yes = 1. No = 0."); userInput(UIr,1) = ("Is there more than one stimulus type? Yes = 1. No = 0."); userInput(UIr,2) = (stimNumQ); UIr = UIr+1; 
+if stimNumQ == 1
+    stimNums = input("How many different kinds of stimuli were used?"); userInput(UIr,1) = ("How many different kinds of stimuli were used?"); userInput(UIr,2) = (stimNums); UIr = UIr+1; 
+    stimTypes = cell(1,stimNums);
+    for stim = 1:stimNums
+        stimTypes{stim} = input(sprintf("What type of stimulus is Stim #%d? (put strings in quotes) ",stim)); 
+        userInput(UIr,1) = (sprintf("Stim Type #%d",stim)); userInput(UIr,2) = (stimTypes{stim}); UIr = UIr+1;     
+    end  
+end 
 stimLengthQ = input("Are all stim trains the same length in time? Yes = 1. No = 0. "); userInput(UIr,1) = ("Are all stim trains the same length in time?"); userInput(UIr,2) = (stimLengthQ); UIr = UIr+1; 
 if stimLengthQ == 1
     stimLengthsQ = 1; userInput(UIr,1) = ("How many different stimulus time lengths are there?"); userInput(UIr,2) = (stimLengthsQ); UIr = UIr+1; 
