@@ -248,16 +248,19 @@ if cumStacksQ == 1
     AVStacks = cell(1,numZplanes);
     for Z = 1:numZplanes
         for trialType = 1:size(sortedStacks{1},2)
-            for trial = 1:length(sortedWheelData{trialType})
-                CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks{Z}{trialType}{trial};
-                Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks{Z}{trialType}{trial};
-                dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks{Z}{trialType}{trial};
-                sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks{Z}{trialType}{trial};
+            if isempty(sortedStacks{Z}{trialType}) == 0
+                for trial = 1:length(sortedWheelData{trialType})
+                    CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks{Z}{trialType}{trial};
+                    Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks{Z}{trialType}{trial};
+                    dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks{Z}{trialType}{trial};
+                    sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks{Z}{trialType}{trial};
+                end 
+                AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
+                AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
+                AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
+                AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);
             end 
-            AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
-            AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
-            AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
-            AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);        
+        
         end 
     end 
 end 
@@ -268,10 +271,12 @@ if pixIntQ == 1
     for ccell = 1:maxCells       
         for z = 1:size(sortedData{ROIinds(ccell)},1)
             for trialType = 1:size(sortedData{ROIinds(ccell)},2) 
-                for trial = 1:length(sortedData{ROIinds(ccell)}{z,trialType})
-                     sortedStats_Array{ROIinds(ccell)}{z,trialType}(:,:,:,trial) = sortedData{ROIinds(ccell)}{z,trialType}{trial};
+                if isempty(sortedData{ROIinds(ccell)}{z,trialType}) == 0
+                    for trial = 1:length(sortedData{ROIinds(ccell)}{z,trialType})
+                         sortedStats_Array{ROIinds(ccell)}{z,trialType}(:,:,:,trial) = sortedData{ROIinds(ccell)}{z,trialType}{trial};
+                    end 
+                    AVsortedData{ROIinds(ccell)}{z,trialType}(1,:) = mean(sortedStats_Array{ROIinds(ccell)}{z,trialType},4);
                 end 
-                AVsortedData{ROIinds(ccell)}{z,trialType}(1,:) = mean(sortedStats_Array{ROIinds(ccell)}{z,trialType},4);
             end 
         end 
     end        
@@ -280,11 +285,13 @@ end
 if VsegQ == 1
     for z = 1:length(sortedData)
         for ROI = 1:size(sortedData{1},2)
-            for trialType = 1:size(sortedData{1}{1},2)                  
-                for trial = 1:length(sortedData{z}{ROI}{trialType})                    
-                     sortedStats_Array{z}{ROI}{trialType}(:,:,:,trial) = sortedData{z}{ROI}{trialType}{trial};
-                end 
-                AVsortedData{z}{ROI}{trialType}(1,:) = mean(sortedStats_Array{z}{ROI}{trialType},4);
+            for trialType = 1:size(sortedData{1}{1},2)   
+                if isempty(sortedData{z}{ROI}{trialType}) == 0                  
+                    for trial = 1:length(sortedData{z}{ROI}{trialType})                    
+                         sortedStats_Array{z}{ROI}{trialType}(:,:,:,trial) = sortedData{z}{ROI}{trialType}{trial};
+                    end 
+                    AVsortedData{z}{ROI}{trialType}(1,:) = mean(sortedStats_Array{z}{ROI}{trialType},4);
+                end               
             end            
         end 
     end 
@@ -293,10 +300,12 @@ end
 sortedWheel_Data = cell(1,size(sortedStacks{1},2));
 AVwheelData = cell(1,size(sortedStacks{1},2));
 for trialType = 1:size(sortedStacks{1},2)   
-    for trial = 1:length(sortedWheelData{trialType})
-        sortedWheel_Data{trialType}(:,:,:,trial) = sortedWheelData{trialType}{trial};
+    if isempty(sortedWheelData{trialType}) == 0
+        for trial = 1:length(sortedWheelData{trialType})
+            sortedWheel_Data{trialType}(:,:,:,trial) = sortedWheelData{trialType}{trial};
+        end   
+        AVwheelData{trialType}(1,:) = mean(sortedWheel_Data{trialType},4); 
     end 
-    AVwheelData{trialType}(1,:) = mean(sortedWheel_Data{trialType},4);     
 end 
 
 %% reorganize data so that the trials are grouped together by type
@@ -452,9 +461,10 @@ for trialType = 1:maxTtypeInd
 end 
 
 %% clear unecessary values 
-   
+
 if cumStacksQ == 1
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start sortedStacks CumStacks CumDffStacks dffStacks CumData CumDffDataFirst20s dffDataFirst20s AVcumDffStacks AVcumStacks AVdffStacks AVStacks
 elseif  VsegQ == 1 || pixIntQ == 1
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start
 end 
+%}

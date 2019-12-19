@@ -447,11 +447,21 @@ for trialType = 1:length(wheelDataToPlot)
         AVwheelData{trialType}(1,:) = AV;  
     end 
 end 
- 
-%clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS sec_before_stim_start dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate CaROImasks maxCells ROIorders ROIinds ROIboundData
 
+ %% clear unecessary values 
 
-%% plot 
+if cumStacksQ == 1
+    clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start sortedStacks CumStacks CumDffStacks dffStacks CumData CumDffDataFirst20s dffDataFirst20s AVcumDffStacks AVcumStacks AVdffStacks AVStacks
+elseif  VsegQ == 1 || pixIntQ == 1
+    clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start
+end 
+
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%THE BELOW CODE IS FOR PLOTTING - HAS NOT BEEN STREAMLINED. LOOK AT IT AND
+%USE WHAT YOU NEED. 
+
 dataMin = input("data Y axis MIN: ");
 dataMax = input("data Y axis MAX: ");
 velMin = input("running velocity Y axis MIN: ");
