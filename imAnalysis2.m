@@ -94,7 +94,8 @@ end
 disp('Organizing Z-Stacks by Trial Type')
 %find the diffent trial types 
 [stimTimes] = getUserInput(userInput,"Stim Time Lengths (sec)"); 
-[uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f,~] = separateTrialTypes(TrialTypes,state_start_f,state_end_f,stimTimes,numZplanes,FPS);
+[stimTypeNum] = getUserInput(userInput,"How many different kinds of stimuli were used?");
+[uniqueTrialData,uniqueTrialDataOcurr,indices,state_start_f,~] = separateTrialTypes(TrialTypes,state_start_f,state_end_f,stimTimes,numZplanes,FPS,stimTypeNum);
 
 if volIm == 1
     %separate the Z-stacks 
@@ -201,47 +202,21 @@ DVOVsubSBLs = DVOV-WdataSlidingBL;
 zWData = zscore(DVOVsubSBLs);
 %sort wheel data                    
 [sortedWheelData,~] = eventTriggeredAverages(zWData,state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);
-
-
-%% average dff, cum dff, and cum stacks across all trials ALSO average pix intensity/vessel width data if applicable
-if cumStacksQ == 1 
-    CumDff_Stacks = cell(1,numZplanes);
-    Cum_Stacks = cell(1,numZplanes);
-    dff_Stacks = cell(1,numZplanes);
-    AVcumDffStacks = cell(1,numZplanes);
-    AVcumStacks = cell(1,numZplanes);
-    AVdffStacks = cell(1,numZplanes);
-    AVStacks = cell(1,numZplanes);
-    for Z = 1:numZplanes
-        for trialType = 1:size(sortedStacks2{1},2)
-            for trial = 1:length(sortedWheelData{trialType})
-                CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks2{Z}{trialType}{trial};
-                Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks2{Z}{trialType}{trial};
-                dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks2{Z}{trialType}{trial};
-                sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks2{Z}{trialType}{trial};
-            end 
-            AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
-            AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
-            AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
-            AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);        
-        end 
-    end 
-end 
  
- %% concatenate data from previous trials 
+ %% resort data by trial type 
  
  %resort the indices 
- indS = cell(1,size(sortedStacks{1},2));
- indI = cell(1,size(sortedStacks{1},2));
- for trialType = 1:size(sortedStacks{1},2)   
+ indS = cell(1,size(sortedStacks2{1},2));
+ indI = cell(1,size(sortedStacks2{1},2));
+ for trialType = 1:size(sortedStacks2{1},2)   
     [S, I] = sort(indices{trialType});
     indS{trialType} = S;
     indI{trialType} = I;
  end 
  
 %figure out max column of data types available 
-tTypeInds = zeros(1,size(sortedStacks{1},2));
-for trialType = 1:size(sortedStacks{1},2)
+tTypeInds = zeros(1,size(sortedStacks2{1},2));
+for trialType = 1:size(sortedStacks2{1},2)
     if ismember(uniqueTrialData(trialType,:),uniqueTrialDataTemplate,'rows') == 1 
         [~, idx] = ismember(uniqueTrialData(trialType,:),uniqueTrialDataTemplate,'rows');
         tTypeInds(trialType) = idx; 
@@ -350,14 +325,13 @@ end
 
 if cumStacksQ == 1 
     clear sortedStacks2 CumStacks2 CumDffStacks2 dffStacks2;
-    AVStacks = AVStacks2; AVcumStacks = AVcumStacks2; AVcumDffStacks = AVcumDffStacks2; AVdffStacks = AVdffStacks2;
     sortedStacks2 = cell(1,length(sortedStacks));
     CumStacks2 = cell(1,length(sortedStacks));
     CumDffStacks2 = cell(1,length(sortedStacks));
     dffStacks2 = cell(1,length(sortedStacks));
     for z = 1:length(sortedStacks)        
         for trialType = 1:maxTtypeInd     
-            if isempty(sortedStacks2{z}{trialType}) == 0
+            if isempty(indices2{trialType}) == 0
                 sortedStacks2{z}{trialType} = sortedStacks3{z}{trialType}(indI2{trialType});    
                 CumStacks2{z}{trialType} = CumStacks3{z}{trialType}(indI2{trialType}); 
                 CumDffStacks2{z}{trialType} = CumDffStacks3{z}{trialType}(indI2{trialType}); 
@@ -367,10 +341,9 @@ if cumStacksQ == 1
     end 
 end 
 
-
+wheelDataToPlot2 = cell(1,maxTtypeInd);
 for trialType = 1:size(indices2,1)
-    wheelDataToPlot2 = cell(1,maxTtypeInd);
-    if isempty(sortedWheelData2{trialType}) == 0 
+    if isempty(indices2{trialType}) == 0 
         wheelDataToPlot2{trialType} = sortedWheelData2{trialType}(indI2{trialType});     
     end
 end 
@@ -438,6 +411,36 @@ if VsegQ == 1
     end      
     maxCells = size(sortedData{1},2);
 end 
+
+%CONCATENATE THESE STACKS FIRST AND THEN AVERAGE THEM! 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% average dff, cum dff, and cum stacks across all trials ALSO average pix intensity/vessel width data if applicable
+if cumStacksQ == 1 
+    CumDff_Stacks = cell(1,numZplanes);
+    Cum_Stacks = cell(1,numZplanes);
+    dff_Stacks = cell(1,numZplanes);
+    AVcumDffStacks = cell(1,numZplanes);
+    AVcumStacks = cell(1,numZplanes);
+    AVdffStacks = cell(1,numZplanes);
+    AVStacks = cell(1,numZplanes);
+    for Z = 1:numZplanes
+        for trialType = 1:size(sortedStacks2{1},2)
+            for trial = 1:length(sortedWheelData{trialType})
+                CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks2{Z}{trialType}{trial};
+                Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks2{Z}{trialType}{trial};
+                dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks2{Z}{trialType}{trial};
+                sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks2{Z}{trialType}{trial};
+            end 
+            AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
+            AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
+            AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
+            AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);        
+        end 
+    end 
+end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 AVwheelData = cell(1,length(wheelDataToPlot));
 for trialType = 1:length(wheelDataToPlot)
