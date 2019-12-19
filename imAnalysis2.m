@@ -42,7 +42,7 @@ end
 [FPS] = getUserInput(userInput,"FPS"); 
 [numZplanes] = getUserInput(userInput,"How many Z planes are there?");
 if cumStacksQ == 1  
-    [dffDataFirst20s,CumDffDataFirst20s,CumData] = makeCumPixWholeEXPstacks(FPS,reg_Stacks,numZplanes,sec_before_stim_start);
+    [dffDataFirst20s2,CumDffDataFirst20s2,CumData2] = makeCumPixWholeEXPstacks(FPS,reg_Stacks,numZplanes,sec_before_stim_start);
 end
 
 %% make sure state start and end frames line up 
@@ -80,9 +80,9 @@ if cutOffFrameQ == 1
         reg_Stacks = cell(1,numZplanes);
         for zStack = 1:numZplanes
             reg_Stacks{zStack} = reg___Stacks{zStack}(:,:,1:cutOffFrame);
-            CumData{zStack}(:,:,cutOffFrame+1:end) = [];
-            CumDffDataFirst20s{zStack}(:,:,cutOffFrame+1:end) = [];
-            dffDataFirst20s{zStack}(:,:,cutOffFrame+1:end) = [];
+            CumData2{zStack}(:,:,cutOffFrame+1:end) = [];
+            CumDffDataFirst20s2{zStack}(:,:,cutOffFrame+1:end) = [];
+            dffDataFirst20s2{zStack}(:,:,cutOffFrame+1:end) = [];
         end        
     end 
     
@@ -367,13 +367,22 @@ if VsegQ == 1
     [dataToPlot3] = catData2(dataToPlot,dataToPlot2);
 end 
 
-%NEED TO WRITE CODE TO CONCATENATE STACKS
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if cumStacksQ == 1
+    clear CumStacks3 CumDffStacks3 dffStacks3 sortedStacks3
+    [CumStacks3] = catData3(CumStacks,CumStacks2);
+    [CumDffStacks3] = catData3(CumDffStacks,CumDffStacks2);
+    [dffStacks3] = catData3(dffStacks,dffStacks2);
+    [sortedStacks3] = catData3(sortedStacks,sortedStacks2);
+    CumData3 = vertcat(CumData,CumData2);
+    CumDffDataFirst20s3 = vertcat(CumDffDataFirst20s,CumDffDataFirst20s2);
+    dffDataFirst20s3 = vertcat(dffDataFirst20s,dffDataFirst20s2);
 end 
 
 [wheelDataToPlot3] = catWheelData(wheelDataToPlot,wheelDataToPlot2);
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%PICK UP BELOW AFTER FIGURING 
 
 %% prep data for plotting - get rid of what you don't need and average 
 dataToPlot = dataToPlot3;
