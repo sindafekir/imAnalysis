@@ -379,16 +379,16 @@ if cumStacksQ == 1
 end 
 
 [wheelDataToPlot3] = catWheelData(wheelDataToPlot,wheelDataToPlot2);
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%PICK UP BELOW AFTER FIGURING 
+ 
 
 %% prep data for plotting - get rid of what you don't need and average 
-dataToPlot = dataToPlot3;
+if pixIntQ == 1 || VsegQ == 1
+    dataToPlot = dataToPlot3;
+    clear dataToPlot3 wheelDataToPlot3
+end 
+        
 wheelDataToPlot = wheelDataToPlot3; 
-
-clear dataToPlot3 wheelDataToPlot3
+clear wheelDataToPlot3
 
 if pixIntQ == 1    
     AVsortedData = cell(1,ROIinds(maxCells));
@@ -421,11 +421,9 @@ if VsegQ == 1
     maxCells = size(sortedData{1},2);
 end 
 
-%CONCATENATE THESE STACKS FIRST AND THEN AVERAGE THEM! 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % average dff, cum dff, and cum stacks across all trials ALSO average pix intensity/vessel width data if applicable
 if cumStacksQ == 1 
+    clear AVcumDffStacks AVcumStacks AVdffStacks AVStacks
     CumDff_Stacks = cell(1,numZplanes);
     Cum_Stacks = cell(1,numZplanes);
     dff_Stacks = cell(1,numZplanes);
@@ -434,22 +432,22 @@ if cumStacksQ == 1
     AVdffStacks = cell(1,numZplanes);
     AVStacks = cell(1,numZplanes);
     for Z = 1:numZplanes
-        for trialType = 1:size(sortedStacks2{1},2)
-            for trial = 1:length(sortedWheelData{trialType})
-                CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks2{Z}{trialType}{trial};
-                Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks2{Z}{trialType}{trial};
-                dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks2{Z}{trialType}{trial};
-                sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks2{Z}{trialType}{trial};
+        for trialType = 1:size(sortedStacks3{Z},2)
+            if isempty(sortedStacks3{Z}{trialType}) == 0 
+                for trial = 1:length(sortedStacks3{Z}{trialType})
+                    CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks3{Z}{trialType}{trial};
+                    Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks3{Z}{trialType}{trial};
+                    dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks3{Z}{trialType}{trial};
+                    sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks3{Z}{trialType}{trial};
+                end 
+                AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
+                AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
+                AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
+                AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);
             end 
-            AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
-            AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
-            AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
-            AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);        
         end 
     end 
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 AVwheelData = cell(1,length(wheelDataToPlot));
 for trialType = 1:length(wheelDataToPlot)
@@ -461,7 +459,9 @@ for trialType = 1:length(wheelDataToPlot)
 end 
 
  %% clear unecessary values 
+CumDffStacks = CumDffStacks3; CumStacks = CumStacks3; dffStacks = dffStacks3; sortedStacks = sortedStacks3; CumData = CumData3; CumDffDataFirst20s = CumDffDataFirst20s3; dffDataFirst20s = dffDataFirst20s3;
 
+ 
 if cumStacksQ == 1
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start sortedStacks CumStacks CumDffStacks dffStacks CumData CumDffDataFirst20s dffDataFirst20s AVcumDffStacks AVcumStacks AVdffStacks AVStacks
 elseif  VsegQ == 1 || pixIntQ == 1
