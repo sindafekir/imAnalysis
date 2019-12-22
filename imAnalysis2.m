@@ -431,7 +431,7 @@ if cumStacksQ == 1
     AVcumStacks = cell(1,numZplanes);
     AVdffStacks = cell(1,numZplanes);
     AVStacks = cell(1,numZplanes);
-    parfor Z = 1:numZplanes
+    for Z = 1:numZplanes
         for trialType = 1:size(sortedStacks3{Z},2)
             if isempty(sortedStacks3{Z}{trialType}) == 0 
                 for trial = 1:length(sortedStacks3{Z}{trialType})
