@@ -31,7 +31,7 @@ for frame = 1:redStackLength
     redImageStack(:,:,frame) = image;
 end 
 count = 1; 
-greenImageStack = zeros(size(image,1),size(image,2),greenStackLength*2);
+greenImageStack = zeros(size(image,1),size(image,2),greenStackLength);
 for frame = redStackLength+1:(greenStackLength*2) 
     image = imread(fileList(frame).name); 
     greenImageStack(:,:,count) = image;
