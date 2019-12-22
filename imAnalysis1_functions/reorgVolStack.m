@@ -1,5 +1,5 @@
 function [subStacks] = reorgVolStack(imageStack,splitType,numSplits)
-subStackLength = size(imageStack,3)/numSplits; 
+subStackLength = floor(size(imageStack,3)/numSplits); 
 
 if splitType == 0 
     subStacks = zeros(size(imageStack,1),size(imageStack,2),numSplits,subStackLength);
