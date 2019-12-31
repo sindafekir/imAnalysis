@@ -19,7 +19,8 @@ for Z = 1:length(reg_Stacks)
     %with data 
     ROIorders{Z} = bwlabel(nm1BW2);
 end
-
+%-----------------------------------------------------------------------
+%PICK UP BELOW FOR BBBPERMTS FUNCTION 
 meanPixIntArray = cell(1,size(reg_Stacks,2));
 %apply mask to data and get the average pixel intensity of each terminal ROI 
 for zStack = 1:size(reg_Stacks,2)
