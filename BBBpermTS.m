@@ -2,25 +2,64 @@ function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
 % inputStacks = sortedStacks; DELETE WHEN DONE TROUBLESHOOTING 
 
-%create non-vascular ROI for entire x-y plane 
+
+%% create non-vascular ROI for entire x-y plane 
+
 UIr = size(userInput,1)+1;
 
-scaledStacks = cell(1,length(inputStacks));
-% CaROImasks = cell(1,length(inputStacks));
-% ROIorders = cell(1,length(inputStacks));
+threshQ = 1; 
 
-parfor z = 1:length(inputStacks)
-    for trialType = 1:length(inputStacks{z}) 
+while threshQ == 1 
+    imThresh = input("Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) "); 
+    %scale the images to be between 0 to 1 
+    scaledIm = inputStacks{1}{1}{1}(:,:,1) ./ max(inputStacks{1}{1}{1}(:,:,1));
+    %apply a threshold to create mask 
+    nm1BW = imbinarize(scaledIm,imThresh);
+    %invert the mask 
+    nm1BW2 = ~nm1BW;    
+    %Open mask with disk
+    radius = 1;
+    decomposition = 0;
+    se = strel('disk', radius, decomposition);
+    nm1BW3 = imopen(nm1BW2, se);
+        %fill holes 
+    nm1BW4 = imfill(nm1BW3, 'holes');                       
+        %erode mask with disk
+    radius = 2;
+    decomposition = 0;
+    se = strel('disk', radius, decomposition);
+    nm1BW5 = imerode(nm1BW4, se);
+    
+    nm1BW_perim = bwperim(nm1BW5);
+    %show the overlay 
+    BBB_ROIs = imoverlay(stackAVs{1}, nm1BW_perim, [.3 1 .3]);% | maskEm, [.3 1 .3]);
+
+    figure;imshow(BBB_ROIs); 
+    
+    threshQ = input('Change pixel intensity threshold? Yes = 1. No = 0. ');    
+end 
+
+if threshQ == 0 
+    %PUT THE ITERATIVE LOOP BELOW HERE!! 
+end 
+
+
+
+%--------------------------------------------NEED TO SHOW EXAMPLE IMAGE OF
+%SEGMENTATION ABOVE AND THEN ITERATE THROUGH ALL FRAMES BELOW - THIS GOES
+%IN THE IF STATEMENT ABOVE 
+for z = 1:length(inputStacks)
+    for trialType = 1%:length(inputStacks{z}) 
         if isempty(inputStacks{z}{trialType}) == 0  
-            for trial = 1:size(inputStacks{z}{trialType},2)
+            for trial = 1%:size(inputStacks{z}{trialType},2)
                 for frame = 1:size(inputStacks{z}{trialType}{trial},3)
                      
                     %scale the images to be between 0 to 1 
-                    %scaledStacks{z}{trialType}{trial}(:,:,frame) = inputStacks{z}{trialType}{trial}(:,:,frame) ./ max(inputStacks{z}{trialType}{trial}(:,:,frame));
+                    scaledStacks{z}{trialType}{trial}(:,:,frame) = inputStacks{z}{trialType}{trial}(:,:,frame) ./ max(inputStacks{z}{trialType}{trial}(:,:,frame));
 
                     CAroiGen = 1;
                     while CAroiGen == 1              
-                        imThresh = input("Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) "); 
+                        
                         %apply a threshold to create mask 
                         nm1BW = imbinarize(scaledStacks{z}{trialType}{trial}(:,:,frame),imThresh);
                         %invert the mask 
@@ -101,7 +140,7 @@ parfor z = 1:length(inputStacks)
     end
 end
 
-save('Last2019Dayta');
+%save('Last2019Dayta');
 
 
 end 

@@ -2,6 +2,7 @@ function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
 % inputStacks = sortedStacks; DELETE WHEN DONE TROUBLESHOOTING 
 
+
 %create non-vascular ROI for entire x-y plane 
 UIr = size(userInput,1)+1;
 
@@ -9,10 +10,39 @@ scaledStacks = cell(1,length(inputStacks));
 % CaROImasks = cell(1,length(inputStacks));
 % ROIorders = cell(1,length(inputStacks));
 
-parfor z = 1:length(inputStacks)
-    for trialType = 1:length(inputStacks{z}) 
+imThresh = input("Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) "); 
+
+%apply a threshold to create mask 
+nm1BW = imbinarize(scaledStacks{z}{trialType}{trial}(:,:,frame),imThresh);
+%invert the mask 
+nm1BW2 = ~nm1BW;    
+%clean the mask up 
+    %Open mask with disk
+radius = 1;
+decomposition = 0;
+se = strel('disk', radius, decomposition);
+nm1BW3 = imopen(nm1BW2, se);
+    %fill holes 
+nm1BW4 = imfill(nm1BW3, 'holes');                       
+    %erode mask with disk
+radius = 2;
+decomposition = 0;
+se = strel('disk', radius, decomposition);
+nm1BW5 = imerode(nm1BW4, se);
+
+
+
+
+
+
+
+
+%--------------------------------------------NEED TO SHOW EXAMPLE IMAGE OF
+%SEGMENTATION ABOVE AND THEN ITERATE THROUGH ALL FRAMES 
+for z = 1:length(inputStacks)
+    for trialType = 1%:length(inputStacks{z}) 
         if isempty(inputStacks{z}{trialType}) == 0  
-            for trial = 1:size(inputStacks{z}{trialType},2)
+            for trial = 1%:size(inputStacks{z}{trialType},2)
                 for frame = 1:size(inputStacks{z}{trialType}{trial},3)
                      
                     %scale the images to be between 0 to 1 
@@ -20,7 +50,7 @@ parfor z = 1:length(inputStacks)
 
                     CAroiGen = 1;
                     while CAroiGen == 1              
-                        imThresh = input("Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) "); 
+                        
                         %apply a threshold to create mask 
                         nm1BW = imbinarize(scaledStacks{z}{trialType}{trial}(:,:,frame),imThresh);
                         %invert the mask 
@@ -32,18 +62,14 @@ parfor z = 1:length(inputStacks)
                         se = strel('disk', radius, decomposition);
                         nm1BW3 = imopen(nm1BW2, se);
                             %fill holes 
-                        nm1BW4 = imfill(nm1BW3, 'holes');
-                        
+                        nm1BW4 = imfill(nm1BW3, 'holes');                       
                             %erode mask with disk
                         radius = 2;
                         decomposition = 0;
                         se = strel('disk', radius, decomposition);
                         nm1BW5 = imerode(nm1BW4, se);
-                        
-                        
-                        
-                        %overlay the mask over original image for comparison 
-                        nm1BW2_perim{z}{trialType}{trial}(:,:,frame) = bwperim(nm1BW2);
+                        %sort masks 
+                        nm1BW_perim{z}{trialType}{trial}(:,:,frame) = bwperim(nm1BW5);
 
                         %BBB_ROIs = imoverlay(stackAVs{trialType}, nm1BW2_perim, [.3 1 .3]);% | maskEm, [.3 1 .3]);
                     end 
@@ -104,5 +130,8 @@ parfor z = 1:length(inputStacks)
         end 
     end
 end
+
+%save('Last2019Dayta');
+
 
 end 
