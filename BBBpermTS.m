@@ -93,13 +93,12 @@ while threshQ == 1
     radius = 1;
     decomposition = 0;
     se = strel('disk', radius, decomposition);
-    nm1BW5 = imerode(nm1BW4, se);
-    
-        %Open mask with disk
-    radius = 1;
+    nm1BW5 = imerode(nm1BW4, se); 
+    % Close mask with disk
+    radius = 3;
     decomposition = 0;
     se = strel('disk', radius, decomposition);
-    nm1BW3 = imopen(nm1BW2, se);
+    nm1BW6 = imclose(nm1BW5, se);
     
     
     
