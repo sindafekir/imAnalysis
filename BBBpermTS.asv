@@ -15,6 +15,15 @@ numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("
 %@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
 %@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
 
+%for display purposes  
+for z = 1:length(inputStacks)
+    for trialType = 1:size(inputStacks{z},2)
+        if isempty(inputStacks{z}{trialType}) == 0 
+            stackAVs2{z}{trialType} = mean(inputStacks{z}{trialType}{1},3);
+        end 
+    end 
+end 
+
 
 ROIboundQ = 1; 
 for z = 1:length(inputStacks)
@@ -22,7 +31,45 @@ for z = 1:length(inputStacks)
         if isempty(inputStacks{z}{trialType}) == 0 
             %create the ROI boundaries 
             if ROIboundQ == 1
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@               
+                for VROI = 1:numROIs 
+                    disp('Create your ROI for vessel segmentation');
+
+                    [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,inputStacks{z}{trialType}{1});
+                    ROIboundData{1} = xmins;
+                    ROIboundData{2} = ymins;
+                    ROIboundData{3} = widths;
+                    ROIboundData{4} = heights;
+                    ROIstacks{stack}{VROI} = ROI_stacks;
+
+                    ROIboundDatas{VROI} = ROIboundData;
+                end 
+                    
+                    
+                    
+                    
+               
                 
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             end 
             
             

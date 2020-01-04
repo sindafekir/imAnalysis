@@ -15,6 +15,23 @@ numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("
 %@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
 %@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
 
+%for display purposes, average a trial 
+dispImQ = 1;
+inputStacks4D = cell(1,length(inputStacks));
+stackAVs2 = cell(1,length(inputStacks));
+while dispImQ == 1
+    for z = 1:length(inputStacks)
+        for trialType = 1:size(inputStacks{z},2)
+            if isempty(inputStacks{z}{trialType}) == 0 
+                for trial = 1:size(inputStacks{z}{trialType},2)
+                    inputStacks4D{z}{trialType}(:,:,:,trial) = inputStacks{z}{trialType}{trial};
+                end 
+                stackAVs2{z}{trialType} = mean(inputStacks4D{z}{trialType},4);
+            end 
+        end 
+    end 
+end 
+
 
 ROIboundQ = 1; 
 for z = 1:length(inputStacks)
@@ -22,35 +39,24 @@ for z = 1:length(inputStacks)
         if isempty(inputStacks{z}{trialType}) == 0 
             %create the ROI boundaries 
             if ROIboundQ == 1
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@               
                 for VROI = 1:numROIs 
+                    disp('Create your ROI for vessel segmentation');
 
-                %%%%%%%%%%[rotStacks,rotateImAngle] = rotateStack(reg_Stacks);       
+                    [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,inputStacks{z}{trialType}{1});
+                    ROIboundData{1} = xmins;
+                    ROIboundData{2} = ymins;
+                    ROIboundData{3} = widths;
+                    ROIboundData{4} = heights;
+                    ROIstacks{stack}{VROI} = ROI_stacks;
 
-
-                %create your ROI and apply it to all planes in Z 
-                disp('Create your ROI for vessel segmentation');
-                ROIstacks = cell(1,length(rotStacks));
-                for stack = 1:length(rotStacks)   
-                    if stack == 1
-                        [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,rotStacks{stack});
-                        ROIboundData{1} = xmins;
-                        ROIboundData{2} = ymins;
-                        ROIboundData{3} = widths;
-                        ROIboundData{4} = heights;
-                        ROIstacks{stack}{VROI} = ROI_stacks;
-
-                    elseif stack > 1 
-                        xmins = ROIboundData{1};
-                        ymins = ROIboundData{2};
-                        widths = ROIboundData{3};
-                        heights = ROIboundData{4};
-                        [ROI_stacks] = make_ROIs_notfirst_time(rotStacks{stack},xmins,ymins,widths,heights);
-                        ROIstacks{stack}{VROI} = ROI_stacks;
-                    end 
+                    ROIboundDatas{VROI} = ROIboundData;
                 end 
-                ROIboundDatas{VROI} = ROIboundData;
+                    
+                    
+                    
+                    
+               
                 
                 
                 
