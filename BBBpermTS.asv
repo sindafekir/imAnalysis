@@ -8,16 +8,15 @@ function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 %go to dir w/functions
 [imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
 cd(imAn1funcDir); 
+
 %update userInput 
 UIr = size(userInput,1)+1;
 numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
 
-%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
-%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
-
-%for display purposes, average a trial 
+%for display purposes mostly: average across trials 
 inputStacks4D = cell(1,length(inputStacks));
 stackAVs = cell(1,length(inputStacks));
+stackAVsIm = cell(1,length(inputStacks));
 for z = 1:length(inputStacks)
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
@@ -26,26 +25,26 @@ for z = 1:length(inputStacks)
             end 
             stackAVs{z}{trialType} = mean(inputStacks4D{z}{trialType},4);
             stackAVsIm{z}{trialType} = mean(stackAVs{z}{trialType},3);
-        end 
-        
+        end  
     end 
 end 
 
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
 
 
-
-
-ROIboundQ = 1; 
+%create the ROI boundaries 
 for z = 1:length(inputStacks)
+    ROIboundQ = 1; 
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-            %create the ROI boundaries 
+            
             if ROIboundQ == 1
                 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@               
                 for VROI = 1:numROIs 
                     disp('Create your ROI for vessel segmentation');
 
-                    [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,inputStacks{z}{trialType}{1});
+                    [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{z}{trialType});
                     ROIboundData{1} = xmins;
                     ROIboundData{2} = ymins;
                     ROIboundData{3} = widths;
@@ -54,6 +53,11 @@ for z = 1:length(inputStacks)
 
                     ROIboundDatas{VROI} = ROIboundData;
                 end 
+                ROI
+            end 
+        end 
+    end 
+end 
                     
                     
                     

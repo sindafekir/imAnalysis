@@ -8,6 +8,7 @@ function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 %go to dir w/functions
 [imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
 cd(imAn1funcDir); 
+
 %update userInput 
 UIr = size(userInput,1)+1;
 numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
@@ -28,34 +29,33 @@ for z = 1:length(inputStacks)
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
-%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
-
-
-
-ROIboundQ = 1; 
+%create the ROI boundaries 
 for z = 1:length(inputStacks)
+    ROIboundQ = 1; 
     for trialType = 1:size(inputStacks{z},2)
-        if isempty(inputStacks{z}{trialType}) == 0 
-            %create the ROI boundaries 
-            if ROIboundQ == 1
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@               
+        if isempty(inputStacks{z}{trialType}) == 0            
+            if ROIboundQ == 1           
                 for VROI = 1:numROIs 
                     disp('Create your ROI for vessel segmentation');
 
-                    [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,inputStacks{z}{trialType}{1});
+                    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{z}{trialType});
                     ROIboundData{1} = xmins;
                     ROIboundData{2} = ymins;
                     ROIboundData{3} = widths;
                     ROIboundData{4} = heights;
-                    ROIstacks{stack}{VROI} = ROI_stacks;
 
-                    ROIboundDatas{VROI} = ROIboundData;
+                    ROIboundDatas{z}{VROI} = ROIboundData;
                 end 
+                ROIboundQ = 0; 
+            end 
+        end 
+    end 
+end 
                     
                     
                     
-                    
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE                     
                
                 
                 
