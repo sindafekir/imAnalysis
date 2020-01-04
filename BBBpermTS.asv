@@ -22,56 +22,7 @@ for z = 1:length(inputStacks)
         if isempty(inputStacks{z}{trialType}) == 0 
             %create the ROI boundaries 
             if ROIboundQ == 1
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 
-                for VROI = 1:numROIs 
-
-                %%%%%%%%%%[rotStacks,rotateImAngle] = rotateStack(reg_Stacks);       
-
-
-                %create your ROI and apply it to all planes in Z 
-                disp('Create your ROI for vessel segmentation');
-                ROIstacks = cell(1,length(rotStacks));
-                for stack = 1:length(rotStacks)   
-                    if stack == 1
-                        [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,rotStacks{stack});
-                        ROIboundData{1} = xmins;
-                        ROIboundData{2} = ymins;
-                        ROIboundData{3} = widths;
-                        ROIboundData{4} = heights;
-                        ROIstacks{stack}{VROI} = ROI_stacks;
-
-                    elseif stack > 1 
-                        xmins = ROIboundData{1};
-                        ymins = ROIboundData{2};
-                        widths = ROIboundData{3};
-                        heights = ROIboundData{4};
-                        [ROI_stacks] = make_ROIs_notfirst_time(rotStacks{stack},xmins,ymins,widths,heights);
-                        ROIstacks{stack}{VROI} = ROI_stacks;
-                    end 
-                end 
-                ROIboundDatas{VROI} = ROIboundData;
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             end 
             
             
