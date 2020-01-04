@@ -66,88 +66,43 @@ for z = 1:length(inputStacks)
     end 
 end 
                     
-                    
- 
-%%JUST CHECKING 
-
-
-%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                   
+%@@@@@@@@@@@@@@@@@@@ SEGMENT IMAGE BELOW 
 
 threshQ = 1; 
 
+testSegIm = ROIstacks{1}{1}{1}{1}{1}(:,:,389);
 
 while threshQ == 1 
     imThresh = input('Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) '); 
     %scale the images to be between 0 to 1 
-    scaledIm = inputStacks{1}{1}{1}(:,:,1) ./ max(inputStacks{1}{1}{1}(:,:,1));
+    scaledIm = ROIstacks{1}{1}{1}{1}{1}(:,:,389) ./ max(ROIstacks{1}{1}{1}{1}{1}(:,:,389)); 
     %apply a threshold to create mask 
     nm1BW = imbinarize(scaledIm,imThresh);
     %invert the mask 
-    nm1BW2 = ~nm1BW;    
+    nm1BW2 = ~nm1BW; 
+    
     %Open mask with disk
     radius = 1;
     decomposition = 0;
     se = strel('disk', radius, decomposition);
     nm1BW3 = imopen(nm1BW2, se);
-        %fill holes 
+    %fill holes 
     nm1BW4 = imfill(nm1BW3, 'holes');                       
-        %erode mask with disk
-    radius = 2;
+    %erode mask with disk
+    radius = 1;
     decomposition = 0;
     se = strel('disk', radius, decomposition);
     nm1BW5 = imerode(nm1BW4, se);
+    
+        %Open mask with disk
+    radius = 1;
+    decomposition = 0;
+    se = strel('disk', radius, decomposition);
+    nm1BW3 = imopen(nm1BW2, se);
+    
+    
+    
          %dilate mask with disk
     radius = 3;
     decomposition = 0;
@@ -155,7 +110,7 @@ while threshQ == 1
     nm1BW6 = imdilate(nm1BW5, se);
     
          %active contour using edge over 2 iterations
-    iterations = 1000;
+    iterations = 10;
     nm1BW7 = activecontour(nm1BW6, nm1BW6, iterations, 'edge');
     
     nm1BW_perim = bwperim(nm1BW7);
