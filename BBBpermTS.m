@@ -16,10 +16,8 @@ numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("
 %@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
 
 %for display purposes, average a trial 
-dispImQ = 1;
 inputStacks4D = cell(1,length(inputStacks));
 stackAVs2 = cell(1,length(inputStacks));
-while dispImQ == 1
     for z = 1:length(inputStacks)
         for trialType = 1:size(inputStacks{z},2)
             if isempty(inputStacks{z}{trialType}) == 0 
@@ -30,7 +28,7 @@ while dispImQ == 1
             end 
         end 
     end 
-end 
+
 
 
 ROIboundQ = 1; 
