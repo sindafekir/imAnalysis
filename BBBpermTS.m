@@ -68,7 +68,7 @@ end
                     
                     
  
-
+%%JUST CHECKING 
 
 
 %@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
