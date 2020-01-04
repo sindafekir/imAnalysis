@@ -7,17 +7,17 @@ function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
 UIr = size(userInput,1)+1;
 
-%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
-% [imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
-% cd(imAn1funcDir); 
-numROIs = input('How many BBB perm ROIs are we making? '); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
+[imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
+cd(imAn1funcDir); 
+numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
 
-rotStackAngles = zeros(1,numROIs);
-ROIboundDatas = cell(1,numROIs);
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
+
 for VROI = 1:numROIs 
-    %rotate all the planes in Z per vessel ROI 
-    [rotStacks,rotateImAngle] = rotateStack(reg_Stacks);       
-    rotStackAngles(VROI) = rotateImAngle;    
+   
+    %%%%%%%%%%[rotStacks,rotateImAngle] = rotateStack(reg_Stacks);       
+    
 
     %create your ROI and apply it to all planes in Z 
     disp('Create your ROI for vessel segmentation');
@@ -43,14 +43,11 @@ for VROI = 1:numROIs
     ROIboundDatas{VROI} = ROIboundData;
 end 
 
-if volIm == 1 
-    rotStackAngles = string(rotStackAngles);
-    rotStackAnglesJoined = join(rotStackAngles);
-    userInput(UIr,1) = ("ROI Rotation Angles"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
-elseif volIm == 0
-    rotStackAngles = string(rotStackAngles);
-    rotStackAnglesJoined = join(rotStackAngles);
-    userInput(UIr,1) = ("ROI Rotation Angle"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
+
+rotStackAngles = string(rotStackAngles);
+rotStackAnglesJoined = join(rotStackAngles);
+userInput(UIr,1) = ("ROI Rotation Angles"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
+
 end 
 
 
