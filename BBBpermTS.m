@@ -7,10 +7,115 @@ function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
 UIr = size(userInput,1)+1;
 
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
+% [imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
+% cd(imAn1funcDir); 
+numROIs = input('How many BBB perm ROIs are we making? '); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
+
+rotStackAngles = zeros(1,numROIs);
+ROIboundDatas = cell(1,numROIs);
+for VROI = 1:numROIs 
+    %rotate all the planes in Z per vessel ROI 
+    [rotStacks,rotateImAngle] = rotateStack(reg_Stacks);       
+    rotStackAngles(VROI) = rotateImAngle;    
+
+    %create your ROI and apply it to all planes in Z 
+    disp('Create your ROI for vessel segmentation');
+    ROIstacks = cell(1,length(rotStacks));
+    for stack = 1:length(rotStacks)   
+        if stack == 1
+            [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,rotStacks{stack});
+            ROIboundData{1} = xmins;
+            ROIboundData{2} = ymins;
+            ROIboundData{3} = widths;
+            ROIboundData{4} = heights;
+            ROIstacks{stack}{VROI} = ROI_stacks;
+
+        elseif stack > 1 
+            xmins = ROIboundData{1};
+            ymins = ROIboundData{2};
+            widths = ROIboundData{3};
+            heights = ROIboundData{4};
+            [ROI_stacks] = make_ROIs_notfirst_time(rotStacks{stack},xmins,ymins,widths,heights);
+            ROIstacks{stack}{VROI} = ROI_stacks;
+        end 
+    end 
+    ROIboundDatas{VROI} = ROIboundData;
+end 
+
+if volIm == 1 
+    rotStackAngles = string(rotStackAngles);
+    rotStackAnglesJoined = join(rotStackAngles);
+    userInput(UIr,1) = ("ROI Rotation Angles"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
+elseif volIm == 0
+    rotStackAngles = string(rotStackAngles);
+    rotStackAnglesJoined = join(rotStackAngles);
+    userInput(UIr,1) = ("ROI Rotation Angle"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
+end 
+
+
+
+
+
+%@@@@@@@@@@@@@@@@@@@CREATE ROI FIRST AND THEN SEGMENT IMAGE 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 threshQ = 1; 
 
+
 while threshQ == 1 
-    imThresh = input("Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) "); 
+    imThresh = input('Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) '); 
     %scale the images to be between 0 to 1 
     scaledIm = inputStacks{1}{1}{1}(:,:,1) ./ max(inputStacks{1}{1}{1}(:,:,1));
     %apply a threshold to create mask 
@@ -29,10 +134,21 @@ while threshQ == 1
     decomposition = 0;
     se = strel('disk', radius, decomposition);
     nm1BW5 = imerode(nm1BW4, se);
+         %dilate mask with disk
+    radius = 3;
+    decomposition = 0;
+    se = strel('disk', radius, decomposition);
+    nm1BW6 = imdilate(nm1BW5, se);
     
-    nm1BW_perim = bwperim(nm1BW5);
+         %active contour using edge over 2 iterations
+    iterations = 1000;
+    nm1BW7 = activecontour(nm1BW6, nm1BW6, iterations, 'edge');
+    
+    nm1BW_perim = bwperim(nm1BW7);
     %show the overlay 
-    BBB_ROIs = imoverlay(stackAVs{1}, nm1BW_perim, [.3 1 .3]);% | maskEm, [.3 1 .3]);
+    avIm = mean(inputStacks{1}{1}{1},3);
+    scaledAvIm = avIm ./ max(avIm);
+    BBB_ROIs = imoverlay(scaledAvIm, nm1BW_perim, [.3 1 .3]);% | maskEm, [.3 1 .3]);
 
     figure;imshow(BBB_ROIs); 
     
