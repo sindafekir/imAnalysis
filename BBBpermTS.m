@@ -44,10 +44,6 @@ for VROI = 1:numROIs
 end 
 
 
-rotStackAngles = string(rotStackAngles);
-rotStackAnglesJoined = join(rotStackAngles);
-userInput(UIr,1) = ("ROI Rotation Angles"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
-
 end 
 
 
