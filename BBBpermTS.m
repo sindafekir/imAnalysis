@@ -101,13 +101,11 @@ while threshQ == 1
         continu = 0;
     end 
     
-    %NEED TO ADD IN BOUNDARIES GENERATION 
     %check segmentation 
     [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
     setMaxPoint = 1;
     while setMaxPoint == 1 
         maxPoint = input("What should the pixel max point be to visualize mask boundaries? ");
-        framesToShow = 200;
         if volIm == 1
             Zplane = input('What Z plane do you want to see?');
         elseif volIm == 0
