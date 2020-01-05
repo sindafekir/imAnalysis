@@ -78,6 +78,8 @@ while threshQ == 1
     while continu == 1 
         BWstacks = cell(1,length(ROIstacks));
         boundaries = cell(1,length(ROIstacks));
+        BW_perim = cell(1,length(ROIstacks));
+        segOverlays = cell(1,length(ROIstacks));
         for Z = 1:length(ROIstacks)
             for trialType = 1:size(inputStacks{z},2)
                 if isempty(inputStacks{z}{trialType}) == 0 
@@ -88,11 +90,10 @@ while threshQ == 1
                                 [BW,~] = segmentImageBBB(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame));
                                 BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW; 
                                 %get the segmentation boundaries 
-                                [~,bounds] = findVesWidth(BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame));
-                                boundaries{Z}{trialType}{trial}{VROI}{frame} = bounds;
+                                BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame) = bwperim(BW);
+                                %overlay segmentation boundaries on data
+                                segOverlays{Z}{trialType}{trial}{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame)), BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame), [.3 1 .3]);
                             end 
-                            
-
                         end 
                     end 
                 end 
@@ -101,35 +102,14 @@ while threshQ == 1
         continu = 0;
     end 
     
-    %NEED TO ADD IN BOUNDARIES GENERATION 
     %check segmentation 
     [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
-    setMaxPoint = 1;
-    while setMaxPoint == 1 
-        maxPoint = input("What should the pixel max point be to visualize mask boundaries? ");
-        framesToShow = 200;
-        if volIm == 1
-            Zplane = input('What Z plane do you want to see?');
-        elseif volIm == 0
-            Zplane = 1;
-        end 
-        for VROI = 1:numROIs
-            %play_mask_over_roi_stack(BWstacks{Z}{trialType}{trial}{VROI},boundaries{Zplane}{VROI},framesToShow,maxPoint);
-         %---------------------------------------------------------------   
-            for frame = 1:size(ROIstacks{Zplane}{trialType}{trial}{VROI}{1},3)
-                imshow(ROIstacks{Zplane}{trialType}{trial}{VROI}{1}(:,:,frame),[0,maxPoint])
-                hold on; 
-                    for bounds = 1:size(boundaries{Z}{trialType}{trial}{VROI}{frame},1)
-                        plot(boundaries{Z}{trialType}{trial}{VROI}{frame}{1}{bounds,1}(:,2), boundaries{Z}{trialType}{trial}{VROI}{frame}{1}{bounds,1}(:,1), 'r', 'LineWidth', 2)
-                    end 
-            end 
-            
-            %-----------------------------------------------------------------------------------
-            
-        end 
-        setMaxPoint = input("Do you need to reset the pixel max point? Yes = 1. No = 0. "); 
+    Z = input("What Z plane do you want to see? );
+    for VROI = 1:numROIs 
+        implay(segOverlays{Z}{trialType}{trial}{VROI})
     end 
 
+   
     segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
     if segmentVessel == 1
         clear BWthreshold BWopenRadius BW se boundaries
@@ -141,27 +121,7 @@ while threshQ == 1
 end 
 
 
-                %ABOVE IS WORKING CODE - ADD IN CODE TO PLAY THE MASK OVER
-                %THE ORIGINAL STACK AS DONE WITH SEGMENTATION CODE 
-            
-%               %--------------------------------------------------          
-% 
-%                 %ABOVE IS WORKING CODE - TROUBLESHOOTING BELOW             
-% 
-%                     CAroiGen = input('Do the calcium ROIs need to be redone? Yes = 1. No = 0. ');
-%                     if CAroiGen == 1 
-%                         clear CaROIs 
-%                     elseif CAroiGen == 0
-%                         userInput(UIr,1) = (sprintf("Set the calcium ROI generation pixel intensity threshold. Z%d",Z)); userInput(UIr,2) = (imThresh); UIr = UIr+1;
-%                     end 
-
-%                     CaROImasks{trialType} = nm1BW2; 
-
-                %     %figure out the order that terminal ROIs are looked at to match ROI
-                %     %with data 
-                %     ROIorders{trialType} = bwlabel(nm1BW2);
-
-
+          
 
 
 
