@@ -68,62 +68,54 @@ end
 
 %% segment the ROIs - goal: identify non-vascular/non-terminal space 
 
-threshQ = 1; 
+segQ = 1; 
 cd(imAn1funcDir); 
-while threshQ == 1     
-    %segment the vessel (small sample of the data) 
-    imageSegmenter(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,size(ROIstacks{z}{trialType}{trial}{VROI}{1},3)))
-    continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
-    
-    while continu == 1 
-        BWstacks = cell(1,length(ROIstacks));
-        boundaries = cell(1,length(ROIstacks));
-        BW_perim = cell(1,length(ROIstacks));
-        segOverlays = cell(1,length(ROIstacks));
-        for Z = 1:length(ROIstacks)
-            for trialType = 1:size(inputStacks{z},2)
-                if isempty(inputStacks{z}{trialType}) == 0 
-                    for trial = 1:size(ROIstacks{Z}{trialType},2)
-                        for VROI = 1:numROIs 
+for VROI = 1:numROIs 
+    while segQ == 1     
+        
+        %segment the vessel (small sample of the data) 
+        imageSegmenter(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,size(ROIstacks{z}{trialType}{trial}{VROI}{1},3)))
+        continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
 
-                            for frame = 1:size(ROIstacks{Z}{trialType}{trial}{VROI}{1},3)
-                                [BW,~] = segmentImageBBB(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame));
-                                BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW; 
-                                %get the segmentation boundaries 
-                                BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame) = bwperim(BW);
-                                %overlay segmentation boundaries on data
-                                segOverlays{Z}{trialType}{trial}{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame)), BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame), [.3 1 .3]);
-                            end 
+        while continu == 1 
+            BWstacks = cell(1,length(ROIstacks));
+            BW_perim = cell(1,length(ROIstacks));
+            segOverlays = cell(1,length(ROIstacks));
+            for Z = 1:length(ROIstacks)
+                for trialType = 1:size(inputStacks{z},2)
+                    if isempty(inputStacks{z}{trialType}) == 0 
+                        for trial = 1:size(ROIstacks{Z}{trialType},2)
+
+                                for frame = 1:size(ROIstacks{Z}{trialType}{trial}{VROI}{1},3)
+                                    [BW,~] = segmentImageBBB(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame));
+                                    BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW; 
+                                    %get the segmentation boundaries 
+                                    BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame) = bwperim(BW);
+                                    %overlay segmentation boundaries on data
+                                    segOverlays{Z}{trialType}{trial}{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame)), BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame), [.3 1 .3]);
+                                end 
+
                         end 
                     end 
                 end 
             end 
+            continu = 0;
         end 
-        continu = 0;
-    end 
-    
-    %check segmentation 
-    [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
-    if volIm == 1
-         Z = input("What Z plane do you want to see? ");
-    elseif volIm == 0 
-        Z = 1; 
-    end 
-    trialType = input("What trial type do you want to see? ");
-    
-    for VROI = 1:numROIs 
+     
+        %check segmentation 
+        [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
+        if volIm == 1
+             Z = input("What Z plane do you want to see? ");
+        elseif volIm == 0 
+            Z = 1; 
+        end 
+        trialType = input("What trial type do you want to see? ");
+
+        %play segmentation boundaries over images 
         implay(segOverlays{Z}{trialType}{1}{VROI})
-    end 
-
-  %--------------------------------------------------------------------------------- 
-    segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-    if segmentVessel == 1
-        clear BWthreshold BWopenRadius BW se boundaries
-    end 
     
-
-%---------------------------------------------------------------------------------
-    threshQ = input('Change pixel intensity threshold? Yes = 1. No = 0. ');    
+        segQ = input('Does segmentation need to be redone? Yes = 1. No = 0. ');    
+    end 
 end 
 
 
