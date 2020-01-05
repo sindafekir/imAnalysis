@@ -1,8 +1,5 @@
 function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
-% inputStacks = sortedStacks; DELETE WHEN DONE TROUBLESHOOTING 
-
-
 %% create non-vascular ROI for entire x-y plane 
 
 %go to dir w/functions
@@ -70,8 +67,9 @@ end
 
 segQ = 1; 
 cd(imAn1funcDir); 
-while segQ == 1     
-    for VROI = 1:numROIs 
+for VROI = 1:numROIs 
+    while segQ == 1     
+        
         %segment the vessel (small sample of the data) 
         imageSegmenter(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,size(ROIstacks{z}{trialType}{trial}{VROI}{1},3)))
         continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
@@ -84,7 +82,6 @@ while segQ == 1
                 for trialType = 1:size(inputStacks{z},2)
                     if isempty(inputStacks{z}{trialType}) == 0 
                         for trial = 1:size(ROIstacks{Z}{trialType},2)
-
 
                                 for frame = 1:size(ROIstacks{Z}{trialType}{trial}{VROI}{1},3)
                                     [BW,~] = segmentImageBBB(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame));
@@ -102,21 +99,20 @@ while segQ == 1
             continu = 0;
         end 
      
-    
-    %check segmentation 
-    [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
-    if volIm == 1
-         Z = input("What Z plane do you want to see? ");
-    elseif volIm == 0 
-        Z = 1; 
-    end 
-    trialType = input("What trial type do you want to see? ");
-    
-    for VROI = 1:numROIs 
+        %check segmentation 
+        [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
+        if volIm == 1
+             Z = input("What Z plane do you want to see? ");
+        elseif volIm == 0 
+            Z = 1; 
+        end 
+        trialType = input("What trial type do you want to see? ");
+
+        %play segmentation boundaries over images 
         implay(segOverlays{Z}{trialType}{1}{VROI})
-    end 
     
-    segQ = input('Does segmentation need to be redone? Yes = 1. No = 0. ');    
+        segQ = input('Does segmentation need to be redone? Yes = 1. No = 0. ');    
+    end 
 end 
 
 

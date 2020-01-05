@@ -1,8 +1,5 @@
 function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
-% inputStacks = sortedStacks; DELETE WHEN DONE TROUBLESHOOTING 
-
-
 %% create non-vascular ROI for entire x-y plane 
 
 %go to dir w/functions
@@ -117,10 +114,5 @@ for VROI = 1:numROIs
         segQ = input('Does segmentation need to be redone? Yes = 1. No = 0. ');    
     end 
 end 
-
-
-          
-
-
 
 end 
