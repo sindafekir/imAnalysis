@@ -65,30 +65,34 @@ for z = 1:length(inputStacks)
         end 
     end 
 end 
-                    
-                   
-%@@@@@@@@@@@@@@@@@@@ SEGMENT IMAGE BELOW 
+
+%% segment the ROIs - goal: identify non-vascular/non-terminal space 
 
 threshQ = 1; 
 cd(imAn1funcDir); 
-while threshQ == 1    
-   [BW,maskedImage] = segmentImageBBB(Im);
-    %--------------------------------------------------------------
-    
+while threshQ == 1     
     %segment the vessel (small sample of the data) 
     imageSegmenter(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,size(ROIstacks{z}{trialType}{trial}{VROI}{1},3)))
     continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
     
-    
     while continu == 1 
+        BWstacks = cell(1,length(ROIstacks));
+        boundaries = cell(1,length(ROIstacks));
         for Z = 1:length(ROIstacks)
             for trialType = 1:size(inputStacks{z},2)
                 if isempty(inputStacks{z}{trialType}) == 0 
-                
-                    for VROI = 1:numROIs 
-                        for frame = 1:500
-                            [BW,~] = segmentImage(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame));
-                            BWstacks{Z}{VROI}(:,:,frame) = BW; 
+                    for trial = 1:size(ROIstacks{Z}{trialType},2)
+                        for VROI = 1:numROIs 
+
+                            for frame = 1:size(ROIstacks{Z}{trialType}{trial}{VROI}{1},3)
+                                [BW,~] = segmentImageBBB(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame));
+                                BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW; 
+                                %get the segmentation boundaries 
+                                [~,bounds] = findVesWidth(BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame));
+                                boundaries{Z}{trialType}{trial}{VROI}{frame} = bounds;
+                            end 
+                            
+
                         end 
                     end 
                 end 
@@ -97,95 +101,49 @@ while threshQ == 1
         continu = 0;
     end 
     
-    boundaries = cell(1,length(rotStacks));
-    vessel_diam = cell(1,length(rotStacks));
+    %NEED TO ADD IN BOUNDARIES GENERATION 
+    %check segmentation 
+    [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
+    setMaxPoint = 1;
+    while setMaxPoint == 1 
+        maxPoint = input("What should the pixel max point be to visualize mask boundaries? ");
+        framesToShow = 200;
+        if volIm == 1
+            Zplane = input('What Z plane do you want to see?');
+        elseif volIm == 0
+            Zplane = 1;
+        end 
+        for VROI = 1:numROIs
+            %play_mask_over_roi_stack(BWstacks{Z}{trialType}{trial}{VROI},boundaries{Zplane}{VROI},framesToShow,maxPoint);
+         %---------------------------------------------------------------   
+            for frame = 1:size(ROIstacks{Zplane}{trialType}{trial}{VROI}{1},3)
+                imshow(ROIstacks{Zplane}{trialType}{trial}{VROI}{1}(:,:,frame),[0,maxPoint])
+                hold on; 
+                    for bounds = 1:size(boundaries{Z}{trialType}{trial}{VROI}{frame},1)
+                        plot(boundaries{Z}{trialType}{trial}{VROI}{frame}{1}{bounds,1}(:,2), boundaries{Z}{trialType}{trial}{VROI}{frame}{1}{bounds,1}(:,1), 'r', 'LineWidth', 2)
+                    end 
+            end 
+            
+            %-----------------------------------------------------------------------------------
+            
+        end 
+        setMaxPoint = input("Do you need to reset the pixel max point? Yes = 1. No = 0. "); 
+    end 
 
-    %----------------------------------------------------------------
+    segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+    if segmentVessel == 1
+        clear BWthreshold BWopenRadius BW se boundaries
+    end 
     
-    
-    
-    
-    
-    
-    BW_perim = bwperim(nm1BW7);
-    %show the overlay 
-    avIm = mean(inputStacks{1}{1}{1},3);
-    scaledAvIm = avIm ./ max(avIm);
-    BBB_ROIs = imoverlay(scaledAvIm, nm1BW_perim, [.3 1 .3]);% | maskEm, [.3 1 .3]);
 
-    figure;imshow(BBB_ROIs); 
-    
+%---------------------------------------------------------------------------------
     threshQ = input('Change pixel intensity threshold? Yes = 1. No = 0. ');    
 end 
 
-if threshQ == 0 
-    %PUT THE ITERATIVE LOOP BELOW HERE!! 
-end 
 
-
-
-%--------------------------------------------NEED TO SHOW EXAMPLE IMAGE OF
-%SEGMENTATION ABOVE AND THEN ITERATE THROUGH ALL FRAMES BELOW - THIS GOES
-%IN THE IF STATEMENT ABOVE 
-for z = 1:length(inputStacks)
-    for trialType = 1%:length(inputStacks{z}) 
-        if isempty(inputStacks{z}{trialType}) == 0  
-            for trial = 1%:size(inputStacks{z}{trialType},2)
-                for frame = 1:size(inputStacks{z}{trialType}{trial},3)
-                     
-                    %scale the images to be between 0 to 1 
-                    scaledStacks{z}{trialType}{trial}(:,:,frame) = inputStacks{z}{trialType}{trial}(:,:,frame) ./ max(inputStacks{z}{trialType}{trial}(:,:,frame));
-
-                    CAroiGen = 1;
-                    while CAroiGen == 1              
-                        
-                        %apply a threshold to create mask 
-                        nm1BW = imbinarize(scaledStacks{z}{trialType}{trial}(:,:,frame),imThresh);
-                        %invert the mask 
-                        nm1BW2 = ~nm1BW;    
-                        %clean the mask up 
-                            %Open mask with disk
-                        radius = 1;
-                        decomposition = 0;
-                        se = strel('disk', radius, decomposition);
-                        nm1BW3 = imopen(nm1BW2, se);
-                            %fill holes 
-                        nm1BW4 = imfill(nm1BW3, 'holes');                       
-                            %erode mask with disk
-                        radius = 2;
-                        decomposition = 0;
-                        se = strel('disk', radius, decomposition);
-                        nm1BW5 = imerode(nm1BW4, se);
-                        %sort masks 
-                        nm1BW_perim{z}{trialType}{trial}(:,:,frame) = bwperim(nm1BW5);
-
-                        %BBB_ROIs = imoverlay(stackAVs{trialType}, nm1BW2_perim, [.3 1 .3]);% | maskEm, [.3 1 .3]);
-                    end 
-
-                %ABOVE IS WORKING CODE - ADD IN CODE TO PLAY THE MASK OVER THE ORIGINAL STACK AS DONE WITH
-%                 %VESSEL SEGMENTATION 
-% 
-%                 %check segmentation 
-%                 setMaxPoint = 1;
-%                 while setMaxPoint == 1 
-%                     maxPoint = input("What should the pixel max point be to visualize mask boundaries? ");
-%                     framesToShow = 200;
-%                     if volIm == 1
-%                         Zplane = input('What Z plane do you want to see?');
-%                     elseif volIm == 0
-%                         Zplane = 1;
-%                     end 
-%                     for VROI = 1:numROIs
-%                         play_mask_over_roi_stack(ROIstacks{Zplane}{VROI}{1},boundaries{Zplane}{VROI},framesToShow,maxPoint);
-%                     end 
-%                     setMaxPoint = input("Do you need to reset the pixel max point? Yes = 1. No = 0. "); 
-%                 end 
-% 
-%                 segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-%                 if segmentVessel == 1
-%                     clear BWthreshold BWopenRadius BW se boundaries
-%                 end 
-% % 
+                %ABOVE IS WORKING CODE - ADD IN CODE TO PLAY THE MASK OVER
+                %THE ORIGINAL STACK AS DONE WITH SEGMENTATION CODE 
+            
 %               %--------------------------------------------------          
 % 
 %                 %ABOVE IS WORKING CODE - TROUBLESHOOTING BELOW             
@@ -196,30 +154,15 @@ for z = 1:length(inputStacks)
 %                     elseif CAroiGen == 0
 %                         userInput(UIr,1) = (sprintf("Set the calcium ROI generation pixel intensity threshold. Z%d",Z)); userInput(UIr,2) = (imThresh); UIr = UIr+1;
 %                     end 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
 
 %                     CaROImasks{trialType} = nm1BW2; 
 
                 %     %figure out the order that terminal ROIs are looked at to match ROI
                 %     %with data 
                 %     ROIorders{trialType} = bwlabel(nm1BW2);
-                end 
-            end 
-        end 
-    end
-end
 
-%save('Last2019Dayta');
+
+
 
 
 end 
