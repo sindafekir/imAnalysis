@@ -78,6 +78,7 @@ while threshQ == 1
     %segment the vessel (small sample of the data) 
     imageSegmenter(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,size(ROIstacks{z}{trialType}{trial}{VROI}{1},3)))
     continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+    
     while continu == 1 
         for Z = 1:length(ROIstacks)
             for trialType = 1:size(inputStacks{z},2)
@@ -85,8 +86,8 @@ while threshQ == 1
                 
                     for VROI = 1:numROIs 
                         for frame = 1:500
-                            [BW,~] = segmentImage(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame));
-                            BWstacks{Z}{VROI}(:,:,frame) = BW; 
+                            [BW,~] = segmentImage(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame));
+                            BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW; 
                         end 
                     end 
                 end 
