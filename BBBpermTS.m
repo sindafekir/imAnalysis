@@ -70,49 +70,42 @@ end
 %@@@@@@@@@@@@@@@@@@@ SEGMENT IMAGE BELOW 
 
 threshQ = 1; 
+cd(imAn1funcDir); 
+while threshQ == 1    
+   [BW,maskedImage] = segmentImageBBB(Im);
+    %--------------------------------------------------------------
+    
+    %segment the vessel (small sample of the data) 
+    imageSegmenter(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,size(ROIstacks{z}{trialType}{trial}{VROI}{1},3)))
+    continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+    while continu == 1 
+        for Z = 1:length(ROIstacks)
+            for trialType = 1:size(inputStacks{z},2)
+                if isempty(inputStacks{z}{trialType}) == 0 
+                
+                    for VROI = 1:numROIs 
+                        for frame = 1:500
+                            [BW,~] = segmentImage(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame));
+                            BWstacks{Z}{VROI}(:,:,frame) = BW; 
+                        end 
+                    end 
+                end 
+            end 
+        end 
+        continu = 0;
+    end 
+    
+    boundaries = cell(1,length(rotStacks));
+    vessel_diam = cell(1,length(rotStacks));
 
-testSegIm = ROIstacks{1}{1}{1}{1}{1}(:,:,389);
-
-while threshQ == 1 
-    imThresh = input('Set the non-vascular ROI generation pixel intensity threshold. (Try ~0.04) '); 
-    %scale the images to be between 0 to 1 
-    scaledIm = ROIstacks{1}{1}{1}{1}{1}(:,:,389) ./ max(ROIstacks{1}{1}{1}{1}{1}(:,:,389)); 
-    %apply a threshold to create mask 
-    nm1BW = imbinarize(scaledIm,imThresh);
-    %invert the mask 
-    nm1BW2 = ~nm1BW; 
-    
-    %Open mask with disk
-    radius = 1;
-    decomposition = 0;
-    se = strel('disk', radius, decomposition);
-    nm1BW3 = imopen(nm1BW2, se);
-    %fill holes 
-    nm1BW4 = imfill(nm1BW3, 'holes');                       
-    %erode mask with disk
-    radius = 1;
-    decomposition = 0;
-    se = strel('disk', radius, decomposition);
-    nm1BW5 = imerode(nm1BW4, se); 
-    % Close mask with disk
-    radius = 3;
-    decomposition = 0;
-    se = strel('disk', radius, decomposition);
-    nm1BW6 = imclose(nm1BW5, se);
+    %----------------------------------------------------------------
     
     
     
-         %dilate mask with disk
-    radius = 3;
-    decomposition = 0;
-    se = strel('disk', radius, decomposition);
-    nm1BW6 = imdilate(nm1BW5, se);
     
-         %active contour using edge over 2 iterations
-    iterations = 10;
-    nm1BW7 = activecontour(nm1BW6, nm1BW6, iterations, 'edge');
     
-    nm1BW_perim = bwperim(nm1BW7);
+    
+    BW_perim = bwperim(nm1BW7);
     %show the overlay 
     avIm = mean(inputStacks{1}{1}{1},3);
     scaledAvIm = avIm ./ max(avIm);
