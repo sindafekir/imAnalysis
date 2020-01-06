@@ -39,15 +39,17 @@ ROIstacks = cell(1,length(inputStacks));
 for z = 1:length(inputStacks) 
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-            for VROI = 1:numROIs 
-                %use the ROI boundaries to generate ROIstacks 
-                xmins = ROIboundDatas{VROI}{1};
-                ymins = ROIboundDatas{VROI}{2};
-                widths = ROIboundDatas{VROI}{3};
-                heights = ROIboundDatas{VROI}{4};
-                [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType},xmins,ymins,widths,heights);
-                ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
-            end                     
+            for trial = 1:size(inputStacks{z}{trialType},2)
+                for VROI = 1:numROIs 
+                    %use the ROI boundaries to generate ROIstacks 
+                    xmins = ROIboundDatas{VROI}{1};
+                    ymins = ROIboundDatas{VROI}{2};
+                    widths = ROIboundDatas{VROI}{3};
+                    heights = ROIboundDatas{VROI}{4};
+                    [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType}{trial},xmins,ymins,widths,heights);
+                    ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
+                end        
+            end 
         end 
     end 
 end 
@@ -127,9 +129,9 @@ end
 %% get pixel intensity value of extravascular space 
 meanPixIntArray = cell(1,length(ROIstacks));
 for Z = 1:length(ROIstacks)
-    for trialType = 1:size(inputStacks{z},2)
+    for trialType = 1:size(inputStacks{Z},2)
         for VROI = 1:numROIs 
-            if isempty(inputStacks{z}{trialType}) == 0 
+            if isempty(inputStacks{Z}{trialType}) == 0 
                 for trial = 1:size(ROIstacks{Z}{trialType},2)
                         for frame = 1:size(ROIstacks{Z}{trialType}{trial}{VROI}{1},3)                            
                             stats = regionprops(BWstacksInv{Z}{trialType}{trial}{VROI}(:,:,frame),ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame),'MeanIntensity');

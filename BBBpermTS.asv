@@ -39,15 +39,17 @@ ROIstacks = cell(1,length(inputStacks));
 for z = 1:length(inputStacks) 
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-            for VROI = 1:numROIs 
-                %use the ROI boundaries to generate ROIstacks 
-                xmins = ROIboundDatas{VROI}{1};
-                ymins = ROIboundDatas{VROI}{2};
-                widths = ROIboundDatas{VROI}{3};
-                heights = ROIboundDatas{VROI}{4};
-                [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType},xmins,ymins,widths,heights);
-                ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
-            end                     
+            for trial = 1:size(inputStacks{z}{trialType},2)
+                for VROI = 1:numROIs 
+                    %use the ROI boundaries to generate ROIstacks 
+                    xmins = ROIboundDatas{VROI}{1};
+                    ymins = ROIboundDatas{VROI}{2};
+                    widths = ROIboundDatas{VROI}{3};
+                    heights = ROIboundDatas{VROI}{4};
+                    [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType}{trial},xmins,ymins,widths,heights);
+                    ROIstacks{z}{trialType}{VROI} = ROI_stacks;
+                end        
+            end 
         end 
     end 
 end 
@@ -162,9 +164,7 @@ dataMeds = cell(1,length(ROIstacks));
 DFOF = cell(1,length(ROIstacks));
 dataSlidingBLs = cell(1,length(ROIstacks));
 DFOFsubSBLs = cell(1,length(ROIstacks));
-%  zData = cell(1,ROIinds(maxCells));
-
-
+zData = cell(1,length(ROIstacks));
 for Z = 1:length(ROIstacks)
     for trialType = 1:size(inputStacks{z},2)
         for VROI = 1:numROIs 
@@ -179,25 +179,14 @@ for Z = 1:length(ROIstacks)
                     [dataSlidingBL]=slidingBaseline(DFOF{Z}{trialType}{trial}{VROI},floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
                     dataSlidingBLs{Z}{trialType}{trial}{VROI} = dataSlidingBL;    
                     %subtract sliding baseline from DF/F
-                    DFOFsubSBLs{Z}{trialType}{trial}{VROI} = DFOF{Z}{trialType}{trial}{VROI}-dataSlidingBLs{Z}{trialType}{trial}{VROI};
+                    DFOFsubSBLs{Z}{trialType}{trial}{VROI} = DFOF{Z}{trialType}{trial}{VROI}-dataSlidingBLs{Z}{trialType}{trial}{VROI};                   
+                    %z-score data 
+                    zData{Z}{trialType}{trial}{VROI} = zscore(DFOFsubSBLs{Z}{trialType}{trial}{VROI});
                 end 
             end 
         end 
     end 
 end 
-
-
-
- for ccell = 1:maxCells     
-        for z = 1:size(meanPixIntArray{ROIinds(ccell)},1)     
-              
-            
-                               
-            
-            %z-score data 
-            zData{ROIinds(ccell)}(z,:) = zscore(DFOFsubSBLs{ROIinds(ccell)}(z,:));
-        end
- end
 
 
 
