@@ -46,15 +46,15 @@ ROIstacks = cell(1,length(inputStacks));
 for z = 1:length(inputStacks) 
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-
-            %use the ROI boundaries to generate ROIstacks 
-            xmins = ROIboundDatas{VROI}{1};
-            ymins = ROIboundDatas{VROI}{2};
-            widths = ROIboundDatas{VROI}{3};
-            heights = ROIboundDatas{VROI}{4};
-            [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType},xmins,ymins,widths,heights);
-            ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
-                    
+            for VROI = 1:numROIs 
+                %use the ROI boundaries to generate ROIstacks 
+                xmins = ROIboundDatas{VROI}{1};
+                ymins = ROIboundDatas{VROI}{2};
+                widths = ROIboundDatas{VROI}{3};
+                heights = ROIboundDatas{VROI}{4};
+                [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType},xmins,ymins,widths,heights);
+                ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
+            end                     
         end 
     end 
 end 
@@ -68,11 +68,8 @@ while segQ == 1
     %segment the vessel (small sample of the data) 
     VROI = input("What BBB ROI do you want to use to make segmentation algorithm? ");
     [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
-    if volIm == 1
-        z = input("What z plane do you want to use to make segmenation algorithm? ");
-    elseif volIm == 0 
-    end 
-    imageSegmenter(ROIstacks{z}{1}{1}{VROI}{1}(:,:,size(ROIstacks{z}{1}{1}{VROI}{1},3)))
+
+    imageSegmenter(ROIstacks{1}{1}{1}{VROI}{1}(:,:,size(ROIstacks{1}{1}{1}{VROI}{1},3)))
     continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
 
     while continu == 1 
