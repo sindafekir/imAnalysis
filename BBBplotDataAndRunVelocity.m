@@ -6,6 +6,25 @@ FPSstack = FPS/numZplanes;
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 %{Z}{trialType}{trial}{VROI}(frame)
 
+%average across trials
+AVarray = cell(1,length(dataToPlot));
+AVdata = cell(1,length(dataToPlot));
+for Z = 1:length(dataToPlot)
+    for trialType = 1:size(dataToPlot{Z},2)
+        for VROI = 1:numROIs 
+            if isempty(dataToPlot{Z}{trialType}) == 0 
+                for trial = 1:size(dataToPlot{Z}{trialType},2)
+                    AVarray{Z}{trialType}{VROI}(trial,:) = dataToPlot{Z}{trialType}{trial}{VROI};
+                end 
+                AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
+            end 
+        end 
+    end 
+end 
+
+
+
+
 for VROI = 1:numROIs 
     for Z = 1:length(ROIstacks)          
         for trialType = 1:size(dataToPlot{Z},2)  
@@ -60,7 +79,7 @@ for VROI = 1:numROIs
                     ax.XTick = FrameVals;
                     ax.XTickLabel = sec_TimeVals;
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)
-                    %plot(normAVSortedStatsArray{ROIinds(V)}{z,trialType}, 'k')                
+                    plot(AVdata{Z}{trialType}{VROI}, 'k')                
                     ylim([dataMin dataMax]);
                     %xlim([1 size(dataToPlot{cell}{z,trialType}{trial},2)]);
     %                 count = trialType+4;
