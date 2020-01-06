@@ -249,7 +249,7 @@ if cumStacksQ == 1
     for Z = 1:numZplanes
         for trialType = 1:size(sortedStacks{1},2)
             if isempty(sortedStacks{Z}{trialType}) == 0
-                for trial = 1:length(sortedWheelData{trialType})
+                for trial = 1:length(indices{trialType})
                     CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks{Z}{trialType}{trial};
                     Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks{Z}{trialType}{trial};
                     dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks{Z}{trialType}{trial};
@@ -301,7 +301,7 @@ sortedWheel_Data = cell(1,size(sortedStacks{1},2));
 AVwheelData = cell(1,size(sortedStacks{1},2));
 for trialType = 1:size(sortedStacks{1},2)   
     if isempty(sortedWheelData{trialType}) == 0
-        for trial = 1:length(sortedWheelData{trialType})
+        for trial = 1:length(indices{trialType})
             sortedWheel_Data{trialType}(:,:,:,trial) = sortedWheelData{trialType}{trial};
         end   
         AVwheelData{trialType}(1,:) = mean(sortedWheel_Data{trialType},4); 
