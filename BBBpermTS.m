@@ -34,6 +34,7 @@ for VROI = 1:numROIs
     ROIboundDatas{VROI} = ROIboundData;
 end 
 
+%create ROIs
 ROIstacks = cell(1,length(inputStacks));
 for z = 1:length(inputStacks) 
     for trialType = 1:size(inputStacks{z},2)
