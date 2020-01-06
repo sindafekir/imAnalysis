@@ -100,8 +100,8 @@ disp('Organizing Z-Stacks by Trial Type')
 if volIm == 1
     %separate the Z-stacks 
     sortedStacks2 = cell(1,length(reg_Stacks));
-    for Zstack = 1%:length(reg_Stacks)
-          [sorted_Stacks,indices] = eventTriggeredAverages_STACKS(reg_Stacks{Zstack},state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);
+    for Zstack = 1:length(reg_Stacks)
+          [sorted_Stacks,indices] = eventTriggeredAverages_STACKS2(reg_Stacks{Zstack},state_start_f,FPS,indices,uniqueTrialData,uniqueTrialDataOcurr,userInput,numZplanes);
           sortedStacks2{Zstack} = sorted_Stacks;           
     end 
 elseif volIm == 0
@@ -116,6 +116,9 @@ end
 for trialType = 1:size(sortedStacks2{1},2)
     if isempty(sortedStacks2{1}{trialType}) == 1 
         indices{trialType} = [];         
+    end 
+    if size(sortedStacks2{1}{trialType},2) < size(indices{trialType},1)
+        indices{trialType}(size(sortedStacks2{1}{trialType},2)+1:end,:) = [];
     end 
 end 
 
