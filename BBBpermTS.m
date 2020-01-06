@@ -26,39 +26,35 @@ for z = 1:length(inputStacks)
     end 
 end 
 
-ROIboundDatas = cell(1,length(inputStacks));
+
+
+%create the ROI boundaries           
+ROIboundDatas = cell(1,numROIs);
+for VROI = 1:numROIs 
+    disp('Create your ROI for vessel segmentation');
+
+    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{1}{trialType});
+    ROIboundData{1} = xmins;
+    ROIboundData{2} = ymins;
+    ROIboundData{3} = widths;
+    ROIboundData{4} = heights;
+
+    ROIboundDatas{VROI} = ROIboundData;
+end 
+
 ROIstacks = cell(1,length(inputStacks));
-for z = 1:length(inputStacks)
-    ROIboundQ = 1; 
+for z = 1:length(inputStacks) 
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-            %create the ROI boundaries 
-            if ROIboundQ == 1           
-                for VROI = 1:numROIs 
-                    disp('Create your ROI for vessel segmentation');
 
-                    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{z}{trialType});
-                    ROIboundData{1} = xmins;
-                    ROIboundData{2} = ymins;
-                    ROIboundData{3} = widths;
-                    ROIboundData{4} = heights;
-
-                    ROIboundDatas{z}{VROI} = ROIboundData;
-                end 
-                ROIboundQ = 0; 
-            end 
-            
             %use the ROI boundaries to generate ROIstacks 
-            for trial = 1:size(inputStacks{z}{trialType},2)
-                for VROI = 1:numROIs 
-                    xmins = ROIboundDatas{z}{VROI}{1};
-                    ymins = ROIboundDatas{z}{VROI}{2};
-                    widths = ROIboundDatas{z}{VROI}{3};
-                    heights = ROIboundDatas{z}{VROI}{4};
-                    [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType}{trial},xmins,ymins,widths,heights);
-                    ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
-                end 
-            end 
+            xmins = ROIboundDatas{VROI}{1};
+            ymins = ROIboundDatas{VROI}{2};
+            widths = ROIboundDatas{VROI}{3};
+            heights = ROIboundDatas{VROI}{4};
+            [ROI_stacks] = make_ROIs_notfirst_time(inputStacks{z}{trialType},xmins,ymins,widths,heights);
+            ROIstacks{z}{trialType}{trial}{VROI} = ROI_stacks;
+                    
         end 
     end 
 end 
