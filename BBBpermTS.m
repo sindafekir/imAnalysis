@@ -15,7 +15,9 @@ stackAVsIm = cell(1,length(inputStacks));
 for z = 1:length(inputStacks)
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-            stackAVsIm{z}{trialType} = mean(inputStacks{z}{trialType},3);
+            for trial = 1:size(inputStacks{z}{trialType},2)
+             stackAVsIm{z}{trialType} = mean(inputStacks{z}{trialType}{trial},3);
+            end 
         end  
     end 
 end 
