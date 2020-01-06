@@ -14,9 +14,11 @@ for Z = 1:length(dataToPlot)
         for VROI = 1:numROIs 
             if isempty(dataToPlot{Z}{trialType}) == 0 
                 for trial = 1:size(dataToPlot{Z}{trialType},2)
-                    AVarray{Z}{trialType}{VROI}(trial,:) = dataToPlot{Z}{trialType}{trial}{VROI};
+                    %AVarray{Z}{trialType}{VROI}(trial,:) = dataToPlot{Z}{trialType}{trial}{VROI};
+                    filt_dataArray(trial,:) = filt_data{trial};
                 end 
-                AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
+                %AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
+                AVdata = mean(filt_dataArray,1);
             end 
         end 
     end 
@@ -54,32 +56,34 @@ for VROI = 1:numROIs
                 for trial = 1:size(dataToPlot{Z}{trialType},2)  % this plots all trials  
                     hold all;              
                     %subplot(2,4,trialType);          
-                    plot(dataToPlot{Z}{trialType}{trial}{1},'Color',ColorSet(trial,:))
+                    %plot(dataToPlot{Z}{trialType}{trial}{1},'Color',ColorSet(trial,:))
+                    plot(filt_data{trial})
                     ax=gca;
                     ax.FontSize = 20;
 
                     hold on;
                     if trialType == 1 
-                        plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'k','LineWidth',2)
+                        plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'k','LineWidth',3)
                         patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
                         alpha(0.03)   
                     elseif trialType == 3 
-                        plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'k','LineWidth',2)
+                        plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'k','LineWidth',3)
                         patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
                         alpha(0.03)                       
                     elseif trialType == 2 
-                        plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'k','LineWidth',2)
+                        plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'k','LineWidth',3)
                         patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
                         alpha(0.03)   
                     elseif trialType == 4 
-                        plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'k','LineWidth',2)
+                        plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'k','LineWidth',3)
                         patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
                         alpha(0.03)  
                     end
                     ax.XTick = FrameVals;
                     ax.XTickLabel = sec_TimeVals;
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)
-                    plot(AVdata{Z}{trialType}{VROI}, 'k')                
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',3)
+                   % plot(AVdata{Z}{trialType}{VROI}, 'k','LineWidth',3)    
+                   plot(AVdata, 'k','LineWidth',3)   
                     ylim([dataMin dataMax]);
                     %xlim([1 size(dataToPlot{cell}{z,trialType}{trial},2)]);
     %                 count = trialType+4;
