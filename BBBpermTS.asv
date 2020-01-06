@@ -11,14 +11,22 @@ UIr = size(userInput,1)+1;
 numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
 
 %for display purposes mostly: average across trials 
+inputStacks4D = cell(1,length(inputStacks));
+stackAVs = cell(1,length(inputStacks));
 stackAVsIm = cell(1,length(inputStacks));
 for z = 1:length(inputStacks)
     for trialType = 1:size(inputStacks{z},2)
         if isempty(inputStacks{z}{trialType}) == 0 
-            stackAVsIm{z}{trialType} = mean(inputStacks{z}{trialType},3);
+         
+            inputStacks4D{z}{trialType} = inputStacks{z}{trialType};
+          
+            stackAVs{z}{trialType} = mean(inputStacks4D{z}{trialType},4);
+            stackAVsIm{z}{trialType} = mean(stackAVs{z}{trialType},3);
         end  
     end 
 end 
+
+
 
 %create the ROI boundaries           
 ROIboundDatas = cell(1,numROIs);
