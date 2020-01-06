@@ -120,7 +120,7 @@ for VROI = 1:numROIs
         end
         
         
-        suptitle(sprintf('Z-Plane #%d. ROI #%d',z,ROIinds(V)))
+        %suptitle(sprintf('Z-Plane #%d. ROI #%d',z,ROIinds(V)))
     end 
 end 
 
