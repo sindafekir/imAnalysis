@@ -73,13 +73,41 @@ while segmentVessel == 1
                     %get the segmentation boundaries 
                     BW_perim{Zstack}{VROI}(:,:,frame) = bwperim(BW);
                     %overlay segmentation boundaries on data
-                    segOverlays{Zstack}{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{Zstack}{VROI}{1}(:,:,frame)), BW_perim{Zstack}{VROI}(:,:,frame), [.3 1 .3]);   
+                    segOverlays{Zstack}{VROI}(:,:,frame) = imoverlay(mat2gray(ROIstacks{Zstack}{VROI}(:,:,frame)), BW_perim{Zstack}{VROI}(:,:,frame), [.3 1 .3]);   
                 end 
             end 
         end 
         continu = 0;
     end 
     
+%     boundaries = cell(1,length(rotStacks));
+%     vessel_diam = cell(1,length(rotStacks));
+%     %get vessel width 
+%     for Zstack = 1:length(rotStacks)
+%         for VROI = 1:numROIs
+%             [vesselDiam,bounds] = findVesWidth(BWstacks{Zstack}{VROI});
+%             boundaries{Zstack}{VROI} = bounds;
+%             vessel_diam{Zstack}{VROI} = vesselDiam;
+%         end 
+%     end 
+% 
+%     %check segmentation 
+%     setMaxPoint = 1;
+%     while setMaxPoint == 1 
+%         maxPoint = input("What should the pixel max point be to visualize mask boundaries? ");
+%         framesToShow = 200;
+%         if volIm == 1
+%             Zplane = input('What Z plane do you want to see?');
+%         elseif volIm == 0
+%             Zplane = 1;
+%         end 
+%         for VROI = 1:numROIs
+%             play_mask_over_roi_stack(ROIstacks{Zplane}{VROI}{1},boundaries{Zplane}{VROI},framesToShow,maxPoint);
+%         end 
+%         setMaxPoint = input("Do you need to reset the pixel max point? Yes = 1. No = 0. "); 
+%     end 
+
+%---------------------------------------------------
     %check segmentation 
     if volIm == 1
          Z = input("What Z plane do you want to see? ");
@@ -89,7 +117,9 @@ while segmentVessel == 1
     VROI = input("What vessel ROI do you want to see? ");
     
     %play segmentation boundaries over images 
-    implay(segOverlays{Z}{VROI})
+    implay(segOverlays{Z}{trialType}{1}{VROI})
+    %{Zstack}{VROI}(:,:,frame)
+    %---------------------------------------------------
 
     segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
     if segmentVessel == 1

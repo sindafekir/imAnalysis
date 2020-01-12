@@ -87,7 +87,7 @@ while segQ == 1
                                     %get the segmentation boundaries 
                                     BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame) = bwperim(BW);
                                     %overlay segmentation boundaries on data
-                                    segOverlays{Z}{trialType}{trial}{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{z}{trialType}{trial}{VROI}{1}(:,:,frame)), BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame), [.3 1 .3]);
+                                    segOverlays{Z}{trialType}{trial}{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{Z}{trialType}{trial}{VROI}{1}(:,:,frame)), BW_perim{Z}{trialType}{trial}{VROI}(:,:,frame), [.3 1 .3]);
                                 end 
 
                         end 
