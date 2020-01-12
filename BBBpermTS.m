@@ -1,5 +1,7 @@
 function [TSdataBBBperm] = BBBpermTS(inputStacks,userInput)
 
+%inputStacks = sortedStacks;
+
 %% create non-vascular ROI for entire x-y plane 
 
 %go to dir w/functions
@@ -189,6 +191,8 @@ for Z = 1:length(ROIstacks)
         end 
     end 
 end 
+
+%% smooth data 
 
 
 

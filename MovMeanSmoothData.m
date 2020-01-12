@@ -1,4 +1,4 @@
-function [filtData] = GaussSmoothData(data,filtTime,FPS)
+function [filtData] = MovMeanSmoothData(data,filtTime,FPS)
 
 filter_rate = FPS*filtTime; 
 
