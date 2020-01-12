@@ -210,6 +210,10 @@ for Z = 1:length(ROIstacks)
 end 
 
 %% plot your data 
+dataMin = input("data Y axis MIN: ");
+dataMax = input("data Y axis MAX: ");
+BBBplotDataAndRunVelocity(filtData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,numROIs,ROIstacks,filtTime);
+
 
 
 
