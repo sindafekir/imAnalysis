@@ -1,10 +1,11 @@
 function BBBplotDataAndRunVelocity(dataToPlot,normAVSortedStatsArray,normSortedWheelDataArray,normAVWheelDataArray,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
 
 
+% dataToPlot = filtData;
+
 FPSstack = FPS/numZplanes;
 
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
-%{Z}{trialType}{trial}{VROI}(frame)
 
 %average across trials
 AVarray = cell(1,length(dataToPlot));
