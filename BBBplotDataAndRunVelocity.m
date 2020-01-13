@@ -34,7 +34,7 @@ for VROI = 1:numROIs
                     Frames = size(dataToPlot{Z}{trialType}{1}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
                     Frames = size(dataToPlot{Z}{trialType}{1}{1},2);
@@ -46,7 +46,6 @@ for VROI = 1:numROIs
                 for trial = 1:size(dataToPlot{Z}{trialType},2)  % this plots all trials  
                     hold all;                       
                     plot(dataToPlot{Z}{trialType}{trial}{1},'Color',ColorSet(trial,:))
-                    title(sprintf("Data smoothed by %d seconds",filtTime));
                     ax=gca;
                     ax.FontSize = 20;
 
@@ -76,9 +75,11 @@ for VROI = 1:numROIs
                     ylim([dataMin dataMax]);
                     %xlim([1 size(dataToPlot{cell}{z,trialType}{trial},2)]);
  
-                end            
+                end    
+                title(sprintf("Data smoothed by %d seconds. Z plane #%d. BBB perm ROI #%d",filtTime,Z,VROI));
             end                         
         end
+        
     end 
 end 
 

@@ -86,5 +86,5 @@ for Z = 1:length(meanPixIntArray)
     end 
 end 
 
-imagesc(CaROImasks{1});grid on;figure;imagesc(CaROImasks{2});grid on;figure;imagesc(CaROImasks{3});grid on;
+imagesc(CaROImasks{1});grid on;
 end 

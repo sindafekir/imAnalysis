@@ -155,8 +155,8 @@ if pixIntQ == 1
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%         CaROImasks{3}(CaROImasks{3}==15)=3;% CaROImasks{1}(CaROImasks{1}==1)=2; CaROImasks{1}(CaROImasks{1}==6)=0; CaROImasks{1}(CaROImasks{1}==4)=0;CaROImasks{1}(CaROImasks{1}==14)=0;
-%         figure;imagesc(CaROImasks{3});grid on
+%          CaROImasks{1}(CaROImasks{1}~=6)=0;% CaROImasks{1}(CaROImasks{1}==1)=2; CaROImasks{1}(CaROImasks{1}==6)=0; CaROImasks{1}(CaROImasks{1}==4)=0;CaROImasks{1}(CaROImasks{1}==14)=0;
+%          figure;imagesc(CaROImasks{1});grid on
         
         masksDoneQ = input('Have the calcium ROI masks been hand edited? Yes = 1. No = 0.');
         if masksDoneQ == 1 
@@ -249,7 +249,7 @@ if cumStacksQ == 1
     for Z = 1:numZplanes
         for trialType = 1:size(sortedStacks{1},2)
             if isempty(sortedStacks{Z}{trialType}) == 0
-                for trial = 1:length(indices{trialType})
+                for trial = 1:length(CumDffStacks{Z}{trialType})
                     CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks{Z}{trialType}{trial};
                     Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks{Z}{trialType}{trial};
                     dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks{Z}{trialType}{trial};
@@ -414,8 +414,8 @@ if pixIntQ == 1
     for ccell = 1:maxCells  
         for z = 1:size(sortedData{ROIinds(ccell)},1)
             for trialType = 1:maxTtypeInd 
-                if isempty(sortedData2{ROIinds(cell)}{z,trialType}) == 0
-                    dataToPlot{ROIinds(ccell)}{z,trialType} = sortedData2{ROIinds(ccell)}{z,trialType}(indI2{trialType}(1:length(sortedData{ROIinds(ccell)}{z,trialType})));     
+                if isempty(sortedData2{ROIinds(ccell)}{z,trialType}) == 0
+                    dataToPlot{ROIinds(ccell)}{z,trialType} = sortedData2{ROIinds(ccell)}{z,trialType}(indI2{trialType}(1:length(sortedData2{ROIinds(ccell)}{z,trialType})));     
                 end 
             end 
         end 

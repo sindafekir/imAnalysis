@@ -387,7 +387,7 @@ end
 %% prep data for plotting - get rid of what you don't need and average 
 if pixIntQ == 1 || VsegQ == 1
     dataToPlot = dataToPlot3;
-    clear dataToPlot3 wheelDataToPlot3
+    clear dataToPlot3 
 end 
         
 wheelDataToPlot = wheelDataToPlot3; 
@@ -462,10 +462,9 @@ for trialType = 1:length(wheelDataToPlot)
 end 
 
  %% clear unecessary values 
-CumDffStacks = CumDffStacks3; CumStacks = CumStacks3; dffStacks = dffStacks3; sortedStacks = sortedStacks3; CumData = CumData3; CumDffDataFirst20s = CumDffDataFirst20s3; dffDataFirst20s = dffDataFirst20s3;
 
- 
 if cumStacksQ == 1
+    CumDffStacks = CumDffStacks3; CumStacks = CumStacks3; dffStacks = dffStacks3; sortedStacks = sortedStacks3; CumData = CumData3; CumDffDataFirst20s = CumDffDataFirst20s3; dffDataFirst20s = dffDataFirst20s3;
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start sortedStacks CumStacks CumDffStacks dffStacks CumData CumDffDataFirst20s dffDataFirst20s AVcumDffStacks AVcumStacks AVdffStacks AVStacks
 elseif  VsegQ == 1 || pixIntQ == 1
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start
@@ -476,20 +475,21 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %THE BELOW CODE IS FOR PLOTTING - HAS NOT BEEN STREAMLINED. LOOK AT IT AND
 %USE WHAT YOU NEED. 
-%{
+
 dataMin = input("data Y axis MIN: ");
 dataMax = input("data Y axis MAX: ");
 velMin = input("running velocity Y axis MIN: ");
 velMax = input("running velocity Y axis MAX: ");
 
+V = input('What vessel (diameter) do you want to see? '); 
 
 %plotDataAndRunVelocity(dataToPlot,AVsortedData,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
-plotAVDataAndRunVelocity(VdataToPlot,VAVsortedData,dataToPlot,AVsortedData,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
+plotAVDataAndRunVelocity(VdataToPlot,VAVsortedData,dataToPlot,AVsortedData,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,maxCells,ROIinds,V)
 %plotAVtTypeDataAndRunVelocity(VdataToPlot,VAVsortedData,AVtType1,AVtType2,AVtType3,AVtType4,AVAVtType1,AVAVtType2,AVAVtType3,AVAVtType4,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
 %plotAllAVDataAndRunVelocity(VdataToPlot,VAVsortedData,allAVarray,allAV,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
 
 %% in case the V data array is missing some trial type data and it needs to be the same size as the calcium data array for plotting 
-
+%{
 SEMVdata = cell(1,length(VAVsortedData));
 for z = 1:length(VAVsortedData)
         for ROI = 1:size(VAVsortedData{z},2)

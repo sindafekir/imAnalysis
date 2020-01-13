@@ -27,7 +27,7 @@ end
 %create the ROI boundaries           
 ROIboundDatas = cell(1,numROIs);
 for VROI = 1:numROIs 
-    disp('Create your ROI for vessel segmentation');
+    disp('Create your ROI for BBB perm analysis');
 
     [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{1}{1});
     ROIboundData{1} = xmins;

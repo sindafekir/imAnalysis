@@ -35,15 +35,11 @@ for VROI = 1:numROIs
     ROIboundDatas{VROI} = ROIboundData;
 end 
 
-if volIm == 1 
-    rotStackAngles = string(rotStackAngles);
-    rotStackAnglesJoined = join(rotStackAngles);
-    userInput(UIr,1) = ("ROI Rotation Angles"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
-elseif volIm == 0
-    rotStackAngles = string(rotStackAngles);
-    rotStackAnglesJoined = join(rotStackAngles);
-    userInput(UIr,1) = ("ROI Rotation Angle"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
-end 
+
+rotStackAngles = string(rotStackAngles);
+rotStackAnglesJoined = join(rotStackAngles);
+userInput(UIr,1) = ("ROI Rotation Angles"); userInput(UIr,2) = (rotStackAnglesJoined); UIr = UIr+1;
+
 
 %% segment the vessels, get vessel width, and check segmentation
 segmentVessel = 1;
