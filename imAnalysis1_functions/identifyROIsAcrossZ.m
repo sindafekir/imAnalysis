@@ -104,7 +104,12 @@ corrIDXs = cell(1,size(ROIcorArrayAcrossZ,2));
 %find indices of correlated ROIs across Z 
 for z = 1:size(ROIcorArrayAcrossZ,2)
      [x, y] = find(ROIcorArrayAcrossZ{z} > 0.01);
-     corrIDXs{z}(:,1) = x; corrIDXs{z}(:,2) = y;
+     if isempty(x) == 0 
+         corrIDXs{z}(:,1) = x;
+     end 
+     if isempty(y) == 0
+         corrIDXs{z}(:,2) = y;
+     end 
 end 
 
 centroidLoc = cell(1,size(corrIDXs,2));
@@ -125,7 +130,9 @@ for z = 1:size(corrIDXs,2)
        CorrROIdists{z}(corrROI) = sqrt(((centroidX-centroidX2).^2) + ((centroidY-centroidY2).^2));               
     end 
     CorrROIdists{z} = CorrROIdists{z}';
-    corrIDXs{z}(:,3) = CorrROIdists{z};
+    if isempty(CorrROIdists{z}) == 0
+        corrIDXs{z}(:,3) = CorrROIdists{z};
+    end 
 end 
 
 %finds ROIs that are correlated with more than one other ROI (the
@@ -133,10 +140,12 @@ end
 corrIDXnoRepeatsCol1 = cell(1,size(corrIDXs,2));
 corrIDXnoRepeatsCol2 = cell(1,size(corrIDXs,2));
 for z = 1:size(corrIDXs,2) 
-    [noRepeatsCol1,~,~] = unique(corrIDXs{z}(:,1));
-    [noRepeatsCol2,~,~] = unique(corrIDXs{z}(:,2));
-    corrIDXnoRepeatsCol1{z} = noRepeatsCol1;
-    corrIDXnoRepeatsCol2{z} = noRepeatsCol2;
+    if isempty(corrIDXs{z}) == 0
+        [noRepeatsCol1,~,~] = unique(corrIDXs{z}(:,1));
+        [noRepeatsCol2,~,~] = unique(corrIDXs{z}(:,2));
+        corrIDXnoRepeatsCol1{z} = noRepeatsCol1;
+        corrIDXnoRepeatsCol2{z} = noRepeatsCol2;
+    end 
 end 
 
 

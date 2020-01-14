@@ -103,6 +103,10 @@ end
 
 %% separate stacks by zPlane and trial type 
 disp('Organizing Z-Stacks by Trial Type')
+%go to the right directory for functions 
+[imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
+cd(imAn1funcDir);
+
 %find the diffent trial types 
 [stimTimes] = getUserInput(userInput,"Stim Time Lengths (sec)"); 
 [stimTypeNum] = getUserInput(userInput,"How many different kinds of stimuli were used?");
