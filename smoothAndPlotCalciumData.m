@@ -1,9 +1,34 @@
-function BBBplotDataAndRunVelocity(dataToPlot,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,numROIs,ROIstacks,filtTime)
+function smoothAndPlotCalciumData(dataToPlot,userInput,FPS,numZplanes)
 
+%% smooth data 
+UIr = size(userInput,1)+1;
+filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
+count = 1;
+for ccell = 1:length(dataToPlot)
+    if isempty(dataToPlot{ccell}) == 0 
+        for trialType = 1:size(dataToPlot{ccell},2) 
+            if isempty(dataToPlot{ccell}{trialType}) == 0 
+                 for z = 1:size(dataToPlot{ccell},1)
+                    for trial = 1:size(dataToPlot{ccell}{trialType},2)
+                        [filtD] = MovMeanSmoothData(dataToPlot{ccell}{trialType}{trial},filtTime,FPS);
+                        filtData{count}{trialType}{trial} = filtD;
+                    end 
+                end 
+            end 
+        end
+        count = count+1;
+    end 
+end 
+
+%% plot your data 
+dataMin = input("data Y axis MIN: ");
+dataMax = input("data Y axis MAX: ");
 
 FPSstack = FPS/numZplanes;
 
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %average across trials
 AVarray = cell(1,length(dataToPlot));
@@ -20,6 +45,7 @@ for Z = 1:length(dataToPlot)
         end 
     end 
 end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 for VROI = 1:numROIs 
     for Z = 1:length(ROIstacks)          
@@ -82,6 +108,4 @@ for VROI = 1:numROIs
         
     end 
 end 
-
-
 end 

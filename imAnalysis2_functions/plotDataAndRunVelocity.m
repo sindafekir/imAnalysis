@@ -21,7 +21,7 @@ for cell = 1:maxCells
                     %min_TimeVals = floor(min_TimeVals); 
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
-                    Frames = size(dataToPlot{6}{1,2}{1},2);
+                    Frames = size(dataToPlot{6}{1,4}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
@@ -29,7 +29,7 @@ for cell = 1:maxCells
                     %min_TimeVals = floor(min_TimeVals); 
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 end 
-                for trial = 1:size(dataToPlot{ROIinds(cell)}{z,trialType},2)  % this plots all trials  
+                for trial = 1:size(normSortedWheelDataArray{trialType},2)  % this plots all trials  
                     hold all;              
                     subplot(2,4,trialType);          
                     plot(dataToPlot{ROIinds(cell)}{z,trialType}{trial},'Color',ColorSet(trial,:))
