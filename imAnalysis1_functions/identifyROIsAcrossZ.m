@@ -104,7 +104,12 @@ corrIDXs = cell(1,size(ROIcorArrayAcrossZ,2));
 %find indices of correlated ROIs across Z 
 for z = 1:size(ROIcorArrayAcrossZ,2)
      [x, y] = find(ROIcorArrayAcrossZ{z} > 0.01);
-     corrIDXs{z}(:,1) = x; corrIDXs{z}(:,2) = y;
+     if isempty(x) == 0 
+         corrIDXs{z}(:,1) = x;
+     end 
+     if isempty(y) == 0
+         corrIDXs{z}(:,2) = y;
+     end 
 end 
 
 centroidLoc = cell(1,size(corrIDXs,2));
