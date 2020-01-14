@@ -46,7 +46,7 @@ for ccell = 1:maxCells
             if isempty(dataToPlot{ROIinds(ccell)}{trialType}) == 0 
                 %set time in x axis 
                 if trialType == 1 || trialType == 3 
-                    Frames = size(dataToPlot{6}{1,1}{1},2);
+                    Frames = size(dataToPlot{5}{1,1}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
@@ -54,7 +54,7 @@ for ccell = 1:maxCells
                     %min_TimeVals = floor(min_TimeVals); 
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
-                    Frames = size(dataToPlot{6}{1,4}{1},2);
+                    Frames = size(dataToPlot{5}{1,4}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);

@@ -159,9 +159,9 @@ if pixIntQ == 1
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%          CaROImasks{1}(CaROImasks{1}~=6)=0;% CaROImasks{1}(CaROImasks{1}==1)=2; CaROImasks{1}(CaROImasks{1}==6)=0; CaROImasks{1}(CaROImasks{1}==4)=0;CaROImasks{1}(CaROImasks{1}==14)=0;
-%          figure;imagesc(CaROImasks{1});grid on
-        
+%          CaROImasks{2}(CaROImasks{2}==7)=0; CaROImasks{3}(CaROImasks{3}==9)=5; CaROImasks{2}(CaROImasks{2}==8)=5; %CaROImasks{3}(CaROImasks{3}==8)=5;%CaROImasks{1}(CaROImasks{1}==14)=0;
+%          figure;imagesc(CaROImasks{1});grid on;figure;imagesc(CaROImasks{2});grid on;figure;imagesc(CaROImasks{3});grid on
+%         
         masksDoneQ = input('Have the calcium ROI masks been hand edited? Yes = 1. No = 0.');
         if masksDoneQ == 1 
             %determine the indices left for the edited CaROImasks or else
