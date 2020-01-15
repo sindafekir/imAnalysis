@@ -9,9 +9,9 @@ for ccell = 1:length(dataToPlot)
         for trialType = 1:size(dataToPlot{ccell},2) 
             if isempty(dataToPlot{ccell}{trialType}) == 0 
                  for z = 1:size(dataToPlot{ccell},1)
-                    for trial = 1:size(dataToPlot{ccell}{trialType},2)
-                        [filtD] = MovMeanSmoothData(dataToPlot{ccell}{trialType}{trial},filtTime,FPS);
-                        filtData{count}{trialType}{trial} = filtD;
+                    for trial = 1:size(dataToPlot{ccell}{z,trialType},2)
+                        [filtD] = MovMeanSmoothData(dataToPlot{ccell}{z,trialType}{trial},filtTime,FPS);
+                        filtData{count}{z,trialType}{trial} = filtD;
                     end 
                 end 
             end 
@@ -23,55 +23,50 @@ end
 %% plot your data 
 dataMin = input("data Y axis MIN: ");
 dataMax = input("data Y axis MAX: ");
-
+%---------------------------------------------
 FPSstack = FPS/numZplanes;
-
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %average across trials
-AVarray = cell(1,length(dataToPlot));
-AVdata = cell(1,length(dataToPlot));
-for Z = 1:length(dataToPlot)
-    for trialType = 1:size(dataToPlot{Z},2)
-        for VROI = 1:numROIs 
-            if isempty(dataToPlot{Z}{trialType}) == 0 
-                for trial = 1:size(dataToPlot{Z}{trialType},2)
-                    AVarray{Z}{trialType}{VROI}(trial,:) = dataToPlot{Z}{trialType}{trial}{VROI};
+AVarray = cell(1,length(filtData));
+AVdata = cell(1,length(filtData));
+for count = 1:length(filtData)
+    for trialType = 1:size(filtData{count},2) 
+        if isempty(filtData{count}{trialType}) == 0 
+             for z = 1:size(filtData{count},1)
+                for trial = 1:size(filtData{count}{z,trialType},2)
+                    AVarray{count}{z,trialType}(trial,:) = filtData{count}{z,trialType}{trial};
                 end 
-                AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
-            end 
+                AVdata{count}{z,trialType} = nanmean(AVarray{count}{z,trialType},1);
+             end 
         end 
     end 
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-for VROI = 1:numROIs 
-    for Z = 1:length(ROIstacks)          
-        for trialType = 1:size(dataToPlot{Z},2)  
-            if isempty(dataToPlot{Z}{trialType}) == 0
-            
-            
+             
+for count = 1:length(filtData)
+    for trialType = 1:size(filtData{count},2) 
+        if isempty(filtData{count}{trialType}) == 0 
+             for z = 1:size(filtData{count},1)
                 figure;
-                ColorSet = varycolor(size(dataToPlot{Z}{trialType},2));    
+                ColorSet = varycolor(size(filtData{count}{z,trialType},2));   
                 %set time in x axis            
                 if trialType == 1 || trialType == 3 
-                    Frames = size(dataToPlot{Z}{trialType}{1}{1},2);                
+                    Frames = size(filtData{count}{z,trialType}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
-                    Frames = size(dataToPlot{Z}{trialType}{1}{1},2);
+                    Frames = size(filtData{count}{z,trialType}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 end 
-                for trial = 1:size(dataToPlot{Z}{trialType},2)  % this plots all trials  
+                
+                for trial = 1:size(filtData{count}{z,trialType},2)  % this plots all trials  
                     hold all;                       
-                    plot(dataToPlot{Z}{trialType}{trial}{1},'Color',ColorSet(trial,:))
+                    plot(filtData{count}{z,trialType}{trial},'Color',ColorSet(trial,:))
                     ax=gca;
                     ax.FontSize = 20;
 
@@ -96,13 +91,13 @@ for VROI = 1:numROIs
                     ax.XTick = FrameVals;
                     ax.XTickLabel = sec_TimeVals;
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',3)
-                    plot(AVdata{Z}{trialType}{VROI}, 'k','LineWidth',3)    
+                    plot(AVdata{count}{z,trialType}, 'k','LineWidth',3)    
                    %plot(AVdata, 'k','LineWidth',3)   
                     ylim([dataMin dataMax]);
                     %xlim([1 size(dataToPlot{cell}{z,trialType}{trial},2)]);
  
                 end    
-                title(sprintf("Data smoothed by %d seconds. Z plane #%d. BBB perm ROI #%d",filtTime,Z,VROI));
+                title(sprintf("Data smoothed by %d seconds. Z plane #%d. DA Ca ROI #%d",filtTime,z,count));
             end                         
         end
         
