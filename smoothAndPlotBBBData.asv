@@ -1,86 +1,86 @@
-function smoothAndPlotVesselData(VdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
-
+function smoothAndPlotBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
 %% smooth data if you want 
 smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
 
 if smoothQ == 1 
     UIr = size(userInput,1)+1;
     filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
-    filtData = cell(1,length(VdataToPlot));
-    for z = 1:length(VdataToPlot)
-        for ROI = 1:size(VdataToPlot{1},2)
-            for trialType = 1:size(VdataToPlot{1}{1},2)   
-                if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
-                    for trial = 1:length(VdataToPlot{z}{ROI}{trialType})                         
-                        [filtD] = MovMeanSmoothData(VdataToPlot{z}{ROI}{trialType}{trial},filtTime,FPS);
-                        filtData{z}{ROI}{trialType}{trial} = filtD;                        
+    filtData = cell(1,length(BdataToPlot));
+    for Z = 1:length(BdataToPlot)
+        for trialType = 1:size(BdataToPlot{Z},2)             
+                if isempty(BdataToPlot{Z}{trialType}) == 0 
+                    for trial = 1:size(BdataToPlot{Z}{trialType},2)
+                         for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) %working on replacing numROIs 
+                            [filtD] = MovMeanSmoothData(BdataToPlot{Z}{trialType}{trial}{VROI},filtTime,FPS);
+                            filtData{Z}{trialType}{trial}{VROI} = filtD;
+                         end 
                     end 
                 end 
-            end
         end 
     end 
 elseif smoothQ == 0 
-    filtData = cell(1,length(VdataToPlot));
-    for z = 1:length(VdataToPlot)
-        for ROI = 1:size(VdataToPlot{1},2)
-            for trialType = 1:size(VdataToPlot{1}{1},2)   
-                if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
-                    for trial = 1:length(VdataToPlot{z}{ROI}{trialType})                         
-                        filtData{z}{ROI}{trialType}{trial} = VdataToPlot{z}{ROI}{trialType}{trial};                        
+    filtData = cell(1,length(BdataToPlot));
+     for Z = 1:length(BdataToPlot)
+            for trialType = 1:size(BdataToPlot{Z},2)             
+                    if isempty(BdataToPlot{Z}{trialType}) == 0 
+                        for trial = 1:size(BdataToPlot{Z}{trialType},2)
+                             for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) %working on replacing numROIs 
+                                filtData{Z}{trialType}{trial}{VROI} = BdataToPlot{Z}{trialType}{trial}{VROI};
+                             end 
+                        end 
                     end 
-                end 
-            end
-        end 
+            end 
     end 
 end 
 
-%% plot your data 
-dataMin = input("data Y axis MIN: ");
-dataMax = input("data Y axis MAX: ");
+
+%average across trials
+AVarray = cell(1,length(BdataToPlot));
+AVdata = cell(1,length(BdataToPlot));
+for Z = 1:length(BdataToPlot)
+    for trialType = 1:size(BdataToPlot{Z},2)
+        if isempty(BdataToPlot{Z}{trialType}) == 0 
+            for trial = 1:size(BdataToPlot{Z}{trialType},2)
+                 for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) 
+                    AVarray{Z}{trialType}{VROI}(trial,:) = filtData{Z}{trialType}{trial}{VROI};
+                 end 
+            end 
+            AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
+        end      
+    end 
+end 
+
+%% plot 
+% dataMin = input("data Y axis MIN: ");
+% dataMax = input("data Y axis MAX: ");
 FPSstack = FPS/numZplanes;
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 
-%average across trials
-AVarray = cell(1,length(filtData));
-AVdata = cell(1,length(filtData));
-
-for z = 1:length(VdataToPlot)
-    for ROI = 1:size(VdataToPlot{1},2)
-        for trialType = 1:size(VdataToPlot{1}{1},2)   
-            if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
-                for trial = 1:length(VdataToPlot{z}{ROI}{trialType})    
-                    AVarray{z}{ROI}{trialType}(trial,:) = filtData{z}{ROI}{trialType}{trial};
-                end 
-                AVdata{z}{ROI}{trialType} = nanmean(AVarray{z}{ROI}{trialType},1);
-             end 
-        end 
-    end 
-end 
-
-for z = 1:length(VdataToPlot)
-    for ROI = 1:size(VdataToPlot{1},2)
-        for trialType = 1:size(VdataToPlot{1}{1},2)  
-            if isempty(VdataToPlot{z}{ROI}{trialType}) == 0       
+for VROI = 1%:size(BdataToPlot{Z}{trialType}{trial},2)
+    for Z = 1:length(BdataToPlot)          
+        for trialType = 2%1:size(BdataToPlot{Z},2)  
+            if isempty(BdataToPlot{Z}{trialType}) == 0
+            
+            
                 figure;
-                ColorSet = varycolor(size(filtData{z}{ROI}{trialType},2));   
+                ColorSet = varycolor(size(BdataToPlot{Z}{trialType},2));    
                 %set time in x axis            
                 if trialType == 1 || trialType == 3 
-                    Frames = size(filtData{z}{ROI}{trialType}{1},2);                
+                    Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
-                    Frames = size(filtData{z}{ROI}{trialType}{1},2);
+                    Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 end 
-                
-                for trial = 1:length(VdataToPlot{z}{ROI}{trialType})      % this plots all trials  
+                for trial = 1:size(BdataToPlot{Z}{trialType},2)  % this plots all trials  
                     hold all;                       
-                    plot(filtData{z}{ROI}{trialType}{trial},'Color',ColorSet(trial,:))
+                    plot(filtData{Z}{trialType}{trial}{1},'Color',ColorSet(trial,:))
                     ax=gca;
                     ax.FontSize = 20;
 
@@ -105,16 +105,16 @@ for z = 1:length(VdataToPlot)
                     ax.XTick = FrameVals;
                     ax.XTickLabel = sec_TimeVals;
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',3)
-                    plot(AVdata{z}{ROI}{trialType}, 'k','LineWidth',3)    
+                    plot(AVdata{Z}{trialType}{VROI}, 'k','LineWidth',3)    
                    %plot(AVdata, 'k','LineWidth',3)   
                     ylim([dataMin dataMax]);
-                    %xlim([1 size(VdataToPlot{cell}{z,trialType}{trial},2)]);
+                    %xlim([1 size(BdataToPlot{cell}{z,trialType}{trial},2)]);
  
                 end    
                 if smoothQ == 1 
-                    title(sprintf("Data smoothed by %d seconds. Z plane #%d. Vessel Width ROI #%d",filtTime,z,ROI));
+                    title(sprintf("BBB Data smoothed by %d seconds. Z plane #%d. BBB perm ROI #%d",filtTime,Z,VROI));
                 elseif smoothQ == 0
-                    title(sprintf("Raw data. Z plane #%d. Vessel Width ROI #%d",z,ROI));
+                    title(sprintf("Raw BBB Data. Z plane #%d. BBB perm ROI #%d",Z,VROI));
                 end 
                 
             end                         
@@ -122,5 +122,6 @@ for z = 1:length(VdataToPlot)
         
     end 
 end 
+
 
 end 

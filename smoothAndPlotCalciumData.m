@@ -1,29 +1,48 @@
-function smoothAndPlotCalciumData(dataToPlot,userInput,FPS,numZplanes)
+function smoothAndPlotCalciumData(dataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
 
-%% smooth data 
-UIr = size(userInput,1)+1;
-filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
-count = 1;
-for ccell = 1:length(dataToPlot)
-    if isempty(dataToPlot{ccell}) == 0 
-        for trialType = 1:size(dataToPlot{ccell},2) 
-            if isempty(dataToPlot{ccell}{trialType}) == 0 
-                 for z = 1:size(dataToPlot{ccell},1)
-                    for trial = 1:size(dataToPlot{ccell}{z,trialType},2)
-                        [filtD] = MovMeanSmoothData(dataToPlot{ccell}{z,trialType}{trial},filtTime,FPS);
-                        filtData{count}{z,trialType}{trial} = filtD;
+%% smooth data if you want 
+smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
+
+if smoothQ == 1 
+    UIr = size(userInput,1)+1;
+    filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
+    count = 1;
+    for ccell = 1:length(dataToPlot)
+        if isempty(dataToPlot{ccell}) == 0 
+            for trialType = 1:size(dataToPlot{ccell},2) 
+                if isempty(dataToPlot{ccell}{trialType}) == 0 
+                     for z = 1:size(dataToPlot{ccell},1)
+                        for trial = 1:size(dataToPlot{ccell}{z,trialType},2)
+                            [filtD] = MovMeanSmoothData(dataToPlot{ccell}{z,trialType}{trial},filtTime,FPS);
+                            filtData{count}{z,trialType}{trial} = filtD;
+                        end 
                     end 
                 end 
-            end 
-        end
-        count = count+1;
+            end
+            count = count+1;
+        end 
+    end 
+elseif smoothQ == 0 
+    count = 1;
+    for ccell = 1:length(dataToPlot)
+        if isempty(dataToPlot{ccell}) == 0 
+            for trialType = 1:size(dataToPlot{ccell},2) 
+                if isempty(dataToPlot{ccell}{trialType}) == 0 
+                     for z = 1:size(dataToPlot{ccell},1)
+                        for trial = 1:size(dataToPlot{ccell}{z,trialType},2)                           
+                            filtData{count}{z,trialType}{trial} = dataToPlot{ccell}{z,trialType}{trial};
+                        end 
+                    end 
+                end 
+            end
+            count = count+1;
+        end 
     end 
 end 
 
 %% plot your data 
 dataMin = input("data Y axis MIN: ");
 dataMax = input("data Y axis MAX: ");
-%---------------------------------------------
 FPSstack = FPS/numZplanes;
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 
@@ -97,7 +116,12 @@ for count = 1:length(filtData)
                     %xlim([1 size(dataToPlot{cell}{z,trialType}{trial},2)]);
  
                 end    
-                title(sprintf("Data smoothed by %d seconds. Z plane #%d. DA Ca ROI #%d",filtTime,z,count));
+                if smoothQ == 1 
+                    title(sprintf("Data smoothed by %d seconds. Z plane #%d. DA Ca ROI #%d",filtTime,z,count));
+                elseif smoothQ == 0
+                    title(sprintf("Raw data. Z plane #%d. DA Ca ROI #%d",z,count));
+                end 
+                
             end                         
         end
         
