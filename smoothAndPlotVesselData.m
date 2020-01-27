@@ -8,8 +8,8 @@ if smoothQ == 1
     filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
     filtData = cell(1,length(VdataToPlot));
     for z = 1:length(VdataToPlot)
-        for ROI = 1:size(VdataToPlot{1},2)
-            for trialType = 1:size(VdataToPlot{1}{1},2)   
+        for ROI = 1:size(VdataToPlot{z},2)
+            for trialType = 1:size(VdataToPlot{z}{1},2)   
                 if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
                     for trial = 1:length(VdataToPlot{z}{ROI}{trialType})                         
                         [filtD] = MovMeanSmoothData(VdataToPlot{z}{ROI}{trialType}{trial},filtTime,FPS);

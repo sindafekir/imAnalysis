@@ -156,11 +156,6 @@ for Z = 1:length(ROIstacks)
     end 
 end  
 
-
-
-
-
-
            
 %% normalize and z score 
             
@@ -197,26 +192,6 @@ BdataToPlot = zData;
 %% plot your data 
 smoothAndPlotBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
 
-%% average across ROIs and z planes 
-for Z = 1:length(ROIstacks)
-    for trialType = 1:size(inputStacks{z},2)
-        for VROI = 1:numROIs 
-            if isempty(inputStacks{z}{trialType}) == 0 
-                for trial = 1:size(ROIstacks{Z}{trialType},2)
-                    BAVdataToPlot1_array{Z}{trialType}{trial}(VROI,:) = BdataToPlot{Z}{trialType}{trial}{VROI};
-                    BAVdataToPlot1{Z}{trialType}{trial} = nanmean(BAVdataToPlot1_array{Z}{trialType}{trial},1);
-                    
-        
-                    BAVdataToPlot2_array{trialType}{trial}(Z,:) = BAVdataToPlot1{Z}{trialType}{trial};
-                    BAVdataToPlot{trialType}{trial} = nanmean(BAVdataToPlot2_array{trialType}{trial},1);
-                end 
-            end 
-        end 
-    end 
-end 
-
-
-
 %% plot averaged data 
-smoothAndPlotAVBBBData(BAVdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
+smoothAndPlotAVBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
 end 

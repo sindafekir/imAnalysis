@@ -70,13 +70,13 @@ for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2)
                     Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
                     Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+11);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 end 
                 for trial = 1:size(BdataToPlot{Z}{trialType},2)  % this plots all trials  

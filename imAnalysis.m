@@ -306,7 +306,9 @@ AVwheelData = cell(1,size(sortedStacks{1},2));
 for trialType = 1:size(sortedStacks{1},2)   
     if isempty(sortedWheelData{trialType}) == 0
         for trial = 1:length(indices{trialType})
-            sortedWheel_Data{trialType}(:,:,:,trial) = sortedWheelData{trialType}{trial};
+            if isempty(sortedWheelData{trialType}{trial}) == 0
+                sortedWheel_Data{trialType}(:,:,:,trial) = sortedWheelData{trialType}{trial};
+            end 
         end   
         AVwheelData{trialType}(1,:) = mean(sortedWheel_Data{trialType},4); 
     end 
