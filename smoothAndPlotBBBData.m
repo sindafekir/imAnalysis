@@ -39,26 +39,27 @@ AVarray = cell(1,length(BdataToPlot));
 AVdata = cell(1,length(BdataToPlot));
 for Z = 1:length(BdataToPlot)
     for trialType = 1:size(BdataToPlot{Z},2)
-        if isempty(BdataToPlot{Z}{trialType}) == 0 
+        if isempty(filtData{Z}{trialType}) == 0 
             for trial = 1:size(BdataToPlot{Z}{trialType},2)
                  for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) 
                     AVarray{Z}{trialType}{VROI}(trial,:) = filtData{Z}{trialType}{trial}{VROI};
+                    AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
                  end 
             end 
-            AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
+            
         end      
     end 
 end 
 
 %% plot 
-% dataMin = input("data Y axis MIN: ");
-% dataMax = input("data Y axis MAX: ");
+dataMin = input("data Y axis MIN: ");
+dataMax = input("data Y axis MAX: ");
 FPSstack = FPS/numZplanes;
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 
-for VROI = 1%:size(BdataToPlot{Z}{trialType}{trial},2)
-    for Z = 1%:length(BdataToPlot)          
-        for trialType = 2%1:size(BdataToPlot{Z},2)  
+for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2)
+    for Z = 1:length(BdataToPlot)          
+        for trialType = 1:size(BdataToPlot{Z},2)  
             if isempty(BdataToPlot{Z}{trialType}) == 0
             
             
@@ -69,7 +70,7 @@ for VROI = 1%:size(BdataToPlot{Z}{trialType}{trial},2)
                     Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
                     Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);
@@ -91,7 +92,7 @@ for VROI = 1%:size(BdataToPlot{Z}{trialType}{trial},2)
                         alpha(0.03)   
                     elseif trialType == 3 
                         plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',3)
-                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack/numZplanes)*2)) round(baselineEndFrame+((FPSstack/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
                         alpha(0.03)                       
                     elseif trialType == 2 
                         plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',3)

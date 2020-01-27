@@ -49,7 +49,9 @@ for z = 1:length(VdataToPlot)
         for trialType = 1:size(VdataToPlot{1}{1},2)   
             if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
                 for trial = 1:length(VdataToPlot{z}{ROI}{trialType})    
-                    AVarray{z}{ROI}{trialType}(trial,:) = filtData{z}{ROI}{trialType}{trial};
+                    if isempty(VdataToPlot{z}{ROI}{trialType}{trial}) == 0    
+                        AVarray{z}{ROI}{trialType}(trial,:) = filtData{z}{ROI}{trialType}{trial};
+                    end 
                 end 
                 AVdata{z}{ROI}{trialType} = nanmean(AVarray{z}{ROI}{trialType},1);
              end 
@@ -68,7 +70,7 @@ for z = 1:length(VdataToPlot)
                     Frames = size(filtData{z}{ROI}{trialType}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
                     Frames = size(filtData{z}{ROI}{trialType}{1},2);
@@ -86,20 +88,20 @@ for z = 1:length(VdataToPlot)
 
                     hold on;
                     if trialType == 1 
-                        plot([round(baselineEndFrame+((FPSstack/numZplanes)*2)) round(baselineEndFrame+((FPSstack/numZplanes)*2))], [-5000 5000], 'k','LineWidth',3)
-                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack/numZplanes)*2)) round(baselineEndFrame+((FPSstack/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+                        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',3)
+                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
                         alpha(0.03)   
                     elseif trialType == 3 
-                        plot([round(baselineEndFrame+((FPSstack/numZplanes)*2)) round(baselineEndFrame+((FPSstack/numZplanes)*2))], [-5000 5000], 'k','LineWidth',3)
-                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack/numZplanes)*2)) round(baselineEndFrame+((FPSstack/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+                        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',3)
+                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
                         alpha(0.03)                       
                     elseif trialType == 2 
-                        plot([round(baselineEndFrame+((FPSstack/numZplanes)*20)) round(baselineEndFrame+((FPSstack/numZplanes)*20))], [-5000 5000], 'k','LineWidth',3)
-                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack/numZplanes)*20)) round(baselineEndFrame+((FPSstack/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+                        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',3)
+                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
                         alpha(0.03)   
                     elseif trialType == 4 
-                        plot([round(baselineEndFrame+((FPSstack/numZplanes)*20)) round(baselineEndFrame+((FPSstack/numZplanes)*20))], [-5000 5000], 'k','LineWidth',3)
-                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack/numZplanes)*20)) round(baselineEndFrame+((FPSstack/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+                        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',3)
+                        patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
                         alpha(0.03)  
                     end
                     ax.XTick = FrameVals;

@@ -1,84 +1,78 @@
-function smoothAndPlotBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
+function smoothAndPlotAVBBBData(BAVdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
 %% smooth data if you want 
 smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
 
 if smoothQ == 1 
     UIr = size(userInput,1)+1;
     filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
-    filtData = cell(1,length(BdataToPlot));
-    for Z = 1:length(BdataToPlot)
-        for trialType = 1:size(BdataToPlot{Z},2)             
-                if isempty(BdataToPlot{Z}{trialType}) == 0 
-                    for trial = 1:size(BdataToPlot{Z}{trialType},2)
-                         for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) %working on replacing numROIs 
-                            [filtD] = MovMeanSmoothData(BdataToPlot{Z}{trialType}{trial}{VROI},filtTime,FPS);
-                            filtData{Z}{trialType}{trial}{VROI} = filtD;
-                         end 
-                    end 
-                end 
-        end 
-    end 
-elseif smoothQ == 0 
-    filtData = cell(1,length(BdataToPlot));
-     for Z = 1:length(BdataToPlot)
-            for trialType = 1:size(BdataToPlot{Z},2)             
-                    if isempty(BdataToPlot{Z}{trialType}) == 0 
-                        for trial = 1:size(BdataToPlot{Z}{trialType},2)
-                             for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) %working on replacing numROIs 
-                                filtData{Z}{trialType}{trial}{VROI} = BdataToPlot{Z}{trialType}{trial}{VROI};
-                             end 
-                        end 
-                    end 
+    filtData = cell(1,length(BAVdataToPlot));
+        for trialType = 1:size(BAVdataToPlot,2)             
+            if isempty(BAVdataToPlot{trialType}) == 0 
+                for trial = 1:size(BAVdataToPlot{trialType},2)                 
+                    [filtD] = MovMeanSmoothData(BAVdataToPlot{trialType}{trial},filtTime,FPS);
+                    filtData{trialType}{trial} = filtD;                 
+                end
             end 
-    end 
+        end 
+
+elseif smoothQ == 0 
+    filtData = cell(1,length(BAVdataToPlot));
+        for trialType = 1:size(BAVdataToPlot,2)             
+            if isempty(BAVdataToPlot{trialType}) == 0 
+                for trial = 1:size(BAVdataToPlot{trialType},2)
+                    filtData{trialType}{trial} = BAVdataToPlot{trialType}{trial};
+                end 
+            end 
+        end 
 end 
 
 
 %average across trials
-AVarray = cell(1,length(BdataToPlot));
-AVdata = cell(1,length(BdataToPlot));
-for Z = 1:length(BdataToPlot)
-    for trialType = 1:size(BdataToPlot{Z},2)
-        if isempty(filtData{Z}{trialType}) == 0 
-            for trial = 1:size(BdataToPlot{Z}{trialType},2)
-                 for VROI = 1:size(BdataToPlot{Z}{trialType}{trial},2) 
-                    AVarray{Z}{trialType}{VROI}(trial,:) = filtData{Z}{trialType}{trial}{VROI};
-                 end 
-            end 
+AVarray = cell(1,length(BAVdataToPlot));
+AVdata = cell(1,length(BAVdataToPlot));
+
+for trialType = 1:size(BAVdataToPlot{Z},2)
+    if isempty(filtData{Z}{trialType}) == 0 
+        for trial = 1:size(BAVdataToPlot{Z}{trialType},2)
+
+            AVarray{Z}{trialType}{VROI}(trial,:) = filtData{Z}{trialType}{trial}{VROI};
             AVdata{Z}{trialType}{VROI} = nanmean(AVarray{Z}{trialType}{VROI},1);
-        end      
-    end 
+
+        end 
+    end   
+end      
+
 end 
 
 %% plot 
-% dataMin = input("data Y axis MIN: ");
-% dataMax = input("data Y axis MAX: ");
+dataMin = input("data Y axis MIN: ");
+dataMax = input("data Y axis MAX: ");
 FPSstack = FPS/numZplanes;
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 
-for VROI = 1%:size(BdataToPlot{Z}{trialType}{trial},2)
-    for Z = 1%:length(BdataToPlot)          
-        for trialType = 2%1:size(BdataToPlot{Z},2)  
-            if isempty(BdataToPlot{Z}{trialType}) == 0
+for VROI = 1:size(BAVdataToPlot{Z}{trialType}{trial},2)
+    for Z = 1:length(BAVdataToPlot)          
+        for trialType = 1:size(BAVdataToPlot{Z},2)  
+            if isempty(BAVdataToPlot{Z}{trialType}) == 0
             
             
                 figure;
-                ColorSet = varycolor(size(BdataToPlot{Z}{trialType},2));    
+                ColorSet = varycolor(size(BAVdataToPlot{Z}{trialType},2));    
                 %set time in x axis            
                 if trialType == 1 || trialType == 3 
-                    Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);                
+                    Frames = size(BAVdataToPlot{Z}{trialType}{1}{1},2);                
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
-                    Frames = size(BdataToPlot{Z}{trialType}{1}{1},2);
+                    Frames = size(BAVdataToPlot{Z}{trialType}{1}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 end 
-                for trial = 1:size(BdataToPlot{Z}{trialType},2)  % this plots all trials  
+                for trial = 1:size(BAVdataToPlot{Z}{trialType},2)  % this plots all trials  
                     hold all;                       
                     plot(filtData{Z}{trialType}{trial}{1},'Color',ColorSet(trial,:))
                     ax=gca;
@@ -108,7 +102,7 @@ for VROI = 1%:size(BdataToPlot{Z}{trialType}{trial},2)
                     plot(AVdata{Z}{trialType}{VROI}, 'k','LineWidth',3)    
                    %plot(AVdata, 'k','LineWidth',3)   
                     ylim([dataMin dataMax]);
-                    %xlim([1 size(BdataToPlot{cell}{z,trialType}{trial},2)]);
+                    %xlim([1 size(BAVdataToPlot{cell}{z,trialType}{trial},2)]);
  
                 end    
                 if smoothQ == 1 

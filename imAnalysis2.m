@@ -480,14 +480,14 @@ end
 %THE BELOW CODE IS FOR PLOTTING - HAS NOT BEEN STREAMLINED. LOOK AT IT AND
 %USE WHAT YOU NEED. 
 
-dataMin = input("data Y axis MIN: ");
-dataMax = input("data Y axis MAX: ");
-velMin = input("running velocity Y axis MIN: ");
-velMax = input("running velocity Y axis MAX: ");
+% dataMin = input("data Y axis MIN: ");
+% dataMax = input("data Y axis MAX: ");
+% velMin = input("running velocity Y axis MIN: ");
+% velMax = input("running velocity Y axis MAX: ");
 
-V = input('What vessel (diameter) do you want to see? '); 
+%V = input('What vessel (diameter) do you want to see? '); 
 
-plotDataAndRunVelocity(dataToPlot,AVsortedData,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
+%plotDataAndRunVelocity(dataToPlot,AVsortedData,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
 %plotAVDataAndRunVelocity(VdataToPlot,VAVsortedData,dataToPlot,AVsortedData,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,maxCells,ROIinds,V)
 %plotAVtTypeDataAndRunVelocity(VdataToPlot,VAVsortedData,AVtType1,AVtType2,AVtType3,AVtType4,AVAVtType1,AVAVtType2,AVAVtType3,AVAVtType4,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
 %plotAllAVDataAndRunVelocity(VdataToPlot,VAVsortedData,allAVarray,allAV,wheelDataToPlot,AVwheelData,FPS,numZplanes,sec_before_stim_start,dataMin,dataMax,velMin,velMax,maxCells,ROIinds)
