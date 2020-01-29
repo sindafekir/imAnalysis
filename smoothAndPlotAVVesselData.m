@@ -22,9 +22,6 @@ for z = 1:length(VdataToPlot)
 end 
 
 
-%@@@@@@@@@@@@@@@@@@@@@THE ABOVE WORKS - EDIT BELOW TO BE COMPATIBLE
-%W/AVERAGED V DATA
-
 
 %% smooth data if you want 
 smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
@@ -84,13 +81,13 @@ for trialType = 1:size(VdataToPlot{1}{1},2)
         ColorSet = varycolor(size(filtData{trialType},2));   
         %set time in x axis            
         if trialType == 1 || trialType == 3 
-            Frames = size(filtData{trialType}{1},2);                
+            Frames = size(filtData{trialType}{2},2);                
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
             FrameVals = round((1:FPSstack*2:Frames)-1); 
         elseif trialType == 2 || trialType == 4 
-            Frames = size(filtData{trialType}{1},2);
+            Frames = size(filtData{trialType}{2},2);
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
@@ -107,19 +104,19 @@ for trialType = 1:size(VdataToPlot{1}{1},2)
             if trialType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',3)
                 patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
-                alpha(0.03)   
+                alpha(0.02)   
             elseif trialType == 3 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',3)
                 patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
-                alpha(0.03)                       
+                alpha(0.02)                       
             elseif trialType == 2 
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',3)
                 patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
-                alpha(0.03)   
+                alpha(0.02)   
             elseif trialType == 4 
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',3)
                 patch([baselineEndFrame round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
-                alpha(0.03)  
+                alpha(0.02)  
             end
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;

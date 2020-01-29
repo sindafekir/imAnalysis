@@ -291,8 +291,10 @@ if VsegQ == 1
         for ROI = 1:size(sortedData{1},2)
             for trialType = 1:size(sortedData{1}{1},2)   
                 if isempty(sortedData{z}{ROI}{trialType}) == 0                  
-                    for trial = 1:length(sortedData{z}{ROI}{trialType})                    
-                         sortedStats_Array{z}{ROI}{trialType}(:,:,:,trial) = sortedData{z}{ROI}{trialType}{trial};
+                    for trial = 1:length(sortedData{z}{ROI}{trialType})  
+                        if isempty(sortedData{z}{ROI}{trialType}{trial}) == 0  
+                            sortedStats_Array{z}{ROI}{trialType}(:,:,:,trial) = sortedData{z}{ROI}{trialType}{trial};
+                        end 
                     end 
                     AVsortedData{z}{ROI}{trialType}(1,:) = mean(sortedStats_Array{z}{ROI}{trialType},4);
                 end               

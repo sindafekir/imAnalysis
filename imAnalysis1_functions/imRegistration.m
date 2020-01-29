@@ -125,7 +125,7 @@ if volIm == 1
         optimizer.Epsilon = 1.5;
         optimizer.GrowthFactor = 1.01;
         optimizer.MaximumIterations = 300;
-        parfor ind = 1:size(gVolStack,4)
+        for ind = 1:size(gVolStack,4)
             ggRegVolStack(:,:,:,ind) = imregister(gVolStack5(:,:,:,ind),gTemplate,'affine', optimizer, metric,'PyramidLevels',1);
             grRegVolStack(:,:,:,ind) = imregister(gVolStack5(:,:,:,ind),rTemplate,'affine', optimizer, metric,'PyramidLevels',1);
         end 
@@ -251,7 +251,7 @@ elseif volIm == 0
 end 
 
 %% check registration 
-
+%PICK UP HERE 202001/28
 if volIm == 1 
     if channelOfInterest == 1
         %check relationship b/w template and 2D registered images

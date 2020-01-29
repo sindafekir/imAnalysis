@@ -1,10 +1,10 @@
-function [stackOut,BG_ROIboundData] = backgroundSubtraction(stackIn)
+function [stackOut,BG_ROIboundData] = backgroundSubtraction(reg__Stacks)
 
 disp('Now select a background ROI for background subtraction')
-BG_ROIboundData = cell(1,length(stackIn));
-BG_ROIstacks = cell(1,length(stackIn));
-for stack = 1:length(stackIn)
-    data = stackIn{stack};
+BG_ROIboundData = cell(1,length(reg__Stacks));
+BG_ROIstacks = cell(1,length(reg__Stacks));
+for stack = 1:length(reg__Stacks)
+    data = reg__Stacks{stack};
     if stack == 1
         [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,data);
         BG_ROIboundData{stack}{1} = xmins;
@@ -29,16 +29,16 @@ for stack = 1:length(stackIn)
 end 
 
 % determine average pixel intensity of each frame in the control ROI
-BGpixInt = cell(1,length(stackIn));
-for stack = 1:length(stackIn)
+BGpixInt = cell(1,length(reg__Stacks));
+for stack = 1:length(reg__Stacks)
     BGpixInt{stack} = mean(mean(BG_ROIstacks{stack}{1}));
 end 
 
 % do background subtraction 
-stackOut = cell(1,length(stackIn));
-for stack = 1:length(stackIn) 
+stackOut = cell(1,length(reg__Stacks));
+for stack = 1:length(reg__Stacks) 
     for frame = 1:size(BGpixInt{1},3)
-        stackOut{stack}(:,:,frame) = (stackIn{stack}(:,:,frame)-BGpixInt{stack}(:,:,frame));
+        stackOut{stack}(:,:,frame) = (reg__Stacks{stack}(:,:,frame)-BGpixInt{stack}(:,:,frame));
     end 
 end 
 
