@@ -190,7 +190,7 @@ end
 BdataToPlot = zData;
 
 %% plot your data 
-smoothAndPlotBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
+%smoothAndPlotBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)
 
 %% plot averaged data 
 smoothAndPlotAVBBBData(BdataToPlot,userInput,FPS,numZplanes,sec_before_stim_start)

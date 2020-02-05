@@ -13,7 +13,7 @@ for cell = 1:maxCells
                 ColorSet = varycolor(size(dataToPlot{ROIinds(cell)}{z,trialType},2));    
                 %set time in x axis 
                 if trialType == 1 || trialType == 3 
-                    Frames = size(dataToPlot{6}{1,1}{1},2);
+                    Frames = size(dataToPlot{2}{1,1}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
@@ -21,7 +21,7 @@ for cell = 1:maxCells
                     %min_TimeVals = floor(min_TimeVals); 
                     FrameVals = round((1:FPSstack*2:Frames)-1); 
                 elseif trialType == 2 || trialType == 4 
-                    Frames = size(dataToPlot{6}{1,4}{1},2);
+                    Frames = size(dataToPlot{2}{1,4}{1},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);

@@ -8,9 +8,9 @@ for z = 1:length(dataToPlot)
             for trial = 1:size(dataToPlot2{z}{trialType},2)   
                 %dataToPlot{z}{trialType}{size(dataToPlot{z}{trialType},2)+1:size(dataToPlot2{z}{trialType},2)+size(dataToPlot{z}{trialType},2),:} = dataToPlot2{z}{trialType};  
                 %dataToPlot3{z}{trialType} = dataToPlot2{z}{trialType};
-                for ROI = 1:size(dataToPlot2{z}{trialType}{trial},2)
-                    dataToPlot{z}{trialType}{startSize+trial}{ROI} = dataToPlot2{z}{trialType}{trial}{ROI}; 
-                end 
+                
+                dataToPlot{z}{trialType}{startSize+trial} = dataToPlot2{z}{trialType}{trial}; 
+            
                
             end 
 

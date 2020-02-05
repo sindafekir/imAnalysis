@@ -149,7 +149,7 @@ elseif smoothQ == 0
 end 
 
 
-% average across trials
+%% average across trials
 
 % BBB data 
 BAVarray = cell(1,size(BAVdataToPlot,2));
@@ -165,11 +165,11 @@ for trialType = 1:size(BAVdataToPlot,2)
     end      
 end 
 
-% calcium data 
+
 %average across trials
 CAVarray = cell(1,length(CAVdataToPlot));
 CAVdata = cell(1,length(CAVdataToPlot));
-CSEMdata = cell(1,size(CAVdataToPlot,2));
+BSEMdata = cell(1,size(BAVdataToPlot,2));
 for trialType = 1:size(CAVdataToPlot,2)
     if isempty(CfiltData{trialType}) == 0 
         for trial = 1:size(CAVdataToPlot{trialType},2)
@@ -180,7 +180,6 @@ for trialType = 1:size(CAVdataToPlot,2)
     end   
 end 
 
-% vessel width data 
 VAVarray = cell(1,size(VAVdataToPlot,2) );
 VAVdata = cell(1,size(VAVdataToPlot,2) );
 VSEMdata = cell(1,size(VAVdataToPlot,2) );
@@ -195,6 +194,8 @@ for trialType = 1:size(VAVdataToPlot,2)
         VSEMdata{trialType} = (nanstd(VAVarray{trialType},1))/(sqrt(size(BAVdataToPlot{trialType},2)));
      end 
 end 
+
+
 
 
 %% plot 
@@ -219,17 +220,17 @@ baselineEndFrame = round(sec_before_stim_start*(FPSstack));
                 Frames = size(BAVdataToPlot{trialType}{1},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+11);
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
                 FrameVals = round((1:FPSstack*2:Frames)-1); 
             end 
             ax=gca;
             plot(BAVdata{trialType},'r')
             hold all;     
-            plot(CAVdata{trialType},'b')
+           % plot(CAVdata{count}{z,trialType},'b')
             plot(VAVdata{trialType},'k')
 
             varargout = boundedline(1:size(BAVdata{trialType},2),BAVdata{trialType},BSEMdata{trialType},'r','transparency', 0.3,'alpha');                                                                             
-            varargout = boundedline(1:size(CAVdata{trialType},2),CAVdata{trialType},CSEMdata{trialType},'b','transparency', 0.3,'alpha');                                           
+%                     varargout = boundedline(1:size(CAVdata{count}{z,trialType},2),CAVdata{count}{z,trialType},CSEMdata{count}{z,trialType},'b','transparency', 0.3,'alpha');                                           
             varargout = boundedline(1:size(VAVdata{trialType},2),VAVdata{trialType},VSEMdata{trialType},'k','transparency', 0.3,'alpha');                        
 
 
@@ -258,9 +259,17 @@ baselineEndFrame = round(sec_before_stim_start*(FPSstack));
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',3) 
             end
 
-            legend('BBB','DA Calcium','Vessel Width')
+
+%                     legend('BBB data','DA Calcium','Vessel Width')
+            legend('BBB data','Vessel Width')
             ylim([dataMin dataMax]);
 
+
+%                     if smoothQ == 1 
+%                         title(sprintf('Data smoothed by %d seconds. Z plane #%d. BBB perm ROI #%d. DA Ca ROI #%d. Vessel Width ROI #%d',filtTime,Z,VROI,count,ROI));
+%                     elseif smoothQ == 0
+%                         title(sprintf("Raw BBB Data. Z plane #%d. BBB perm ROI #%d. DA Ca ROI #%d. Vessel Width ROI #%d",Z,VROI,count,ROI));
+%                     end 
             if smoothQ == 1 
                 title(sprintf('Data smoothed by %d seconds.',filtTime));
             elseif smoothQ == 0

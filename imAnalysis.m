@@ -158,10 +158,10 @@ if pixIntQ == 1
 %         %EDIT CALCIUM ROI MASKS BY HAND!!!!!
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%          CaROImasks{2}(CaROImasks{2}==7)=0; CaROImasks{3}(CaROImasks{3}==9)=5; CaROImasks{2}(CaROImasks{2}==8)=5; %CaROImasks{3}(CaROImasks{3}==8)=5;%CaROImasks{1}(CaROImasks{1}==14)=0;
-%          figure;imagesc(CaROImasks{1});grid on;figure;imagesc(CaROImasks{2});grid on;figure;imagesc(CaROImasks{3});grid on
-%         
+% %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+          CaROImasks{3}(CaROImasks{3}==17)=0; CaROImasks{3}(CaROImasks{3}==18)=0; CaROImasks{3}(CaROImasks{3}==15)=0; CaROImasks{3}(CaROImasks{3}==16)=0;CaROImasks{2}(CaROImasks{2}==10)=0;
+          figure;imagesc(CaROImasks{3});grid on;figure;imagesc(CaROImasks{2});grid on;figure;imagesc(CaROImasks{3});grid on
+% %         
         masksDoneQ = input('Have the calcium ROI masks been hand edited? Yes = 1. No = 0.');
         if masksDoneQ == 1 
             %determine the indices left for the edited CaROImasks or else
@@ -461,8 +461,8 @@ if cumStacksQ == 1
     end 
 end 
  
+wheelDataToPlot = cell(1,maxTtypeInd);
 for trialType = 1:maxTtypeInd 
-    wheelDataToPlot = cell(1,maxTtypeInd);
     if isempty(sortedWheelData2{trialType}) == 0 
         wheelDataToPlot{trialType} = sortedWheelData2{trialType}(indI2{trialType});  
     end 
