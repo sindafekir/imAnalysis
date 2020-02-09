@@ -5,19 +5,35 @@ cd(imAn2funcDir);
 [numROIs] = getUserInput(userInput,"How many ROIs are we making?");
 [ROIrotAngles] = getUserInput(userInput,"ROI Rotation Angles");
 
-for VROI = 1:numROIs 
+if numROIs > 1 
+    for VROI = 1:numROIs 
+        %rotate all the planes in Z per vessel ROI 
+        [rotStacks] = rotateStack2(reg_Stacks,ROIrotAngles(VROI)); 
+
+        %create your ROI and apply it to all planes in Z 
+        ROIstacks = cell(1,length(rotStacks));
+        for stack = 1:length(rotStacks)   
+                xmins = ROIboundData{VROI}{1};
+                ymins = ROIboundData{VROI}{2};
+                widths = ROIboundData{VROI}{3};
+                heights = ROIboundData{VROI}{4};
+                [ROI_stacks] = make_ROIs_notfirst_time(rotStacks{stack},xmins,ymins,widths,heights);
+                ROIstacks{stack}{VROI} = ROI_stacks;     
+        end 
+    end 
+elseif numROIs == 1 
     %rotate all the planes in Z per vessel ROI 
-    [rotStacks] = rotateStack2(reg_Stacks,ROIrotAngles(VROI)); 
-    
+    [rotStacks] = rotateStack2(reg_Stacks,ROIrotAngles); 
+
     %create your ROI and apply it to all planes in Z 
     ROIstacks = cell(1,length(rotStacks));
     for stack = 1:length(rotStacks)   
-            xmins = ROIboundData{VROI}{1};
-            ymins = ROIboundData{VROI}{2};
-            widths = ROIboundData{VROI}{3};
-            heights = ROIboundData{VROI}{4};
+            xmins = ROIboundData{1};
+            ymins = ROIboundData{2};
+            widths = ROIboundData{3};
+            heights = ROIboundData{4};
             [ROI_stacks] = make_ROIs_notfirst_time(rotStacks{stack},xmins,ymins,widths,heights);
-            ROIstacks{stack}{VROI} = ROI_stacks;     
+            ROIstacks{stack}{1} = ROI_stacks;     
     end 
 end 
 

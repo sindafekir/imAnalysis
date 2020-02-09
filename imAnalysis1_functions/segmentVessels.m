@@ -13,7 +13,7 @@ for VROI = 1:numROIs
 
     %create your ROI and apply it to all planes in Z 
     disp('Create your ROI for vessel segmentation');
-    ROIstacks = cell(1,length(rotStacks));
+
     for stack = 1:length(rotStacks)   
         if stack == 1
             [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,rotStacks{stack});

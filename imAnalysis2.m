@@ -41,9 +41,9 @@ end
 %% make cumulative, diff-cumulative, and DF/F stacks to output for calcium and BBB perm analysis 
 [FPS] = getUserInput(userInput,"FPS"); 
 [numZplanes] = getUserInput(userInput,"How many Z planes are there?");
-if cumStacksQ == 1  
-    [dffDataFirst20s2,CumDffDataFirst20s2,CumData2] = makeCumPixWholeEXPstacks(FPS,reg_Stacks,numZplanes,sec_before_stim_start);
-end
+% if cumStacksQ == 1  
+%     [dffDataFirst20s2,CumDffDataFirst20s2,CumData2] = makeCumPixWholeEXPstacks(FPS,reg_Stacks,numZplanes,sec_before_stim_start);
+% end
 
 %% make sure state start and end frames line up 
 [state_start_f,state_end_f,TrialTypes] = makeSureStartEndTrialTypesLineUp(reg_Stacks,state_start_f,state_end_f,TrialTypes,numZplanes);
@@ -80,9 +80,9 @@ if cutOffFrameQ == 1
         reg_Stacks = cell(1,numZplanes);
         for zStack = 1:numZplanes
             reg_Stacks{zStack} = reg___Stacks{zStack}(:,:,1:cutOffFrame);
-            CumData2{zStack}(:,:,cutOffFrame+1:end) = [];
-            CumDffDataFirst20s2{zStack}(:,:,cutOffFrame+1:end) = [];
-            dffDataFirst20s2{zStack}(:,:,cutOffFrame+1:end) = [];
+%             CumData2{zStack}(:,:,cutOffFrame+1:end) = [];
+%             CumDffDataFirst20s2{zStack}(:,:,cutOffFrame+1:end) = [];
+%             dffDataFirst20s2{zStack}(:,:,cutOffFrame+1:end) = [];
         end        
     end 
     
@@ -196,6 +196,7 @@ if pixIntQ == 1
     end    
 end 
 
+
 %% wheel data work goes here 
 %get median wheel value 
 WdataMed = median(ResampedVel_wheel_data);     
@@ -271,9 +272,9 @@ end
 
 if cumStacksQ == 1
     sortedStacks3 = cell(1,length(sortedStacks));
-    CumStacks3 = cell(1,length(sortedStacks));
-    CumDffStacks3 = cell(1,length(sortedStacks));
-    dffStacks3 = cell(1,length(sortedStacks));
+%     CumStacks3 = cell(1,length(sortedStacks));
+%     CumDffStacks3 = cell(1,length(sortedStacks));
+%     dffStacks3 = cell(1,length(sortedStacks));
     for z = 1:length(sortedStacks)
         for trialType = 1:maxTtypeInd     
             if ismember(uniqueTrialDataTemplate(trialType,:),uniqueTrialData,'rows') == 1
@@ -283,9 +284,9 @@ if cumStacksQ == 1
                 indI2{idxFin} = indI{idxStart};
                 indices2{idxFin} = indices{idxStart};                   
                 sortedStacks3{z}{idxFin} = sortedStacks2{z}{idxStart};  
-                CumStacks3{z}{idxFin} = CumStacks2{z}{idxStart};
-                CumDffStacks3{z}{idxFin} = CumDffStacks2{z}{idxStart};
-                dffStacks3{z}{idxFin} = dffStacks2{z}{idxStart};
+%                 CumStacks3{z}{idxFin} = CumStacks2{z}{idxStart};
+%                 CumDffStacks3{z}{idxFin} = CumDffStacks2{z}{idxStart};
+%                 dffStacks3{z}{idxFin} = dffStacks2{z}{idxStart};
             end 
         end          
     end 
@@ -333,16 +334,16 @@ end
 if cumStacksQ == 1 
     clear sortedStacks2 CumStacks2 CumDffStacks2 dffStacks2;
     sortedStacks2 = cell(1,length(sortedStacks));
-    CumStacks2 = cell(1,length(sortedStacks));
-    CumDffStacks2 = cell(1,length(sortedStacks));
-    dffStacks2 = cell(1,length(sortedStacks));
+%     CumStacks2 = cell(1,length(sortedStacks));
+%     CumDffStacks2 = cell(1,length(sortedStacks));
+%     dffStacks2 = cell(1,length(sortedStacks));
     for z = 1:length(sortedStacks)        
         for trialType = 1:maxTtypeInd     
             if isempty(indices2{trialType}) == 0
                 sortedStacks2{z}{trialType} = sortedStacks3{z}{trialType}(indI2{trialType});    
-                CumStacks2{z}{trialType} = CumStacks3{z}{trialType}(indI2{trialType}); 
-                CumDffStacks2{z}{trialType} = CumDffStacks3{z}{trialType}(indI2{trialType}); 
-                dffStacks2{z}{trialType} = dffStacks3{z}{trialType}(indI2{trialType}); 
+%                 CumStacks2{z}{trialType} = CumStacks3{z}{trialType}(indI2{trialType}); 
+%                 CumDffStacks2{z}{trialType} = CumDffStacks3{z}{trialType}(indI2{trialType}); 
+%                 dffStacks2{z}{trialType} = dffStacks3{z}{trialType}(indI2{trialType}); 
             end   
         end  
     end 
@@ -376,13 +377,13 @@ end
 
 if cumStacksQ == 1
     clear CumStacks3 CumDffStacks3 dffStacks3 sortedStacks3
-    [CumStacks3] = catData3(CumStacks,CumStacks2);
-    [CumDffStacks3] = catData3(CumDffStacks,CumDffStacks2);
-    [dffStacks3] = catData3(dffStacks,dffStacks2);
+%     [CumStacks3] = catData3(CumStacks,CumStacks2);
+%     [CumDffStacks3] = catData3(CumDffStacks,CumDffStacks2);
+%     [dffStacks3] = catData3(dffStacks,dffStacks2);
     [sortedStacks3] = catData3(sortedStacks,sortedStacks2);
-    CumData3 = vertcat(CumData,CumData2);
-    CumDffDataFirst20s3 = vertcat(CumDffDataFirst20s,CumDffDataFirst20s2);
-    dffDataFirst20s3 = vertcat(dffDataFirst20s,dffDataFirst20s2);
+%     CumData3 = vertcat(CumData,CumData2);
+%     CumDffDataFirst20s3 = vertcat(CumDffDataFirst20s,CumDffDataFirst20s2);
+%     dffDataFirst20s3 = vertcat(dffDataFirst20s,dffDataFirst20s2);
 end 
 
 [wheelDataToPlot3] = catWheelData(wheelDataToPlot,wheelDataToPlot2);
@@ -430,26 +431,26 @@ end
 
 % average dff, cum dff, and cum stacks across all trials ALSO average pix intensity/vessel width data if applicable
 if cumStacksQ == 1 
-    clear AVcumDffStacks AVcumStacks AVdffStacks AVStacks
-    CumDff_Stacks = cell(1,numZplanes);
-    Cum_Stacks = cell(1,numZplanes);
-    dff_Stacks = cell(1,numZplanes);
-    AVcumDffStacks = cell(1,numZplanes);
-    AVcumStacks = cell(1,numZplanes);
-    AVdffStacks = cell(1,numZplanes);
+%     clear AVcumDffStacks AVcumStacks AVdffStacks AVStacks
+%     CumDff_Stacks = cell(1,numZplanes);
+%     Cum_Stacks = cell(1,numZplanes);
+%     dff_Stacks = cell(1,numZplanes);
+%     AVcumDffStacks = cell(1,numZplanes);
+%     AVcumStacks = cell(1,numZplanes);
+%     AVdffStacks = cell(1,numZplanes);
     AVStacks = cell(1,numZplanes);
     for Z = 1:numZplanes
         for trialType = 1:size(sortedStacks3{Z},2)
             if isempty(sortedStacks3{Z}{trialType}) == 0 
                 for trial = 1:length(sortedStacks3{Z}{trialType})
-                    CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks3{Z}{trialType}{trial};
-                    Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks3{Z}{trialType}{trial};
-                    dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks3{Z}{trialType}{trial};
+%                     CumDff_Stacks{Z}{trialType}(:,:,:,trial) = CumDffStacks3{Z}{trialType}{trial};
+%                     Cum_Stacks{Z}{trialType}(:,:,:,trial) = CumStacks3{Z}{trialType}{trial};
+%                     dff_Stacks{Z}{trialType}(:,:,:,trial) = dffStacks3{Z}{trialType}{trial};
                     sorted_Stacks{Z}{trialType}(:,:,:,trial) = sortedStacks3{Z}{trialType}{trial};
                 end 
-                AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
-                AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
-                AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
+%                 AVcumDffStacks{Z}{trialType} = mean(CumDff_Stacks{Z}{trialType},4);
+%                 AVcumStacks{Z}{trialType} = mean(Cum_Stacks{Z}{trialType},4);
+%                 AVdffStacks{Z}{trialType} = mean(dff_Stacks{Z}{trialType},4);
                 AVStacks{Z}{trialType} = mean(sorted_Stacks{Z}{trialType},4);
             end 
         end 
@@ -468,7 +469,8 @@ end
  %% clear unecessary values 
 
 if cumStacksQ == 1
-    CumDffStacks = CumDffStacks3; CumStacks = CumStacks3; dffStacks = dffStacks3; sortedStacks = sortedStacks3; CumData = CumData3; CumDffDataFirst20s = CumDffDataFirst20s3; dffDataFirst20s = dffDataFirst20s3;
+    %CumDffStacks = CumDffStacks3; CumStacks = CumStacks3; dffStacks = dffStacks3; sortedStacks = sortedStacks3; CumData = CumData3; CumDffDataFirst20s = CumDffDataFirst20s3; dffDataFirst20s = dffDataFirst20s3;
+    sortedStacks = sortedStacks3; 
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start sortedStacks CumStacks CumDffStacks dffStacks CumData CumDffDataFirst20s dffDataFirst20s AVcumDffStacks AVcumStacks AVdffStacks AVStacks
 elseif  VsegQ == 1 || pixIntQ == 1
     clearvars -except dataToPlot AVsortedData wheelDataToPlot AVwheelData userInput FPS dataMin dataMax velMin velMax HDFchart numZplanes BG_ROIboundData CaROImasks uniqueTrialDataTemplate maxCells ROIorders ROIinds ROIboundData sec_before_stim_start

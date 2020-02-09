@@ -25,29 +25,31 @@ for Z = 1:length(BdataToPlot)
         
     end 
 end 
-
-%calcium data 
-ROI = 1;
-CAVdataToPlot2_array = cell(1,size(CdataToPlot{ROIinds(1)},2));
-CAVdataToPlot = cell(1,size(CdataToPlot{ROIinds(1)},2));
-for ccell = 1:maxCells
-    for trialType = 1:size(CdataToPlot{ROIinds(ccell)},2) 
-        for Z = 1:size(CdataToPlot{ROIinds(ccell)},1) 
-            if ismember(ROIinds(ccell),CaROImasks{Z}) == 1 
-%                 cellROI = max(unique(ROIorders{Z}(CaROImasks{Z} == ROIROIs(ccell))));
-                for trial = 1:length(CdataToPlot{ROIinds(ccell)}{Z,trialType})                   
-                    CAVdataToPlot1_array{ROI}{trialType}{trial}(Z,:) = CdataToPlot{ROIinds(ccell)}{Z,trialType}{trial};                   
-                    CAVdataToPlot1{ROI}{trialType}{trial} = nanmean(CAVdataToPlot1_array{ROI}{trialType}{trial},1);
-
-                    CAVdataToPlot2_array{trialType}{trial}(ROI,:) = CAVdataToPlot1{ROI}{trialType}{trial};
-                    CAVdataToPlot{trialType}{trial} = nanmean(CAVdataToPlot2_array{trialType}{trial},1);
-                    
-                end 
-            end 
-        end 
-    end 
-    ROI = ROI+1;
-end 
+% 
+% %calcium data 
+% ROI = 1;
+% CAVdataToPlot2_array = cell(1,size(CdataToPlot{ROIinds(1)},2));
+% CAVdataToPlot = cell(1,size(CdataToPlot{ROIinds(1)},2));
+% for ccell = 1:maxCells
+%     for trialType = 1:size(CdataToPlot{ROIinds(ccell)},2) 
+%         for Z = 1:size(CdataToPlot{ROIinds(ccell)},1) 
+%             if ismember(ROIinds(ccell),CaROImasks{Z}) == 1 
+% %                 cellROI = max(unique(ROIorders{Z}(CaROImasks{Z} == ROIROIs(ccell))));
+%                 for trial = 1:length(CdataToPlot{ROIinds(ccell)}{Z,trialType})    
+%                     if isempty(CdataToPlot{ROIinds(ccell)}{Z,trialType}{trial})==0
+%                         CAVdataToPlot1_array{ROI}{trialType}{trial}(Z,:) = CdataToPlot{ROIinds(ccell)}{Z,trialType}{trial};                   
+%                         CAVdataToPlot1{ROI}{trialType}{trial} = nanmean(CAVdataToPlot1_array{ROI}{trialType}{trial},1);
+% 
+%                         CAVdataToPlot2_array{trialType}{trial}(ROI,:) = CAVdataToPlot1{ROI}{trialType}{trial};
+%                         CAVdataToPlot{trialType}{trial} = nanmean(CAVdataToPlot2_array{trialType}{trial},1);
+%                     end 
+%                     
+%                 end 
+%             end 
+%         end 
+%     end 
+%     ROI = ROI+1;
+% end 
 
 %vessel width data 
 VAVdataToPlot1_array = cell(1,length(VdataToPlot));
@@ -91,17 +93,17 @@ if smoothQ == 1
             end 
         end 
     end 
-
-    % calcium data 
-    CfiltData = cell(1,length(CAVdataToPlot));
-    for trialType = 1:size(CAVdataToPlot,2)             
-        if isempty(CAVdataToPlot{trialType}) == 0 
-            for trial = 1:size(CAVdataToPlot{trialType},2)                 
-                [CfiltD] = MovMeanSmoothData(CAVdataToPlot{trialType}{trial},filtTime,FPS);
-                CfiltData{trialType}{trial} = CfiltD;                 
-            end
-        end 
-    end 
+% 
+%     % calcium data 
+%     CfiltData = cell(1,length(CAVdataToPlot));
+%     for trialType = 1:size(CAVdataToPlot,2)             
+%         if isempty(CAVdataToPlot{trialType}) == 0 
+%             for trial = 1:size(CAVdataToPlot{trialType},2)                 
+%                 [CfiltD] = MovMeanSmoothData(CAVdataToPlot{trialType}{trial},filtTime,FPS);
+%                 CfiltData{trialType}{trial} = CfiltD;                 
+%             end
+%         end 
+%     end 
     
     % vessel width data 
     VfiltData = cell(1,size(VAVdataToPlot,2));
@@ -125,17 +127,17 @@ elseif smoothQ == 0
             end 
         end 
     end 
-    
-    % calcium data 
-    CfiltData = cell(1,length(CAVdataToPlot));
-    for trialType = 1:size(CAVdataToPlot,2)             
-        if isempty(CAVdataToPlot{trialType}) == 0 
-            for trial = 1:size(CAVdataToPlot{trialType},2)
-                CfiltData{trialType}{trial} = CAVdataToPlot{trialType}{trial};
-            end 
-        end 
-    end 
-
+%     
+%     % calcium data 
+%     CfiltData = cell(1,length(CAVdataToPlot));
+%     for trialType = 1:size(CAVdataToPlot,2)             
+%         if isempty(CAVdataToPlot{trialType}) == 0 
+%             for trial = 1:size(CAVdataToPlot{trialType},2)
+%                 CfiltData{trialType}{trial} = CAVdataToPlot{trialType}{trial};
+%             end 
+%         end 
+%     end 
+% 
     % vessel data 
     VfiltData = cell(1,size(VAVdataToPlot,2));
     for trialType = 1:size(VAVdataToPlot,2)   
@@ -164,21 +166,23 @@ for trialType = 1:size(BAVdataToPlot,2)
         BSEMdata{trialType} = (nanstd(BAVarray{trialType},1))/(sqrt(size(BfiltData{trialType},2)));
     end      
 end 
-
-% calcium data 
-%average across trials
-CAVarray = cell(1,length(CAVdataToPlot));
-CAVdata = cell(1,length(CAVdataToPlot));
-CSEMdata = cell(1,size(CAVdataToPlot,2));
-for trialType = 1:size(CAVdataToPlot,2)
-    if isempty(CfiltData{trialType}) == 0 
-        for trial = 1:size(CAVdataToPlot{trialType},2)
-            CAVarray{trialType}(trial,:) = CfiltData{trialType}{trial};
-            CAVdata{trialType} = nanmean(CAVarray{trialType},1);
-            CSEMdata{trialType} = (nanstd(CAVarray{trialType},1))/(sqrt(size(CfiltData{trialType},2)));
-        end 
-    end   
-end 
+% 
+% % calcium data 
+% %average across trials
+% CAVarray = cell(1,length(CAVdataToPlot));
+% CAVdata = cell(1,length(CAVdataToPlot));
+% CSEMdata = cell(1,size(CAVdataToPlot,2));
+% for trialType = 1:size(CAVdataToPlot,2)
+%     if isempty(CfiltData{trialType}) == 0 
+%         for trial = 1:size(CAVdataToPlot{trialType},2)
+%             if isempty(CfiltData{trialType}{trial}) == 0 
+%                 CAVarray{trialType}(trial,:) = CfiltData{trialType}{trial};
+%                 CAVdata{trialType} = nanmean(CAVarray{trialType},1);
+%                 CSEMdata{trialType} = (nanstd(CAVarray{trialType},1))/(sqrt(size(CfiltData{trialType},2)));
+%             end 
+%         end 
+%     end   
+% end 
 
 % vessel width data 
 VAVarray = cell(1,size(VAVdataToPlot,2) );
@@ -204,8 +208,8 @@ FPSstack = FPS/numZplanes;
 baselineEndFrame = round(sec_before_stim_start*(FPSstack));
 
 %for count = length(CfiltData)
-    for trialType = 1:size(BAVdata,2)  
-        if isempty(BAVdata{trialType}) == 0
+    for trialType = 1:size(BAVdataToPlot,2)  
+        if isempty(BAVdataToPlot{trialType}) == 0
 
             figure;
             %set time in x axis            
@@ -225,11 +229,11 @@ baselineEndFrame = round(sec_before_stim_start*(FPSstack));
             ax=gca;
             plot(BAVdata{trialType},'r')
             hold all;     
-            plot(CAVdata{trialType},'b')
+%             plot(CAVdata{trialType},'b')
             plot(VAVdata{trialType},'k')
 
             varargout = boundedline(1:size(BAVdata{trialType},2),BAVdata{trialType},BSEMdata{trialType},'r','transparency', 0.3,'alpha');                                                                             
-            varargout = boundedline(1:size(CAVdata{trialType},2),CAVdata{trialType},CSEMdata{trialType},'b','transparency', 0.3,'alpha');                                           
+%             varargout = boundedline(1:size(CAVdata{trialType},2),CAVdata{trialType},CSEMdata{trialType},'b','transparency', 0.3,'alpha');                                           
             varargout = boundedline(1:size(VAVdata{trialType},2),VAVdata{trialType},VSEMdata{trialType},'k','transparency', 0.3,'alpha');                        
 
 
@@ -258,7 +262,8 @@ baselineEndFrame = round(sec_before_stim_start*(FPSstack));
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',3) 
             end
 
-            legend('BBB','DA Calcium','Vessel Width')
+%             legend('BBB','DA Calcium','Vessel Width')
+            legend('BBB','Vessel Width')
             ylim([dataMin dataMax]);
 
             if smoothQ == 1 
