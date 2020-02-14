@@ -9,7 +9,7 @@ d1_len{4} = length(BdataToPlot{1}{4}{1}{1});
 d2_len{1} = length(BdataToPlot2{1}{1}{1}{1});
 d2_len{2} = length(BdataToPlot2{1}{2}{1}{1});
 d2_len{3} = length(BdataToPlot2{1}{3}{1}{1});
-d2_len{4} = length(BdataToPlot2{1}{4}{1}{2});
+d2_len{4} = length(BdataToPlot2{1}{4}{1}{1});
 
 if d1_len{1} > d2_len{1}
     dlenQ = 1;

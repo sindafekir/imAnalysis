@@ -50,30 +50,30 @@ end
 %     end 
 %     ROI = ROI+1;
 % end 
-
-%vessel width data 
-VAVdataToPlot1_array = cell(1,length(VdataToPlot));
-VAVdataToPlot1 = cell(1,length(VdataToPlot));
-VAVdataToPlot2_array = cell(1,size(VdataToPlot{1}{1},2));
-VAVdataToPlot = cell(1,size(VdataToPlot{1}{1},2));
-for z = 1:length(VdataToPlot)
-    for ROI = 1:size(VdataToPlot{z},2)
-        for trialType = 1:size(VdataToPlot{1}{1},2)   
-            if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
-                for trial = 1:length(VdataToPlot{z}{ROI}{trialType})      
-                     if isempty(VdataToPlot{z}{ROI}{trialType}{trial}) == 0    
-                        
-                        VAVdataToPlot1_array{z}{trialType}{trial}(ROI,:) = VdataToPlot{z}{ROI}{trialType}{trial};
-                        VAVdataToPlot1{z}{trialType}{trial} = nanmean(VAVdataToPlot1_array{z}{trialType}{trial},1);
-
-                        VAVdataToPlot2_array{trialType}{trial}(z,:) = VAVdataToPlot1{z}{trialType}{trial};
-                        VAVdataToPlot{trialType}{trial} = nanmean(VAVdataToPlot2_array{trialType}{trial},1);
-                     end 
-                end 
-            end 
-        end 
-    end 
-end 
+% 
+% %vessel width data 
+% VAVdataToPlot1_array = cell(1,length(VdataToPlot));
+% VAVdataToPlot1 = cell(1,length(VdataToPlot));
+% VAVdataToPlot2_array = cell(1,size(VdataToPlot{1}{1},2));
+% VAVdataToPlot = cell(1,size(VdataToPlot{1}{1},2));
+% for z = 1:length(VdataToPlot)
+%     for ROI = 1:size(VdataToPlot{z},2)
+%         for trialType = 1:size(VdataToPlot{1}{1},2)   
+%             if isempty(VdataToPlot{z}{ROI}{trialType}) == 0                  
+%                 for trial = 1:length(VdataToPlot{z}{ROI}{trialType})      
+%                      if isempty(VdataToPlot{z}{ROI}{trialType}{trial}) == 0    
+%                         
+%                         VAVdataToPlot1_array{z}{trialType}{trial}(ROI,:) = VdataToPlot{z}{ROI}{trialType}{trial};
+%                         VAVdataToPlot1{z}{trialType}{trial} = nanmean(VAVdataToPlot1_array{z}{trialType}{trial},1);
+% 
+%                         VAVdataToPlot2_array{trialType}{trial}(z,:) = VAVdataToPlot1{z}{trialType}{trial};
+%                         VAVdataToPlot{trialType}{trial} = nanmean(VAVdataToPlot2_array{trialType}{trial},1);
+%                      end 
+%                 end 
+%             end 
+%         end 
+%     end 
+% end 
 
 
 %% smooth data if you want 
@@ -104,17 +104,17 @@ if smoothQ == 1
 %             end
 %         end 
 %     end 
-    
-    % vessel width data 
-    VfiltData = cell(1,size(VAVdataToPlot,2));
-    for trialType = 1:size(VAVdataToPlot,2)   
-        if isempty(VAVdataToPlot{trialType}) == 0                  
-            for trial = 1:length(VAVdataToPlot{trialType})                         
-                [VfiltD] = MovMeanSmoothData(VAVdataToPlot{trialType}{trial},filtTime,FPS);
-                VfiltData{trialType}{trial} = VfiltD;                        
-            end 
-        end 
-    end
+%     
+%     % vessel width data 
+%     VfiltData = cell(1,size(VAVdataToPlot,2));
+%     for trialType = 1:size(VAVdataToPlot,2)   
+%         if isempty(VAVdataToPlot{trialType}) == 0                  
+%             for trial = 1:length(VAVdataToPlot{trialType})                         
+%                 [VfiltD] = MovMeanSmoothData(VAVdataToPlot{trialType}{trial},filtTime,FPS);
+%                 VfiltData{trialType}{trial} = VfiltD;                        
+%             end 
+%         end 
+%     end
      
     
 elseif smoothQ == 0 
@@ -138,15 +138,15 @@ elseif smoothQ == 0
 %         end 
 %     end 
 % 
-    % vessel data 
-    VfiltData = cell(1,size(VAVdataToPlot,2));
-    for trialType = 1:size(VAVdataToPlot,2)   
-        if isempty(VAVdataToPlot{trialType}) == 0                  
-            for trial = 1:length(VAVdataToPlot{trialType})    
-                VfiltData{trialType}{trial} = VAVdataToPlot{trialType}{trial};                        
-            end 
-        end 
-    end
+%     % vessel data 
+%     VfiltData = cell(1,size(VAVdataToPlot,2));
+%     for trialType = 1:size(VAVdataToPlot,2)   
+%         if isempty(VAVdataToPlot{trialType}) == 0                  
+%             for trial = 1:length(VAVdataToPlot{trialType})    
+%                 VfiltData{trialType}{trial} = VAVdataToPlot{trialType}{trial};                        
+%             end 
+%         end 
+%     end
     
 end 
 
@@ -183,22 +183,22 @@ end
 %         end 
 %     end   
 % end 
-
-% vessel width data 
-VAVarray = cell(1,size(VAVdataToPlot,2) );
-VAVdata = cell(1,size(VAVdataToPlot,2) );
-VSEMdata = cell(1,size(VAVdataToPlot,2) );
-for trialType = 1:size(VAVdataToPlot,2)   
-    if isempty(VAVdataToPlot{trialType}) == 0                  
-        for trial = 1:length(VAVdataToPlot{trialType})    
-            if isempty(VAVdataToPlot{trialType}{trial}) == 0 
-                VAVarray{trialType}(trial,:) = VfiltData{trialType}{trial};
-            end 
-        end 
-        VAVdata{trialType} = nanmean(VAVarray{trialType},1);
-        VSEMdata{trialType} = (nanstd(VAVarray{trialType},1))/(sqrt(size(BAVdataToPlot{trialType},2)));
-     end 
-end 
+% 
+% % vessel width data 
+% VAVarray = cell(1,size(VAVdataToPlot,2) );
+% VAVdata = cell(1,size(VAVdataToPlot,2) );
+% VSEMdata = cell(1,size(VAVdataToPlot,2) );
+% for trialType = 1:size(VAVdataToPlot,2)   
+%     if isempty(VAVdataToPlot{trialType}) == 0                  
+%         for trial = 1:length(VAVdataToPlot{trialType})    
+%             if isempty(VAVdataToPlot{trialType}{trial}) == 0 
+%                 VAVarray{trialType}(trial,:) = VfiltData{trialType}{trial};
+%             end 
+%         end 
+%         VAVdata{trialType} = nanmean(VAVarray{trialType},1);
+%         VSEMdata{trialType} = (nanstd(VAVarray{trialType},1))/(sqrt(size(BAVdataToPlot{trialType},2)));
+%      end 
+% end 
 
 
 %% plot 
@@ -230,11 +230,11 @@ baselineEndFrame = round(sec_before_stim_start*(FPSstack));
             plot(BAVdata{trialType},'r')
             hold all;     
 %             plot(CAVdata{trialType},'b')
-            plot(VAVdata{trialType},'k')
+%             plot(VAVdata{trialType},'k')
 
             varargout = boundedline(1:size(BAVdata{trialType},2),BAVdata{trialType},BSEMdata{trialType},'r','transparency', 0.3,'alpha');                                                                             
 %             varargout = boundedline(1:size(CAVdata{trialType},2),CAVdata{trialType},CSEMdata{trialType},'b','transparency', 0.3,'alpha');                                           
-            varargout = boundedline(1:size(VAVdata{trialType},2),VAVdata{trialType},VSEMdata{trialType},'k','transparency', 0.3,'alpha');                        
+%             varargout = boundedline(1:size(VAVdata{trialType},2),VAVdata{trialType},VSEMdata{trialType},'k','transparency', 0.3,'alpha');                        
 
 
             ax.XTick = FrameVals;
@@ -263,7 +263,7 @@ baselineEndFrame = round(sec_before_stim_start*(FPSstack));
             end
 
 %             legend('BBB','DA Calcium','Vessel Width')
-            legend('BBB','Vessel Width')
+            legend('BBB')
             ylim([dataMin dataMax]);
 
             if smoothQ == 1 

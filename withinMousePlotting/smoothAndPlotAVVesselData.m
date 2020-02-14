@@ -23,7 +23,7 @@ end
 
 
 
-%% smooth data if you want 
+% smooth data if you want 
 smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
 
 if smoothQ == 1 
@@ -81,7 +81,7 @@ for trialType = 1:size(VdataToPlot{1}{1},2)
         ColorSet = varycolor(size(filtData{trialType},2));   
         %set time in x axis            
         if trialType == 1 || trialType == 3 
-            Frames = size(filtData{trialType}{2},2);                
+            Frames = size(filtData{trialType}{1},2);                
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);

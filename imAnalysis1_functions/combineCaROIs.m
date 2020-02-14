@@ -38,7 +38,7 @@ minMinDist = min(min(ROIdistances));
 %set distance threshold
 if minMinDist < avROIwidth
     %dilate relevant ROIs 
-    radius = minMinDist;
+    radius = round(minMinDist);
     decomposition = 0;
     se = strel('disk', radius, decomposition);
     Rdilated = imdilate(R{1},se);

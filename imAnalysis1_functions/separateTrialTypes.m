@@ -84,7 +84,14 @@ state_end_f = ceil(state_end_f);
 trialLengths = state_end_f - state_start_f; 
 lengths = unique(trialLengths); 
 lengths(:,2) = histc(trialLengths(:),lengths);
-   
+
+if length(Ttypes) ~= length(trialLengths)
+    if length(Ttypes) < length(trialLengths)
+        trialLengths = trialLengths(1:length(Ttypes));
+    elseif length(Ttypes) > length(trialLengths)
+        Ttypes = Ttypes(1:length(trialLengths));
+    end 
+end 
 trialData = horzcat(Ttypes,trialLengths);    
 [uniqueTrialData,~,ib] = unique(trialData,'rows');
 uniqueTrialDataOcurr = accumarray(ib, 1);

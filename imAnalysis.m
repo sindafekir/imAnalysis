@@ -61,8 +61,13 @@ end
 %% make sure state start and end frames line up 
 [state_start_f,state_end_f,TrialTypes] = makeSureStartEndTrialTypesLineUp(reg_Stacks,state_start_f,state_end_f,TrialTypes,numZplanes);
 
-%% resample velocity data by trial type 
-[ResampedVel_wheel_data] = resampleWheelData(reg_Stacks,vel_wheel_data);
+%% resample velocity data by trial type
+if length(vel_wheel_data)*size(reg_Stacks{1},3) > 2^31
+    ResampedVel_wheel_data1 = resample(vel_wheel_data,(length(vel_wheel_data)/2),length(vel_wheel_data));
+    ResampedVel_wheel_data = resample(ResampedVel_wheel_data1,size(reg_Stacks{1},3),length(ResampedVel_wheel_data1));
+elseif length(vel_wheel_data)*size(reg_Stacks{1},3) < 2^31
+    ResampedVel_wheel_data = resample(vel_wheel_data,size(reg_Stacks{1},3),length(vel_wheel_data));
+end 
 
 %% get rid of frames/trials where registration gets wonky 
 %EVENTUALLY MAKE THIS AUTOMATIC INSTEAD OF HAVING TO INPUT WHAT FRAME THE
@@ -159,8 +164,8 @@ if pixIntQ == 1
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-%           CaROImasks{3}(CaROImasks{3}==10)=0; CaROImasks{3}(CaROImasks{3}==11)=0; CaROImasks{3}(CaROImasks{3}==9)=0; %CaROImasks{3}(CaROImasks{3}==16)=0;CaROImasks{2}(CaROImasks{2}==10)=0;
+% 
+%           CaROImasks{1}(CaROImasks{1}==2)=0; CaROImasks{2}(CaROImasks{2}>15)=0; CaROImasks{1}(CaROImasks{1}==3)=0; CaROImasks{3}(CaROImasks{3}==8)=0;%CaROImasks{2}(CaROImasks{2}==10)=0;
 %           figure;imagesc(CaROImasks{1});grid on;figure;imagesc(CaROImasks{2});grid on;figure;imagesc(CaROImasks{3});grid on
 %         
         masksDoneQ = input('Have the calcium ROI masks been hand edited? Yes = 1. No = 0.');

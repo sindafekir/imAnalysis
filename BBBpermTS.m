@@ -107,7 +107,6 @@ while segQ == 1
     VROI = input("What BBB ROI do you want to see? ");
     trialType = input("What trial type do you want to see? ");
     
-
     %play segmentation boundaries over images 
     implay(segOverlays{Z}{trialType}{1}{VROI})
 
@@ -179,7 +178,7 @@ for Z = 1:length(ROIstacks)
                     dataSlidingBLs{Z}{trialType}{trial}{VROI} = dataSlidingBL;    
                     %subtract sliding baseline from DF/F
                     DFOFsubSBLs{Z}{trialType}{trial}{VROI} = DFOF{Z}{trialType}{trial}{VROI}-dataSlidingBLs{Z}{trialType}{trial}{VROI};                   
-                    %z-score data 
+                    %z-score data                
                     zData{Z}{trialType}{trial}{VROI} = zscore(DFOFsubSBLs{Z}{trialType}{trial}{VROI});
                 end 
             end 

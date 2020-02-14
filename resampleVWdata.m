@@ -6,9 +6,9 @@ d1_len{2} = length(dataToPlot{1}{1}{2}{1});
 d1_len{3} = length(dataToPlot{1}{1}{3}{1});
 d1_len{4} = length(dataToPlot{1}{1}{4}{1});
 
-d2_len{1} = length(dataToPlot2{1}{1}{1}{1});
-d2_len{2} = length(dataToPlot2{1}{1}{2}{1});
-d2_len{3} = length(dataToPlot2{1}{1}{3}{1});
+d2_len{1} = length(dataToPlot2{1}{1}{1}{2});
+d2_len{2} = length(dataToPlot2{1}{1}{2}{2});
+d2_len{3} = length(dataToPlot2{1}{1}{3}{2});
 d2_len{4} = length(dataToPlot2{1}{1}{4}{2});
 
 if d1_len{1} > d2_len{1}

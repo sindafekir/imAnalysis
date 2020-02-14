@@ -26,13 +26,13 @@ padD(:,end-(halfInd-1):end)=data(:,end-(halfInd-1):end);
 
 startQuant=halfInd;
 if size(data,1)>1
-    for n=1:size(data,2)
+    parfor n=1:size(data,2)
         td=padD(:,(n+startQuant)-startQuant:(n+startQuant)+(startQuant-1));
         aa=quantile(td,quantileThresh,2);
         out(:,n)=diag(aa);
     end
 else
-    for n=1:size(data,2)
+    parfor n=1:size(data,2)
         td=padD(:,(n+startQuant)-startQuant:(n+startQuant)+(startQuant-1));
         aa=quantile(td,quantileThresh);
         out(:,n)=aa;
