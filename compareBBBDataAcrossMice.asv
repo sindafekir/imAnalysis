@@ -1,15 +1,15 @@
 %% get just the BBB data
-temp = matfile('SFWT6_20190607_ROI4_BBB.mat');
-SFWT6_ROI4_Bdata = temp.BdataToPlot;
+temp = matfile('SF61_20200219_ROI2_1-10_BBB.mat');
+SF61_ROI3_Bdata = temp.BdataToPlot;
 
 %% resample 
-[RSFWT6_ROI3_Bdata,RSFWT6_ROI4_Bdata] = resampleBBBdata(SFWT6_ROI3_Bdata,SFWT6_ROI4_Bdata);
+[RSF61_ROI1_Bdata,RSF61_ROI3_Bdata] = resampleBBBdata(SF61_ROI1_Bdata,SF61_ROI3_Bdata);
 % [RSF57_ROI1_Bdata,RSF57_ROI2_Bdata] = resampleBBBdata(SF57_ROI1_Bdata,SF57_ROI2_Bdata);
 % [RSF56_ROI1_Bdata,RSF56_ROI2_Bdata] = resampleBBBdata(SF56_ROI1_Bdata,SF56_ROI2_Bdata);
 % [RSF53_ROI1_Bdata,RSF53_ROI2_Bdata] = resampleBBBdata(SF53_ROI1_Bdata,SF53_ROI2_Bdata);
 
 %% average across planes in Z, ROIs, and trials
-BdataToPlot = RSFWT6_ROI4_Bdata;
+BdataToPlot = RSF61_ROI3_Bdata;
 
 for Z = 1:length(BdataToPlot)
     for trialType = 1:size(BdataToPlot{Z},2)        
@@ -40,14 +40,14 @@ for trialType = 1:size(BAVdataToPlot,2)
     end   
 end    
 
-SFWT6_ROI4av = AVdata;
+SF61_ROI3av = AVdata;
 
 clear BAVdataToPlot1_array BAVdataToPlot1 BAVdataToPlot2_array BAVdataToPlot
 
 %% average across imaging FOVs 
 
-for trialType = 4%1:size(SFWT6_ROI1av,2)
-    SFWT6av{trialType} = (SFWT6_ROI3av{trialType} + SFWT6_ROI4av{trialType})/2;
+for trialType = 1:size(SF61_ROI1av,2)
+    SF61av{trialType} = (SF61_ROI1av{trialType} + SF61_ROI3av{trialType})/2;
 %     SF57av{trialType} = (SF57_ROI1av{trialType} + SF57_ROI2av{trialType})/2;
 %     SF56av{trialType} = SF56_ROI2av{trialType};%(SF56_ROI1av{trialType} + SF56_ROI2av{trialType})/2;
 %     SF53av{trialType} = SF53_ROI1av{trialType};%(SF53_ROI1av{trialType} + SF53_ROI2av{trialType})/2;
@@ -70,25 +70,24 @@ for trialType = 1:size(SF64_ROI1av,2)
     end 
 end 
 RSF63av = SF63av;
-RSFWT6av = SFWT6av;
+RSF64av = SF64av;
 
 %% put all data into the same array 
+for trialType = 1:size(SF64_ROI1av,2)
+    if isempty(RSF64av{trialType}) == 0 
+        miceData{trialType}(1,:) = RSF63av{trialType};
+        miceData{trialType}(2,:) = RSF64av{trialType};
+%         miceData{trialType}(3,:) = RSF58av{trialType};
+%         miceData{trialType}(4,:) = RSF53av{trialType};
+    end 
+end 
+
+%% get SEM and average across mice 
 % for trialType = 1:size(SF64_ROI1av,2)
-%     if isempty(RSF64av{trialType}) == 0 
-%         miceData{trialType}(1,:) = RSF63av{trialType};
-%         miceData{trialType}(2,:) = RSF64av{trialType};
-% %         miceData{trialType}(3,:) = RSF58av{trialType};
-% %         miceData{trialType}(4,:) = RSF53av{trialType};
-%     end 
+%     varMiceData{trialType} = nanvar(miceData{trialType});
+%     avMiceData{trialType} = nanmean(miceData{trialType});
 % end 
-% 
-% %% get SEM and average across mice 
-% % for trialType = 1:size(SF64_ROI1av,2)
-% %     varMiceData{trialType} = nanvar(miceData{trialType});
-% %     avMiceData{trialType} = nanmean(miceData{trialType});
-% % end 
-miceData = SFWT6av;
-avMiceData = SFWT6av;
+avMiceData = miceData;
 
 
 %% smooth data if you want 
@@ -121,7 +120,7 @@ end
 %% plot 
 dataMin = input("data Y axis MIN: ");
 dataMax = input("data Y axis MAX: ");
-FPSstack = FPS;
+FPSstack = FPS/3;
 baselineEndFrame = round(20*(FPSstack));
 
 
@@ -141,11 +140,11 @@ for trialType = 1:size(miceData,2)
             Frames = size(miceData{trialType}(1,:),2);
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+11);
             FrameVals = round((1:FPSstack*2:Frames)-1); 
         end 
         ax=gca;
-        plot(VfiltData{trialType},'r','LineWidth',2)
+        plot(VfiltData{trialType},'r')
         hold all;     
 
 %         varargout = boundedline(1:size(VfiltData{trialType},2),VfiltData{trialType},VfiltVar{trialType},'r','transparency', 0.3,'alpha');                                                                             

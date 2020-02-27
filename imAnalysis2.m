@@ -1,6 +1,6 @@
-%% register images 
+% %% register images 
 clear AVsortedData AVwheelData indices 
-[regStacks,userInput,~,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration2(userInput);
+% [regStacks,userInput,~,state_start_f,state_end_f,vel_wheel_data,TrialTypes,HDFchart] = imRegistration2(userInput);
 
 %% set what data you want to plot 
 [dataParseType] = getUserInput(userInput,'How many seconds before the stimulus starts do you want to plot?');
@@ -436,6 +436,7 @@ end
 
 % average dff, cum dff, and cum stacks across all trials ALSO average pix intensity/vessel width data if applicable
 if cumStacksQ == 1 
+    clear sorted_Stacks
 %     clear AVcumDffStacks AVcumStacks AVdffStacks AVStacks
 %     CumDff_Stacks = cell(1,numZplanes);
 %     Cum_Stacks = cell(1,numZplanes);

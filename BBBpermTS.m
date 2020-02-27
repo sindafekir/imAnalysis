@@ -29,7 +29,7 @@ ROIboundDatas = cell(1,numROIs);
 for VROI = 1:numROIs 
     disp('Create your ROI for BBB perm analysis');
 
-    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{1}{1});
+    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm{1}{4});
     ROIboundData{1} = xmins;
     ROIboundData{2} = ymins;
     ROIboundData{3} = widths;
@@ -66,9 +66,8 @@ while segQ == 1
 
     %segment the vessel (small sample of the data) 
     VROI = input("What BBB ROI do you want to use to make segmentation algorithm? ");
-    [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
 
-    imageSegmenter(ROIstacks{1}{1}{1}{VROI}{1}(:,:,size(ROIstacks{1}{1}{1}{VROI}{1},3)))
+    imageSegmenter(ROIstacks{1}{4}{1}{VROI}{1}(:,:,size(ROIstacks{1}{4}{1}{VROI}{1},3)))
     continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
 
     while continu == 1 
@@ -99,6 +98,7 @@ while segQ == 1
     end 
 
     %check segmentation 
+    [volIm] = getUserInput(userInput,'Is this volume imaging data? Yes = 1. Not = 0.');
     if volIm == 1
          Z = input("What Z plane do you want to see? ");
     elseif volIm == 0 

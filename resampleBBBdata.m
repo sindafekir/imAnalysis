@@ -1,19 +1,19 @@
 function [RBdataToPlot,RBdataToPlot2] = resampleBBBdata(BdataToPlot,BdataToPlot2)
 
 %% determine what dataset needs resampling 
-d1_len{1} = length(BdataToPlot{1}{1}{1}{1});
-d1_len{2} = length(BdataToPlot{1}{2}{1}{1});
-d1_len{3} = length(BdataToPlot{1}{3}{1}{1});
+% d1_len{1} = length(BdataToPlot{1}{1}{1}{1});
+% d1_len{2} = length(BdataToPlot{1}{2}{1}{1});
+% d1_len{3} = length(BdataToPlot{1}{3}{1}{1});
 d1_len{4} = length(BdataToPlot{1}{4}{1}{1});
 
-d2_len{1} = length(BdataToPlot2{1}{1}{1}{1});
-d2_len{2} = length(BdataToPlot2{1}{2}{1}{1});
-d2_len{3} = length(BdataToPlot2{1}{3}{1}{1});
+% d2_len{1} = length(BdataToPlot2{1}{1}{1}{1});
+% d2_len{2} = length(BdataToPlot2{1}{2}{1}{1});
+% d2_len{3} = length(BdataToPlot2{1}{3}{1}{1});
 d2_len{4} = length(BdataToPlot2{1}{4}{1}{1});
 
-if d1_len{1} > d2_len{1}
+if d1_len{4} > d2_len{4}
     dlenQ = 1;
-elseif d1_len{1} < d2_len{1}
+elseif d1_len{4} < d2_len{4}
     dlenQ = 2;
 end 
 

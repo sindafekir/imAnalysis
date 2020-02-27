@@ -1,19 +1,19 @@
 function [RdataToPlot,RdataToPlot2] = resampleVWdata(dataToPlot,dataToPlot2)
 
 %% determine what dataset needs resampling 
-d1_len{1} = length(dataToPlot{1}{1}{1}{1});
-d1_len{2} = length(dataToPlot{1}{1}{2}{1});
-d1_len{3} = length(dataToPlot{1}{1}{3}{1});
-d1_len{4} = length(dataToPlot{1}{1}{4}{1});
+% d1_len{1} = length(dataToPlot{1}{1}{1}{2});
+% d1_len{2} = length(dataToPlot{1}{1}{2}{2});
+% d1_len{3} = length(dataToPlot{1}{1}{3}{2});
+d1_len{4} = length(dataToPlot{1}{1}{4}{2});
 
-d2_len{1} = length(dataToPlot2{1}{1}{1}{2});
-d2_len{2} = length(dataToPlot2{1}{1}{2}{2});
-d2_len{3} = length(dataToPlot2{1}{1}{3}{2});
+% d2_len{1} = length(dataToPlot2{1}{1}{1}{2});
+% d2_len{2} = length(dataToPlot2{1}{1}{2}{2});
+% d2_len{3} = length(dataToPlot2{1}{1}{3}{2});
 d2_len{4} = length(dataToPlot2{1}{1}{4}{2});
 
-if d1_len{1} > d2_len{1}
+if d1_len{4} > d2_len{4}
     dlenQ = 1;
-elseif d1_len{1} < d2_len{1}
+elseif d1_len{4} < d2_len{4}
     dlenQ = 2;
 end 
 

@@ -1,19 +1,19 @@
 function [RWdataToPlot,RWdataToPlot2] = resampleWheelData(WdataToPlot,WdataToPlot2)
 
 %% determine what dataset needs resampling 
-d1_len{1} = length(WdataToPlot{1}{2});
-d1_len{2} = length(WdataToPlot{2}{2});
-d1_len{3} = length(WdataToPlot{3}{2});
+% d1_len{1} = length(WdataToPlot{1}{2});
+% d1_len{2} = length(WdataToPlot{2}{2});
+% d1_len{3} = length(WdataToPlot{3}{2});
 d1_len{4} = length(WdataToPlot{4}{2});
-
-d2_len{1} = length(WdataToPlot2{1}{2});
-d2_len{2} = length(WdataToPlot2{2}{2});
-d2_len{3} = length(WdataToPlot2{3}{2});
+% 
+% d2_len{1} = length(WdataToPlot2{1}{2});
+% d2_len{2} = length(WdataToPlot2{2}{2});
+% d2_len{3} = length(WdataToPlot2{3}{2});
 d2_len{4} = length(WdataToPlot2{4}{2});
 
-if d1_len{1} > d2_len{1}
+if d1_len{4} > d2_len{4}
     dlenQ = 1;
-elseif d1_len{1} < d2_len{1}
+elseif d1_len{4} < d2_len{4}
     dlenQ = 2;
 end 
 

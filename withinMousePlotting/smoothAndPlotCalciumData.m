@@ -54,7 +54,9 @@ for count = 1:length(filtData)
         if isempty(filtData{count}{trialType}) == 0 
              for z = 1:size(filtData{count},1)
                 for trial = 1:size(filtData{count}{z,trialType},2)
-                    AVarray{count}{z,trialType}(trial,:) = filtData{count}{z,trialType}{trial};
+                    if isempty(filtData{count}{z,trialType}{trial}) == 0 
+                        AVarray{count}{z,trialType}(trial,:) = filtData{count}{z,trialType}{trial};
+                    end 
                 end 
                 AVdata{count}{z,trialType} = nanmean(AVarray{count}{z,trialType},1);
              end 
