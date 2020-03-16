@@ -9,7 +9,8 @@ SFWT6_ROI4_Bdata = temp.BdataToPlot;
 % [RSF53_ROI1_Bdata,RSF53_ROI2_Bdata] = resampleBBBdata(SF53_ROI1_Bdata,SF53_ROI2_Bdata);
 
 %% average across planes in Z, ROIs, and trials
-BdataToPlot = RSFWT6_ROI4_Bdata;
+% BdataToPlot = RSFWT6_ROI4_Bdata;
+BdataToPlot = SF_57_70FITC_ROI2_Bdata;
 
 for Z = 1:length(BdataToPlot)
     for trialType = 1:size(BdataToPlot{Z},2)        
@@ -40,9 +41,9 @@ for trialType = 1:size(BAVdataToPlot,2)
     end   
 end    
 
-SFWT6_ROI4av = AVdata;
+SF57_ROI2av = AVdata;
 
-clear BAVdataToPlot1_array BAVdataToPlot1 BAVdataToPlot2_array BAVdataToPlot
+% clear BAVdataToPlot1_array BAVdataToPlot1 BAVdataToPlot2_array BAVdataToPlot
 
 %% average across imaging FOVs 
 
@@ -52,43 +53,35 @@ for trialType = 4%1:size(SFWT6_ROI1av,2)
 %     SF56av{trialType} = SF56_ROI2av{trialType};%(SF56_ROI1av{trialType} + SF56_ROI2av{trialType})/2;
 %     SF53av{trialType} = SF53_ROI1av{trialType};%(SF53_ROI1av{trialType} + SF53_ROI2av{trialType})/2;
 end 
-% SF63av = SF63_ROI1av;
-% SF64av = SF64_ROI1av;
+SF56av = SF56_ROI2av;
+SF58av = SF58_ROI2av;
 
 %% resample averaged individual mouse data 
-for trialType = 1:size(SF64_ROI1av,2)
+for trialType = 1:size(SF58_ROI2av,2)
     if trialType == 1 || trialType == 3 
-        goalLen = length(SF64av{1});
+        goalLen = length(SF58av{1});
 %         RSF58av{trialType} = resample(SF58av{trialType},goalLen,length(SF58av{trialType}));
-        RSF63av{trialType} = resample(SF63av{trialType},goalLen,length(SF63av{trialType}));
+        RSF56av{trialType} = resample(SF56av{trialType},goalLen,length(SF56av{trialType}));
 %         RSF53av{trialType} = resample(SF53av{trialType},goalLen,length(SF53av{trialType}));
     elseif trialType == 2 || trialType == 4 
-        goalLen = length(SF64av{4});
+        goalLen = length(SF58av{4});
 %         RSF58av{trialType} = resample(SF58av{trialType},goalLen,length(SF58av{trialType}));
-        RSF63av{trialType} = resample(SF63av{trialType},goalLen,length(SF63av{trialType}));
+        RSF56av{trialType} = resample(SF56av{trialType},goalLen,length(SF56av{trialType}));
 %         RSF53av{trialType} = resample(SF53av{trialType},goalLen,length(SF53av{trialType}));
     end 
 end 
-RSF63av = SF63av;
-RSFWT6av = SFWT6av;
+RSF58av = SF58av;
+% RSFWT6av = SFWT6av;
 
 %% put all data into the same array 
-% for trialType = 1:size(SF64_ROI1av,2)
-%     if isempty(RSF64av{trialType}) == 0 
-%         miceData{trialType}(1,:) = RSF63av{trialType};
-%         miceData{trialType}(2,:) = RSF64av{trialType};
-% %         miceData{trialType}(3,:) = RSF58av{trialType};
-% %         miceData{trialType}(4,:) = RSF53av{trialType};
-%     end 
-% end 
-% 
-% %% get SEM and average across mice 
-% % for trialType = 1:size(SF64_ROI1av,2)
-% %     varMiceData{trialType} = nanvar(miceData{trialType});
-% %     avMiceData{trialType} = nanmean(miceData{trialType});
-% % end 
-miceData = SFWT6av;
-avMiceData = SFWT6av;
+for trialType = 1:size(SF58_ROI2av,2)
+    if isempty(RSF56av{trialType}) == 0 
+        miceData{trialType}(1,:) = RSF56av{trialType};
+        miceData{trialType}(2,:) = RSF58av{trialType};
+%         miceData{trialType}(3,:) = RSF58av{trialType};
+%         miceData{trialType}(4,:) = RSF53av{trialType};
+    end 
+end 
 
 
 %% smooth data if you want 
@@ -97,8 +90,8 @@ smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ == 1 
     filtTime = input('How many seconds do you want to smooth your data by? '); 
     
-    for trialType = 1:size(avMiceData,2)   
-        if isempty(avMiceData{trialType}) == 0                  
+    for trialType = 1:size(miceData,2)   
+        if isempty(miceData{trialType}) == 0                  
 %             [VfiltD] = MovMeanSmoothData(avMiceData{trialType},filtTime,FPS);
             [VfiltD] = MovMeanSmoothData(miceData{trialType},filtTime,FPS);
 %             [VfiltV] = MovMeanSmoothData(varMiceData{trialType},filtTime,FPS);
@@ -109,19 +102,31 @@ if smoothQ == 1
      
 elseif smoothQ == 0
 
-    for trialType = 1:size(avMiceData,2)   
-        if isempty(avMiceData{trialType}) == 0                           
-            VfiltData{trialType} = avMiceData{trialType};   
+    for trialType = 1:size(miceData,2)   
+        if isempty(miceData{trialType}) == 0                           
+            VfiltData{trialType} = miceData{trialType};   
 %             VfiltVar{trialType} = varMiceData{trialType};
         end 
     end
     
 end 
 
+% get SEM and average across mice 
+for trialType = 1:size(VfiltData,2)
+    
+    avMiceData{trialType} = nanmean(VfiltData{trialType},1);
+    
+    varMiceData{trialType} = (nanstd(VfiltData{trialType},1)).^2;
+    semMiceData{trialType} = ((nanstd(VfiltData{trialType},1)))/(sqrt(size(VfiltData{trialType},1)));
+end 
+
+%  VSEMdata{trialType} = (nanstd(VAVarray{trialType},1))/(sqrt(size(VAVdataToPlot{trialType},2)));
+
+
 %% plot 
-dataMin = input("data Y axis MIN: ");
-dataMax = input("data Y axis MAX: ");
-FPSstack = FPS;
+% dataMin = input("data Y axis MIN: ");
+% dataMax = input("data Y axis MAX: ");
+FPSstack = FPS;%/3;
 baselineEndFrame = round(20*(FPSstack));
 
 
@@ -145,10 +150,10 @@ for trialType = 1:size(miceData,2)
             FrameVals = round((1:FPSstack*2:Frames)-1); 
         end 
         ax=gca;
-        plot(VfiltData{trialType},'r','LineWidth',2)
+        plot(avMiceData{trialType},'r','LineWidth',2)
         hold all;     
 
-%         varargout = boundedline(1:size(VfiltData{trialType},2),VfiltData{trialType},VfiltVar{trialType},'r','transparency', 0.3,'alpha');                                                                             
+%         varargout = boundedline(1:size(avMiceData{trialType},2),avMiceData{trialType},semMiceData{trialType},'r','transparency', 0.3,'alpha');                                                                             
 
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;

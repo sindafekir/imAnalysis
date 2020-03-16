@@ -89,8 +89,8 @@ end
 smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
 
 if smoothQ == 1 
-    UIr = size(userInput,1)+1;
-    filtTime = input('How many seconds do you want to smooth your data by? '); userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
+%     UIr = size(userInput,1)+1;
+    filtTime = input('How many seconds do you want to smooth your data by? ');% userInput(UIr,1) = ("How many seconds do you want to smooth your data by? "); userInput(UIr,2) = (filtTime); UIr = UIr+1;
 
     if BBBQ == 1
         % BBB data 
