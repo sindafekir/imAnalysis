@@ -82,7 +82,7 @@ RSF61av = SF61av;
 miceData = SFWT6av;
 avMiceData = SFWT6av;
 %% smooth data if you want 
-FPS = length(miceData{2})/60;
+FPS = length(miceData{4})/60;
 smoothQ = input('Do you want to smooth your data? Yes = 1. No = 0. ');
 
 if smoothQ == 1 
@@ -105,18 +105,21 @@ elseif smoothQ == 0
 %             VfiltVar{trialType} = varMiceData{trialType};
         end 
     end
-    
+end 
+
+for trialType = 1:size(avMiceData,2)
+    semMiceData{trialType} = ((nanstd(miceData{trialType},1)))/(sqrt(size(miceData{trialType},1)));
 end 
 
 %% plot 
-dataMin = input("data Y axis MIN: ");
-dataMax = input("data Y axis MAX: ");
+% dataMin = input("data Y axis MIN: ");
+% dataMax = input("data Y axis MAX: ");
 FPSstack = FPS;
 baselineEndFrame = round(20*(FPSstack));
 
 
 
-for trialType = 4%1:size(avMiceData,2)  
+for trialType = 1:size(avMiceData,2)  
     if isempty(avMiceData{trialType}) == 0
 
         figure;
@@ -125,7 +128,7 @@ for trialType = 4%1:size(avMiceData,2)
             Frames = size(VfiltData{trialType},2);                
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+2);
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
             FrameVals = round((1:FPSstack*2:Frames)-1); 
         elseif trialType == 2 || trialType == 4 
             Frames = size(VfiltData{trialType},2);
@@ -138,7 +141,7 @@ for trialType = 4%1:size(avMiceData,2)
         plot(VfiltData{trialType},'k','LineWidth',2)
         hold all;     
 
-%         varargout = boundedline(1:size(VfiltData{trialType},2),VfiltData{trialType},VfiltVar{trialType},'k','transparency', 0.3,'alpha');                                                                             
+%         varargout = boundedline(1:size(VfiltData{trialType},2),VfiltData{trialType},semMiceData{trialType},'k','transparency', 0.3,'alpha');                                                                             
 
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;

@@ -12,19 +12,24 @@ clear FPS temp
 mouse = 4;
 ROI = 2; 
 data{mouse}{ROI} = SF58_ROI2_Bdata;
-FPSdata{mouse}{ROI} = SF58_ROI2_FPS;
+FPSdata(mouse,ROI) = SF58_ROI2_FPS;
 
-%% create cell array of timeseries objects 
-
-TSdata = cell(1,length(data));
+%% upsample data 
+maxFPS = max(max(FPSdata));
+Rdata = cell(1,length(data));
 for mouse = 1:length(data)
     for ROI = 1:length(data{mouse})
         for Z = 1:length(data{mouse}{ROI})
             for trialType = 1:length(data{mouse}{ROI}{Z})
                 for trial = 1:length(data{mouse}{ROI}{Z}{trialType})
                     for FOV = 1:length(data{mouse}{ROI}{Z}{trialType}{trial})
-                        Tval = ((1/FPSdata{mouse}{ROI}):(1/FPSdata{mouse}{ROI}):(length(data{mouse}{ROI}{Z}{trialType}{trial}{FOV}))/FPSdata{mouse}{ROI});
-                        TSdata{mouse}{ROI}{Z}{trialType}{trial}{FOV} = timeseries(data{mouse}{ROI}{Z}{trialType}{trial}{FOV},Tval);
+                        if trialType == 1 || trialType == 3
+                            goalLen = round(maxFPS*42);
+                            Rdata{mouse}{ROI}{Z}{trialType}{trial}{FOV} = resample(data{mouse}{ROI}{Z}{trialType}{trial}{FOV},goalLen,length(data{mouse}{ROI}{Z}{trialType}{trial}{FOV}));
+                        elseif trialType == 2 || trialType == 4
+                            goalLen = round(maxFPS*60);
+                            Rdata{mouse}{ROI}{Z}{trialType}{trial}{FOV} = resample(data{mouse}{ROI}{Z}{trialType}{trial}{FOV},goalLen,length(data{mouse}{ROI}{Z}{trialType}{trial}{FOV}));
+                        end 
                     end 
                 end 
             end 
@@ -32,5 +37,23 @@ for mouse = 1:length(data)
     end 
 end 
 
+%% create cell array of timeseries objects 
+
+% TSdata = cell(1,length(data));
+% for mouse = 1:length(data)
+%     for ROI = 1:length(data{mouse})
+%         for Z = 1:length(data{mouse}{ROI})
+%             for trialType = 1:length(data{mouse}{ROI}{Z})
+%                 for trial = 1:length(data{mouse}{ROI}{Z}{trialType})
+%                     for FOV = 1:length(data{mouse}{ROI}{Z}{trialType}{trial})
+%                         Tval = ((1/FPSdata{mouse}{ROI}):(1/FPSdata{mouse}{ROI}):(length(data{mouse}{ROI}{Z}{trialType}{trial}{FOV}))/FPSdata{mouse}{ROI});
+%                         TSdata{mouse}{ROI}{Z}{trialType}{trial}{FOV} = timeseries(data{mouse}{ROI}{Z}{trialType}{trial}{FOV},Tval);
+%                     end 
+%                 end 
+%             end 
+%         end 
+%     end 
+% end 
+
 %% clear unescessary values 
-clearvars -except data FPSdata TSdata
+clearvars -except data FPSdata TSdata Rdata
