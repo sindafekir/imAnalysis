@@ -195,13 +195,13 @@ elseif volIm == 0
         gTemplate = mean(greenImageStack,3);
         [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
         ggRegZstacks{1} = ggRegStack;
-        rTemplate = mean(redImageStack,3);
-        [grRegStack,~] = registerVesStack(greenImageStack,rTemplate);  
-        grRegZstacks{1} = grRegStack;
+%         rTemplate = mean(redImageStack,3);
+%         [grRegStack,~] = registerVesStack(greenImageStack,rTemplate);  
+%         grRegZstacks{1} = grRegStack;
         
         %package data for output 
         regStacks{2,1} = ggRegZstacks; regStacks{1,1} = 'ggRegZstacks';
-        regStacks{2,2} = grRegZstacks; regStacks{1,2} = 'grRegZstacks';
+%         regStacks{2,2} = grRegZstacks; regStacks{1,2} = 'grRegZstacks';
    
     elseif channelOfInterest == 0
         disp('2D Motion Correction')
@@ -334,21 +334,21 @@ elseif volIm == 0
     if channelOfInterest == 1
         %check relationship b/w template and 2D registered images        
         ggTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));
-        grTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));      
+%         grTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));      
         for ind = 1:size(ggRegZstacks{1},3)
             ggTemp2regCorr2D(ind) = corr2(gTemplate,ggRegZstacks{1}(:,:,ind));
-            grTemp2regCorr2D(ind) = corr2(rTemplate,grRegZstacks{1}(:,:,ind));
+%             grTemp2regCorr2D(ind) = corr2(rTemplate,grRegZstacks{1}(:,:,ind));
         end 
         
         
         %plot 2D registrations for comparison 
         figure;
-        subplot(1,2,1);
+%         subplot(1,2,1);
         plot(ggTemp2regCorr2D);
         title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
-        subplot(1,2,2);
-        plot(grTemp2regCorr2D);
-        title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Green Channel Registered with Red Channel Template'}); 
+%         subplot(1,2,2);
+%         plot(grTemp2regCorr2D);
+%         title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Green Channel Registered with Red Channel Template'}); 
 
     
    elseif channelOfInterest == 0

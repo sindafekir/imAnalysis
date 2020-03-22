@@ -93,10 +93,10 @@ if smoothQ == 1
     for trialType = 1:size(miceData,2)   
         if isempty(miceData{trialType}) == 0                  
             [VfiltD] = MovMeanSmoothData(miceData{trialType},filtTime,FPS);
-            [BVfiltD] = MovMeanSmoothData(BmiceData{trialType},filtTime,FPS);
+%             [BVfiltD] = MovMeanSmoothData(BmiceData{trialType},filtTime,FPS);
             [VfiltV] = MovMeanSmoothData(varMiceData{trialType},filtTime,FPS);
             VfiltData{trialType} = VfiltD;   
-            BVfiltData{trialType} = BVfiltD;  
+%             BVfiltData{trialType} = BVfiltD;  
             VfiltVar{trialType} = VfiltV; 
         end 
     end
@@ -106,7 +106,7 @@ elseif smoothQ == 0
     for trialType = 1:size(miceData,2)   
         if isempty(miceData{trialType}) == 0                           
             VfiltData{trialType} = miceData{trialType}; 
-            BVfiltData{trialType} = BmiceData{trialType}; 
+%             BVfiltData{trialType} = BmiceData{trialType}; 
             VfiltVar{trialType} = varMiceData{trialType};
         end 
     end
@@ -120,10 +120,10 @@ for trialType = 1:size(VfiltData,2)
     
     varMiceData{trialType} = (nanstd(VfiltData{trialType},1)).^2;
     semMiceData{trialType} = ((nanstd(VfiltData{trialType},1)))/(sqrt(size(VfiltData{trialType},1)));
-    
-    BavMiceData{trialType} = nanmean(BVfiltData{trialType},1);
-    
-    BsemMiceData{trialType} = ((nanstd(BVfiltData{trialType},1)))/(sqrt(size(BVfiltData{trialType},1)));
+%     
+%     BavMiceData{trialType} = nanmean(BVfiltData{trialType},1);
+%     
+%     BsemMiceData{trialType} = ((nanstd(BVfiltData{trialType},1)))/(sqrt(size(BVfiltData{trialType},1)));
 end 
 
 %  VSEMdata{trialType} = (nanstd(VAVarray{trialType},1))/(sqrt(size(VAVdataToPlot{trialType},2)));
@@ -158,10 +158,10 @@ for trialType = 1:size(miceData,2)
         ax=gca;
         plot(avMiceData{trialType},'b','LineWidth',2)
         hold all;     
-        plot(BavMiceData{trialType},'r','LineWidth',2)
+%         plot(BavMiceData{trialType},'r','LineWidth',2)
 
         varargout = boundedline(1:size(avMiceData{trialType},2),avMiceData{trialType},semMiceData{trialType},'b','transparency', 0.3,'alpha');                                                                             
-        varargout = boundedline(1:size(BavMiceData{trialType},2),BavMiceData{trialType},BsemMiceData{trialType},'r','transparency', 0.3,'alpha');                                                                             
+%         varargout = boundedline(1:size(BavMiceData{trialType},2),BavMiceData{trialType},BsemMiceData{trialType},'r','transparency', 0.3,'alpha');                                                                             
 
 
         ax.XTick = FrameVals;
@@ -190,7 +190,7 @@ for trialType = 1:size(miceData,2)
         end
 
 %         legend('BBB','DA Calcium','Vessel Width')
-            legend('DA calcium','BBB data')
+%             legend('DA calcium','BBB data')
         ylim([dataMin dataMax]);
 
         if smoothQ == 1 
