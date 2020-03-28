@@ -1,10 +1,10 @@
 function [TSdataBBBperm] = BBBpermTSwholeExp(regStacks,userInput)
 
 %% average registered imaging data across planes in Z 
-% inputStackArray = cell(size(regStacks{2,3}{1},1),size(regStacks{2,3}{1},2),size(regStacks{2,3},2));
+inputStackArray = cell(size(regStacks{2,4}{1},1),size(regStacks{2,4}{1},2),size(regStacks{2,4},2));
 clear inputStackArray
-for Z = 1:size(regStacks{2,1},2)
-    inputStackArray(:,:,:,Z) = regStacks{2,1}{Z};
+for Z = 1:size(regStacks{2,4},2)
+    inputStackArray(:,:,:,Z) = regStacks{2,4}{Z};
 end 
 inputStacks = mean(inputStackArray,4);
 

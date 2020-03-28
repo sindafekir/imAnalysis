@@ -1,11 +1,11 @@
-function [TSdataBBBperm] = calciumTSwholeExp(regStacks,userInput)
+% function [TSdataBBBperm] = calciumTSwholeExp(regStacks,userInput)
 %% get just the data you need 
-temp = matfile('SF56_20190709_ROI2_Ca_TS1-2.mat');
-userInput = temp.userInput; 
-CaROImasks = temp.CaROImasks; 
-ROIorders = temp.ROIorders; 
+% temp = matfile('SF56_20190718_ROI2_1_regIms_green.mat');
+% userInput = temp.userInput; 
+% CaROImasks = temp.CaROImasks; 
+% ROIorders = temp.ROIorders; 
 
-inputStacks = regStacks{2,1};
+inputStacks = regStacks{2,3};
 
 %% get rid of frames/trials where registration gets wonky 
 %EVENTUALLY MAKE THIS AUTOMATIC INSTEAD OF HAVING TO INPUT WHAT FRAME THE
@@ -17,6 +17,8 @@ if cutOffFrameQ == 1
     for Z = 1:length(inputStacks)
         Ims{Z} = inputStacks{Z}(:,:,1:cutOffFrame);  
     end 
+elseif cutOffFrameQ == 0 
+    Ims = inputStacks;
 end 
 
 clear inputStacks
@@ -79,16 +81,22 @@ end
  zData2 = cell(1,length(zData));
  zData2array = zeros(length(zData),size(zData{1},2));
  for ccell = 1:length(zData)
-     zData2{ccell} = mean(zData{ccell},1);
+     zData2{ccell} = nanmean(zData{ccell},1);
      zData2array(ccell,:) = zData2{ccell};
  end 
- Cdata = mean(zData2array,1);
+ Cdata = nanmean(zData2array,1);
  
  
  %% PLAYGROUND 
  
  plot(Cdata)
  
+ clearvars -except Cdata
+ 
+%  Cdata = Cdata(1:1716);
+ 
+% inputStacks = (Ims{1} + Ims{2} + Ims{3})/3;
 
+% inputStacks = Ims{1};
 
-end 
+% end 
