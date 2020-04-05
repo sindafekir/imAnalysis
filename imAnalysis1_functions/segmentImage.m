@@ -18,7 +18,7 @@ else
 end
 
 % Threshold image - manual threshold
-BW = X > 1.372500e-01;
+BW = X > 1e-01;
 
 % Fill holes
 BW = imfill(BW, 'holes');
@@ -40,6 +40,12 @@ radius = 3;
 decomposition = 0;
 se = strel('disk', radius, decomposition);
 BW = imopen(BW, se);
+
+% Erode mask with disk
+radius = 1;
+decomposition = 0;
+se = strel('disk', radius, decomposition);
+BW = imerode(BW, se);
 
 % Create masked image.
 maskedImage = X;

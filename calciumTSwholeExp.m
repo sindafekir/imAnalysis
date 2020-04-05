@@ -93,7 +93,7 @@ end
  
  clearvars -except Cdata
  
-%  Cdata = Cdata(1:1716);
+%  Cdata = Cdata(1:1186);
  
 % inputStacks = (Ims{1} + Ims{2} + Ims{3})/3;
 
