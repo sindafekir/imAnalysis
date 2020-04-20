@@ -53,7 +53,7 @@ userInput(UIr,1) = ("FPS"); userInput(UIr,2) = (FPS); UIr = UIr+1;
 disp('Importing Images')
 cd(uigetdir('*.*','WHERE ARE THE PHOTOS? '));    
 fileList = dir('*.tif*');
-imStackDir = fileList(1).folder; userInput(UIr,1) = ("Where Photos Are Found"); userInput(UIr,2) = (imStackDir); UIr = UIr+1;
+imStackDir = fileList(1).folder; %userInput(UIr,1) = ("Where Photos Are Found"); userInput(UIr,2) = (imStackDir); UIr = UIr+1;
 greenStackLength = size(fileList,1)/2;
 redStackLength = size(fileList,1)/2;
 image = imread(fileList(1).name); 

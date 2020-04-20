@@ -139,18 +139,9 @@ for per = 1:length(Jit_bCdata)
     bCdataJitAVarray(per,:) = Jit_bCdata{per}(1,1:minLenJ);
 end 
 
-%remove rows entirely made of NaNs 
-coljCNans = find(all(isnan(bCdataJitAVarray),2));
-for col = 1:length(coljCNans)
-    bCdataJitAVarray(coljCNans,:) = [];
-end 
 
-%average 
-% Jit_avbBdata = mean(bBdataJitAVarray,1);
-% Jit_avbVdata = mean(bVdataJitAVarray,1); 
-Jit_avbCdata = mean(bCdataJitAVarray,1); 
 
-%remove NaNs in averaged cols 
+%remove rows entirely made of NaNs
 % [~, coljBNans] = find(isnan(Jit_avbBdata));
 % jBcolStart = max(coljBNans)+1;
 % Jit_avbBdata = Jit_avbBdata(jBcolStart:end);
@@ -159,9 +150,14 @@ Jit_avbCdata = mean(bCdataJitAVarray,1);
 % jVcolStart = max(coljVNans)+1;
 % Jit_avbVdata = Jit_avbVdata(jVcolStart:end);
 
-[~, coljCNans] = find(isnan(Jit_avbCdata));
-jCcolStart = max(coljCNans)+1;
-Jit_avbCdata = Jit_avbCdata(jCcolStart:end);
+coljCNans = find(all(isnan(bCdataJitAVarray),2));
+
+bCdataJitAVarray = bCdataJitAVarray(:,jCcolStart:end);
+
+%average 
+% Jit_avbBdata = mean(bBdataJitAVarray,1);
+% Jit_avbVdata = mean(bVdataJitAVarray,1); 
+Jit_avbCdata = mean(bCdataJitAVarray,1); 
 
 %% create power spectrums of averaged baseline periods 
 FPstack = FPS/numZplanes;
@@ -171,7 +167,7 @@ FPstack = FPS/numZplanes;
 % XJV = fft(Jit_avbVdata); 
 XJC = fft(Jit_avbCdata); 
 %get length of signal 
-L = length(Jit_avbCdata);
+L = length(avbCdata);
 %compute the 2 sided spectrum
 % XJB2sided = abs(XJB/L); 
 % XJV2sided = abs(XJV/L); 
@@ -185,7 +181,6 @@ XJC1sided = XJC2sided(1:L/2+1);
 XJC1sided(2:end-1) = 2*XJC1sided(2:end-1);
 %define the frequency domain f 
 fJ = FPstack*(0:(L/2))/L;
-
 
 %% plot B data 
 
@@ -323,7 +318,7 @@ ax3.FontSize = 15;
 %plot the frequency amplitudes of jittered averaged baseline 
 subplot(2,2,4)
 ax4 = gca;
-plot(fJ,XJC1sided,'k','LineWidth',2); 
+plot(f,XJC1sided,'k','LineWidth',2); 
 title('Amplitudes as a function of frequency');
 xlabel('f (Hz)')
 ylabel('|P1(f)|') 

@@ -1,18 +1,24 @@
 % function [TSdataBBBperm] = calciumTSwholeExp(regStacks,userInput)
 %% get just the data you need 
-% temp = matfile('SF56_20190718_ROI2_1_regIms_green.mat');
-% userInput = temp.userInput; 
-% CaROImasks = temp.CaROImasks; 
-% ROIorders = temp.ROIorders; 
+temp1 = matfile('SF56_20190718_ROI2_1_regIms_red.mat');
+regStacks = temp1.regStacks;
+numZplanes = temp1.numZplanes ;
 
-inputStacks = regStacks{2,3};
+temp2 = matfile('SF56_20190718_ROI2_1-3_5_7_VW_and_1-5_7_10CaData.mat');
+userInput = temp2.userInput; 
+CaROImasks = temp2.CaROImasks; 
+ROIorders = temp2.ROIorders; 
+
+%% do background subtraction 
+input_Stacks = regStacks{2,3};
+[inputStacks,BG_ROIboundData] = backgroundSubtraction(input_Stacks);
 
 %% get rid of frames/trials where registration gets wonky 
 %EVENTUALLY MAKE THIS AUTOMATIC INSTEAD OF HAVING TO INPUT WHAT FRAME THE
 %REGISTRATION GETS WONKY 
-cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. ');  userInput(UIr,1) = ("Does the registration ever get wonky? Yes = 1. No = 0."); userInput(UIr,2) = (cutOffFrameQ); UIr = UIr+1;
+cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. '); 
 if cutOffFrameQ == 1 
-    cutOffFrame = input('Beyond what frame is the registration wonky? ');  userInput(UIr,1) = ("Beyond what frame is the registration wonky?"); userInput(UIr,2) = (cutOffFrame); 
+    cutOffFrame = input('Beyond what frame is the registration wonky? ');  
     Ims = cell(1,length(inputStacks));
     for Z = 1:length(inputStacks)
         Ims{Z} = inputStacks{Z}(:,:,1:cutOffFrame);  
@@ -58,7 +64,7 @@ end
  dataSlidingBLs = cell(1,ROIinds(maxCells));
  DFOFsubSBLs = cell(1,ROIinds(maxCells));
  zData = cell(1,length(ROIinds));
- count = 1;
+%  count = 1;
  for ccell = 1:maxCells     
         for z = 1:size(meanPixIntArray{ROIinds(ccell)},1)     
             %get median value per trace
@@ -72,26 +78,27 @@ end
             %subtract sliding baseline from DF/F
             DFOFsubSBLs{ROIinds(ccell)}(z,:) = DFOF{ROIinds(ccell)}(z,:)-dataSlidingBLs{ROIinds(ccell)}(z,:);
             %z-score data 
-            zData{count}(z,:) = zscore(DFOFsubSBLs{ROIinds(ccell)}(z,:));
+            zData{ROIinds(ccell)}(z,:) = zscore(DFOFsubSBLs{ROIinds(ccell)}(z,:));
         end
-        count = count + 1 ;
+%         count = count + 1 ;
  end        
 
  % average across z and cells 
  zData2 = cell(1,length(zData));
- zData2array = zeros(length(zData),size(zData{1},2));
- for ccell = 1:length(zData)
-     zData2{ccell} = nanmean(zData{ccell},1);
-     zData2array(ccell,:) = zData2{ccell};
+%  zData2array = zeros(length(zData),size(zData{1},2));
+ for ccell = 1:maxCells
+     zData2{ROIinds(ccell)} = nanmean(zData{ROIinds(ccell)},1);
+     zData2array(ROIinds(ccell),:) = zData2{ROIinds(ccell)};
  end 
  Cdata = nanmean(zData2array,1);
+ CcellData = zData2; 
  
  
  %% PLAYGROUND 
  
  plot(Cdata)
  
- clearvars -except Cdata
+ clearvars -except Cdata CcellData FPS CaROImasks userInput
  
 %  Cdata = Cdata(1:1186);
  

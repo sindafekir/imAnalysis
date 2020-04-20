@@ -105,7 +105,7 @@ if ccellQ ==  1
     if termQ == 0 
         for ccell = 1:length(CcellData)
             if isempty(CcellData{ccell}) == 0
-                [peaks, locs] = findpeaks(SCdata{ccell},'MinPeakProminence',50); %0.6,0.8,0.9,1
+                [peaks, locs] = findpeaks(SCdata{ccell},'MinPeakProminence',10); %0.6,0.8,0.9,1
 
                 FPSstack = FPS/3; 
                 Frames = size(SCdata{ccell},2);
@@ -122,9 +122,9 @@ if ccellQ ==  1
     %             plot(SCdata{ccell},'g','LineWidth',1)
     %             plot(RSCdata{ccell},'r','LineWidth',1)
                 plot(diffCdata{ccell},'k','LineWidth',1)
-%                 for loc = 1:length(locs)
-%                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-%                 end 
+                for loc = 1:length(locs)
+                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                end 
                 for trial = 1:size(TrialTypes,1)
                     if TrialTypes(trial,2) == 1
                         plot([state_start_f(trial) state_start_f(trial)], [-5000 5000], 'b','LineWidth',0.5)
@@ -168,9 +168,9 @@ if ccellQ ==  1
     %             plot(SCdata{ccell},'g','LineWidth',1)
     %             plot(RSCdata{ccell},'r','LineWidth',1)
                 plot(diffCdata{ccell},'k','LineWidth',1)
-%                 for loc = 1:length(locs)
-%                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-%                 end 
+                for loc = 1:length(locs)
+                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                end 
                 for trial = 1:size(TrialTypes,1)
                     if TrialTypes(trial,2) == 1
                         plot([state_start_f(trial) state_start_f(trial)], [-5000 5000], 'b','LineWidth',0.5)
@@ -321,9 +321,9 @@ title(sprintf('%d calcium peaks',length(peaks)))
 clearvars diffAV diffSEM tTdata
 
 %reogranize diff data so I can get the SEM 
-diffCarray = zeros(length(diffCdata),length(diffCdata{1}));
-greenCarray = zeros(length(diffCdata),length(diffCdata{1}));
-redCarray = zeros(length(diffCdata),length(diffCdata{1}));
+diffCarray = zeros(length(diffCdata),length(diffCdata{2}));
+greenCarray = zeros(length(diffCdata),length(diffCdata{2}));
+redCarray = zeros(length(diffCdata),length(diffCdata{2}));
 for ccell = 1:length(diffCdata)
     if isempty(diffCdata{ccell}) == 0 
         diffCarray(ccell,:) = diffCdata{ccell};
@@ -358,19 +358,15 @@ for trial = 1:size(TrialTypes,1)
             elseif trialLengths(trial) == floor(FPSstack*20)
                 tTdata{2}(count2,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
                 GtTdata{2}(count2,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                RtTdata{2}(count2,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                RTdata{2}(count2,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
                 count2 = count2+1;
             end 
         elseif TrialTypes(trial,2) == 2 % red trials 
             if trialLengths(trial) == floor(FPSstack*2)
                 tTdata{3}(count3,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                GtTdata{3}(count3,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                RtTdata{3}(count3,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
                 count3 = count3+1;
             elseif trialLengths(trial) == floor(FPSstack*20)
                 tTdata{4}(count4,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                GtTdata{4}(count4,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                RtTdata{4}(count4,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
                 count4 = count4+1;
             end 
         end 
@@ -380,18 +376,10 @@ end
 %% plot trialType data
 AVtTdata = cell(1,length(tTdata));
 SEMtTdata = cell(1,length(tTdata));
-AVGtTdata = cell(1,length(tTdata));
-SEMGtTdata = cell(1,length(tTdata));
-AVRtTdata = cell(1,length(tTdata));
-SEMRtTdata = cell(1,length(tTdata));
 baselineEndFrame = floor(20*(FPSstack));
 for tType = 1:length(tTdata)
     AVtTdata{tType} = mean(tTdata{tType},1);
     SEMtTdata{tType} = std(tTdata{tType},1)/sqrt(size(tTdata{tType},1));
-    AVGtTdata{tType} = mean(GtTdata{tType},1);
-    SEMGtTdata{tType} = std(GtTdata{tType},1)/sqrt(size(GtTdata{tType},1));
-    AVRtTdata{tType} = mean(RtTdata{tType},1);
-    SEMRtTdata{tType} = std(RtTdata{tType},1)/sqrt(size(RtTdata{tType},1));
     figure; 
     hold all;
     if tType == 1 || tType == 3 
@@ -433,13 +421,9 @@ for tType = 1:length(tTdata)
     
 %     varargout = boundedline(1:size(AVtTdata{tType},2),AVtTdata{tType},SEMtTdata{tType},'k','transparency', 0.5);
     for trial = 1:size(tTdata{tType},1)
-%         plot(RtTdata{tType}(trial,:),'LineWidth',1)
-        plot(GtTdata{tType}(trial,:),'LineWidth',1)
-%         plot(tTdata{tType}(trial,:),'LineWidth',1)
+        plot(tTdata{tType}(trial,:),'LineWidth',1)
     end 
-%     plot(AVRtTdata{tType},'Color',[0.5 0 0],'LineWidth',3)
-    plot(AVGtTdata{tType},'Color',[0 0.5 0],'LineWidth',3)
-%     plot(AVtTdata{tType},'k','LineWidth',3)
+    plot(AVtTdata{tType},'k','LineWidth',3)
     if tType == 1 || tType == 2
     elseif tType == 3 || tType == 4
     end 

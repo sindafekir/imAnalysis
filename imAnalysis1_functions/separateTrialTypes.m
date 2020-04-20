@@ -6,7 +6,7 @@ theoTLengths = zeros(1,length(stimTimes));
 for L = 1:length(stimTimes)
     theoTLengths(L) = (FPS/numZplanes)*stimTimes(L);
 end 
-theoTLengths = ceil(theoTLengths); 
+theoTLengths = floor(theoTLengths); 
 
 %determine the actual trial lengths (in frames) = col 1. col 2 = num of
 %occurances 
@@ -23,8 +23,7 @@ end
 
 UniqueLengthGroups = unique(lengthGroups);
 
-%remove trials that are too long (more than 10% off) = where there was probably a
-%mechanical/triggering error 
+%% remove trials that are too long (more than 10% off) = where there was probably a mechanical/triggering error 
 groupRows = cell(1,length(UniqueLengthGroups));
 diffArray = zeros(length(UniqueLengthGroups),length(theoTLengths));
  for uniqueGroup = 1:length(UniqueLengthGroups)
@@ -38,7 +37,7 @@ diffArray = zeros(length(UniqueLengthGroups),length(theoTLengths));
     centroids(uniqueGroup,2) = theoTLengths(minCol);
 
      for ind = 1:length(groupRows{uniqueGroup})
-        if lengths(groupRows{uniqueGroup}(ind)) > (0.1*centroids(uniqueGroup,2))+centroids(uniqueGroup,2)
+        if lengths(groupRows{uniqueGroup}(ind)) > (0.1*centroids(uniqueGroup,1))+centroids(uniqueGroup,1)
 
             state_start_f(find(trialLengths == lengths(groupRows{uniqueGroup}(ind)))) = [];
             state_end_f(find(trialLengths == lengths(groupRows{uniqueGroup}(ind)))) = [];          
@@ -46,7 +45,7 @@ diffArray = zeros(length(UniqueLengthGroups),length(theoTLengths));
         end 
      end 
  end 
-
+%%
 %determine the actual trial lengths (in frames) again 
 state_start_f = floor(state_start_f); 
 state_end_f = ceil(state_end_f);
