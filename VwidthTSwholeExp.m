@@ -1,17 +1,16 @@
 %% get just the data you need 
-% temp = matfile('SF56_20190718_ROI2_1_regIms_green.mat');
-% userInput = temp.userInput; 
-% CaROImasks = temp.CaROImasks; 
-% ROIorders = temp.ROIorders; 
+temp = matfile('SF56_20190718_ROI2_4_regIms_red.mat');
+userInput = temp.userInput; 
+regStacks = temp.regStacks;
 
 inputStacks = regStacks{2,4};
 
 %% get rid of frames/trials where registration gets wonky 
 %EVENTUALLY MAKE THIS AUTOMATIC INSTEAD OF HAVING TO INPUT WHAT FRAME THE
 %REGISTRATION GETS WONKY 
-cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. ');  userInput(UIr,1) = ("Does the registration ever get wonky? Yes = 1. No = 0."); userInput(UIr,2) = (cutOffFrameQ); UIr = UIr+1;
+cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. ');  
 if cutOffFrameQ == 1 
-    cutOffFrame = input('Beyond what frame is the registration wonky? ');  userInput(UIr,1) = ("Beyond what frame is the registration wonky?"); userInput(UIr,2) = (cutOffFrame); 
+    cutOffFrame = input('Beyond what frame is the registration wonky? ');  
     Ims = cell(1,length(inputStacks));
     for Z = 1:length(inputStacks)
         Ims{Z} = inputStacks{Z}(:,:,1:cutOffFrame);  
@@ -22,10 +21,13 @@ end
 
 clear inputStacks
 
+%% do background subtraction 
+[inputStacks,BG_ROIboundData] = backgroundSubtraction(Ims);
+
 %% average registered imaging data across planes in Z 
 clear inputStackArray
 for Z = 1:size(Ims,2)
-    imArray(:,:,:,Z) = Ims{Z};
+    imArray(:,:,:,Z) = inputStacks{Z};
 end 
 clear Ims
 Ims{1} = mean(imArray,4);
@@ -112,6 +114,7 @@ while segmentVessel == 1
     end 
 end
 
+%%
 %segment the vessel (all the data) 
 disp('Vessel Segmentation')
 parfor Zstack = 1:length(rotStacks)
@@ -143,7 +146,7 @@ for Zstack = 1:length(BWstacks)
 end 
 
 %interpolate (average) data at frames that are max or min 
-parfor Zstack = 1:length(BWstacks)
+for Zstack = 1:length(BWstacks)
     for VROI = 1:numROIs 
         for frame = 2:size(ROIstacks{1}{1}{1},3) %to avoid edges since i'm interpolating 
             if vessel_diam{Zstack}{VROI}(:,frame) == maxVDval(Zstack,VROI) || vessel_diam{Zstack}{VROI}(:,frame) == minVDval(Zstack,VROI)
@@ -155,30 +158,30 @@ parfor Zstack = 1:length(BWstacks)
     end 
 end 
 
-
+%%
 dataMeds = cell(1,length(BWstacks));
 DFOF = cell(1,length(BWstacks));
 dataSlidingBLs = cell(1,length(BWstacks));
-DFOFsubSBLs = cell(1,length(BWstacks));
+Data = cell(1,length(BWstacks));
 zVData = cell(1,length(BWstacks));
 for z = 1:length(BWstacks)
     for VROI = 1:numROIs   
         %get median value per trace
-        dataMed = median(vessel_diam2{z}{VROI});     
-        dataMeds{z}(VROI,:) = dataMed;        
+%         dataMed = median(vessel_diam2{z}{VROI});     
+%         dataMeds{z}(VROI,:) = dataMed;        
         %compute DF/F using means  
-        DFOF{z}(VROI,:) = (vessel_diam2{z}{VROI}-dataMeds{z}(VROI,:))./dataMeds{z}(VROI,:);              
+%         DFOF{z}(VROI,:) = (vessel_diam2{z}{VROI}-dataMeds{z}(VROI,:))./dataMeds{z}(VROI,:);              
         %get sliding baseline 
-        [dataSlidingBL]=slidingBaseline(DFOF{z}(VROI,:),floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
+        [dataSlidingBL]=slidingBaseline(vessel_diam2{z}{VROI},floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
         dataSlidingBLs{z}(VROI,:) = dataSlidingBL;     
         %subtract sliding baseline from DF/F
-        DFOFsubSBLs{z}(VROI,:) = DFOF{z}(VROI,:)-dataSlidingBLs{z}(VROI,:);        
+        Data{z}(VROI,:) = vessel_diam2{z}{VROI}-dataSlidingBLs{z}(VROI,:);        
         %z-score data 
-        zVData{z}(VROI,:) = zscore(DFOFsubSBLs{z}(VROI,:));
+%         zVData{z}(VROI,:) = zscore(Data{z}(VROI,:));
     end
 end
 
-Vdata = mean(zVData{1},1);
+Vdata = mean(Data{1},1);
 
-clearvars -except Vdata
+% clearvars -except Vdata
 

@@ -18,7 +18,7 @@ else
 end
 
 % Threshold image - manual threshold
-BW = X > 5.058800e-02;
+BW = X > 5.0e-02;
 
 % Open mask with disk
 radius = 2;
@@ -26,17 +26,53 @@ decomposition = 0;
 se = strel('disk', radius, decomposition);
 BW = imopen(BW, se);
 
-% Erode mask with disk
-radius = 1;
-decomposition = 0;
-se = strel('disk', radius, decomposition);
-BW = imerode(BW, se);
+% % Erode mask with disk
+% radius = 1;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imerode(BW, se);
+% 
+% % Open mask with disk
+% radius = 2;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imopen(BW, se);
 
-% Dilate mask with disk
-radius = 1;
-decomposition = 0;
-se = strel('disk', radius, decomposition);
-BW = imdilate(BW, se);
+% % Dilate mask with disk
+% radius = 3;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imdilate(BW, se);
+% 
+% % Erode mask with disk
+% radius = 2;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imerode(BW, se);
+% 
+% % Open mask with disk
+% radius = 3;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imopen(BW, se);
+
+% % Erode mask with disk
+% radius = 4;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imerode(BW, se);
+% 
+% % Open mask with disk
+% radius = 1;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imopen(BW, se);
+% 
+% % Dilate mask with disk
+% radius = 2;
+% decomposition = 0;
+% se = strel('disk', radius, decomposition);
+% BW = imdilate(BW, se);
 
 % Create masked image.
 maskedImage = X;

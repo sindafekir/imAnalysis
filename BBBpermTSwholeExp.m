@@ -1,16 +1,18 @@
 function [TSdataBBBperm] = BBBpermTSwholeExp(regStacks,userInput)
 
+
+%% do background subtraction 
+[input_Stacks,~] = backgroundSubtraction(regStacks{2,4});
+
 %% average registered imaging data across planes in Z 
-inputStackArray = cell(size(regStacks{2,4}{1},1),size(regStacks{2,4}{1},2),size(regStacks{2,4},2));
 clear inputStackArray
+inputStackArray = zeros(size(regStacks{2,4}{1},1),size(regStacks{2,4}{1},2),size(regStacks{2,4}{1},3),size(regStacks{2,4},2));
 for Z = 1:size(regStacks{2,4},2)
-    inputStackArray(:,:,:,Z) = regStacks{2,4}{Z};
+    inputStackArray(:,:,:,Z) = input_Stacks{Z};
 end 
 inputStacks = mean(inputStackArray,4);
 
 %% create non-vascular ROI- x-y plane 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %go to dir w/functions
 [imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
@@ -78,9 +80,15 @@ while segQ == 1
     end 
 
     %check segmentation 
-    VROI = input("What BBB ROI do you want to see? ");
-    %play segmentation boundaries over images 
-    implay(segOverlays{VROI})
+    if numROIs == 1 
+        %play segmentation boundaries over images 
+        implay(segOverlays{1})
+    elseif numROIs > 1 
+        VROI = input("What BBB ROI do you want to see? ");
+        %play segmentation boundaries over images 
+        implay(segOverlays{VROI})
+    end 
+
 
     segQ = input('Does segmentation need to be redone? Yes = 1. No = 0. ');    
 end 
@@ -128,31 +136,33 @@ end
            
 %% normalize and z score 
             
-dataMeds = cell(1,numROIs);
-DFOF = cell(1,numROIs);
+% dataMeds = cell(1,numROIs);
+% DFOF = cell(1,numROIs);
 dataSlidingBLs = cell(1,numROIs);
+wVdataSlidingBLs = cell(1,numROIs);
 Data = cell(1,numROIs);
-zData = cell(1,numROIs);
+WvData = cell(1,numROIs);
+% zData = cell(1,numROIs);
 for VROI = 1:numROIs          
     %get median value per trace
-    dataMed = nanmedian(meanPixIntArray{VROI});     
-    dataMeds{VROI} = dataMed;
-    wVdataMed = nanmedian(wVmeanPixIntArray{VROI});     
-    wVdataMeds{VROI} = wVdataMed;
-    %compute DF/F using median  
-    DFOF{VROI} = (meanPixIntArray{VROI}-dataMeds{VROI})./dataMeds{VROI};   
-    WvDFOF{VROI} = (wVmeanPixIntArray{VROI}-wVdataMeds{VROI})./wVdataMeds{VROI};
+%     dataMed = nanmedian(meanPixIntArray{VROI});     
+%     dataMeds{VROI} = dataMed;
+%     wVdataMed = nanmedian(wVmeanPixIntArray{VROI});     
+%     wVdataMeds{VROI} = wVdataMed;
+%     %compute DF/F using median  
+%     DFOF{VROI} = (meanPixIntArray{VROI}-dataMeds{VROI})./dataMeds{VROI};   
+%     WvDFOF{VROI} = (wVmeanPixIntArray{VROI}-wVdataMeds{VROI})./wVdataMeds{VROI};
     %get sliding baseline 
-    [dataSlidingBL]=slidingBaseline(DFOF{VROI},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value                 
+    [dataSlidingBL]=slidingBaseline(meanPixIntArray{VROI},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value                 
     dataSlidingBLs{VROI} = dataSlidingBL;   
-    [wVdataSlidingBL]=slidingBaseline(WvDFOF{VROI},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value                 
+    [wVdataSlidingBL]=slidingBaseline(wVmeanPixIntArray{VROI},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value                 
     wVdataSlidingBLs{VROI} = wVdataSlidingBL;    
     %subtract sliding baseline from DF/F
-    Data{VROI} = DFOF{VROI}-dataSlidingBLs{VROI}; 
-    WvData{VROI} = WvDFOF{VROI}-wVdataSlidingBLs{VROI}; 
+    Data{VROI} = meanPixIntArray{VROI}-dataSlidingBLs{VROI}; 
+    WvData{VROI} = wVmeanPixIntArray{VROI}-wVdataSlidingBLs{VROI}; 
     %z-score data                
-    zData{VROI} = zscore(Data{VROI});
-    wVzData{VROI} = zscore(WvData{VROI});
+%     zData{VROI} = zscore(Data{VROI});
+%     wVzData{VROI} = zscore(WvData{VROI});
 end 
 
 %% create cumulative pixel intensity traces 
@@ -191,6 +201,28 @@ for VROI = 1:size(cumData,2)
     ylabel('pixel intensity rate change')
 end 
 
+
+Bdata = Data{1};
+
+
+
+
+
+
+
+
+
+
+
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

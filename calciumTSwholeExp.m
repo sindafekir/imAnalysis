@@ -1,6 +1,6 @@
 % function [TSdataBBBperm] = calciumTSwholeExp(regStacks,userInput)
 %% get just the data you need 
-temp1 = matfile('SF56_20190718_ROI2_1_regIms_red.mat');
+temp1 = matfile('SF56_20190718_ROI2_4_regIms_green.mat');
 regStacks = temp1.regStacks;
 numZplanes = temp1.numZplanes ;
 
@@ -59,46 +59,72 @@ for ccell = 1:maxCells %cell starts at 2 because that's where our cell identity 
 end 
 
 [FPS] = getUserInput(userInput,"FPS"); 
- dataMeds = cell(1,ROIinds(maxCells));
- DFOF = cell(1,ROIinds(maxCells));
+%  dataMeds = cell(1,ROIinds(maxCells));
+%  DFOF = cell(1,ROIinds(maxCells));
  dataSlidingBLs = cell(1,ROIinds(maxCells));
- DFOFsubSBLs = cell(1,ROIinds(maxCells));
- zData = cell(1,length(ROIinds));
+FsubSBLs = cell(1,ROIinds(maxCells));
+%  zData = cell(1,length(ROIinds));
 %  count = 1;
  for ccell = 1:maxCells     
         for z = 1:size(meanPixIntArray{ROIinds(ccell)},1)     
-            %get median value per trace
-            dataMed = median(meanPixIntArray{ROIinds(ccell)}(z,:));     
-            dataMeds{ROIinds(ccell)}(z,:) = dataMed;
-            %compute DF/F using means  
-            DFOF{ROIinds(ccell)}(z,:) = (meanPixIntArray{ROIinds(ccell)}(z,:)-dataMeds{ROIinds(ccell)}(z,:))./dataMeds{ROIinds(ccell)}(z,:);                         
+%             %get median value per trace
+%             dataMed = median(meanPixIntArray{ROIinds(ccell)}(z,:));     
+%             dataMeds{ROIinds(ccell)}(z,:) = dataMed;
+%             %compute DF/F using means  
+%             DFOF{ROIinds(ccell)}(z,:) = (meanPixIntArray{ROIinds(ccell)}(z,:)-dataMeds{ROIinds(ccell)}(z,:))./dataMeds{ROIinds(ccell)}(z,:);                         
             %get sliding baseline 
-            [dataSlidingBL]=slidingBaseline(DFOF{ROIinds(ccell)}(z,:),floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
+%             [dataSlidingBL]=slidingBaseline(DFOF{ROIinds(ccell)}(z,:),floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value      
+            [dataSlidingBL]=slidingBaseline(meanPixIntArray{ROIinds(ccell)}(z,:),floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value
             dataSlidingBLs{ROIinds(ccell)}(z,:) = dataSlidingBL;                       
-            %subtract sliding baseline from DF/F
-            DFOFsubSBLs{ROIinds(ccell)}(z,:) = DFOF{ROIinds(ccell)}(z,:)-dataSlidingBLs{ROIinds(ccell)}(z,:);
+%             %subtract sliding baseline from DF/F
+%             DFOFsubSBLs{ROIinds(ccell)}(z,:) = DFOF{ROIinds(ccell)}(z,:)-dataSlidingBLs{ROIinds(ccell)}(z,:);
+            %subtract sliding baseline from F trace 
+            FsubSBLs{ROIinds(ccell)}(z,:) = meanPixIntArray{ROIinds(ccell)}(z,:)-dataSlidingBLs{ROIinds(ccell)}(z,:);
+
             %z-score data 
-            zData{ROIinds(ccell)}(z,:) = zscore(DFOFsubSBLs{ROIinds(ccell)}(z,:));
+%             zData{ROIinds(ccell)}(z,:) = zscore(DFOFsubSBLs{ROIinds(ccell)}(z,:));
         end
 %         count = count + 1 ;
  end        
 
- % average across z and cells 
- zData2 = cell(1,length(zData));
+%% average across z and cells 
+%  zData2 = cell(1,length(zData));
 %  zData2array = zeros(length(zData),size(zData{1},2));
+meanPixIntArray2 = cell(1,length(meanPixIntArray));
+meanPixIntArray3 = zeros(length(meanPixIntArray),size(meanPixIntArray{2},2));
+dataSlidingBLs2 = cell(1,length(meanPixIntArray));
+dataSlidingBLs3 = zeros(length(meanPixIntArray),size(meanPixIntArray{2},2));
+FsubSBLs2 = cell(1,length(meanPixIntArray));
+FsubSBLs3 = zeros(length(meanPixIntArray),size(meanPixIntArray{2},2));
  for ccell = 1:maxCells
-     zData2{ROIinds(ccell)} = nanmean(zData{ROIinds(ccell)},1);
-     zData2array(ROIinds(ccell),:) = zData2{ROIinds(ccell)};
+%      zData2{ROIinds(ccell)} = nanmean(zData{ROIinds(ccell)},1);
+%      zData2array(ROIinds(ccell),:) = zData2{ROIinds(ccell)};
+       meanPixIntArray2{ROIinds(ccell)} = nanmean(meanPixIntArray{ROIinds(ccell)},1);
+       meanPixIntArray3(ROIinds(ccell),:) = meanPixIntArray2{ROIinds(ccell)};
+       dataSlidingBLs2{ROIinds(ccell)} = nanmean(dataSlidingBLs{ROIinds(ccell)},1);
+       dataSlidingBLs3(ROIinds(ccell),:) = dataSlidingBLs2{ROIinds(ccell)};
+       FsubSBLs2{ROIinds(ccell)} = nanmean(FsubSBLs{ROIinds(ccell)},1);
+       FsubSBLs3(ROIinds(ccell),:) = FsubSBLs2{ROIinds(ccell)};
  end 
- Cdata = nanmean(zData2array,1);
- CcellData = zData2; 
+%  Cdata = nanmean(zData2array,1);
+%  CcellData = zData2; 
+Fdata = nanmean(meanPixIntArray3,1);
+slidingBL = nanmean(dataSlidingBLs3,1);
+FsubBLdata = nanmean(FsubSBLs3,1);
+
+avFdata = Fdata;
+terminalFData = meanPixIntArray2;
+
+avFsubSB = FsubBLdata; 
+terminalFsubSB = FsubSBLs2;
  
  
  %% PLAYGROUND 
+Cdata = avFsubSB; CcellData = terminalFsubSB;
  
- plot(Cdata)
+plot(Cdata)
  
- clearvars -except Cdata CcellData FPS CaROImasks userInput
+clearvars -except Cdata CcellData FPS CaROImasks userInput avFdata terminalFData avFsubSB terminalFsubSB numZplanes
  
 %  Cdata = Cdata(1:1186);
  
