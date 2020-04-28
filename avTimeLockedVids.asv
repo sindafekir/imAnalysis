@@ -1,8 +1,5 @@
 %% get the data you need 
-%ALL OF THE CODE BELOW HAS BEEN WRITTEN TO SORT, AVERAGE, AND PLOT CALCIUM
-%PEAK ALIGNED DATA - DON'T NEED THIS YET...
-%{
-temp = matfile('SF56_20190718_ROI2_8_CVBdata_F-SB_terminalWOnoiseFloor_CaPeakAlignedData_2frameMinWidth.mat');
+temp = matfile('SF56_20190718_ROI2_8_CVBdata_F-SB_terminalWOnoiseFloor_CaPeakAlignedData.mat');
 sortedCdata8 = temp.sortedCdata; 
 sortedBdata8 = temp.sortedBdata;
 sortedVdata8 = temp.sortedVdata; 
@@ -57,11 +54,9 @@ avVarray = cell(1,size(CdataArray,2));
 avVterm = zeros(size(CdataArray,2),length(CdataArray{1}));
 for term = 1:size(CdataArray,2)
     for vid = 1:size(CdataArray,1)
-        if isempty(CdataArray{vid,term}) == 0 
-            avCarray{term}(vid,:) = (nanmean(CdataArray{vid,term},1))*weights(vid,term);
-            avBarray{term}(vid,:) = (nanmean(BdataArray{vid,term},1))*weights(vid,term);
-            avVarray{term}(vid,:) = (nanmean(VdataArray{vid,term},1))*weights(vid,term);
-        end 
+        avCarray{term}(vid,:) = (nanmean(CdataArray{vid,term},1))*weights(vid,term);
+        avBarray{term}(vid,:) = (nanmean(BdataArray{vid,term},1))*weights(vid,term);
+        avVarray{term}(vid,:) = (nanmean(VdataArray{vid,term},1))*weights(vid,term);
     end
     avCterm(term,:) = sum(avCarray{term},1);
     avBterm(term,:) = sum(avBarray{term},1);
@@ -100,8 +95,8 @@ hold all
 %     plot(sortedCdata(row,:),'b','LineWidth',2)
 % end 
 plot(avB2,'r','LineWidth',2);
-plot(avC2,'b','LineWidth',2);
-% plot(avV2,'k','LineWidth',2);
+% plot(avC,'b','LineWidth',2);
+% plot(avV,'k','LineWidth',2);
 % varargout = boundedline(1:size(avB2,2),avB2,semB2,'r','transparency', 0.3,'alpha');                                                                             
 % varargout = boundedline(1:size(avC2,2),avC2,semC2,'b','transparency', 0.3,'alpha'); 
 % varargout = boundedline(1:size(avV2,2),avV2,semV2,'k','transparency', 0.3,'alpha'); 
@@ -118,7 +113,6 @@ ylabel('percent change')
 
 
 %% plot terminal data 
-terminals = [13, 20, 12, 16, 11, 15, 10, 8, 9, 7, 4];
 
 for term = 1:size(CdataArray,2)
     
@@ -134,9 +128,9 @@ for term = 1:size(CdataArray,2)
     %     plot(sortedBdata(row,:),'r','LineWidth',2)
     %     plot(sortedCdata(row,:),'b','LineWidth',2)
     % end 
-    plot(avBterm2(term,:),'r','LineWidth',2);
-    plot(avCterm2(term,:),'b','LineWidth',2);
-%     plot(avVterm2(term,:),'k','LineWidth',2);
+    plot(avB2,'r','LineWidth',2);
+    % plot(avC,'b','LineWidth',2);
+    % plot(avV,'k','LineWidth',2);
     % varargout = boundedline(1:size(avB2,2),avB2,semB2,'r','transparency', 0.3,'alpha');                                                                             
     % varargout = boundedline(1:size(avC2,2),avC2,semC2,'b','transparency', 0.3,'alpha'); 
     % varargout = boundedline(1:size(avV2,2),avV2,semV2,'k','transparency', 0.3,'alpha'); 
@@ -149,20 +143,7 @@ for term = 1:size(CdataArray,2)
     % legend('BBB data','DA calcium')
     xlabel('time (s)')
     ylabel('percent change')
-    title(sprintf('Terminal %d',terminals(term))) 
+    % title(sprintf('%d calcium peaks',length(peaks))) 
    
 end 
-%}
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%% concatenate trial type data per terminal 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-%% get the data you need 
-
-temp = matfile('SF56_20190718_ROI2_8_CVBdata_F-SB_terminalWOnoiseFloor_CaPeakAlignedData_2frameMinWidth.mat');
-sortedCdata8 = temp.sortedCdata; 
-sortedBdata8 = temp.sortedBdata;
-sortedVdata8 = temp.sortedVdata; 

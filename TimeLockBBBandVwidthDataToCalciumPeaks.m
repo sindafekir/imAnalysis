@@ -1,20 +1,17 @@
-% % Bdata = (zData{1} + zData{2})/2;
-% % Bdata = zData{1};
-
-Blength = length(Bdata);
-Clength = length(Cdata);
-Vlength = length(Vdata);
-
-if Blength < Clength && Blength < Vlength
-    Cdata = Cdata(1:length(Bdata));
-    Vdata = Vdata(1:length(Bdata));
-elseif Clength < Vlength && Clength < Blength
-    Vdata = Vdata(1:length(Cdata));
-    Bdata = Bdata(1:length(Cdata));    
-elseif Vlength < Clength && Vlength < Blength
-    Cdata = Cdata(1:length(Vdata));
-    Bdata = Bdata(1:length(Vdata));
-end 
+% Blength = length(Bdata);
+% Clength = length(Cdata);
+% Vlength = length(Vdata);
+% 
+% if Blength < Clength && Blength < Vlength
+%     Cdata = Cdata(1:length(Bdata));
+%     Vdata = Vdata(1:length(Bdata));
+% elseif Clength < Vlength && Clength < Blength
+%     Vdata = Vdata(1:length(Cdata));
+%     Bdata = Bdata(1:length(Cdata));    
+% elseif Vlength < Clength && Vlength < Blength
+%     Cdata = Cdata(1:length(Vdata));
+%     Bdata = Bdata(1:length(Vdata));
+% end 
 
 %% smooth data 
 clear SCdata RSCdata
@@ -78,8 +75,8 @@ elseif smoothQ == 0
                 end 
             end
         elseif termQ == 1
-            SBdata = Bdata;
-            SVdata = Vdata;
+%             SBdata = Bdata;
+%             SVdata = Vdata;
             SCdata = cell(1,length(terminals));
 %             RSCdata = cell(1,length(terminals));
             for ccell = 1:length(terminals)
@@ -95,13 +92,17 @@ end
 % 27, 20, 14,10,15,13,11,8,5,4
 
 %% prep trial type data 
+[framePeriod] = getUserInput(userInput,'What is the framePeriod? ');
+[state] = getUserInput(userInput,'What teensy state does the stimulus happen in?');
+[HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
 
-% TrialTypes = TrialTypes(1:length(state_start_f),:);
-% state_start_f = floor(state_start_f/3);
-% state_end_f = floor(state_end_f/3);
-% trialLength = state_end_f - state_start_f;
+TrialTypes = TrialTypes(1:length(state_start_f),:);
+state_start_f = floor(state_start_f/3);
+state_end_f = floor(state_end_f/3);
+trialLength = state_end_f - state_start_f;
 
 %% find peaks and then plot where they are in the entire TS 
+%{
 clear diffCdata
 if ccellQ ==  1
     if termQ == 0 
@@ -156,13 +157,13 @@ if ccellQ ==  1
         sigLocs = cell(1,length(terminals));
         for ccell = 1:length(terminals)
             if isempty(CcellData{terminals(ccell)}) == 0
-                [peaks, locs] = findpeaks(SCdata{ccell},'MinPeakProminence',0.1); %0.6,0.8,0.9,1
+                [peaks, locs] = findpeaks(SCdata{ccell},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1
 
                 FPSstack = FPS/3; 
                 Frames = size(SCdata{ccell},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+81);
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
                 min_TimeVals = round(sec_TimeVals/60,2);
                 FrameVals = round((1:FPSstack*50:Frames)-1); 
                 figure;
@@ -362,9 +363,11 @@ avC1 = zeros(length(sortedCdata),size(sortedCdata{1},2));
 avB1 = zeros(length(sortedBdata),size(sortedBdata{1},2));
 avV1 = zeros(length(sortedVdata),size(sortedVdata{1},2));
 for term = 1:length(sortedCdata)
-    avC1(term,:) = nanmean(sortedCdata{term},1);
-    avB1(term,:) = nanmean(sortedBdata{term},1);
-    avV1(term,:) = nanmean(sortedVdata{term},1);
+    if isempty(sortedCdata{term}) == 0 
+        avC1(term,:) = nanmean(sortedCdata{term},1);
+        avB1(term,:) = nanmean(sortedBdata{term},1);
+        avV1(term,:) = nanmean(sortedVdata{term},1);
+    end 
 end 
 
 
@@ -401,9 +404,9 @@ hold all
 plot(avB,'r','LineWidth',2);
 plot(avC,'b','LineWidth',2);
 plot(avV,'k','LineWidth',2);
-varargout = boundedline(1:size(avB,2),avB,semB,'r','transparency', 0.3,'alpha');                                                                             
-varargout = boundedline(1:size(avC,2),avC,semC,'b','transparency', 0.3,'alpha'); 
-varargout = boundedline(1:size(avV,2),avV,semV,'k','transparency', 0.3,'alpha'); 
+% varargout = boundedline(1:size(avB,2),avB,semB,'r','transparency', 0.3,'alpha');                                                                             
+% varargout = boundedline(1:size(avC,2),avC,semC,'b','transparency', 0.3,'alpha'); 
+% varargout = boundedline(1:size(avV,2),avV,semV,'k','transparency', 0.3,'alpha'); 
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;
 ax.FontSize = 20;
@@ -421,9 +424,20 @@ ylabel('percent change')
 clearvars diffAV diffSEM tTdata
 
 %make sure the trial lengths are the same per trial type 
-% trialLengths = state_end_f - state_start_f;
+%set ideal trial lengths 
+lenT1 = floor(FPSstack*2); % 2 second trials 
+lenT2 = floor(FPSstack*20); % 20 second trials 
+%identify current trial lengths 
 [kIdx,kMeans] = kmeans(trialLength,2);
-kMeans = floor(kMeans);
+%edit kMeans list so trialLengths is what they should be 
+for len = 1:length(kMeans)
+    if kMeans(len)-lenT1 < abs(kMeans(len)-lenT2)
+        kMeans(len) = lenT1;
+    elseif kMeans(len)-lenT1 > abs(kMeans(len)-lenT2)
+        kMeans(len) = lenT2;
+    end 
+end 
+%change state_end_f so all trial lengths match up 
 for trial = 1:length(state_start_f)
     state_end_f(trial,1) = state_start_f(trial)+kMeans(kIdx(trial));
 end 
@@ -454,38 +468,46 @@ greenAV = nanmean(greenCarray,1);
 % redSEM = nanstd(redCarray,1)/sqrt(size(redCarray,1));
 % redAV = nanmean(redCarray,1);
 
-count1 = 1;count2 = 1;count3 = 1;count4 = 1;
-for trial = 1:size(state_start_f,1)
-    if state_start_f(trial)-floor(FPSstack*20) > 0 && state_end_f(trial)+floor(FPSstack*20) < length(greenAV)
-        if TrialTypes(trial,2) == 1 % blue trials 
-            if trialLength(trial) == floor(FPSstack*2)
-%                 tTdata{1}(count1,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
-                GtTdata{1}(count1,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
-%                 RtTdata{1}(count1,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
-                count1 = count1+1;
-            elseif trialLength(trial) == floor(FPSstack*20)
-%                 tTdata{2}(count2,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                GtTdata{2}(count2,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-%                 RtTdata{2}(count2,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                count2 = count2+1;
-            end 
-        elseif TrialTypes(trial,2) == 2 % red trials 
-            if trialLength(trial) == floor(FPSstack*2)
-%                 tTdata{3}(count3,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                GtTdata{3}(count3,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-%                 RtTdata{3}(count3,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                count3 = count3+1;
-            elseif trialLength(trial) == floor(FPSstack*20)
-%                 tTdata{4}(count4,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                GtTdata{4}(count4,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-%                 RtTdata{4}(count4,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
-                count4 = count4+1;
+
+for term = 1:size(greenCarray,1)
+    count1 = 1;count2 = 1;count3 = 1;count4 = 1;
+    for trial = 1:size(state_start_f,1)
+        if state_start_f(trial)-floor(FPSstack*20) > 0 && state_end_f(trial)+floor(FPSstack*20) < length(greenAV)
+            if TrialTypes(trial,2) == 1 % blue trials 
+                if trialLength(trial) == floor(FPSstack*2)
+    %                 tTdata{1}(count1,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
+                    GtTdata{1}(count1,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
+                    GtTdataTerm{1}{term}(count1,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+    %                 RtTdata{1}(count1,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
+                    count1 = count1+1;
+                elseif trialLength(trial) == floor(FPSstack*20)
+    %                 tTdata{2}(count2,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdata{2}(count2,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdataTerm{2}{term}(count2,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+    %                 RtTdata{2}(count2,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count2 = count2+1;
+                end 
+            elseif TrialTypes(trial,2) == 2 % red trials 
+                if trialLength(trial) == floor(FPSstack*2)
+    %                 tTdata{3}(count3,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdata{3}(count3,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdataTerm{3}{term}(count3,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+    %                 RtTdata{3}(count3,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count3 = count3+1;
+                elseif trialLength(trial) == floor(FPSstack*20)
+    %                 tTdata{4}(count4,:) = diffAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdata{4}(count4,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdataTerm{4}{term}(count4,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+    %                 RtTdata{4}(count4,:) = redAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count4 = count4+1;
+                end 
             end 
         end 
     end 
-end 
+end
 
-%% plot trialType data
+%% plot trialType data averaged across all relevant terminals 
+
 % AVtTdata = cell(1,length(tTdata));
 % SEMtTdata = cell(1,length(tTdata));
 AVGtTdata = cell(1,length(GtTdata));
@@ -494,76 +516,142 @@ SEMGtTdata = cell(1,length(GtTdata));
 % SEMRtTdata = cell(1,length(tTdata));
 baselineEndFrame = floor(20*(FPSstack));
 for tType = 1:length(GtTdata)
-%     AVtTdata{tType} = mean(tTdata{tType},1);
-%     SEMtTdata{tType} = std(tTdata{tType},1)/sqrt(size(tTdata{tType},1));
-    AVGtTdata{tType} = mean(GtTdata{tType},1);
-    SEMGtTdata{tType} = std(GtTdata{tType},1)/sqrt(size(GtTdata{tType},1));
-%     AVRtTdata{tType} = mean(RtTdata{tType},1);
-%     SEMRtTdata{tType} = std(RtTdata{tType},1)/sqrt(size(RtTdata{tType},1));
-    figure; 
-    hold all;
-    if tType == 1 || tType == 3 
-        Frames = size(AVGtTdata{tType},2);        
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
-        FrameVals = floor((1:FPSstack*2:Frames)-1); 
-    elseif tType == 2 || tType == 4 
-        Frames = size(AVGtTdata{tType},2);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
-        FrameVals = floor((1:FPSstack*2:Frames)-1); 
-    end 
-    
-    if tType == 1 
-        plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'b','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
-%                 alpha(0.5)   
-    elseif tType == 3 
-        plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'r','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
-%                 alpha(0.5)                       
-    elseif tType == 2 
-        plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'b','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
-%                 alpha(0.5)   
-    elseif tType == 4 
-        plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'r','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
-%                 alpha(0.5)  
-    end
+    if isempty(GtTdata{tType}) == 0 
+    %     AVtTdata{tType} = mean(tTdata{tType},1);
+    %     SEMtTdata{tType} = std(tTdata{tType},1)/sqrt(size(tTdata{tType},1));
+        AVGtTdata{tType} = mean(GtTdata{tType},1);
+        SEMGtTdata{tType} = std(GtTdata{tType},1)/sqrt(size(GtTdata{tType},1));
+    %     AVRtTdata{tType} = mean(RtTdata{tType},1);
+    %     SEMRtTdata{tType} = std(RtTdata{tType},1)/sqrt(size(RtTdata{tType},1));
+        figure; 
+        hold all;
+        if tType == 1 || tType == 3 
+            Frames = size(AVGtTdata{tType},2);        
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+            FrameVals = floor((1:FPSstack*2:Frames)-1); 
+        elseif tType == 2 || tType == 4 
+            Frames = size(AVGtTdata{tType},2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+            FrameVals = floor((1:FPSstack*2:Frames)-1); 
+        end 
 
-    
-%     varargout = boundedline(1:size(AVtTdata{tType},2),AVtTdata{tType},SEMtTdata{tType},'k','transparency', 0.5);
-    for trial = 1:size(GtTdata{tType},1)
-%         plot(RtTdata{tType}(trial,:),'LineWidth',1)
-        plot(GtTdata{tType}(trial,:),'LineWidth',1)
-%         plot(tTdata{tType}(trial,:),'LineWidth',1)
-    end 
-%     plot(AVRtTdata{tType},'Color',[0.5 0 0],'LineWidth',3)
-    plot(AVGtTdata{tType},'Color',[0 0.5 0],'LineWidth',3)
-%     plot(AVtTdata{tType},'k','LineWidth',3)
-    if tType == 1 || tType == 2
-    elseif tType == 3 || tType == 4
-    end 
-    ax=gca;
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;
-    ax.FontSize = 20;
-    xlim([0 Frames])
-    ylim([-200 200])
-    xlabel('time (s)')
-    if smoothQ == 1
-        title(sprintf('data smoothed by %0.2f sec',filtTime));
-    elseif smoothQ == 0
-        title('raw data')
-    end 
-    
-end 
+        if tType == 1 
+            plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+    %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+    %                 alpha(0.5)   
+        elseif tType == 3 
+            plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+    %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+    %                 alpha(0.5)                       
+        elseif tType == 2 
+            plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+    %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+    %                 alpha(0.5)   
+        elseif tType == 4 
+            plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+    %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+    %                 alpha(0.5)  
+        end
 
+
+    %     varargout = boundedline(1:size(AVtTdata{tType},2),AVtTdata{tType},SEMtTdata{tType},'k','transparency', 0.5);
+        for trial = 1:size(GtTdata{tType},1)
+    %         plot(RtTdata{tType}(trial,:),'LineWidth',1)
+            plot(GtTdata{tType}(trial,:),'LineWidth',1)
+    %         plot(tTdata{tType}(trial,:),'LineWidth',1)
+        end 
+    %     plot(AVRtTdata{tType},'Color',[0.5 0 0],'LineWidth',3)
+        plot(AVGtTdata{tType},'Color',[0 0.5 0],'LineWidth',3)
+    %     plot(AVtTdata{tType},'k','LineWidth',3)
+        if tType == 1 || tType == 2
+        elseif tType == 3 || tType == 4
+        end 
+        ax=gca;
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 20;
+        xlim([0 Frames])
+        ylim([-200 200])
+        xlabel('time (s)')
+        if smoothQ == 1
+            title(sprintf('data smoothed by %0.2f sec',filtTime));
+        elseif smoothQ == 0
+            title('raw data')
+        end 
+    end 
+end
+
+%% plot trialType data per terminal 
+
+for term = 1:size(GtTdataTerm{4},2)
+    AVGtTdata = cell(1,length(GtTdataTerm));
+    SEMGtTdata = cell(1,length(GtTdataTerm));
+    baselineEndFrame = floor(20*(FPSstack));
+    for tType = 1:length(GtTdataTerm)
+        if isempty(GtTdataTerm{tType}) == 0 
+            AVGtTdata{tType} = mean(GtTdataTerm{tType}{term},1);
+            SEMGtTdata{tType} = std(GtTdataTerm{tType}{term},1)/sqrt(size(GtTdataTerm{tType}{term},1));
+            figure; 
+            hold all;
+            if tType == 1 || tType == 3 
+                Frames = size(AVGtTdata{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+            elseif tType == 2 || tType == 4 
+                Frames = size(AVGtTdata{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+            end 
+            if tType == 1 
+                plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+        %                 alpha(0.5)   
+            elseif tType == 3 
+                plot([round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+        %                 alpha(0.5)                       
+            elseif tType == 2 
+                plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+        %                 alpha(0.5)   
+            elseif tType == 4 
+                plot([round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+        %                 alpha(0.5)  
+            end
+            for trial = 1:size(GtTdataTerm{tType}{term},1)
+                plot(GtTdataTerm{tType}{term}(trial,:),'LineWidth',1)
+            end 
+            plot(AVGtTdata{tType},'Color',[0 0.5 0],'LineWidth',3)
+            ax=gca;
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 20;
+            xlim([0 Frames])
+            ylim([-200 200])
+            xlabel('time (s)')
+            if smoothQ == 1
+                title(sprintf('Terminal #%d data smoothed by %0.2f sec',terminals(term),filtTime));
+            elseif smoothQ == 0
+                title(sprintf('Terminal #%d raw data',terminals(term)));
+            end 
+        end 
+    end 
+end
 
