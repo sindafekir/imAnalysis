@@ -156,7 +156,6 @@ end
 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%% concatenate trial type data per terminal 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -270,19 +269,89 @@ end
 %}
 
 %% compare terminal calcium activity 
-corData = cell(1,length(Data{1}));
-for tType = 1:length(Data{1})      
-   for trial = 1:size(Data{1}{tType},1)
+
+AVdata = cell(1,length(Data));
+for term = 1:length(Data)
+    for tType = 1:length(Data{1})      
+        AVdata{term}{tType} = mean(sData{term}{tType},1);
+    end 
+end 
+
+dataQ = input('Input 0 if you want to compare the entire TS. Input 1 if you want to compare stim period data. ');
+if dataQ == 0 
+    corData = cell(1,length(Data{1}));
+    corAVdata = cell(1,length(Data{1}));
+    for tType = 1:length(Data{1})    
        for term1 = 1:length(Data)
            for term2 = 1:length(Data)
-               corData{tType}{trial}(term1,term2) = corr2(sData{term1}{tType}(trial,:),sData{term2}{tType}(trial,:));
+               for trial = 1:size(Data{1}{tType},1)
+                   corData{tType}{trial}(term1,term2) = corr2(sData{term1}{tType}(trial,:),sData{term2}{tType}(trial,:));                  
+               end 
+               corAVdata{tType}(term1,term2) = corr2(AVdata{term1}{tType},AVdata{term2}{tType});
            end 
        end 
-   end 
+    end 
+elseif dataQ == 1 
+    corData = cell(1,length(Data{1}));
+    corAVdata = cell(1,length(Data{1}));
+    for tType = 1:length(Data{1})    
+       for term1 = 1:length(Data)
+           for term2 = 1:length(Data)
+               stimOnFrame = floor(FPSstack*20);
+               if tType == 1 || tType == 3 
+                   stimOffFrame = stimOnFrame + floor(FPSstack*20);
+               elseif tType == 2 || tType == 4
+                   stimOffFrame = stimOnFrame + floor(FPSstack*2);
+               end 
+               for trial = 1:size(Data{1}{tType},1)
+                   corData{tType}{trial}(term1,term2) = corr2(sData{term1}{tType}(trial,stimOnFrame:stimOffFrame),sData{term2}{tType}(trial,stimOnFrame:stimOffFrame));
+               end 
+               corAVdata{tType}(term1,term2) = corr2(AVdata{term1}{tType}(stimOnFrame:stimOffFrame),AVdata{term2}{tType}(stimOnFrame:stimOffFrame));
+           end 
+       end 
+    end 
 end 
 
 % plot cross correlelograms 
-for tType = 1:length(Data{1})   
+for tType = 1:length(Data{1})
+    % plot averaged trial data
+    figure;
+    imagesc(corAVdata{tType})
+    colorbar 
+    truesize([700 900])
+    ax=gca;
+    ax.FontSize = 20;
+    ax.XTickLabel = terminals;
+    ax.YTickLabel = terminals;
+    if smoothQ == 0 
+       if tType == 1 
+           title('2 sec blue stim. Raw data.','FontSize',20);
+       elseif tType == 2
+           title('20 sec blue stim. Raw data.','FontSize',20);
+       elseif tType == 3
+           title('2 sec red stim. Raw data.','FontSize',20);
+       elseif tType == 4 
+           title('20 sec red stim. Raw data.','FontSize',20);
+       end 
+    elseif smoothQ == 1
+       if tType == 1 
+           mtitle = sprintf('2 sec blue stim. Data smoothed by %0.2f sec.',filtTime);
+           title(mtitle,'FontSize',20);
+       elseif tType == 2
+           mtitle = sprintf('20 sec blue stim. Data smoothed by %0.2f sec.',filtTime);
+           title(mtitle,'FontSize',20);
+       elseif tType == 3
+           mtitle = sprintf('2 sec red stim. Data smoothed by %0.2f sec.',filtTime);
+           title(mtitle,'FontSize',20);
+       elseif tType == 4 
+           mtitle = sprintf('20 sec red stim. Data smoothed by %0.2f sec.',filtTime);
+           title(mtitle,'FontSize',20);
+       end 
+    end 
+   xlabel('terminal')
+   ylabel('terminal')
+    
+   %plot trial data 
    figure;
     if smoothQ == 0 
        if tType == 1 
@@ -314,11 +383,15 @@ for tType = 1:length(Data{1})
        imagesc(corData{tType}{trial})
        colorbar 
        ax=gca;
-       ax.FontSize = 20;
+       ax.FontSize = 12;
        title(sprintf('Trial #%d.',trial));
-%        truesize([700 900])
+%        truesize([200 400])
        xlabel('terminal')
        ylabel('terminal')
+       ax.XTick = (1:length(terminals));
+       ax.YTick = (1:length(terminals));
+       ax.XTickLabel = terminals;
+       ax.YTickLabel = terminals;
    end 
 end 
 
