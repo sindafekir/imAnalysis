@@ -395,4 +395,84 @@ for tType = 1:length(Data{1})
    end 
 end 
 
+%% CALCIUM PEAK RASTER PLOTS 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+peaks = cell(1,length(Data));
+locs = cell(1,length(Data));
+stdTrace = cell(1,length(Data));
+sigPeaks = cell(1,length(Data));
+sigPeakLocs = cell(1,length(Data));
+clear raster2 
+for term = 1:length(Data)
+    figure;
+    for tType = 1:length(Data{1})   
+        for trial = 1:size(Data{term}{tType},1)
+            %identify where the peaks are 
+            [peak, loc] = findpeaks(sData{term}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1
+            peaks{term}{tType}{trial} = peak;
+            locs{term}{tType}{trial} = loc;
+            stdTrace{term}(trial,tType) = std(sData{term}{tType}(trial,:));
+            count = 1;
+            for ind = 1:length(peaks{term}{tType}{trial})
+                if peaks{term}{tType}{trial}(ind) > stdTrace{term}(trial,tType)*1
+                    sigPeakLocs{term}{tType}{trial}(count) = locs{term}{tType}{trial}(ind);
+                    sigPeaks{term}{tType}{trial}(count) = peaks{term}{tType}{trial}(ind);                   
+                    %create raster plot by binarizing data                      
+                    raster2{term}{tType}(trial,sigPeakLocs{term}{tType}{trial}(count)) = 1;
+                   count = count + 1;
+                end                
+            end    
+        end 
+        raster2{term}{tType} = ~raster2{term}{tType};
+        %make raster plot larger/easier to look at 
+        multFactor = 10;
+        raster{term}{tType} = repelem(raster2{term}{tType},multFactor,1);
+        
+        %create image 
+        subplot(2,2,tType)
+        imshow(raster{term}{tType})
+        hold all 
+        stimStartF = floor(FPSstack*20);
+        if tType == 1 || tType == 3
+            stimStopF = stimStartF + floor(FPSstack*2);           
+            Frames = size(raster{term}{tType},2);        
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+1);
+            FrameVals = floor((1:FPSstack*4:Frames)-1);            
+        elseif tType == 2 || tType == 4       
+            stimStopF = stimStartF + floor(FPSstack*20);            
+            Frames = size(raster{term}{tType},2);        
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+10);
+            FrameVals = floor((1:FPSstack*4:Frames)-1);
+        end 
+        if tType == 1 || tType == 2
+        plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+        plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+        plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+        plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+        end 
+
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        yticks(5:10:size(raster{term}{tType},1)-5)
+        ax.YTickLabel = ([]);
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('trial')
+        sgtitle(sprintf('Terminal %d',terminals(term)))
+    end 
+end 
+
+
+
 
