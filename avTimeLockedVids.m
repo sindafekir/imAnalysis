@@ -167,6 +167,7 @@ for vid = 1:length(vidList)
     tData{vid} = temp.GtTdataTerm; 
 end 
 FPSstack = temp.FPSstack;
+terminals = [13, 20, 12, 16, 11, 15, 10, 8, 9, 7, 4];
 
 %% reorganize data 
 Data = cell(1,length(tData{1}{1}));
@@ -185,7 +186,6 @@ for term = 1:length(tData{1}{1})
 end 
 
 %% smooth data if you want
-terminals = [13, 20, 12, 16, 11, 15, 10, 8, 9, 7, 4];
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ ==  1
     filtTime = input('How many seconds do you want to smooth your data by? ');
@@ -269,7 +269,84 @@ for term = 1:length(Data)
 end 
 %}
 
-%% compare terminal calcium activity 
+%% plot event triggered averages of relevant terminals averaged together 
+
+%define the terminals you want to average 
+% terms = input('What terminals do you want to average? ');
+
+termGdata = cell(1,length(Data{1}));
+for tType = 1:length(Data{1}) 
+    for term = 1:length(terms)
+        ind = find(terminals == (terms(term)));
+        if term == 1 
+            termGdata{tType} = sData{ind}{tType};
+        elseif term > 1
+            termGdata{tType}(((term-1)*size(Data{ind}{tType},1))+1:term*size(Data{ind}{tType},1),:) = sData{ind}{tType};
+        end          
+    end 
+end 
+
+AVdata = cell(1,length(Data{1}));
+SEMdata = cell(1,length(Data{1}));
+baselineEndFrame = floor(20*(FPSstack));
+for tType = 4%1:length(Data{1}) 
+    AVdata{tType} = mean(termGdata{tType},1);
+    SEMdata{tType} = std(termGdata{tType},1)/sqrt(size(termGdata{tType},1));
+    figure;                 
+    hold all;
+    if tType == 1 || tType == 3 
+        Frames = size(termGdata{tType},2);        
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+        FrameVals = floor((1:FPSstack*2:Frames)-1); 
+    elseif tType == 2 || tType == 4 
+        Frames = size(termGdata{tType},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+        FrameVals = floor((1:FPSstack*2:Frames)-1); 
+    end 
+    if tType == 1 
+        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+%                 alpha(0.5)   
+    elseif tType == 3 
+        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+%                 alpha(0.5)                       
+    elseif tType == 2 
+        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+%                 alpha(0.5)   
+    elseif tType == 4 
+        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+%                 alpha(0.5)  
+    end
+    for trial = 1:size(termGdata{tType},1)
+        plot(termGdata{tType}(trial,:),'LineWidth',1)
+    end 
+    plot(AVdata{tType},'k','LineWidth',3)
+    ax=gca;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;
+    ax.FontSize = 20;
+    xlim([0 Frames])
+    ylim([-200 200])
+    xlabel('time (s)')
+    if smoothQ == 1
+        title(sprintf('data smoothed by %0.2f sec',filtTime));
+    elseif smoothQ == 0
+        title('raw data');
+    end 
+end 
+
+%% compare terminal calcium activity - create correlograms
 
 AVdata = cell(1,length(Data));
 for term = 1:length(Data)
@@ -397,10 +474,6 @@ for tType = 1:length(Data{1})
 end 
 
 %% CALCIUM PEAK RASTER PLOTS 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 Len1_3 = length(sData{1}{1});
 Len2_4 = length(sData{1}{2});
 
@@ -415,7 +488,7 @@ for term = 1:length(Data)
     for tType = 1:length(Data{1})   
         for trial = 1:size(Data{term}{tType},1)
             %identify where the peaks are 
-            [peak, loc] = findpeaks(sData{term}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',3); %0.6,0.8,0.9,1
+            [peak, loc] = findpeaks(sData{term}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1
             peaks{term}{tType}{trial} = peak;
             locs{term}{tType}{trial} = loc;
             stdTrace{term}(trial,tType) = std(sData{term}{tType}(trial,:));
@@ -441,54 +514,55 @@ for term = 1:length(peaks)
             if isempty(peaks{term}{tType}{trial}) == 0
                 raster2{term}{tType} = ~raster2{term}{tType};
                 %make raster plot larger/easier to look at 
-                multFactor = 10;
-                raster3{term}{tType} = repelem(raster2{term}{tType},multFactor,1);
-                raster{term}{tType} = repelem(raster2{term}{tType},multFactor,1);
+                RowMultFactor = 10;
+                ColMultFactor = 1;
+                raster3{term}{tType} = repelem(raster2{term}{tType},RowMultFactor,ColMultFactor);
+                raster{term}{tType} = repelem(raster2{term}{tType},RowMultFactor,ColMultFactor);
                 %make rasters the correct length  
                 if tType == 1 || tType == 3
                     raster{term}{tType}(:,length(raster3{term}{tType})+1:Len1_3) = 1;
                 elseif tType == 2 || tType == 4   
                     raster{term}{tType}(:,length(raster3{term}{tType})+1:Len2_4) = 1;
                 end 
-        %         
-        %         %create image 
-        %         subplot(2,2,tType)
-        %         imshow(raster{term}{tType})
-        %         hold all 
-        %         stimStartF = floor(FPSstack*20);
-        %         if tType == 1 || tType == 3
-        %             stimStopF = stimStartF + floor(FPSstack*2);           
-        %             Frames = size(raster{term}{tType},2);        
-        %             Frames_pre_stim_start = -((Frames-1)/2); 
-        %             Frames_post_stim_start = (Frames-1)/2; 
-        %             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+1);
-        %             FrameVals = floor((1:FPSstack*4:Frames)-1);            
-        %         elseif tType == 2 || tType == 4       
-        %             stimStopF = stimStartF + floor(FPSstack*20);            
-        %             Frames = size(raster{term}{tType},2);        
-        %             Frames_pre_stim_start = -((Frames-1)/2); 
-        %             Frames_post_stim_start = (Frames-1)/2; 
-        %             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+10);
-        %             FrameVals = floor((1:FPSstack*4:Frames)-1);
-        %         end 
-        %         if tType == 1 || tType == 2
-        %         plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
-        %         plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
-        %         elseif tType == 3 || tType == 4
-        %         plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
-        %         plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
-        %         end 
-        % 
-        %         ax=gca;
-        %         axis on 
-        %         xticks(FrameVals)
-        %         ax.XTickLabel = sec_TimeVals;
-        %         yticks(5:10:size(raster{term}{tType},1)-5)
-        %         ax.YTickLabel = ([]);
-        %         ax.FontSize = 15;
-        %         xlabel('time (s)')
-        %         ylabel('trial')
-        %         sgtitle(sprintf('Terminal %d',terminals(term)))
+%        
+%                 %create image 
+%                 subplot(2,2,tType)
+%                 imshow(raster{term}{tType})
+%                 hold all 
+%                 stimStartF = floor(FPSstack*20);
+%                 if tType == 1 || tType == 3
+%                     stimStopF = stimStartF + floor(FPSstack*2);           
+%                     Frames = size(raster{term}{tType},2);        
+%                     Frames_pre_stim_start = -((Frames-1)/2); 
+%                     Frames_post_stim_start = (Frames-1)/2; 
+%                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+1);
+%                     FrameVals = floor((1:FPSstack*4:Frames)-1);            
+%                 elseif tType == 2 || tType == 4       
+%                     stimStopF = stimStartF + floor(FPSstack*20);            
+%                     Frames = size(raster{term}{tType},2);        
+%                     Frames_pre_stim_start = -((Frames-1)/2); 
+%                     Frames_post_stim_start = (Frames-1)/2; 
+%                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+10);
+%                     FrameVals = floor((1:FPSstack*4:Frames)-1);
+%                 end 
+%                 if tType == 1 || tType == 2
+%                 plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+%                 plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+%                 elseif tType == 3 || tType == 4
+%                 plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+%                 plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+%                 end 
+%         
+%                 ax=gca;
+%                 axis on 
+%                 xticks(FrameVals)
+%                 ax.XTickLabel = sec_TimeVals;
+%                 yticks(5:10:size(raster{term}{tType},1)-5)
+%                 ax.YTickLabel = ([]);
+%                 ax.FontSize = 15;
+%                 xlabel('time (s)')
+%                 ylabel('trial')
+%                 sgtitle(sprintf('Terminal %d',terminals(term)))
             end 
         end 
     end 
@@ -498,9 +572,9 @@ end
  %create raster for all terminals stacked 
 for tType = 1:length(Data{1})   
     for term = 1:length(Data)
-        curSize = size(raster{term}{tType},1);
-        if curSize < size(sData{term}{tType},1)*multFactor 
-            raster{term}{tType}(curSize+1:size(sData{term}{tType},1)*multFactor,:) = 1;
+        curRowSize = size(raster{term}{tType},1);
+        if curRowSize < size(sData{term}{tType},1)*RowMultFactor 
+            raster{term}{tType}(curSize+1:size(sData{term}{tType},1)*RowMultFactor,:) = 1;
         end    
     end 
 end 
@@ -620,7 +694,6 @@ for term = 1:length(Data)
     end 
 end 
 
-%plot num peaks for all terminals
 allTermAvPeakNums = cell(1,length(Data{1}));
 for term = 1:length(Data)
     for tType = 1:length(Data{1})
@@ -632,8 +705,8 @@ for term = 1:length(Data)
     end 
 end 
 
+%plot num peaks for all terminals (terminal traces overlaid)
 for tType = 1:length(Data{1})
-
     subplot(2,2,tType)
     hold all 
     stimStartF = floor((FPSstack*20)/winFrames);
@@ -648,18 +721,22 @@ for tType = 1:length(Data{1})
         sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
         FrameVals = (0:2:Frames);
     end 
-    if tType == 1 || tType == 2
-    plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-    plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
-    elseif tType == 3 || tType == 4
-    plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-    plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
-    end 
+    colorSet = varycolor(length(Data));
     for term = 1:length(Data)
-        plot(allTermAvPeakNums{tType}(term,:))
+        plot(allTermAvPeakNums{tType}(term,:),'Color',colorSet(term,:),'LineWidth',1.5)
     end 
-    plot(mean(allTermAvPeakNums{tType},1),'k','LineWidth',2)
-
+    plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
+%     plot(allTermAvPeakNums{tType},'Color','k')
+%     for col = 1:length(allTermAvPeakNums{tType})
+%         scatter(linspace(col,col,size(allTermAvPeakNums{tType},1)),allTermAvPeakNums{tType}(:,col))
+%     end 
+    if tType == 1 || tType == 2
+        plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+    elseif tType == 3 || tType == 4
+        plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+    end 
     ax=gca;
     axis on 
     xticks(FrameVals)
@@ -669,8 +746,59 @@ for tType = 1:length(Data{1})
     ax.FontSize = 10;
     xlabel('time (s)')
     ylabel('number of peaks')
-    xlim([1 length(avTermNumPeaks{term}{tType})])
+    xlim([0 length(avTermNumPeaks{term}{tType})])
     ylim([-0.5 1])
     sgtitle('Number of calcium peaks per terminal');
+    legend('terminal 13','terminal 20','terminal 12','terminal 16','terminal 11','terminal 15','terminal 10','terminal 8','terminal 9','terminal 7','terminal 4')
+end 
+
+%plot num peaks for all terminals (terminal traces stacked - not overlaid)
+figure;
+for tType = 1:length(Data{1})
+    subplot(2,2,tType)
+    hold all 
+    stimStartF = floor((FPSstack*20)/winFrames);
+    if tType == 1 || tType == 3
+        stimStopF = stimStartF + floor((FPSstack*2)/winFrames);           
+        Frames = size(allTermAvPeakNums{tType},2);        
+        sec_TimeVals = (0:winSec*2:winSec*Frames)-20;
+        FrameVals = (0:2:Frames);            
+    elseif tType == 2 || tType == 4       
+        stimStopF = stimStartF + floor((FPSstack*20)/winFrames);            
+        Frames = size(allTermAvPeakNums{tType},2);        
+        sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+        FrameVals = (0:2:Frames);
+    end 
+    colorSet = varycolor(length(Data));
+    yStagTerm = 0.7;
+    for term = 1:length(Data)
+        plot(allTermAvPeakNums{tType}(term,:)+yStagTerm,'Color',colorSet(term,:),'LineWidth',1.5)
+        yStagTerm = yStagTerm + 0.7;
+    end 
+%     plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
+%     plot(allTermAvPeakNums{tType},'Color','k')
+%     for col = 1:length(allTermAvPeakNums{tType})
+%         scatter(linspace(col,col,size(allTermAvPeakNums{tType},1)),allTermAvPeakNums{tType}(:,col))
+%     end 
+    if tType == 1 || tType == 2
+        plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+    elseif tType == 3 || tType == 4
+        plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+    end 
+    ax=gca;
+    axis on 
+    xticks(FrameVals)
+    ax.XTickLabel = sec_TimeVals;
+%         yticks(5:10:size(avTermNumPeaks{term}{tType},1)-5)
+%         ax.YTickLabel = ([]);
+    ax.FontSize = 10;
+    xlabel('time (s)')
+    ylabel('number of peaks')
+    xlim([0 length(avTermNumPeaks{term}{tType})])
+    ylim([0 8.5])
+    sgtitle('Number of calcium peaks per terminal');
+    legend('terminal 13','terminal 20','terminal 12','terminal 16','terminal 11','terminal 15','terminal 10','terminal 8','terminal 9','terminal 7','terminal 4')
 end 
 
