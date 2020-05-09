@@ -239,9 +239,6 @@ for tType = 1:length(Bdata)
 end 
 
 %% smooth data if you want
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ ==  1
     filtTime = input('How many seconds do you want to smooth your data by? ');
@@ -622,6 +619,7 @@ end
 
 %}
 %% compare terminal calcium activity - create correlograms
+%NEXT ADD IN BASELINE CORRELOGRAMS - THEN DO 2-2 CALCIUM PEAK ALIGNED PLOTS
 %{
 AVdata = cell(1,length(Data));
 for term = 1:length(Data)

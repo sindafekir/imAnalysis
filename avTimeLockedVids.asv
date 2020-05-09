@@ -239,9 +239,6 @@ for tType = 1:length(Bdata)
 end 
 
 %% smooth data if you want
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ ==  1
     filtTime = input('How many seconds do you want to smooth your data by? ');
@@ -622,6 +619,7 @@ end
 
 %}
 %% compare terminal calcium activity - create correlograms
+%NEXT ADD IN BASELINE CORRELOGRAMS 
 %{
 AVdata = cell(1,length(Data));
 for term = 1:length(Data)
@@ -749,6 +747,7 @@ for tType = 4%1:length(Data{1})
 end 
 %}
 %% CALCIUM PEAK RASTER PLOTS 
+%{
 Len1_3 = length(sData{1}{1});
 Len2_4 = length(sData{1}{2});
 
@@ -843,7 +842,7 @@ for term = 1:length(peaks)
     end 
 end 
 
-%%
+%
  %create raster for all terminals stacked 
 for tType = 4%1:length(Data{1})   
     for term = 1:length(Data)
@@ -904,9 +903,9 @@ for tType = 4%1:length(Data{1})
     ylabel('trial')
 %     sgtitle(sprintf('Terminal %d',terminals(term)))
 end
-
-%%
-% plot peak rate per every n seconds 
+%}
+%% plot peak rate per every n seconds 
+ %{
 winSec = input('How many seconds do you want to know the calcium peak rate? '); 
 winFrames = floor(winSec*FPSstack);
 numPeaks = cell(1,length(Data));
@@ -1076,4 +1075,4 @@ for tType = 4%1:length(Data{1})
     sgtitle('Number of calcium peaks per terminal');
     legend('terminal 17','terminal 15','terminal 12','terminal 10','terminal 8','terminal 7','terminal 6','terminal 5','terminal 4','terminal 3')
 end 
-
+%}
