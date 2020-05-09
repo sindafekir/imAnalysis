@@ -1,10 +1,10 @@
 % function [TSdataBBBperm] = calciumTSwholeExp(regStacks,userInput)
 %% get just the data you need 
-temp1 = matfile('SF56_20190718_ROI2_8_regIms_green.mat');
+temp1 = matfile('SF57_20190717_ROI1_9_regIms_green.mat');
 regStacks = temp1.regStacks;
 numZplanes = temp1.numZplanes ;
 
-temp2 = matfile('SF56_20190718_ROI2_1-3_5_7_VW_and_1-5_7_10CaData.mat');
+temp2 = matfile('SF57_20190717_DAca_V1-6_8_vesAndCalciumData.mat');
 userInput = temp2.userInput; 
 CaROImasks = temp2.CaROImasks; 
 ROIorders = temp2.ROIorders; 

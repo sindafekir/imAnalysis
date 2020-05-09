@@ -89,8 +89,6 @@ elseif smoothQ == 0
     end 
 end
 
-% 27, 20, 14,10,15,13,11,8,5,4
-
 %% prep trial type data 
 [framePeriod] = getUserInput(userInput,'What is the framePeriod? ');
 [state] = getUserInput(userInput,'What teensy state does the stimulus happen in?');
@@ -114,7 +112,7 @@ if ccellQ ==  1
                 Frames = size(SCdata{ccell},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+473);
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+102);
                 min_TimeVals = round(sec_TimeVals/60,2);
                 FrameVals = round((1:FPSstack*50:Frames)-1); 
                 figure;
@@ -141,7 +139,7 @@ if ccellQ ==  1
                 ax.XTickLabel = min_TimeVals;
                 ax.FontSize = 20;
                 xlim([0 length(Cdata)])
-                ylim([-200 1000])
+                ylim([-200 500])
                 xlabel('time (min)')
                 if smoothQ ==  1
                     title({sprintf('terminal #%d data',ccell); sprintf('smoothed by %0.2f seconds',filtTime)})
@@ -421,7 +419,7 @@ ylabel('percent change')
 %% sort data into different trial types to see effects of stims 
 %THIS IS SET UP FOR DIFFCDATA THAT SHOWS INDIVIDUAL TERMINAL ACTIVITY - TO
 %GET SEM 
-clearvars diffAV diffSEM tTdata
+clearvars diffAV diffSEM tTdata GtTdataTerm
 
 %make sure the trial lengths are the same per trial type 
 %set ideal trial lengths 
@@ -506,8 +504,8 @@ for term = 1:size(greenCarray,1)
     end 
 end
 
-%% plot trialType data averaged across all relevant terminals 
-
+%% organize trialType data averaged across all relevant terminals 
+%{
 % AVtTdata = cell(1,length(tTdata));
 % SEMtTdata = cell(1,length(tTdata));
 AVGtTdata = cell(1,length(GtTdata));
@@ -654,4 +652,4 @@ for term = 1:size(GtTdataTerm{4},2)
         end 
     end 
 end
-
+%}

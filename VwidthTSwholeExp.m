@@ -1,5 +1,5 @@
 %% get just the data you need 
-temp = matfile('SF56_20190718_ROI2_8_regIms_red.mat');
+temp = matfile('SF56_20190718_ROI2_1_regIms_red.mat');
 userInput = temp.userInput; 
 regStacks = temp.regStacks;
 

@@ -160,24 +160,42 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %% get the data you need 
-vidList = [1,2,3,4,5,7];
+vidList = [1,2,3,4,5,7]; %SF56
+% vidList = [1,2,3,4,5,6]; %SF57
 tData = cell(1,length(vidList));
+cDataFullTrace = cell(1,length(vidList));
 for vid = 1:length(vidList)
-    temp = matfile(sprintf('SF56_20190718_ROI2_%d_Fdata_termTtype.mat',vidList(vid)));
-    tData{vid} = temp.GtTdataTerm; 
+    temp1 = matfile(sprintf('SF56_20190718_ROI2_%d_Fdata_termTtype.mat',vidList(vid)));
+    tData{vid} = temp1.GtTdataTerm;  
+    cDataFullTrace{vid} = temp1.CcellData;  
 end 
-FPSstack = temp.FPSstack;
-terminals = [13, 20, 12, 16, 11, 15, 10, 8, 9, 7, 4];
+FPSstack = temp1.FPSstack;
+terminals = [13,20,12,16,11,15,10,8,9,7,4]; %SF56
+% terminals = [17,15,12,10,8,7,6,5,4,3]; %SF57
+
+bDataFullTrace = cell(1,length(vidList));
+vDataFullTrace = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    temp2 = matfile(sprintf('SF56_20190718_ROI2_%d_CVBdata_F-SB_terminalWOnoiseFloor_CaPeakAlignedData.mat',vidList(vid)));
+    bDataFullTrace{vid} = temp2.Bdata; 
+    vDataFullTrace{vid} = temp2.Vdata; 
+end 
+
+temp3 = matfile('SF56_20190718_ROI2_1-5_7_10_BBB.mat');
+Bdata = temp3.dataToPlot;
+
+temp4 = matfile('SF56_20190718_ROI2_1-3_5_7_VW.mat');
+Vdata = temp4.dataToPlot;
 
 %% reorganize data 
-Data = cell(1,length(tData{1}{1}));
+Cdata = cell(1,length(tData{1}{1}));
 for term = 1:length(tData{1}{1})
     for tType = 1:length(tData{1})
         trial2 = 1; 
         for vid = 1:length(tData)            
             if isempty(tData{vid}{tType}) == 0 
                 for trial = 1:size(tData{vid}{tType}{term},1)
-                    Data{term}{tType}(trial2,:) = tData{vid}{tType}{term}(trial,:); 
+                    Cdata{term}{tType}(trial2,:) = tData{vid}{tType}{term}(trial,:); 
                     trial2 = trial2 + 1;
                 end 
             end             
@@ -185,21 +203,88 @@ for term = 1:length(tData{1}{1})
     end 
 end 
 
+%average across z and different vessel segments 
+VdataNoROIarray = cell(1,length(Vdata));
+VdataNoROI = cell(1,length(Vdata));
+VdataNoZ = cell(1,length(Bdata));
+VdataNoZarray = cell(1,length(Bdata));
+for tType = 1:length(Bdata) 
+    for z = 1:length(Vdata)        
+        for ROI = 1:length(Vdata{z})   
+            for trial = 1:length(Vdata{z}{ROI}{tType})
+                VdataNoROIarray{z}{tType}{trial}(ROI,:) = Vdata{z}{ROI}{tType}{trial};             
+                VdataNoROI{z}{tType}{trial} = nanmean(VdataNoROIarray{z}{tType}{trial},1);
+                VdataNoZarray{tType}{trial}(z,:) = VdataNoROI{z}{tType}{trial};                
+                VdataNoZ{tType}{trial} = nanmean(VdataNoZarray{tType}{trial},1);
+            end
+        end 
+        
+    end 
+end 
+clear Vdata 
+Vdata = VdataNoZ;
+
+%resample if you need to
+for tType = 1:length(Bdata)
+    for trial = 1:length(Bdata{tType})
+        if length(Cdata{1}{tType}) ~= length(Bdata{tType}{trial})
+            Bdata{tType}{trial} = resample(Bdata{tType}{trial},length(Cdata{1}{tType}),length(Bdata{tType}{trial}));
+        end 
+    end 
+    for trial = 1:length(Vdata{tType})
+        if length(Cdata{1}{tType}) ~= length(Vdata{tType}{trial})
+            Vdata{tType}{trial} = resample(Vdata{tType}{trial},length(Cdata{1}{tType}),length(Vdata{tType}{trial}));
+        end 
+    end 
+end 
+
 %% smooth data if you want
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ ==  1
     filtTime = input('How many seconds do you want to smooth your data by? ');
-    sData = cell(1,length(Data));
-    for term = 1:length(Data)
-        for tType = 1:length(Data{1})   
-            for trial = 1:size(Data{term}{tType},1)
-                [s_Data] = MovMeanSmoothData(Data{term}{tType}(trial,:),filtTime,FPSstack);
-                sData{term}{tType}(trial,:) = s_Data; 
+    sCdata = cell(1,length(Cdata));
+    for term = 1:length(Cdata)
+        for tType = 1:length(Cdata{1})   
+            for trial = 1:size(Cdata{term}{tType},1)
+                [sC_Data] = MovMeanSmoothData(Cdata{term}{tType}(trial,:),filtTime,FPSstack);
+                sCdata{term}{tType}(trial,:) = sC_Data; 
             end 
         end 
     end 
+    
+    sBdata = cell(1,length(Bdata));
+    for tType = 1:length(Bdata)   
+        for trial = 1:length(Bdata{tType})
+            [sB_Data] = MovMeanSmoothData(Bdata{tType}{trial},filtTime,FPSstack);
+            sBdata{tType}(trial,:) = sB_Data;             
+        end 
+    end 
+
+    sVdata = cell(1,length(Vdata));
+    for tType = 1:length(Vdata)   
+        for trial = 1:length(Vdata{tType})
+            [sV_Data] = MovMeanSmoothData(Vdata{tType}{trial},filtTime,FPSstack);
+            sVdata{tType}(trial,:) = sV_Data;             
+        end 
+    end     
+    
 elseif smoothQ == 0
-    sData = Data; 
+    sCdata = Cdata; 
+    sBdata = cell(1,length(Bdata));
+    for tType = 1:length(Bdata)   
+        for trial = 1:length(Bdata{tType})
+            sBdata{tType}(trial,:) = Bdata{tType}{trial};
+        end 
+    end 
+    sVdata = cell(1,length(Vdata));
+    for tType = 1:length(Vdata)   
+        for trial = 1:length(Vdata{tType})
+            sVdata{tType}(trial,:) = Vdata{tType}{trial};
+        end 
+    end     
 end 
 
 %% plot event triggered averages per terminal 
@@ -208,7 +293,7 @@ for term = 1:length(Data)
     AVdata = cell(1,length(Data{1}));
     SEMdata = cell(1,length(Data{1}));
     baselineEndFrame = floor(20*(FPSstack));
-    for tType = 1:length(Data{1})      
+    for tType = 4%1:length(Data{1})      
         if isempty(Data{term}{tType}) == 0          
             AVdata{tType} = mean(sData{term}{tType},1);
             SEMdata{tType} = std(sData{term}{tType},1)/sqrt(size(Data{term}{tType},1));
@@ -248,8 +333,9 @@ for term = 1:length(Data)
         %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
         %                 alpha(0.5)  
             end
+            colorSet = varycolor(size(Data{term}{tType},1));
             for trial = 1:size(Data{term}{tType},1)
-                plot(sData{term}{tType}(trial,:),'LineWidth',1)
+                plot(sData{term}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
             end 
             plot(AVdata{tType},'k','LineWidth',3)
             ax=gca;
@@ -267,31 +353,109 @@ for term = 1:length(Data)
         end 
     end 
 end 
+
+% plot event triggered averages per terminal (trials staggered) 
+for term = 1:length(Data)
+    AVdata = cell(1,length(Data{1}));
+    SEMdata = cell(1,length(Data{1}));
+    baselineEndFrame = floor(20*(FPSstack));
+    for tType = 4%1:length(Data{1})      
+        if isempty(Data{term}{tType}) == 0          
+            AVdata{tType} = mean(sData{term}{tType},1);
+            SEMdata{tType} = std(sData{term}{tType},1)/sqrt(size(Data{term}{tType},1));
+            figure;             
+            hold all;
+            if tType == 1 || tType == 3 
+                Frames = size(Data{term}{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+            elseif tType == 2 || tType == 4 
+                Frames = size(Data{term}{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+            end 
+            colorSet = varycolor(size(Data{term}{tType},1));
+            yStagTerm = 300;
+            trialList = cell(1,size(Data{term}{tType},1));
+            for trial = 1:size(Data{term}{tType},1)
+                plot(sData{term}{tType}(trial,:)+yStagTerm,'LineWidth',1,'Color',colorSet(trial,:),'LineWidth',1.5)
+                yStagTerm = yStagTerm + 300;
+                trialList{trial} = sprintf('trial %d',trial);
+            end 
+            if tType == 1 
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+        %                 alpha(0.5)   
+            elseif tType == 3 
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+        %                 alpha(0.5)                       
+            elseif tType == 2 
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+        %                 alpha(0.5)   
+            elseif tType == 4 
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+        %                 alpha(0.5)  
+            end
+            ax=gca;
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 20;
+            xlim([0 Frames])
+            ylim([0 2500])
+            xlabel('time (s)')
+            if smoothQ == 1
+                title(sprintf('Terminal #%d data smoothed by %0.2f sec',terminals(term),filtTime));
+            elseif smoothQ == 0
+                title(sprintf('Terminal #%d raw data',terminals(term)));
+            end          
+            legend(trialList)
+        end 
+    end 
+end 
 %}
-
 %% plot event triggered averages of relevant terminals averaged together 
-
+%{
 %define the terminals you want to average 
 % terms = input('What terminals do you want to average? ');
 
-termGdata = cell(1,length(Data{1}));
-for tType = 1:length(Data{1}) 
+termGdata = cell(1,length(Cdata{1}));
+for tType = 1:length(Cdata{1}) 
     for term = 1:length(terms)
         ind = find(terminals == (terms(term)));
         if term == 1 
-            termGdata{tType} = sData{ind}{tType};
+            termGdata{tType} = sCdata{ind}{tType};
         elseif term > 1
-            termGdata{tType}(((term-1)*size(Data{ind}{tType},1))+1:term*size(Data{ind}{tType},1),:) = sData{ind}{tType};
+            termGdata{tType}(((term-1)*size(Cdata{ind}{tType},1))+1:term*size(Cdata{ind}{tType},1),:) = sCdata{ind}{tType};
         end          
     end 
 end 
 
-AVdata = cell(1,length(Data{1}));
-SEMdata = cell(1,length(Data{1}));
+cAVdata = cell(1,length(Cdata{1}));
+cSEMdata = cell(1,length(Cdata{1}));
+bAVdata = cell(1,length(Cdata{1}));
+bSEMdata = cell(1,length(Cdata{1}));
+vAVdata = cell(1,length(Cdata{1}));
+vSEMdata = cell(1,length(Cdata{1}));
 baselineEndFrame = floor(20*(FPSstack));
-for tType = 4%1:length(Data{1}) 
-    AVdata{tType} = mean(termGdata{tType},1);
-    SEMdata{tType} = std(termGdata{tType},1)/sqrt(size(termGdata{tType},1));
+for tType = 4%1:length(cData{1}) 
+    cAVdata{tType} = nanmean(termGdata{tType},1);
+    cSEMdata{tType} = std(termGdata{tType},1)/sqrt(size(termGdata{tType},1));    
+    bAVdata{tType} = nanmean(sBdata{tType},1);
+    bSEMdata{tType} = std(sBdata{tType},1)/sqrt(size(sBdata{tType},1));    
+    vAVdata{tType} = nanmean(sVdata{tType},1);
+    vSEMdata{tType} = std(sVdata{tType},1)/sqrt(size(sVdata{tType},1));
+    
     figure;                 
     hold all;
     if tType == 1 || tType == 3 
@@ -331,7 +495,7 @@ for tType = 4%1:length(Data{1})
     for trial = 1:size(termGdata{tType},1)
         plot(termGdata{tType}(trial,:),'LineWidth',1)
     end 
-    plot(AVdata{tType},'k','LineWidth',3)
+    plot(cAVdata{tType},'k','LineWidth',3)
     ax=gca;
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;
@@ -340,14 +504,125 @@ for tType = 4%1:length(Data{1})
     ylim([-200 200])
     xlabel('time (s)')
     if smoothQ == 1
-        title(sprintf('data smoothed by %0.2f sec',filtTime));
+        title(sprintf('calcium data smoothed by %0.2f sec',filtTime));
     elseif smoothQ == 0
-        title('raw data');
+        title('raw calcium data');
     end 
 end 
 
-%% compare terminal calcium activity - create correlograms
+for tType = 4%1:length(cData{1}) 
+    figure;                 
+    hold all;
+    if tType == 1 || tType == 3 
+        Frames = size(termGdata{tType},2);        
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+        FrameVals = floor((1:FPSstack*2:Frames)-1); 
+    elseif tType == 2 || tType == 4 
+        Frames = size(termGdata{tType},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+        FrameVals = floor((1:FPSstack*2:Frames)-1); 
+    end 
+    if tType == 1 
+        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+%                 alpha(0.5)   
+    elseif tType == 3 
+        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+%                 alpha(0.5)                       
+    elseif tType == 2 
+        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+%                 alpha(0.5)   
+    elseif tType == 4 
+        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+%                 alpha(0.5)  
+    end
+    for trial = 1:size(sBdata{tType},1)
+        plot(sBdata{tType}(trial,:),'LineWidth',1)
+    end 
+    plot(bAVdata{tType},'k','LineWidth',3)
+    ax=gca;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;
+    ax.FontSize = 20;
+    xlim([0 Frames])
+    ylim([-3 3])
+    xlabel('time (s)')
+    if smoothQ == 1
+        title(sprintf('BBB data smoothed by %0.2f sec',filtTime));
+    elseif smoothQ == 0
+        title('raw BBB data');
+    end 
+end 
 
+for tType = 4%1:length(cData{1}) 
+    figure;                 
+    hold all;
+    if tType == 1 || tType == 3 
+        Frames = size(termGdata{tType},2);        
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+        FrameVals = floor((1:FPSstack*2:Frames)-1); 
+    elseif tType == 2 || tType == 4 
+        Frames = size(termGdata{tType},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+        FrameVals = floor((1:FPSstack*2:Frames)-1); 
+    end 
+    if tType == 1 
+        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+%                 alpha(0.5)   
+    elseif tType == 3 
+        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+%                 alpha(0.5)                       
+    elseif tType == 2 
+        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
+%                 alpha(0.5)   
+    elseif tType == 4 
+        plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+%                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
+%                 alpha(0.5)  
+    end
+    for trial = 1:size(sVdata{tType},1)
+        plot(sVdata{tType}(trial,:),'LineWidth',1)
+    end 
+    plot(vAVdata{tType},'k','LineWidth',3)
+    ax=gca;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;
+    ax.FontSize = 20;
+    xlim([0 Frames])
+    ylim([-3 3])
+    xlabel('time (s)')
+    if smoothQ == 1
+        title(sprintf('vessel width smoothed by %0.2f sec',filtTime));
+    elseif smoothQ == 0
+        title('raw vessel width');
+    end 
+end 
+
+%}
+%% compare terminal calcium activity - create correlograms
+%{
 AVdata = cell(1,length(Data));
 for term = 1:length(Data)
     for tType = 1:length(Data{1})      
@@ -391,7 +666,7 @@ elseif dataQ == 1
 end 
 
 % plot cross correlelograms 
-for tType = 1:length(Data{1})
+for tType = 4%1:length(Data{1})
     % plot averaged trial data
     figure;
     imagesc(corAVdata{tType})
@@ -472,8 +747,9 @@ for tType = 1:length(Data{1})
        ax.YTickLabel = terminals;
    end 
 end 
-
+%}
 %% CALCIUM PEAK RASTER PLOTS 
+%{
 Len1_3 = length(sData{1}{1});
 Len2_4 = length(sData{1}{2});
 
@@ -485,7 +761,7 @@ sigPeakLocs = cell(1,length(Data));
 clear raster raster2 raster3 
 for term = 1:length(Data)
 %     figure;
-    for tType = 1:length(Data{1})   
+    for tType = 4%1:length(Data{1})   
         for trial = 1:size(Data{term}{tType},1)
             %identify where the peaks are 
             [peak, loc] = findpeaks(sData{term}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1
@@ -509,7 +785,7 @@ for term = 1:length(Data)
 end 
 for term = 1:length(peaks)
 %     figure;
-    for tType = 1:length(peaks{1})   
+    for tType = 4%1:length(peaks{1})   
         for trial = 1:size(peaks{term}{tType},1)
             if isempty(peaks{term}{tType}{trial}) == 0
                 raster2{term}{tType} = ~raster2{term}{tType};
@@ -568,9 +844,9 @@ for term = 1:length(peaks)
     end 
 end 
 
-%%
+%
  %create raster for all terminals stacked 
-for tType = 1:length(Data{1})   
+for tType = 4%1:length(Data{1})   
     for term = 1:length(Data)
         curRowSize = size(raster{term}{tType},1);
         if curRowSize < size(sData{term}{tType},1)*RowMultFactor 
@@ -581,7 +857,7 @@ end
 
 clear fullRaster
 fullRaster = cell(1,length(Data{1}));
-for tType = 1:length(Data{1})   
+for tType = 4%1:length(Data{1})   
     rowLen = size(raster{term}{tType},1);
     for term = 1:length(Data)
         if term == 1
@@ -591,7 +867,7 @@ for tType = 1:length(Data{1})
         end 
     end 
     %create image 
-    subplot(2,2,tType)
+%     subplot(2,2,tType)
     imshow(fullRaster{tType})
     hold all 
     stimStartF = floor(FPSstack*20);
@@ -629,16 +905,16 @@ for tType = 1:length(Data{1})
     ylabel('trial')
 %     sgtitle(sprintf('Terminal %d',terminals(term)))
 end
-
-%%
-% plot peak rate per every n seconds 
+%}
+%% plot peak rate per every n seconds 
+ %{
 winSec = input('How many seconds do you want to know the calcium peak rate? '); 
 winFrames = floor(winSec*FPSstack);
 numPeaks = cell(1,length(Data));
 avTermNumPeaks = cell(1,length(Data));
 for term = 1:length(Data)
 %     figure
-    for tType = 1:length(Data{1})
+    for tType = 4%1:length(Data{1})
         windows = ceil(length(raster2{term}{tType})/winFrames);
         for win = 1:windows
             if win == 1 
@@ -696,7 +972,7 @@ end
 
 allTermAvPeakNums = cell(1,length(Data{1}));
 for term = 1:length(Data)
-    for tType = 1:length(Data{1})
+    for tType = 4%1:length(Data{1})
         colNum = floor(length(sData{term}{tType})/winFrames); 
         if length(avTermNumPeaks{term}{tType}) < colNum
             avTermNumPeaks{term}{tType}(length(avTermNumPeaks{term}{tType})+1:colNum) = 0;
@@ -706,8 +982,8 @@ for term = 1:length(Data)
 end 
 
 %plot num peaks for all terminals (terminal traces overlaid)
-for tType = 1:length(Data{1})
-    subplot(2,2,tType)
+for tType = 4%1:length(Data{1})
+%     subplot(2,2,tType)
     hold all 
     stimStartF = floor((FPSstack*20)/winFrames);
     if tType == 1 || tType == 3
@@ -754,8 +1030,8 @@ end
 
 %plot num peaks for all terminals (terminal traces stacked - not overlaid)
 figure;
-for tType = 1:length(Data{1})
-    subplot(2,2,tType)
+for tType = 4%1:length(Data{1})
+%     subplot(2,2,tType)
     hold all 
     stimStartF = floor((FPSstack*20)/winFrames);
     if tType == 1 || tType == 3
@@ -799,6 +1075,6 @@ for tType = 1:length(Data{1})
     xlim([0 length(avTermNumPeaks{term}{tType})])
     ylim([0 8.5])
     sgtitle('Number of calcium peaks per terminal');
-    legend('terminal 13','terminal 20','terminal 12','terminal 16','terminal 11','terminal 15','terminal 10','terminal 8','terminal 9','terminal 7','terminal 4')
+    legend('terminal 17','terminal 15','terminal 12','terminal 10','terminal 8','terminal 7','terminal 6','terminal 5','terminal 4','terminal 3')
 end 
-
+%}
