@@ -119,17 +119,106 @@ avFsubSB = FsubBLdata;
 terminalFsubSB = FsubSBLs2;
  
  
- %% PLAYGROUND 
+%% seperate data into trialTypes 
 Cdata = avFsubSB; CcellData = terminalFsubSB;
- 
-plot(Cdata)
- 
-clearvars -except Cdata CcellData FPS CaROImasks userInput avFdata terminalFData avFsubSB terminalFsubSB numZplanes
- 
-%  Cdata = Cdata(1:1186);
- 
-% inputStacks = (Ims{1} + Ims{2} + Ims{3})/3;
 
-% inputStacks = Ims{1};
+termQ = input('Input 0 if you want to plot all terminals. Input 1 if you want to specify what terminals to plot. ');
+if termQ == 1 
+    terminals = input('What terminals do you want to average? ');
+end 
 
-% end 
+if termQ == 0
+    SCdata = cell(1,length(CcellData));
+    RSCdata = cell(1,length(CcellData));
+    for ccell = 1:length(CcellData)
+        if isempty(CcellData{ccell}) == 0
+            SCdata{ccell} = CcellData{ccell};
+        end 
+    end
+elseif termQ == 1
+    SCdata = cell(1,length(terminals));
+    for ccell = 1:length(terminals)
+        if isempty(CcellData{terminals(ccell)}) == 0
+            SCdata{ccell} = CcellData{terminals(ccell)};
+        end 
+    end
+end 
+
+% prep trial type data 
+[framePeriod] = getUserInput(userInput,'What is the framePeriod? ');
+[state] = getUserInput(userInput,'What teensy state does the stimulus happen in?');
+[HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+
+TrialTypes = TrialTypes(1:length(state_start_f),:);
+state_start_f = floor(state_start_f/3);
+state_end_f = floor(state_end_f/3);
+trialLength = state_end_f - state_start_f;
+
+
+% sort data into different trial types to see effects of stims 
+clearvars diffAV diffSEM tTdata GtTdataTerm
+
+%make sure the trial lengths are the same per trial type 
+%set ideal trial lengths 
+lenT1 = floor(FPSstack*2); % 2 second trials 
+lenT2 = floor(FPSstack*20); % 20 second trials 
+%identify current trial lengths 
+[kIdx,kMeans] = kmeans(trialLength,2);
+%edit kMeans list so trialLengths is what they should be 
+for len = 1:length(kMeans)
+    if kMeans(len)-lenT1 < abs(kMeans(len)-lenT2)
+        kMeans(len) = lenT1;
+    elseif kMeans(len)-lenT1 > abs(kMeans(len)-lenT2)
+        kMeans(len) = lenT2;
+    end 
+end 
+%change state_end_f so all trial lengths match up 
+for trial = 1:length(state_start_f)
+    state_end_f(trial,1) = state_start_f(trial)+kMeans(kIdx(trial));
+end 
+trialLength = state_end_f - state_start_f;
+
+%reogranize diff data so I can get the SEM 
+greenCarray = zeros(length(SCdata),length(SCdata{2}));
+for ccell = 1:length(SCdata)
+    if isempty(SCdata{ccell}) == 0 
+        greenCarray(ccell,:) = SCdata{ccell};
+    end 
+end 
+%replace rows of all 0s w/NaNs
+nonZeroRows = all(greenCarray == 0,2);
+greenCarray(nonZeroRows,:) = NaN;
+
+%get AV and SEM 
+greenSEM = nanstd(greenCarray,1)/sqrt(size(greenCarray,1));
+greenAV = nanmean(greenCarray,1);
+
+
+for term = 1:size(greenCarray,1)
+    count1 = 1;count2 = 1;count3 = 1;count4 = 1;
+    for trial = 1:size(state_start_f,1)
+        if state_start_f(trial)-floor(FPSstack*20) > 0 && state_end_f(trial)+floor(FPSstack*20) < length(greenAV)
+            if TrialTypes(trial,2) == 1 % blue trials 
+                if trialLength(trial) == floor(FPSstack*2)
+                    GtTdata{1}(count1,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20)); 
+                    GtTdataTerm{1}{term}(count1,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count1 = count1+1;
+                elseif trialLength(trial) == floor(FPSstack*20)
+                    GtTdata{2}(count2,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdataTerm{2}{term}(count2,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count2 = count2+1;
+                end 
+            elseif TrialTypes(trial,2) == 2 % red trials 
+                if trialLength(trial) == floor(FPSstack*2)
+                    GtTdata{3}(count3,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdataTerm{3}{term}(count3,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count3 = count3+1;
+                elseif trialLength(trial) == floor(FPSstack*20)
+                    GtTdata{4}(count4,:) = greenAV(state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    GtTdataTerm{4}{term}(count4,:) = greenCarray(term,state_start_f(trial)-floor(FPSstack*20):state_end_f(trial)+floor(FPSstack*20));
+                    count4 = count4+1;
+                end 
+            end 
+        end 
+    end 
+end
