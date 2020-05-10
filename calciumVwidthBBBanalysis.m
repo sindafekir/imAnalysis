@@ -31,17 +31,37 @@ Vdata = temp4.dataToPlot;
 temp5 = matfile('SF56_20190718_ROI2_1-3_5_7_VW_and_1-5_7_10CaData.mat');
 ROIinds = temp5.ROIinds;
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%GET STIM STATE START AND END FRAMES FOR EACH VIDEO 
-[HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
-
-TrialTypes = TrialTypes(1:length(state_start_f),:);
-state_start_f = floor(state_start_f/3);
-state_end_f = floor(state_end_f/3);
-trialLength = state_end_f - state_start_f;
-
+TrialTypes = cell(1,length(vidList));
+state_start_f = cell(1,length(vidList));
+state_end_f = cell(1,length(vidList));
+trialLength = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    [~,stateStartF,stateEndF,FPS,vel_wheel_data,TrialType] = makeHDFchart_redBlueStim(state,framePeriod);
+    TrialTypes{vid} = TrialType(1:length(stateStartF),:);
+    state_start_f{vid} = floor(stateStartF/3);
+    state_end_f{vid} = floor(stateEndF/3);
+    trialLength{vid} = state_end_f{vid} - state_start_f{vid};
+    
+    %make sure the trial lengths are the same per trial type 
+    %set ideal trial lengths 
+    lenT1 = floor(FPSstack*2); % 2 second trials 
+    lenT2 = floor(FPSstack*20); % 20 second trials 
+    %identify current trial lengths 
+    [kIdx,kMeans] = kmeans(trialLength{vid},2);
+    %edit kMeans list so trialLengths is what they should be 
+    for len = 1:length(kMeans)
+        if kMeans(len)-lenT1 < abs(kMeans(len)-lenT2)
+            kMeans(len) = lenT1;
+        elseif kMeans(len)-lenT1 > abs(kMeans(len)-lenT2)
+            kMeans(len) = lenT2;
+        end 
+    end 
+    %change state_end_f so all trial lengths match up 
+    for trial = 1:length(state_start_f{vid})
+        state_end_f{vid}(trial,1) = state_start_f{vid}(trial)+kMeans(kIdx(trial));
+    end 
+    trialLength{vid} = state_end_f{vid} - state_start_f{vid};   
+end 
 %% reorganize trial data 
 %{
 Cdata = cell(1,length(tData{1}{1}));
@@ -946,32 +966,18 @@ for tType = 4%1:length(Data{1})
     legend('terminal 17','terminal 15','terminal 12','terminal 10','terminal 8','terminal 7','terminal 6','terminal 5','terminal 4','terminal 3')
 end 
 %}
-%% find calcium peaks per terminal and plot BBB and Vwidth aligned to calcium peaks 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+%% find calcium peaks per terminal across entire experiment 
+%{
 % find peaks and then plot where they are in the entire TS 
-
-for vid = 1%:length(vidList)
-% stdTrace = cell(1,length(terminals));
-% sigPeaks = cell(1,length(terminals));
-% sigLocs = cell(1,length(terminals));
-    for ccell = 1%:length(terminals)
+stdTrace = cell(1,length(vidList));
+sigPeaks = cell(1,length(vidList));
+sigLocs = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
         ind = find(ROIinds == terminals(ccell));
-        [peaks, locs] = findpeaks(cDataFullTrace{vid}{ind},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1
-        
-        Frames = size(cDataFullTrace{vid}{ind},2);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
-        min_TimeVals = round(sec_TimeVals/60,2);
-        FrameVals = round((1:FPSstack*50:Frames)-1); 
-        figure;
-        ax=gca;
-        hold all
-        plot(cDataFullTrace{vid}{ind},'b','LineWidth',1)
+        %find the peaks 
+        [peaks, locs] = findpeaks(cDataFullTrace{vid}{ind},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+        %find the sig peaks (peaks above 2 standard deviations from mean) 
         stdTrace{vid}{ind} = std(cDataFullTrace{vid}{ind});  
         count = 1 ; 
         for loc = 1:length(locs)
@@ -982,37 +988,48 @@ for vid = 1%:length(vidList)
                 count = count + 1;
             end 
         end 
-        for trial = 1:size(state_start_f,1)
-            if TrialTypes(trial,2) == 1
-                plot([state_start_f(trial) state_start_f(trial)], [-5000 5000], 'b','LineWidth',2)
-                plot([state_end_f(trial) state_end_f(trial)], [-5000 5000], 'b','LineWidth',2)
-            elseif TrialTypes(trial,2) == 2
-                plot([state_start_f(trial) state_start_f(trial)], [-5000 5000], 'r','LineWidth',2)
-                plot([state_end_f(trial) state_end_f(trial)], [-5000 5000], 'r','LineWidth',2)
+                
+        % below is plotting code 
+        %{
+        Frames = size(cDataFullTrace{vid}{ind},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
+        min_TimeVals = round(sec_TimeVals/60,2);
+        FrameVals = round((1:FPSstack*50:Frames)-1); 
+        figure;
+        ax=gca;
+        hold all
+        plot(cDataFullTrace{vid}{ind},'Color',[0 0.5 0],'LineWidth',1)
+        for trial = 1:size(state_start_f{vid},1)
+            if TrialTypes{vid}(trial,2) == 1
+                plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+                plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+            elseif TrialTypes{vid}(trial,2) == 2
+                plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+                plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
             end 
         end 
         ax.XTick = FrameVals;
         ax.XTickLabel = min_TimeVals;
         ax.FontSize = 20;
-        xlim([0 length(Cdata)])
+        xlim([0 size(cDataFullTrace{vid}{ind},2)])
         ylim([-200 200])
         xlabel('time (min)')
         if smoothQ ==  1
             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
         elseif smoothQ == 0 
             title(sprintf('terminal #%d raw data',terminals(ccell)))
-        end 
-       
+        end        
+        %}
     end 
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-
+%}
 %% sort data based on ca peak location 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 
