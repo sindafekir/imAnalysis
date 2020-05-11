@@ -18,7 +18,7 @@ else
 end
 
 % Threshold image - manual threshold
-BW = X > 4.5e-02;
+BW = X > 12.5e-02;
 
 % Open mask with disk
 radius = 2;

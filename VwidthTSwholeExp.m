@@ -1,7 +1,10 @@
 %% get just the data you need 
-temp = matfile('SF56_20190718_ROI2_1_regIms_red.mat');
+temp = matfile('SF56_20190718_ROI2_3_regIms_red.mat');
 userInput = temp.userInput; 
 regStacks = temp.regStacks;
+temp2 = matfile('SF56_20190718_ROI2_1_Fdata.mat');
+FPS = temp2.FPS;
+numZplanes = temp2.numZplanes;
 
 inputStacks = regStacks{2,4};
 
@@ -102,11 +105,18 @@ while segmentVessel == 1
     end 
     
     %check segmentation 
-    Z = 1; 
-    VROI = input("What vessel ROI do you want to see? ");
-    
-    %play segmentation boundaries over images 
-    implay(segOverlays{Z}{VROI})
+    if numROIs == 1 
+        Z = 1; 
+        VROI = 1;
+        %play segmentation boundaries over images 
+        implay(segOverlays{Z}{VROI})
+    elseif numROIs > 1
+        Z = 1; 
+        VROI = input("What vessel ROI do you want to see? ");
+        %play segmentation boundaries over images 
+        implay(segOverlays{Z}{VROI})
+    end 
+
 
     segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
     if segmentVessel == 1
