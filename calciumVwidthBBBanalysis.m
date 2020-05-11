@@ -1026,295 +1026,195 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+%{
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 
-if ccellQ ==  0
-%         sortedBdata = zeros(1,floor((windSize*FPS)+1));
-        sortedCdata = zeros(1,floor((windSize*FPS)+1));
-%         sortedVdata = zeros(1,floor((windSize*FPS)+1));
-        % sortedWdata = zeros(1,round((windSize*FPS)+1));
-        for peak = 1:length(sigLocs)
-            if sigLocs(peak)-(windSize/2)*FPS > 0 && sigLocs(peak)+(windSize/2)*FPS < length(Cdata)
-                start = floor(sigLocs(peak)-(windSize/2)*FPS);
-                stop = floor(start + (windSize*FPS));%round(locs(peak)+(windSize/2)*FPS);
+sortedCdata = cell(1,length(vidList));
+sortedBdata = cell(1,length(vidList));
+sortedVdata = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+        ind = find(ROIinds == terminals(ccell));
+        for peak = 1:length(sigLocs{vid}{ind})            
+            if sigLocs{vid}{ind}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{ind}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{ind})                
+                start = sigLocs{vid}{ind}(peak)-floor((windSize/2)*FPSstack);
+                stop = sigLocs{vid}{ind}(peak)+floor((windSize/2)*FPSstack);                
                 if start == 0 
                     start = 1 ;
-                    stop = floor(start + (windSize*FPS));
-                end 
-        %         sortedBdata(peak,:) = SBdata(start:stop);
-                sortedCdata(peak,:) = SCdata(start:stop);
-        %         sortedVdata(peak,:) = SVdata(start:stop);
-            end 
-        end 
-
-        %replace rows of all 0s w/NaNs
-        % nonZeroRowsB = all(sortedBdata == 0,2);
-        % sortedBdata(nonZeroRowsB,:) = NaN;
-        nonZeroRowsC = all(sortedCdata == 0,2);
-        sortedCdata(nonZeroRowsC,:) = NaN;
-        % nonZeroRowsV = all(sortedVdata == 0,2);
-        % sortedVdata(nonZeroRowsV,:) = NaN;
-        % nonZeroRowsW = all(sortedWdata == 0,2);
-        % sortedWdata(nonZeroRowsW,:) = NaN;
-elseif ccellQ == 1 
-    if termQ == 0
-        sortedCdata = cell(1,floor(length(CcellData)));
-        for ccell = 1:length(CcellData)
-            if isempty(CcellData{ccell}) == 0
-        
-                for peak = 1:length(sigLocs{ccell})
-                    if sigLocs{ccell}(peak)-(windSize/2)*FPS > 0 && sigLocs{ccell}(peak)+(windSize/2)*FPS < length(Cdata)
-                        start = floor(sigLocs{ccell}(peak)-(windSize/2)*FPS);
-                        stop = floor(start + (windSize*FPS));%round(locs(peak)+(windSize/2)*FPS);
-                        if start == 0 
-                            start = 1 ;
-                            stop = floor(start + (windSize*FPS));
-                        end 
-                %         sortedBdata(peak,:) = SBdata(start:stop);
-                        sortedCdata{ccell}(peak,:) = SCdata{ccell}(start:stop);
-                %         sortedVdata(peak,:) = SVdata(start:stop);
-                    end 
-                end 
-
-                %replace rows of all 0s w/NaNs
-                % nonZeroRowsB = all(sortedBdata == 0,2);
-                % sortedBdata(nonZeroRowsB,:) = NaN;
-                nonZeroRowsC = all(sortedCdata{ccell} == 0,2);
-                sortedCdata{ccell}(nonZeroRowsC,:) = NaN;
-                % nonZeroRowsV = all(sortedVdata == 0,2);
-                % sortedVdata(nonZeroRowsV,:) = NaN;
-                % nonZeroRowsW = all(sortedWdata == 0,2);
-                % sortedWdata(nonZeroRowsW,:) = NaN;  
-            end 
-        end 
-        
-    elseif termQ == 1 
-        sortedCdata = cell(1,length(terminals));
-        sortedBdata = cell(1,length(terminals));
-        sortedVdata = cell(1,length(terminals));
-        for ccell = 1:length(terminals)
-            if isempty(CcellData{terminals(ccell)}) == 0
-        
-                for peak = 1:length(sigLocs{ccell})
-                    if sigLocs{ccell}(peak)-(windSize/2)*FPS > 0 && sigLocs{ccell}(peak)+(windSize/2)*FPS < length(Cdata)
-                        start = floor(sigLocs{ccell}(peak)-(windSize/2)*FPS);
-                        stop = floor(start + (windSize*FPS));%round(locs(peak)+(windSize/2)*FPS);
-                        if start == 0 
-                            start = 1 ;
-                            stop = floor(start + (windSize*FPS));
-                        end 
-                        sortedBdata{ccell}(peak,:) = SBdata(start:stop);
-                        sortedCdata{ccell}(peak,:) = SCdata{ccell}(start:stop);
-                        sortedVdata{ccell}(peak,:) = SVdata(start:stop);
-                    end 
-                end 
-
-                %replace rows of all 0s w/NaNs
-                nonZeroRowsB = all(sortedBdata{ccell} == 0,2);
-                sortedBdata{ccell}(nonZeroRowsB,:) = NaN;
-                nonZeroRowsC = all(sortedCdata{ccell} == 0,2);
-                sortedCdata{ccell}(nonZeroRowsC,:) = NaN;
-                nonZeroRowsV = all(sortedVdata{ccell} == 0,2);
-                sortedVdata{ccell}(nonZeroRowsV,:) = NaN;
-                % nonZeroRowsW = all(sortedWdata == 0,2);
-                % sortedWdata(nonZeroRowsW,:) = NaN;  
+                    stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
+                end                
+                sortedBdata{vid}{ind}(peak,:) = bDataFullTrace{vid}(start:stop);
+                sortedCdata{vid}{ind}(peak,:) = cDataFullTrace{vid}{ind}(start:stop);
+                sortedVdata{vid}{ind}(peak,:) = vDataFullTrace{vid}(start:stop);
             end 
         end 
     end 
 end 
 
-%% average and plot calcium peak aligned data 
-%BELOW DOES NOT HAVE OPTION FOR DOING SINGLE TERMINAL DATA SORTING OR
-%PLOTTING...YET
-
-%average across peaks and terminals 
-avC1 = zeros(length(sortedCdata),size(sortedCdata{1},2));
-avB1 = zeros(length(sortedBdata),size(sortedBdata{1},2));
-avV1 = zeros(length(sortedVdata),size(sortedVdata{1},2));
-for term = 1:length(sortedCdata)
-    if isempty(sortedCdata{term}) == 0 
-        avC1(term,:) = nanmean(sortedCdata{term},1);
-        avB1(term,:) = nanmean(sortedBdata{term},1);
-        avV1(term,:) = nanmean(sortedVdata{term},1);
+%replace rows of all 0s w/NaNs
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)    
+        ind = find(ROIinds == terminals(ccell));
+        nonZeroRowsB = all(sortedBdata{vid}{ind} == 0,2);
+        sortedBdata{vid}{ind}(nonZeroRowsB,:) = NaN;
+        nonZeroRowsC = all(sortedCdata{vid}{ind} == 0,2);
+        sortedCdata{vid}{ind}(nonZeroRowsC,:) = NaN;
+        nonZeroRowsV = all(sortedVdata{vid}{ind} == 0,2);
+        sortedVdata{vid}{ind}(nonZeroRowsV,:) = NaN;
     end 
 end 
-
-
-avB2 = nanmean(avB1,1);
-avC2 = nanmean(avC1,1);
-avV2 = nanmean(avV1,1);
-
-%normalize to baseline period 
-baselinePer = floor(length(avC2)/3);
-avC = ((avC2-mean(avC2(1:baselinePer)))/mean(avC2(1:baselinePer)))*100;
-avB = ((avB2-mean(avB2(1:baselinePer)))/mean(avB2(1:baselinePer)))*100;
-avV = ((avV2-mean(avV2(1:baselinePer)))/mean(avV2(1:baselinePer)))*100;
-
-semB1 = ((nanstd(avB1,1)))/(sqrt(size(avB1,1)));
-semC1 = ((nanstd(avC1,1)))/(sqrt(size(avC1,1)));
-semV1 = ((nanstd(avV1,1)))/(sqrt(size(avV1,1)));
-
-semC = ((semC1))/mean(semC1(1:baselinePer))*100;
-semB = ((semB1))/mean(semB1(1:baselinePer))*100;
-semV = ((semV1))/mean(semV1(1:baselinePer))*100;
-
-figure;
-Frames = size(avC,2);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack));
-FrameVals = round((1:FPSstack:Frames)-5); 
-ax=gca;
-hold all
-% for row = 1:5
-%     plot(sortedBdata(row,:),'r','LineWidth',2)
-%     plot(sortedCdata(row,:),'b','LineWidth',2)
-% end 
-plot(avB,'r','LineWidth',2);
-plot(avC,'b','LineWidth',2);
-plot(avV,'k','LineWidth',2);
-% varargout = boundedline(1:size(avB,2),avB,semB,'r','transparency', 0.3,'alpha');                                                                             
-% varargout = boundedline(1:size(avC,2),avC,semC,'b','transparency', 0.3,'alpha'); 
-% varargout = boundedline(1:size(avV,2),avV,semV,'k','transparency', 0.3,'alpha'); 
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;
-ax.FontSize = 20;
-xlim([0 length(avC)])
-ylim([-200 200])
-% legend('BBB data','DA calcium','Vessel width')
-xlabel('time (s)')
-ylabel('percent change')
-% title(sprintf('%d calcium peaks',length(peaks)))
 %}
-
-
-%% determine weights from number of peaks per video per terminal 
-
-numPeaks = zeros(size(CdataArray,1),size(CdataArray,2));
-totalPeaks = zeros(1,size(CdataArray,2));
-weights = zeros(size(CdataArray,1),size(CdataArray,2));
-for term = 1:size(CdataArray,2)
-    for vid = 1:size(CdataArray,1)
-        numPeaks(vid,term) = size(CdataArray{vid,term},1);
+%% average calcium peak aligned data - normalized to number of peaks per video 
+%{
+% determine weights from number of peaks per video per terminal 
+numPeaks = zeros(length(vidList),length(sortedCdata{1}));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+        ind = find(ROIinds == terminals(ccell));
+        numPeaks(vid,ind) = size(sortedCdata{vid}{ind},1);
     end 
-    totalPeaks(term) = sum(numPeaks(:,term));
-    weights(:,term) = numPeaks(:,term)./totalPeaks(term);
 end 
+totalPeaks = sum(numPeaks,1);
+weights = numPeaks ./ totalPeaks;
 
-
-%% determine weighted average 
-
-avCarray = cell(1,size(CdataArray,2));
-avCterm = zeros(size(CdataArray,2),length(CdataArray{1}));
-avBarray = cell(1,size(CdataArray,2));
-avBterm = zeros(size(CdataArray,2),length(CdataArray{1}));
-avVarray = cell(1,size(CdataArray,2));
-avVterm = zeros(size(CdataArray,2),length(CdataArray{1}));
-for term = 1:size(CdataArray,2)
-    for vid = 1:size(CdataArray,1)
-        if isempty(CdataArray{vid,term}) == 0 
-            avCarray{term}(vid,:) = (nanmean(CdataArray{vid,term},1))*weights(vid,term);
-            avBarray{term}(vid,:) = (nanmean(BdataArray{vid,term},1))*weights(vid,term);
-            avVarray{term}(vid,:) = (nanmean(VdataArray{vid,term},1))*weights(vid,term);
+% determine weighted average and SEM- across videos - normalized by peak number  
+avCweighted = cell(1,length(vidList));
+avBweighted = cell(1,length(vidList));
+avVweighted = cell(1,length(vidList));
+semCweighted = cell(1,length(vidList));
+semBweighted = cell(1,length(vidList));
+semVweighted = cell(1,length(vidList));
+avCweighted2 = cell(1,length(sortedCdata{1}));
+avBweighted2 = cell(1,length(sortedCdata{1}));
+avVweighted2 = cell(1,length(sortedCdata{1}));
+semCweighted2 = cell(1,length(sortedCdata{1}));
+semBweighted2 = cell(1,length(sortedCdata{1}));
+semVweighted2 = cell(1,length(sortedCdata{1}));
+avSortedCdata = cell(1,length(sortedCdata{1}));
+avSortedBdata = cell(1,length(sortedCdata{1}));
+avSortedVdata = cell(1,length(sortedCdata{1}));
+semSortedCdata = cell(1,length(sortedCdata{1}));
+semSortedBdata = cell(1,length(sortedCdata{1}));
+semSortedVdata = cell(1,length(sortedCdata{1}));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+        ind = find(ROIinds == terminals(ccell));
+        avCweighted{vid}{ind} = nanmean((sortedCdata{vid}{ind})*weights(vid,ind),1);
+        avBweighted{vid}{ind} = nanmean((sortedBdata{vid}{ind})*weights(vid,ind),1);
+        avVweighted{vid}{ind} = nanmean((sortedVdata{vid}{ind})*weights(vid,ind),1);        
+        semCweighted{vid}{ind} = (std(sortedCdata{vid}{ind}))/sqrt(length(sortedCdata{vid}{ind}))*weights(vid,ind);
+        semBweighted{vid}{ind} = (std(sortedBdata{vid}{ind}))/sqrt(length(sortedBdata{vid}{ind}))*weights(vid,ind);
+        semVweighted{vid}{ind} = (std(sortedVdata{vid}{ind}))/sqrt(length(sortedVdata{vid}{ind}))*weights(vid,ind);        
+        if isempty(avCarray{vid}{ind}) == 0 
+            avCweighted2{ind}(vid,:) = avCweighted{vid}{ind};
+            avBweighted2{ind}(vid,:) = avBweighted{vid}{ind};
+            avVweighted2{ind}(vid,:) = avVweighted{vid}{ind};
+            semCweighted2{ind}(vid,:) = semCweighted{vid}{ind};
+            semBweighted2{ind}(vid,:) = semBweighted{vid}{ind};
+            semVweighted2{ind}(vid,:) = semVweighted{vid}{ind};
         end 
-    end
-    avCterm(term,:) = sum(avCarray{term},1);
-    avBterm(term,:) = sum(avBarray{term},1);
-    avVterm(term,:) = sum(avVarray{term},1);
+        avSortedCdata{ind} = sum(avCweighted2{ind},1);
+        avSortedBdata{ind} = sum(avBweighted2{ind},1);
+        avSortedVdata{ind} = sum(avVweighted2{ind},1);
+        semSortedCdata{ind} = sum(semCweighted2{ind},1);
+        semSortedBdata{ind} = sum(semBweighted2{ind},1);
+        semSortedVdata{ind} = sum(semVweighted2{ind},1);
+    end 
 end 
-
-avC = nanmean(avCterm,1);
-avB = nanmean(avBterm,1);
-avV = nanmean(avVterm,1);
-
+%}
 %% normalize to baseline period and plot
 
-
 %normalize to baseline period 
-baselinePer = floor(length(avC)/3);
-avC2 = ((avC-mean(avC(1:baselinePer)))/mean(avC(1:baselinePer)))*100;
-avB2 = ((avB-mean(avB(1:baselinePer)))/mean(avB(1:baselinePer)))*100;
-avV2 = ((avV-mean(avV(1:baselinePer)))/mean(avV(1:baselinePer)))*100;
+NavCdata = cell(1,length(avSortedCdata));
+NavBdata = cell(1,length(avSortedCdata));
+NavVdata = cell(1,length(avSortedCdata));
+NsemCdata = cell(1,length(avSortedCdata));
+NsemBdata = cell(1,length(avSortedCdata));
+NsemVdata = cell(1,length(avSortedCdata));
+for ccell = 1:length(terminals)
+    ind = find(ROIinds == terminals(ccell));
+    NavCdata{ind} = ((avSortedCdata{ind}-mean(avSortedCdata{ind}(1:floor(length(avSortedCdata{ind})/3))))/mean(avSortedCdata{ind}(1:floor(length(avSortedCdata{ind})/3))))*100;
+    NavBdata{ind} = ((avSortedBdata{ind}-mean(avSortedBdata{ind}(1:floor(length(avSortedBdata{ind})/3))))/mean(avSortedBdata{ind}(1:floor(length(avSortedBdata{ind})/3))))*100;
+    NavVdata{ind} = ((avSortedVdata{ind}-mean(avSortedVdata{ind}(1:floor(length(avSortedVdata{ind})/3))))/mean(avSortedVdata{ind}(1:floor(length(avSortedVdata{ind})/3))))*100;    
+    NsemCdata{ind} = ((semSortedCdata{ind}-mean(semSortedCdata{ind}(1:floor(length(semSortedCdata{ind})/3))))/mean(semSortedCdata{ind}(1:floor(length(semSortedCdata{ind})/3))))*100;
+    NsemBdata{ind} = ((semSortedBdata{ind}-mean(semSortedBdata{ind}(1:floor(length(semSortedBdata{ind})/3))))/mean(semSortedBdata{ind}(1:floor(length(semSortedBdata{ind})/3))))*100;
+    NsemVdata{ind} = ((semSortedVdata{ind}-mean(semSortedVdata{ind}(1:floor(length(semSortedVdata{ind})/3))))/mean(semSortedVdata{ind}(1:floor(length(semSortedVdata{ind})/3)))*100);
+end    
 
-
-avCterm2 = ((avCterm-mean(avCterm(:,1:baselinePer),2))./mean(avCterm(:,1:baselinePer),2))*100;
-avBterm2 = ((avBterm-mean(avBterm(:,1:baselinePer),2))./mean(avBterm(:,1:baselinePer),2))*100;
-avVterm2 = ((avVterm-mean(avVterm(:,1:baselinePer),2))./mean(avVterm(:,1:baselinePer),2))*100;
-
-%%
-figure;
-Frames = size(avC,2);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack));
-FrameVals = round((1:FPSstack:Frames)-5); 
-ax=gca;
-hold all
-% for row = 1:5
-%     plot(sortedBdata(row,:),'r','LineWidth',2)
-%     plot(sortedCdata(row,:),'b','LineWidth',2)
-% end 
-plot(avB2,'r','LineWidth',2);
-plot(avC2,'b','LineWidth',2);
-% plot(avV2,'k','LineWidth',2);
-% varargout = boundedline(1:size(avB2,2),avB2,semB2,'r','transparency', 0.3,'alpha');                                                                             
-% varargout = boundedline(1:size(avC2,2),avC2,semC2,'b','transparency', 0.3,'alpha'); 
-% varargout = boundedline(1:size(avV2,2),avV2,semV2,'k','transparency', 0.3,'alpha'); 
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;
-ax.FontSize = 20;
-xlim([0 length(avC)])
-ylim([-200 200])
-legend('BBB data','DA calcium','Vessel width')
-% legend('BBB data','DA calcium')
-xlabel('time (s)')
-ylabel('percent change')
-% title(sprintf('%d calcium peaks',length(peaks)))
-
-
-%% plot terminal data 
-terminals = [13, 20, 12, 16, 11, 15, 10, 8, 9, 7, 4];
-
-for term = 1:size(CdataArray,2)
+%smoothing option
+smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+if smoothQ == 0 
+    SNavCdata = NavCdata;
+    SNavBdata = NavBdata;
+    SNavVdata = NavVdata;
+    SNsemCdata = NsemCdata;
+    SNsemBdata = NsemBdata;
+    SNsemVdata = NsemVdata;
+elseif smoothQ == 1
+    filtTime = input('How many seconds do you want to smooth your data by? ');
     
+    SNavCdata = cell(1,length(NavCdata));
+    SNavBdata = cell(1,length(NavCdata));
+    SNavVdata = cell(1,length(NavCdata));
+    SNsemCdata = cell(1,length(NavCdata));
+    SNsemBdata = cell(1,length(NavCdata));
+    SNsemVdata = cell(1,length(NavCdata));
+    for ccell = 1:length(terminals)
+        ind = find(ROIinds == terminals(ccell));
+        [sC_Data] = MovMeanSmoothData(NavCdata{ind},filtTime,FPSstack);
+        SNavCdata{ind} = sC_Data;
+        [sB_Data] = MovMeanSmoothData(NavBdata{ind},filtTime,FPSstack);
+        SNavBdata{ind} = sB_Data;
+        [sV_Data] = MovMeanSmoothData(NavVdata{ind},filtTime,FPSstack);
+        SNavVdata{ind} = sV_Data;
+        [sCsem_Data] = MovMeanSmoothData(NsemCdata{ind},filtTime,FPSstack);
+        SNsemCdata{ind} = sCsem_Data;
+        [sBsem_Data] = MovMeanSmoothData(NsemBdata{ind},filtTime,FPSstack);
+        SNsemBdata{ind} = sBsem_Data;
+        [sVsem_Data] = MovMeanSmoothData(NsemVdata{ind},filtTime,FPSstack);
+        SNsemVdata{ind} = sVsem_Data;
+    end 
+end 
+
+%plot
+for ccell = 1:length(terminals)
+    ind = find(ROIinds == terminals(ccell));
+    % plot 
     figure;
-    Frames = size(avC,2);
+    Frames = length(avSortedCdata{ind});
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack));
-    FrameVals = round((1:FPSstack:Frames)-5); 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+    FrameVals = round((1:FPSstack:Frames)+5); 
     ax=gca;
     hold all
-    % for row = 1:5
-    %     plot(sortedBdata(row,:),'r','LineWidth',2)
-    %     plot(sortedCdata(row,:),'b','LineWidth',2)
-    % end 
-    plot(avBterm2(term,:),'r','LineWidth',2);
-    plot(avCterm2(term,:),'b','LineWidth',2);
-%     plot(avVterm2(term,:),'k','LineWidth',2);
-    % varargout = boundedline(1:size(avB2,2),avB2,semB2,'r','transparency', 0.3,'alpha');                                                                             
-    % varargout = boundedline(1:size(avC2,2),avC2,semC2,'b','transparency', 0.3,'alpha'); 
-    % varargout = boundedline(1:size(avV2,2),avV2,semV2,'k','transparency', 0.3,'alpha'); 
+    plot(SNavCdata{ind},'b','LineWidth',2)
+    plot(SNavBdata{ind},'r','LineWidth',2)
+%     plot(SNavVdata{ind},'k','LineWidth',2)
+    varargout = boundedline(1:size(SNavCdata{ind},2),SNavCdata{ind},SNsemCdata{ind},'b','transparency', 0.3,'alpha'); 
+    varargout = boundedline(1:size(SNavBdata{ind},2),SNavBdata{ind},SNsemBdata{ind},'r','transparency', 0.3,'alpha');
+%     varargout = boundedline(1:size(SNavVdata{ind},2),SNavVdata{ind},SNsemVdata{ind},'k','transparency', 0.3,'alpha');
     ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;
+    ax.XTickLabel = sec_TimeVals;   
     ax.FontSize = 20;
-    xlim([0 length(avC)])
-    ylim([-200 200])
-    legend('BBB data','DA calcium','Vessel width')
-    % legend('BBB data','DA calcium')
     xlabel('time (s)')
     ylabel('percent change')
-    title(sprintf('Terminal %d',terminals(term))) 
-   
-end 
-%}
+    xlim([0 length(SNavCdata{ind})])
+    ylim([-100 500])
+    legend('DA calcium','BBB data')
+    if smoothQ == 0 
+        title(sprintf('DA terminal #%d.',terminals(ccell)))
+    elseif smoothQ == 1
+        title(sprintf('DA terminal #%d. %0.2f sec smoothing.',terminals(ccell),filtTime))
+    end 
+end
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+%TO DO NEXT - MAKE BBB AND V WIDTH PLOTS SEPERATE AND SMOOTH IN ALL THE
+%WAYS SORT IN ONE NOTE BEFORE CHRIS MEETING 
+
+
+
+
+
+
