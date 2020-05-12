@@ -1151,7 +1151,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
-
+%{
 %normalize to baseline period 
 NavCdata = cell(1,length(avSortedCdata));
 NavBdata = cell(1,length(avSortedCdata));
@@ -1214,19 +1214,19 @@ for ccell = 1:length(terminals)
     ax=gca;
     hold all
     plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
-    plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
-%     plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
+%     plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
+    plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
     varargout = boundedline(1:size(SNavCdata{terminals(ccell)},2),SNavCdata{terminals(ccell)},SNsemCdata{terminals(ccell)},'b','transparency', 0.3,'alpha'); 
-    varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
-%     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
+%     varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
+    varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;   
     ax.FontSize = 20;
     xlabel('time (s)')
     ylabel('percent change')
     xlim([0 length(SNavCdata{terminals(ccell)})])
-    ylim([-100 500])
-    legend('DA calcium','BBB data')
+    ylim([-800 1000])
+    legend('DA calcium','vessel width')
     if smoothQ == 0 
         title(sprintf('DA terminal #%d.',terminals(ccell)))
     elseif smoothQ == 1
@@ -1235,7 +1235,7 @@ for ccell = 1:length(terminals)
 end
 %}
 %% sort red and green channel stacks based on ca peak location 
-
+%{
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 sortedGreenStacks = cell(1,length(vidList));
 sortedRedStacks = cell(1,length(vidList));
@@ -1256,31 +1256,53 @@ for vid = 1:length(vidList)
         end 
     end 
 end 
+%}
+%% create red and green channel stack averages around calcium peak location 
 
-%%
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%we already have the weights 
 % create weighted average stacks - normalized by peak number  
 avGreenWeighted = cell(1,length(vidList));
 avRedWeighted = cell(1,length(vidList));
-avGreenWeighted2 = cell(1,length(vidList));
-% avBweighted2 = cell(1,length(sortedCdata{1}));
-% avVweighted2 = cell(1,length(sortedCdata{1}));
+avGreenWeighted2 = cell(1);
+avRedWeighted2 = cell(1);
 for vid = 1:length(vidList)
     for ccell = 1%:length(terminals)
         ind = find(ROIinds == terminals(ccell));
         for peak = 1:size(sortedGreenStacks{vid}{ccell},2)  
             avGreenWeighted{vid}{ccell}(:,:,:,peak) = (sortedGreenStacks{vid}{ccell}{peak})*weights(vid,ind);
-            
-            %nanmean((sortedGreenStacks{vid}{ccell}{peak})*weights(vid,ccell),1);
-            
-            
-%             avRedWeighted{vid}{ccell}{peak} = nanmean((sortedRedStacks{vid}{ccell}{peak})*weights(vid,ccell),1); 
-            
-%             avSortedCdata{ccell} = sum(avCweighted2{ccell},1);
-%             avSortedBdata{ccell} = sum(avBweighted2{ccell},1);
+            avRedWeighted{vid}{ccell}(:,:,:,peak) = (sortedRedStacks{vid}{ccell}{peak})*weights(vid,ind);
         end
-        avGreenWeighted2{vid}{ccell} = nanmean(avGreenWeighted{vid}{ccell},4);
+        avGreenWeighted2{ccell}(:,:,:,vid) = nanmean(avGreenWeighted{vid}{ccell},4);
+        avRedWeighted2{ccell}(:,:,:,vid) = nanmean(avRedWeighted{vid}{ccell},4);
     end 
 end 
+greenStackAv = sum(avGreenWeighted2{1},4);
+redStackAv = sum(avRedWeighted2{1},4);
+
+% normalize to baseline period 
+NgreenStackAv = ((greenStackAv-mean(greenStackAv(:,:,1:floor(size(greenStackAv,3)/3)),3))./(mean(greenStackAv(:,:,1:floor(size(greenStackAv,3)/3)),3)))*100;
+NredStackAv = ((redStackAv-mean(redStackAv(:,:,1:floor(size(redStackAv,3)/3)),3))./(mean(redStackAv(:,:,1:floor(size(redStackAv,3)/3)),3)))*100;
+
+%smoothing option
+smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+if smoothQ == 0 
+    SNgreenStackAv = NgreenStackAv;
+    SNredStackAv = NredStackAv;
+elseif smoothQ == 1
+    filtTime = input('How many seconds do you want to smooth your data by? ');
+    filter_rate = FPSstack*filtTime; 
+    SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);
+    SNredStackAv = smoothdata(NredStackAv,3,'movmean',filter_rate);
+end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+    
+    
+
+
+        
+
+
+
