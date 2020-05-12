@@ -14,8 +14,8 @@ end
 FPSstack = temp1.FPSstack;
 framePeriod = temp1.framePeriod;
 state = 8;
-% terminals = [13,20,12,16,11,15,10,8,9,7,4]; %SF56
-terminals = [17,15,12,10,8,7,6,5,4,3]; %SF57
+terminals = [13,20,12,16,11,15,10,8,9,7,4]; %SF56
+% terminals = [17,15,12,10,8,7,6,5,4,3]; %SF57
 
 % get vessel width and BBB full exp traces
 bDataFullTrace = cell(1,length(vidList));
@@ -1095,7 +1095,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% average calcium peak aligned data - normalized to number of peaks per video 
-%{
+
 % determine weights from number of peaks per video per terminal 
 numPeaks = zeros(length(vidList),length(sortedCdata{1}));
 for vid = 1:length(vidList)
@@ -1236,12 +1236,10 @@ for ccell = 1:length(terminals)
 end
 %}
 %% sort red and green channel stacks based on ca peak location 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
-
 sortedGreenStacks = cell(1,length(vidList));
+sortedRedStacks = cell(1,length(vidList));
 for vid = 1:length(vidList)
     for ccell = 1%:length(terminals)
         ind = find(ROIinds == terminals(ccell));
@@ -1253,23 +1251,37 @@ for vid = 1:length(vidList)
                     start = 1 ;
                     stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
                 end                
-                sortedGreenStacks{vid}{ind}(peak,:) = greenStacks{vid}(:,:,start:stop);
+                sortedGreenStacks{vid}{ccell}{peak} = greenStacks{vid}(:,:,start:stop);
+                sortedRedStacks{vid}{ccell}{peak} = redStacks{vid}(:,:,start:stop);
             end 
         end 
     end 
 end 
 
+%%
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-%replace rows of all 0s w/NaNs
+%we already have the weights 
+% create weighted average stacks - normalized by peak number  
+avGreenWeighted = cell(1,length(vidList));
+avRedWeighted = cell(1,length(vidList));
+avGreenWeighted2 = cell(1,length(vidList));
+% avBweighted2 = cell(1,length(sortedCdata{1}));
+% avVweighted2 = cell(1,length(sortedCdata{1}));
 for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)    
-        nonZeroRowsB = all(sortedBstacksGreen{vid}{ind} == 0,2);
-        sortedBstacksGreen{vid}{ind}(nonZeroRowsB,:) = NaN;
-        nonZeroRowsC = all(sortedCstacksGreen{vid}{ind} == 0,2);
-        sortedCstacksGreen{vid}{ind}(nonZeroRowsC,:) = NaN;
-        nonZeroRowsV = all(sortedVstacksGreen{vid}{ind} == 0,2);
-        sortedVstacksGreen{vid}{ind}(nonZeroRowsV,:) = NaN;
+    for ccell = 1%:length(terminals)
+        ind = find(ROIinds == terminals(ccell));
+        for peak = 1:size(sortedGreenStacks{vid}{ccell},2)  
+            avGreenWeighted{vid}{ccell}(:,:,:,peak) = (sortedGreenStacks{vid}{ccell}{peak})*weights(vid,ind);
+            
+            %nanmean((sortedGreenStacks{vid}{ccell}{peak})*weights(vid,ccell),1);
+            
+            
+%             avRedWeighted{vid}{ccell}{peak} = nanmean((sortedRedStacks{vid}{ccell}{peak})*weights(vid,ccell),1); 
+            
+%             avSortedCdata{ccell} = sum(avCweighted2{ccell},1);
+%             avSortedBdata{ccell} = sum(avBweighted2{ccell},1);
+        end
+        avGreenWeighted2{vid}{ccell} = nanmean(avGreenWeighted{vid}{ccell},4);
     end 
 end 

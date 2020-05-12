@@ -14,8 +14,8 @@ end
 FPSstack = temp1.FPSstack;
 framePeriod = temp1.framePeriod;
 state = 8;
-% terminals = [13,20,12,16,11,15,10,8,9,7,4]; %SF56
-terminals = [17,15,12,10,8,7,6,5,4,3]; %SF57
+terminals = [13,20,12,16,11,15,10,8,9,7,4]; %SF56
+% terminals = [17,15,12,10,8,7,6,5,4,3]; %SF57
 
 % get vessel width and BBB full exp traces
 bDataFullTrace = cell(1,length(vidList));
@@ -1151,7 +1151,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
-%{
+
 %normalize to baseline period 
 NavCdata = cell(1,length(avSortedCdata));
 NavBdata = cell(1,length(avSortedCdata));
@@ -1187,7 +1187,6 @@ elseif smoothQ == 1
     SNsemBdata = cell(1,length(NavCdata));
     SNsemVdata = cell(1,length(NavCdata));
     for ccell = 1:length(terminals)
-        terminals(ccell) = find(ROIinds == terminals(ccell));
         [sC_Data] = MovMeanSmoothData(NavCdata{terminals(ccell)},filtTime,FPSstack);
         SNavCdata{terminals(ccell)} = sC_Data;
         [sB_Data] = MovMeanSmoothData(NavBdata{terminals(ccell)},filtTime,FPSstack);
@@ -1238,7 +1237,6 @@ end
 %% sort red and green channel stacks based on ca peak location 
 
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
-
 sortedGreenStacks = cell(1,length(vidList));
 sortedRedStacks = cell(1,length(vidList));
 for vid = 1:length(vidList)
@@ -1259,53 +1257,30 @@ for vid = 1:length(vidList)
     end 
 end 
 
-
+%%
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %we already have the weights 
-
-
-% determine weighted average and SEM- across videos - normalized by peak number  
-avCweighted = cell(1,length(vidList));
-avBweighted = cell(1,length(vidList));
-avVweighted = cell(1,length(vidList));
-semCweighted = cell(1,length(vidList));
-semBweighted = cell(1,length(vidList));
-semVweighted = cell(1,length(vidList));
-avCweighted2 = cell(1,length(sortedCdata{1}));
-avBweighted2 = cell(1,length(sortedCdata{1}));
-avVweighted2 = cell(1,length(sortedCdata{1}));
-semCweighted2 = cell(1,length(sortedCdata{1}));
-semBweighted2 = cell(1,length(sortedCdata{1}));
-semVweighted2 = cell(1,length(sortedCdata{1}));
-avSortedCdata = cell(1,length(sortedCdata{1}));
-avSortedBdata = cell(1,length(sortedCdata{1}));
-avSortedVdata = cell(1,length(sortedCdata{1}));
-semSortedCdata = cell(1,length(sortedCdata{1}));
-semSortedBdata = cell(1,length(sortedCdata{1}));
-semSortedVdata = cell(1,length(sortedCdata{1}));
+% create weighted average stacks - normalized by peak number  
+avGreenWeighted = cell(1,length(vidList));
+avRedWeighted = cell(1,length(vidList));
+avGreenWeighted2 = cell(1,length(vidList));
+% avBweighted2 = cell(1,length(sortedCdata{1}));
+% avVweighted2 = cell(1,length(sortedCdata{1}));
 for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
-        avCweighted{vid}{terminals(ccell)} = nanmean((sortedCdata{vid}{terminals(ccell)})*weights(vid,terminals(ccell)),1);
-        avBweighted{vid}{terminals(ccell)} = nanmean((sortedBdata{vid}{terminals(ccell)})*weights(vid,terminals(ccell)),1);
-        avVweighted{vid}{terminals(ccell)} = nanmean((sortedVdata{vid}{terminals(ccell)})*weights(vid,terminals(ccell)),1);        
-        semCweighted{vid}{terminals(ccell)} = (std(sortedCdata{vid}{terminals(ccell)}))/sqrt(length(sortedCdata{vid}{terminals(ccell)}))*weights(vid,terminals(ccell));
-        semBweighted{vid}{terminals(ccell)} = (std(sortedBdata{vid}{terminals(ccell)}))/sqrt(length(sortedBdata{vid}{terminals(ccell)}))*weights(vid,terminals(ccell));
-        semVweighted{vid}{terminals(ccell)} = (std(sortedVdata{vid}{terminals(ccell)}))/sqrt(length(sortedVdata{vid}{terminals(ccell)}))*weights(vid,terminals(ccell));        
-        if isempty(avCweighted{vid}{terminals(ccell)}) == 0 
-            avCweighted2{terminals(ccell)}(vid,:) = avCweighted{vid}{terminals(ccell)};
-            avBweighted2{terminals(ccell)}(vid,:) = avBweighted{vid}{terminals(ccell)};
-            avVweighted2{terminals(ccell)}(vid,:) = avVweighted{vid}{terminals(ccell)};
-            semCweighted2{terminals(ccell)}(vid,:) = semCweighted{vid}{terminals(ccell)};
-            semBweighted2{terminals(ccell)}(vid,:) = semBweighted{vid}{terminals(ccell)};
-            semVweighted2{terminals(ccell)}(vid,:) = semVweighted{vid}{terminals(ccell)};
-        end 
-        avSortedCdata{terminals(ccell)} = sum(avCweighted2{terminals(ccell)},1);
-        avSortedBdata{terminals(ccell)} = sum(avBweighted2{terminals(ccell)},1);
-        avSortedVdata{terminals(ccell)} = sum(avVweighted2{terminals(ccell)},1);
-        semSortedCdata{terminals(ccell)} = sum(semCweighted2{terminals(ccell)},1);
-        semSortedBdata{terminals(ccell)} = sum(semBweighted2{terminals(ccell)},1);
-        semSortedVdata{terminals(ccell)} = sum(semVweighted2{terminals(ccell)},1);
+    for ccell = 1%:length(terminals)
+        ind = find(ROIinds == terminals(ccell));
+        for peak = 1:size(sortedGreenStacks{vid}{ccell},2)  
+            avGreenWeighted{vid}{ccell}(:,:,:,peak) = (sortedGreenStacks{vid}{ccell}{peak})*weights(vid,ind);
+            
+            %nanmean((sortedGreenStacks{vid}{ccell}{peak})*weights(vid,ccell),1);
+            
+            
+%             avRedWeighted{vid}{ccell}{peak} = nanmean((sortedRedStacks{vid}{ccell}{peak})*weights(vid,ccell),1); 
+            
+%             avSortedCdata{ccell} = sum(avCweighted2{ccell},1);
+%             avSortedBdata{ccell} = sum(avBweighted2{ccell},1);
+        end
+        avGreenWeighted2{vid}{ccell} = nanmean(avGreenWeighted{vid}{ccell},4);
     end 
 end 
