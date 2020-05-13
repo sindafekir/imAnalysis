@@ -1293,16 +1293,60 @@ elseif smoothQ == 1
     SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);
     SNredStackAv = smoothdata(NredStackAv,3,'movmean',filter_rate);
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+%% save the stack 
+%{
+%set saving parameters
+channel = input('Input 0 to save green channel. Input 1 to save red channel. ');
+if channel == 0 
+    color = 'Green';
+    Ims = SNgreenStackAv;
+elseif channel == 1
+    color = 'Red';
+    Ims = SNredStackAv;
+end 
+term = input('What terminal data are we saving? ');
+dir1 = input('What folder are you saving these images in? ');
+dir2 = strrep(dir1,'\','/');
+dir3 = (sprintf('%s/SmoothedNormalized%sStackAv_Terminal%dCalciumSpikes',dir2,color,term));
 
+%make image gray scale 16 bit
+% Ims_index = uint16((Ims - min(Ims(:))) * (65536 / (max(Ims(:)) - min(Ims(:)))));
+Ims_index = uint16(Ims(:,:,:));
 
-    
-    
+%make the directory and save the images 
+mkdir(dir3);
+for frame = 1:size(SNgreenStackAv,3)
+    folder = sprintf('%s/%s_Im_%d.tif',dir3,color,frame');
+    imwrite(Ims_index(:,:,frame),folder);
+end 
+%}
+%% create composite stack
+%{
+%THIS NEEDS FURTHER EDITING BECAUSE THE COMPOSITE STACK IS REALLY DIM
+%convert gray scale images to red green channel images
+redGrayIndex = uint8(SNredStackAv(:,:,:));
+greenGrayIndex = uint8(SNgreenStackAv(:,:,:));
+%create custom color maps 
+redMap = customcolormap([0 0.99 1], [1 0 0; 0.5 0 0 ;0 0 0]);
+greenMap = customcolormap([0 0.97 1], [0 1 0; 0 0.5 0 ;0 0 0]);
+% colorbar;
+% colormap(blueMap);
+% axis off;
+for frame = 1:size(redGrayIndex,3)
+    red(:,:,:,frame) = ind2rgb(redGrayIndex(:,:,frame),redMap);   
+    green(:,:,:,frame) = ind2rgb(greenGrayIndex(:,:,frame),greenMap);   
+    %imfuse is fucking up the color maps 
+    redGreen(:,:,:,frame) = imfuse(red(:,:,:,frame),green(:,:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');
+end 
 
+implay(redGreen)
+%}
+%% work on creating multiple ROIs farther away from term 12 and plot BBB data
+% of these different 
 
-        
+%use greenStackAv and redStackAv for this 
 
+%% show all trials that go into BBB trace for terminal 12 
 
-
+%% create stacks that are seperated by trial type 
