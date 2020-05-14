@@ -1095,6 +1095,61 @@ if tTypeQ == 0
     end 
     
 elseif tTypeQ == 1 
+
+    %tTypeSigLocs{1} = blue light
+    %tTypeSigLocs{2} = red light
+    %tTypeSigLocs{3} = ISI
+    for vid = 1%:length(vidList)
+        for ccell = 1%:length(terminals)
+            count = 1;
+            for peak = 1:length(sigLocs{vid}{terminals(ccell)})  
+                %if the peak location is less than all of the
+                %state start frames 
+                if all(sigLocs{vid}{terminals(ccell)}(peak) < state_start_f{vid})
+                    %than that peak is before the first stim and is in an
+                    %ISI period 
+                    tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak);                           
+                %if the peak location is not in the first ISI period 
+                elseif sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(1)-1                                        
+                    %find the trial start frames that are < current peak
+                    %location 
+                    trials = find(state_start_f{vid} < sigLocs{vid}{terminals(ccell)}(peak)); 
+                    trial = max(trials);
+                    %if the current peak location is happening during the
+                    %stim
+                    if sigLocs{vid}{terminals(ccell)}(peak) < state_end_f{vid}(trial)
+                        %sort into the correct cell depending on whether
+                        %the light is blue or red 
+                        if TrialTypes{vid}(trial,2) == 1
+                            tTypeSigLocs{1}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        elseif TrialTypes{vid}(trial,2) == 2 
+                            tTypeSigLocs{2}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        end 
+                    %if the current peak location is happening after the
+                    %stim (in the next ISI)
+                    elseif sigLocs{vid}{terminals(ccell)}(peak) > state_end_f{vid}(trial)
+                        %sort into the correct cell depending on whether
+                        %the light is blue or red 
+                        tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                    end 
+                end 
+                count = count + 1;
+            end
+        end 
+    end 
+    
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %NEXT REMOVE ZEROS FROM TTYPESIGLOCS
+    %NEXT NEXT SORT THE DATA INTO THE DIFFERENT CATEGORIES BASED ON TTYPESIGLOCS
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
     
 end 
 %}
@@ -1262,7 +1317,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-
+%{
 % create weighted average stacks - normalized by peak number  
 avGreenWeighted = cell(1,length(vidList));
 avRedWeighted = cell(1,length(vidList));
@@ -1347,7 +1402,7 @@ end
 implay(redGreen)
 %}
 %% create multiple BBB ROIs 
-
+%{
 % numROIs = input("How many BBB perm ROIs are we making? "); 
 % %for display purposes mostly: average across frames 
 % stackAVsIm = mean(redStackAv,3);

@@ -1058,41 +1058,90 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-tTypeQ = input('Do you want to seperate peaks by trial type? No ');
 
+tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
-
-sortedCdata = cell(1,length(vidList));
-sortedBdata = cell(1,length(vidList));
-sortedVdata = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
-        for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
-            if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
-                start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
-                stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
-                if start == 0 
-                    start = 1 ;
-                    stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
-                end                
-                sortedBdata{vid}{terminals(ccell)}(peak,:) = bDataFullTrace{vid}(start:stop);
-                sortedCdata{vid}{terminals(ccell)}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                sortedVdata{vid}{terminals(ccell)}(peak,:) = vDataFullTrace{vid}(start:stop);
+if tTypeQ == 0 
+    sortedCdata = cell(1,length(vidList));
+    sortedBdata = cell(1,length(vidList));
+    sortedVdata = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)
+            for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
+                if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
+                    start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
+                    stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
+                    if start == 0 
+                        start = 1 ;
+                        stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
+                    end                
+                    sortedBdata{vid}{terminals(ccell)}(peak,:) = bDataFullTrace{vid}(start:stop);
+                    sortedCdata{vid}{terminals(ccell)}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                    sortedVdata{vid}{terminals(ccell)}(peak,:) = vDataFullTrace{vid}(start:stop);
+                end 
             end 
         end 
     end 
-end 
-
-%replace rows of all 0s w/NaNs
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)    
-        nonZeroRowsB = all(sortedBdata{vid}{terminals(ccell)} == 0,2);
-        sortedBdata{vid}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
-        nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
-        sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
-        nonZeroRowsV = all(sortedVdata{vid}{terminals(ccell)} == 0,2);
-        sortedVdata{vid}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
+    %replace rows of all 0s w/NaNs
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)    
+            nonZeroRowsB = all(sortedBdata{vid}{terminals(ccell)} == 0,2);
+            sortedBdata{vid}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
+            nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
+            sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
+            nonZeroRowsV = all(sortedVdata{vid}{terminals(ccell)} == 0,2);
+            sortedVdata{vid}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
+        end 
     end 
+    
+elseif tTypeQ == 1 
+
+    %tTypeSigLocs{1} = blue light
+    %tTypeSigLocs{2} = red light
+    %tTypeSigLocs{3} = ISI
+    for vid = 1%:length(vidList)
+        for ccell = 1%:length(terminals)
+            count = 1;
+            for peak = 20%1:length(sigLocs{vid}{terminals(ccell)})  
+                %if the peak location is less than all of the
+                %state start frames 
+                if all(sigLocs{vid}{terminals(ccell)}(peak) < state_start_f{vid})
+                    %than that peak is before the first stim and is in an
+                    %ISI period 
+                    tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak);                           
+                %if the peak location is not in the first ISI period 
+                elseif sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(1)-1
+                                        
+                    %find the trial start frames that are < current peak
+                    %location 
+                    trials = find(state_start_f{vid} < sigLocs{vid}{terminals(ccell)}(peak)); 
+                    trial = max(trials);
+                    %if the current peak location is happening during the
+                    %stim
+                    if sigLocs{vid}{terminals(ccell)}(peak) < state_end_f{vid}(trial)
+                        %sort into the correct cell depending on whether
+                        %the light is blue or red 
+                        if TrialTypes{vid}(trial,2) == 1
+                            tTypeSigLocs{1}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        elseif TrialTypes{vid}(trial,2) == 2 
+                            tTypeSigLocs{2}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        end 
+                    %if the current peak location is happening after the
+                    %stim (in the next ISI)
+                    elseif sigLocs{vid}{terminals(ccell)}(peak) > state_end_f{vid}(trial)
+                        %sort into the correct cell depending on whether
+                        %the light is blue or red 
+                        tTypeSigLocs{2}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                    end 
+                    
+                    
+                end 
+                count = count + 1;
+            end
+        end 
+    end 
+    
+    
 end 
 %}
 %% average calcium peak aligned data - normalized to number of peaks per video 
