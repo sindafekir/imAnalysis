@@ -1,5 +1,5 @@
 % get the data you need 
-
+%{
 % get calcium data 
 % vidList = [1,2,3,4,5,7]; %SF56
 vidList = [1,2,3,4,5,6]; %SF57
@@ -92,7 +92,7 @@ for vid = 1:length(vidList)
     end 
     greenStacks{vid} = mean(imArrays{vid},4);
 end 
-
+%}
 %% reorganize trial data 
 %{
 Cdata = cell(1,length(tData{1}{1}));
@@ -1058,40 +1058,44 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-%{
-windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 
-sortedCdata = cell(1,length(vidList));
-sortedBdata = cell(1,length(vidList));
-sortedVdata = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
-        for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
-            if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
-                start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
-                stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
-                if start == 0 
-                    start = 1 ;
-                    stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
-                end                
-                sortedBdata{vid}{terminals(ccell)}(peak,:) = bDataFullTrace{vid}(start:stop);
-                sortedCdata{vid}{terminals(ccell)}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                sortedVdata{vid}{terminals(ccell)}(peak,:) = vDataFullTrace{vid}(start:stop);
+tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
+windSize = 5; %input('How big should the window be around Ca peak in seconds?');
+if tTypeQ == 0 
+    sortedCdata = cell(1,length(vidList));
+    sortedBdata = cell(1,length(vidList));
+    sortedVdata = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)
+            for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
+                if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
+                    start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
+                    stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
+                    if start == 0 
+                        start = 1 ;
+                        stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
+                    end                
+                    sortedBdata{vid}{terminals(ccell)}(peak,:) = bDataFullTrace{vid}(start:stop);
+                    sortedCdata{vid}{terminals(ccell)}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                    sortedVdata{vid}{terminals(ccell)}(peak,:) = vDataFullTrace{vid}(start:stop);
+                end 
             end 
         end 
     end 
-end 
-
-%replace rows of all 0s w/NaNs
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)    
-        nonZeroRowsB = all(sortedBdata{vid}{terminals(ccell)} == 0,2);
-        sortedBdata{vid}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
-        nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
-        sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
-        nonZeroRowsV = all(sortedVdata{vid}{terminals(ccell)} == 0,2);
-        sortedVdata{vid}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
+    %replace rows of all 0s w/NaNs
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)    
+            nonZeroRowsB = all(sortedBdata{vid}{terminals(ccell)} == 0,2);
+            sortedBdata{vid}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
+            nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
+            sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
+            nonZeroRowsV = all(sortedVdata{vid}{terminals(ccell)} == 0,2);
+            sortedVdata{vid}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
+        end 
     end 
+    
+elseif tTypeQ == 1 
+    
 end 
 %}
 %% average calcium peak aligned data - normalized to number of peaks per video 
@@ -1201,38 +1205,38 @@ elseif smoothQ == 1
         SNsemVdata{terminals(ccell)} = sVsem_Data;
     end 
 end 
-
-%plot
-for ccell = 1:length(terminals)
-    % plot 
-    figure;
-    Frames = length(avSortedCdata{terminals(ccell)});
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-    FrameVals = round((1:FPSstack:Frames)+5); 
-    ax=gca;
-    hold all
-    plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
-    plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
-%     plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
-    varargout = boundedline(1:size(SNavCdata{terminals(ccell)},2),SNavCdata{terminals(ccell)},SNsemCdata{terminals(ccell)},'b','transparency', 0.3,'alpha'); 
-    varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
-%     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 20;
-    xlabel('time (s)')
-    ylabel('percent change')
-    xlim([0 length(SNavCdata{terminals(ccell)})])
-    ylim([-800 1000])
-    legend('DA calcium','BBB data')
-    if smoothQ == 0 
-        title(sprintf('DA terminal #%d.',terminals(ccell)))
-    elseif smoothQ == 1
-        title(sprintf('DA terminal #%d. %0.2f sec smoothing.',terminals(ccell),filtTime))
-    end 
-end
+% 
+% %plot
+% for ccell = 1:length(terminals)
+%     % plot 
+%     figure;
+%     Frames = length(avSortedCdata{terminals(ccell)});
+%     Frames_pre_stim_start = -((Frames-1)/2); 
+%     Frames_post_stim_start = (Frames-1)/2; 
+%     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+%     FrameVals = round((1:FPSstack:Frames)+5); 
+%     ax=gca;
+%     hold all
+%     plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
+%     plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
+% %     plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
+%     varargout = boundedline(1:size(SNavCdata{terminals(ccell)},2),SNavCdata{terminals(ccell)},SNsemCdata{terminals(ccell)},'b','transparency', 0.3,'alpha'); 
+%     varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
+% %     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
+%     ax.XTick = FrameVals;
+%     ax.XTickLabel = sec_TimeVals;   
+%     ax.FontSize = 20;
+%     xlabel('time (s)')
+%     ylabel('percent change')
+%     xlim([0 length(SNavCdata{terminals(ccell)})])
+%     ylim([-800 1000])
+%     legend('DA calcium','BBB data')
+%     if smoothQ == 0 
+%         title(sprintf('DA terminal #%d.',terminals(ccell)))
+%     elseif smoothQ == 1
+%         title(sprintf('DA terminal #%d. %0.2f sec smoothing.',terminals(ccell),filtTime))
+%     end 
+% end
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
@@ -1258,7 +1262,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-%{
+
 % create weighted average stacks - normalized by peak number  
 avGreenWeighted = cell(1,length(vidList));
 avRedWeighted = cell(1,length(vidList));
@@ -1275,8 +1279,8 @@ for vid = 1:length(vidList)
         avRedWeighted2{ccell}(:,:,:,vid) = nanmean(avRedWeighted{vid}{ccell},4);
     end 
 end 
-greenStackAv = sum(avGreenWeighted2{1},4);
-redStackAv = sum(avRedWeighted2{1},4);
+greenStackAv = sum(avGreenWeighted2{ccell},4);
+redStackAv = sum(avRedWeighted2{ccell},4);
 
 % normalize to baseline period 
 NgreenStackAv = ((greenStackAv-mean(greenStackAv(:,:,1:floor(size(greenStackAv,3)/3)),3))./(mean(greenStackAv(:,:,1:floor(size(greenStackAv,3)/3)),3)))*100;
@@ -1322,8 +1326,8 @@ for frame = 1:size(SNgreenStackAv,3)
 end 
 %}
 %% create composite stack
-%{
 %THIS NEEDS FURTHER EDITING BECAUSE THE COMPOSITE STACK IS REALLY DIM
+%{
 %convert gray scale images to red green channel images
 redGrayIndex = uint8(SNredStackAv(:,:,:));
 greenGrayIndex = uint8(SNgreenStackAv(:,:,:));
@@ -1344,21 +1348,21 @@ implay(redGreen)
 %}
 %% create multiple BBB ROIs 
 
-numROIs = input("How many BBB perm ROIs are we making? "); 
-%for display purposes mostly: average across frames 
-stackAVsIm = mean(redStackAv,3);
-%create the ROI boundaries           
-ROIboundDatas = cell(1,numROIs);
-for VROI = 1:numROIs 
-    label = sprintf('Create ROI %d for BBB perm analysis',VROI);
-    disp(label);
-    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
-    ROIboundData{1} = xmins;
-    ROIboundData{2} = ymins;
-    ROIboundData{3} = widths;
-    ROIboundData{4} = heights;
-    ROIboundDatas{VROI} = ROIboundData;
-end
+% numROIs = input("How many BBB perm ROIs are we making? "); 
+% %for display purposes mostly: average across frames 
+% stackAVsIm = mean(redStackAv,3);
+% %create the ROI boundaries           
+% ROIboundDatas = cell(1,numROIs);
+% for VROI = 1:numROIs 
+%     label = sprintf('Create ROI %d for BBB perm analysis',VROI);
+%     disp(label);
+%     [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
+%     ROIboundData{1} = xmins;
+%     ROIboundData{2} = ymins;
+%     ROIboundData{3} = widths;
+%     ROIboundData{4} = heights;
+%     ROIboundDatas{VROI} = ROIboundData;
+% end
 
 SNROIstacks = cell(1,numROIs);
 ROIstacks = cell(1,numROIs);
@@ -1368,14 +1372,8 @@ for VROI = 1:numROIs
     ymins = ROIboundDatas{VROI}{2};
     widths = ROIboundDatas{VROI}{3};
     heights = ROIboundDatas{VROI}{4};
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %PICK UP HERE - NEED TO FIGURE OUT WHY SNROISTACKS AND ROISTACKS ARE
-    %NOT THE SAME SIZE THEN APPLY THE MASK TO SNDATA - RIGHT NOW I CAN'T
-    %APPLY THE MASK TO THE RIGHT DATA BECAUSE THE ROISTACKS AREN'T THE SAME
-    %SIZE 
     [SNROI_stacks] = make_ROIs_notfirst_time(SNredStackAv,xmins,ymins,widths,heights);
-    SNROIstacks{VROI} = ROI_stacks{1};
+    SNROIstacks{VROI} = SNROI_stacks{1};
     [ROI_stacks] = make_ROIs_notfirst_time(redStackAv,xmins,ymins,widths,heights);
     ROIstacks{VROI} = ROI_stacks{1};
 end 
@@ -1384,26 +1382,27 @@ end
 BWstacks = cell(1,numROIs);
 BW_perim = cell(1,numROIs);
 segOverlays = cell(1,numROIs);         
-for VROI = 1:numROIs                     
+for VROI = 1:numROIs  
+    BWstacks{VROI} = zeros(size(ROIstacks{VROI},1),size(ROIstacks{VROI},2),size(ROIstacks{VROI},3));
     for frame = 1:size(ROIstacks{VROI},3)
-        [BW,~] = segmentImageBBB(ROIstacks{VROI}(:,:,frame));
-        BWstacks{VROI}(:,:,frame) = BW; 
+%         [BW,~] = segmentImageBBB(ROIstacks{VROI}(:,:,frame));
+%         BWstacks{VROI}(:,:,frame) = BW; 
         %get the segmentation boundaries 
-        BW_perim{VROI}(:,:,frame) = bwperim(BW);
+        BW_perim{VROI}(:,:,frame) = bwperim(BWstacks{VROI}(:,:,frame));
         %overlay segmentation boundaries on data
         segOverlays{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{VROI}(:,:,frame)), BW_perim{VROI}(:,:,frame), [.3 1 .3]);
     end               
 end      
-
-%check segmentation 
-if numROIs == 1 
-    %play segmentation boundaries over images 
-    implay(segOverlays{1})
-elseif numROIs > 1 
-    VROI = input("What BBB ROI do you want to see? ");
-    %play segmentation boundaries over images 
-    implay(segOverlays{VROI})
-end 
+% 
+% %check segmentation 
+% if numROIs == 1 
+%     %play segmentation boundaries over images 
+%     implay(segOverlays{1})
+% elseif numROIs > 1 
+%     VROI = input("What BBB ROI do you want to see? ");
+%     %play segmentation boundaries over images 
+%     implay(segOverlays{VROI})
+% end 
 
 % invert the mask
 BWstacksInv = cell(1,numROIs);
@@ -1413,11 +1412,7 @@ for VROI = 1:numROIs
     end         
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-%apply the mask 
+%apply the mask and get pixel intensities
 meanPixIntArray = cell(1,numROIs);
 for VROI = 1:numROIs           
     for frame = 1:size(ROIstacks{VROI},3)   
@@ -1429,51 +1424,7 @@ for VROI = 1:numROIs
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-wVmeanPixIntArray = cell(1,numROIs);
-for VROI = 1:numROIs           
-    for frame = 1:size(ROIstacks{VROI},3)                            
-        stats = regionprops(BWstacksInv{VROI}(:,:,frame),ROIstacks{VROI}(:,:,frame),'MeanIntensity');       
-        wVstats = regionprops(BWstacks{VROI}(:,:,frame),ROIstacks{VROI}(:,:,frame),'MeanIntensity');   
-        
-        ROIpixInts = zeros(1,length(stats));
-        WvROIpixInts = zeros(1,length(stats));
-        for stat = 1:length(stats)
-            ROIpixInts(stat) = stats(stat).MeanIntensity;
-        end 
-        for stat = 1:length(wVstats)
-            WvROIpixInts(stat) = wVstats(stat).MeanIntensity;
-        end 
-        meanPixIntArray{VROI}(frame) = mean(ROIpixInts);  
-        wVmeanPixIntArray{VROI}(frame) = mean(WvROIpixInts);         
-    end 
-end 
-
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%}
-%% plot BBB ROI pixel intensities 
-
-% get pixel intensities
-BBBroiPixInts = cell(1,numROIs);
-NBBBroiPixInts = cell(1,numROIs);
-SNBBBroiPixInts = cell(1,numROIs);
-for VROI = 1:numROIs           
-    for frame = 1:size(ROIstacks{VROI},3)                            
-        BBBroiPixInts{VROI}(frame) = (mean(mean(ROIstacks{VROI}(:,:,frame))));     
-    end 
-%     % normalize to baseline period 
-%     NBBBroiPixInts{VROI} = ((BBBroiPixInts{VROI}-mean(BBBroiPixInts{VROI}(1:floor(length(BBBroiPixInts{VROI})/3))))/mean(BBBroiPixInts{VROI}(1:floor(length(BBBroiPixInts{VROI})/3))))*100;
-%     % smooth 
-%     SNBBBroiPixInts{VROI} = MovMeanSmoothData(NBBBroiPixInts{VROI},filtTime,FPSstack);
-end 
-
-
-% plot 
+% plot BBB ROI pixel intensities 
 figure;
 Frames = length(avSortedCdata{terminals(ccell)});
 Frames_pre_stim_start = -((Frames-1)/2); 
@@ -1482,9 +1433,9 @@ sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FP
 FrameVals = round((1:FPSstack:Frames)+5); 
 ax=gca;
 hold all
-% plot(SNavCdata{term},'b','LineWidth',2);
+plot(SNavCdata{term},'b','LineWidth',2);
 for VROI = 1:numROIs
-    plot(BBBroiPixInts{VROI},'LineWidth',2);
+    plot(meanPixIntArray{VROI},'LineWidth',2);
 end 
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
@@ -1493,19 +1444,13 @@ xlabel('time (s)')
 ylabel('percent change')
 xlim([0 length(SNavCdata{terminals(ccell)})])
 ylim([-20 100])
-% legend('BBB ROI 1','BBB ROI 2','BBB ROI 3','BBB ROI 4','BBB ROI 5')
+legend('Terminal 12 calcium','BBB ROI 1','BBB ROI 2','BBB ROI 3','BBB ROI 4','BBB ROI 5') %'Terminal 12 calcium',
 if smoothQ == 0 
-    title(sprintf('DA terminal #%d.',terminals(ccell)))
+    title(sprintf('DA terminal #%d.',term))
 elseif smoothQ == 1
-    title(sprintf('DA terminal #%d. %0.2f sec smoothing.',terminals(ccell),filtTime))
+    title(sprintf('DA terminal #%d. %0.2f sec smoothing.',term,filtTime))
 end 
 
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %% show all trials that go into BBB trace for terminal 12 
 
