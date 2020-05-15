@@ -1102,7 +1102,7 @@ elseif tTypeQ == 1
     for vid = 1%:length(vidList)
         for ccell = 1%:length(terminals)
             count = 1;
-            for peak = 20%1:length(sigLocs{vid}{terminals(ccell)})  
+            for peak = 1:length(sigLocs{vid}{terminals(ccell)})  
                 %if the peak location is less than all of the
                 %state start frames 
                 if all(sigLocs{vid}{terminals(ccell)}(peak) < state_start_f{vid})
@@ -1110,8 +1110,7 @@ elseif tTypeQ == 1
                     %ISI period 
                     tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak);                           
                 %if the peak location is not in the first ISI period 
-                elseif sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(1)-1
-                                        
+                elseif sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(1)-1                                        
                     %find the trial start frames that are < current peak
                     %location 
                     trials = find(state_start_f{vid} < sigLocs{vid}{terminals(ccell)}(peak)); 
@@ -1131,15 +1130,25 @@ elseif tTypeQ == 1
                     elseif sigLocs{vid}{terminals(ccell)}(peak) > state_end_f{vid}(trial)
                         %sort into the correct cell depending on whether
                         %the light is blue or red 
-                        tTypeSigLocs{2}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
                     end 
-                    
-                    
                 end 
                 count = count + 1;
             end
         end 
     end 
+    
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %NEXT REMOVE ZEROS FROM TTYPESIGLOCS
+    %NEXT NEXT SORT THE DATA INTO THE DIFFERENT CATEGORIES BASED ON TTYPESIGLOCS
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     
     
 end 
@@ -1201,7 +1210,33 @@ for vid = 1:length(vidList)
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
-%{
+
+%below gives me ability to plot    
+BdataPeaks = cell(1,length(vidList));
+NBdataPeaks = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+       BdataPeaks{vid}{terminals(ccell)} = (sortedBdata{vid}{terminals(ccell)})*weights(vid,terminals(ccell));
+       %normalize to baseline period 
+       NBdataPeaks{vid}{terminals(ccell)} = (BdataPeaks{vid}{terminals(ccell)}-mean(mean((BdataPeaks{vid}{terminals(ccell)}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3))))))/(mean(mean(BdataPeaks{vid}{terminals(ccell)}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)))))*100;
+    end 
+end 
+
+smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+if smoothQ == 0 
+elseif smoothQ == 1
+    filtTime = input('How many seconds do you want to smooth your data by? ');
+    SNBdataPeaks = cell(1,
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)
+            for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
+                [SBPeak_Data] = MovMeanSmoothData(NBdataPeaks{vid}{terminals(ccell)}(peak,:),filtTime,FPSstack);
+                SNBdataPeaks{vid}{terminals(ccell)}(peak,:) = SBPeak_Data;
+            end 
+        end 
+    end 
+end 
+
 %normalize to baseline period 
 NavCdata = cell(1,length(avSortedCdata));
 NavBdata = cell(1,length(avSortedCdata));
@@ -1219,7 +1254,6 @@ for ccell = 1:length(terminals)
 end    
 
 %smoothing option
-smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if smoothQ == 0 
     SNavCdata = NavCdata;
     SNavBdata = NavBdata;
@@ -1228,8 +1262,6 @@ if smoothQ == 0
     SNsemBdata = NsemBdata;
     SNsemVdata = NsemVdata;
 elseif smoothQ == 1
-    filtTime = input('How many seconds do you want to smooth your data by? ');
-    
     SNavCdata = cell(1,length(NavCdata));
     SNavBdata = cell(1,length(NavCdata));
     SNavVdata = cell(1,length(NavCdata));
@@ -1251,38 +1283,38 @@ elseif smoothQ == 1
         SNsemVdata{terminals(ccell)} = sVsem_Data;
     end 
 end 
-% 
-% %plot
-% for ccell = 1:length(terminals)
-%     % plot 
-%     figure;
-%     Frames = length(avSortedCdata{terminals(ccell)});
-%     Frames_pre_stim_start = -((Frames-1)/2); 
-%     Frames_post_stim_start = (Frames-1)/2; 
-%     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-%     FrameVals = round((1:FPSstack:Frames)+5); 
-%     ax=gca;
-%     hold all
-%     plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
-%     plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
-% %     plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
+
+%plot
+for ccell = 3%1:length(terminals)
+    % plot 
+    figure;
+    Frames = length(avSortedCdata{terminals(ccell)});
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+    FrameVals = round((1:FPSstack:Frames)+5); 
+    ax=gca;
+    hold all
+    plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
+    plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
+%     plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
 %     varargout = boundedline(1:size(SNavCdata{terminals(ccell)},2),SNavCdata{terminals(ccell)},SNsemCdata{terminals(ccell)},'b','transparency', 0.3,'alpha'); 
 %     varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
-% %     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
-%     ax.XTick = FrameVals;
-%     ax.XTickLabel = sec_TimeVals;   
-%     ax.FontSize = 20;
-%     xlabel('time (s)')
-%     ylabel('percent change')
-%     xlim([0 length(SNavCdata{terminals(ccell)})])
-%     ylim([-800 1000])
-%     legend('DA calcium','BBB data')
-%     if smoothQ == 0 
-%         title(sprintf('DA terminal #%d.',terminals(ccell)))
-%     elseif smoothQ == 1
-%         title(sprintf('DA terminal #%d. %0.2f sec smoothing.',terminals(ccell),filtTime))
-%     end 
-% end
+%     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;   
+    ax.FontSize = 20;
+    xlabel('time (s)')
+    ylabel('percent change')
+    xlim([0 length(SNavCdata{terminals(ccell)})])
+    ylim([-800 1000])
+    legend('DA calcium','BBB data')
+    if smoothQ == 0 
+        title(sprintf('DA terminal #%d.',terminals(ccell)))
+    elseif smoothQ == 1
+        title(sprintf('DA terminal #%d. %0.2f sec smoothing.',terminals(ccell),filtTime))
+    end 
+end
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
@@ -1308,7 +1340,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-
+%{
 % create weighted average stacks - normalized by peak number  
 avGreenWeighted = cell(1,length(vidList));
 avRedWeighted = cell(1,length(vidList));
@@ -1393,7 +1425,7 @@ end
 implay(redGreen)
 %}
 %% create multiple BBB ROIs 
-
+%{
 % numROIs = input("How many BBB perm ROIs are we making? "); 
 % %for display purposes mostly: average across frames 
 % stackAVsIm = mean(redStackAv,3);
