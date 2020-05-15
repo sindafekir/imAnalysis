@@ -1240,36 +1240,56 @@ end
 
 %find where calcium peak onset is 
 changePt = (findchangepts(SNavCdata{terminals(ccell)}))-1;
-
-
+%%
 %find the BBB traces that increase after calcium peak onset (changePt) 
 SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
+SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList));
 for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
+    for ccell = 1:length(terminals)   
+        count1 = 1;
+        count2 = 1;
         for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
             %if pre changePt mean is less than post changePt mean 
             if mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) < mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
-                SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(peak,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+                SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(count1,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+                count1 = count1+1;
+            %find the traces that do not increase after calcium peak onset 
+            elseif mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) >= mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
+                SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)}(count2,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+                count2 = count2+1;
             end 
         end 
     end 
 end 
 
+
+%%
+
+
+
+
 SNBdataPeaks_IncAfterCa_2 = cell(1,length(vidList));
+SNBdataPeaks_NotIncAfterCa_2 = cell(1,length(vidList));
 AVSNBdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%average the BBB traces that increase after calcium peak onset 
+AVSNBdataPeaksNotInc = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%average the BBB traces that increase after calcium peak onset and those
+%that don't
 for vid = 1:length(vidList)
     for ccell = 1:length(terminals)
         if terminals(ccell) <= length(SNBdataPeaks_IncAfterCa{vid}) 
             if isempty(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}) == 0 
-                SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(vid,:) = mean(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)},1);               
+                SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(vid,:) = mean(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)},1);  
+                SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)}(vid,:) = mean(SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)},1); 
             end            
         end
         %find all 0 rows and replace with NaNs
         zeroRows = all(SNBdataPeaks_IncAfterCa_2{terminals(ccell)} == 0,2);
         SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(zeroRows,:) = NaN; 
+        zeroRowsNotInc = all(SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)} == 0,2);
+        SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)}(zeroRowsNotInc,:) = NaN; 
         %create average trace per terminal
         AVSNBdataPeaks{terminals(ccell)} = nansum(SNBdataPeaks_IncAfterCa_2{terminals(ccell)},1);
+        AVSNBdataPeaksNotInc{terminals(ccell)} = nansum(SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)},1);
     end 
 end 
 
@@ -1345,6 +1365,7 @@ for ccell = 3%1:length(terminals)
     plot(SNavCdata{terminals(ccell)},'b','LineWidth',4)
 %     plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
     plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)    
+%     plot(AVSNBdataPeaksNotInc{terminals(ccell)},'r','LineWidth',4) 
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;   
     ax.FontSize = 20;
