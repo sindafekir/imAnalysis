@@ -1058,7 +1058,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-
+%{
 tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 if tTypeQ == 0 
@@ -1211,7 +1211,7 @@ end
 %}
 %% normalize to baseline period and plot calcium peak aligned data
 
-%below gives me ability to plot    
+%below gives me ability to plot single peak BBB traces 
 BdataPeaks = cell(1,length(vidList));
 NBdataPeaks = cell(1,length(vidList));
 for vid = 1:length(vidList)
@@ -1224,9 +1224,10 @@ end
 
 smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if smoothQ == 0 
+    SNBdataPeaks = NBdataPeaks;
 elseif smoothQ == 1
     filtTime = input('How many seconds do you want to smooth your data by? ');
-    SNBdataPeaks = cell(1,
+    SNBdataPeaks = cell(1,length(vidList));
     for vid = 1:length(vidList)
         for ccell = 1:length(terminals)
             for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
@@ -1237,7 +1238,43 @@ elseif smoothQ == 1
     end 
 end 
 
-%normalize to baseline period 
+%find where calcium peak onset is 
+changePt = (findchangepts(SNavCdata{terminals(ccell)}))-1;
+
+
+%find the BBB traces that increase after calcium peak onset (changePt) 
+SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+        for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
+            %if pre changePt mean is less than post changePt mean 
+            if mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) < mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
+                SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(peak,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+            end 
+        end 
+    end 
+end 
+%%
+SNBdataPeaks_IncAfterCa_2 = cell(1,length(vidList));
+AVSNBdataPeaks = cell(1,);
+%average the BBB traces that increase after calcium peak onset 
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+        if terminals(ccell) <= length(SNBdataPeaks_IncAfterCa{vid}) 
+            if isempty(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}) == 0 
+                SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(vid,:) = mean(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)},1);               
+            end            
+        end
+        %find all 0 rows and replace with NaNs
+        zeroRows = all(SNBdataPeaks_IncAfterCa_2{terminals(ccell)} == 0,2);
+        SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(zeroRows,:) = NaN; 
+        %create average trace per terminal
+        AVSNBdataPeaks{terminals(ccell)} = sum(SNBdataPeaks_IncAfterCa_2{terminals(ccell)},1);
+    end 
+end 
+%%
+
+%normalize averaged data to baseline period 
 NavCdata = cell(1,length(avSortedCdata));
 NavBdata = cell(1,length(avSortedCdata));
 NavVdata = cell(1,length(avSortedCdata));
@@ -1283,7 +1320,7 @@ elseif smoothQ == 1
         SNsemVdata{terminals(ccell)} = sVsem_Data;
     end 
 end 
-
+%%
 %plot
 for ccell = 3%1:length(terminals)
     % plot 
@@ -1295,12 +1332,19 @@ for ccell = 3%1:length(terminals)
     FrameVals = round((1:FPSstack:Frames)+5); 
     ax=gca;
     hold all
-    plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
-    plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
 %     plot(SNavVdata{terminals(ccell)},'k','LineWidth',2)
 %     varargout = boundedline(1:size(SNavCdata{terminals(ccell)},2),SNavCdata{terminals(ccell)},SNsemCdata{terminals(ccell)},'b','transparency', 0.3,'alpha'); 
 %     varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
 %     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
+    for vid = 1:length(vidList)
+        for peak = 1:size(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)},1)
+            %if the BBB trace is greater after calcium peak onset
+            %(changePt) than before             
+            plot(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(peak,:))       
+        end 
+    end 
+    plot(SNavCdata{terminals(ccell)},'b','LineWidth',2)
+    plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;   
     ax.FontSize = 20;
@@ -1308,7 +1352,7 @@ for ccell = 3%1:length(terminals)
     ylabel('percent change')
     xlim([0 length(SNavCdata{terminals(ccell)})])
     ylim([-800 1000])
-    legend('DA calcium','BBB data')
+%     legend('DA calcium','BBB data')
     if smoothQ == 0 
         title(sprintf('DA terminal #%d.',terminals(ccell)))
     elseif smoothQ == 1
