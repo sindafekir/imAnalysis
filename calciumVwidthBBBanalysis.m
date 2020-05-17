@@ -1099,18 +1099,31 @@ elseif tTypeQ == 1
     %tTypeSigLocs{1} = blue light
     %tTypeSigLocs{2} = red light
     %tTypeSigLocs{3} = ISI
-    for vid = 1%:length(vidList)
-        for ccell = 3%:length(terminals)
-            count = 1;
-            count1 = 1;
-            count2 = 1;
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %PICK UP HERE - SOMETHING IS WRONG BELOW. TTYPESIGLOCS FOR TERM 12
+    %SHOULD ADD UP TO 335 
+    
+    %FOUND THE PROBLEM!! NEED TO REMOVE ZEROS FROM TTYPESIGLOCS - SET VID
+    %TO 1 FOR SIMPLE TROBLESHOOTING 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    clear tTypeSigLocs
+    tTypeSigLocs = cell(1,length(vidList));
+    for ccell = 3%:length(terminals)
+        count = 1;
+        count1 = 1;
+        count2 = 1;
+        for vid = 1:length(vidList)
+        
             for peak = 1:length(sigLocs{vid}{terminals(ccell)})  
                 %if the peak location is less than all of the
                 %state start frames 
                 if all(sigLocs{vid}{terminals(ccell)}(peak) < state_start_f{vid})
                     %than that peak is before the first stim and is in an
                     %ISI period 
-                    tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                    tTypeSigLocs{vid}{terminals(ccell)}{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
                 %if the peak location is not in the first ISI period 
                 elseif sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(1)-1                                        
                     %find the trial start frames that are < current peak
@@ -1123,10 +1136,10 @@ elseif tTypeQ == 1
                         %sort into the correct cell depending on whether
                         %the light is blue or red                        
                         if TrialTypes{vid}(trial,2) == 1                            
-                            tTypeSigLocs{1}(count1) = sigLocs{vid}{terminals(ccell)}(peak); 
+                            tTypeSigLocs{vid}{terminals(ccell)}{1}(count1) = sigLocs{vid}{terminals(ccell)}(peak); 
                             count1 = count1 + 1;                      
                         elseif TrialTypes{vid}(trial,2) == 2 
-                            tTypeSigLocs{2}(count2) = sigLocs{vid}{terminals(ccell)}(peak); 
+                            tTypeSigLocs{vid}{terminals(ccell)}{2}(count2) = sigLocs{vid}{terminals(ccell)}(peak); 
                             count2 = count2 + 1;
                         end 
                     %if the current peak location is happening after the
@@ -1134,14 +1147,14 @@ elseif tTypeQ == 1
                     elseif sigLocs{vid}{terminals(ccell)}(peak) > state_end_f{vid}(trial)
                         %sort into the correct cell depending on whether
                         %the light is blue or red 
-                        tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        tTypeSigLocs{vid}{terminals(ccell)}{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
                         count = count + 1; 
                     end 
                 end 
             end
         end 
     end 
-    
+    %%
     
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
