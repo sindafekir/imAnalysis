@@ -1058,7 +1058,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-%{
+
 tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 if tTypeQ == 0 
@@ -1100,15 +1100,17 @@ elseif tTypeQ == 1
     %tTypeSigLocs{2} = red light
     %tTypeSigLocs{3} = ISI
     for vid = 1%:length(vidList)
-        for ccell = 1%:length(terminals)
+        for ccell = 3%:length(terminals)
             count = 1;
+            count1 = 1;
+            count2 = 1;
             for peak = 1:length(sigLocs{vid}{terminals(ccell)})  
                 %if the peak location is less than all of the
                 %state start frames 
                 if all(sigLocs{vid}{terminals(ccell)}(peak) < state_start_f{vid})
                     %than that peak is before the first stim and is in an
                     %ISI period 
-                    tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak);                           
+                    tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
                 %if the peak location is not in the first ISI period 
                 elseif sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(1)-1                                        
                     %find the trial start frames that are < current peak
@@ -1119,11 +1121,13 @@ elseif tTypeQ == 1
                     %stim
                     if sigLocs{vid}{terminals(ccell)}(peak) < state_end_f{vid}(trial)
                         %sort into the correct cell depending on whether
-                        %the light is blue or red 
-                        if TrialTypes{vid}(trial,2) == 1
-                            tTypeSigLocs{1}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        %the light is blue or red                        
+                        if TrialTypes{vid}(trial,2) == 1                            
+                            tTypeSigLocs{1}(count1) = sigLocs{vid}{terminals(ccell)}(peak); 
+                            count1 = count1 + 1;                      
                         elseif TrialTypes{vid}(trial,2) == 2 
-                            tTypeSigLocs{2}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                            tTypeSigLocs{2}(count2) = sigLocs{vid}{terminals(ccell)}(peak); 
+                            count2 = count2 + 1;
                         end 
                     %if the current peak location is happening after the
                     %stim (in the next ISI)
@@ -1131,9 +1135,9 @@ elseif tTypeQ == 1
                         %sort into the correct cell depending on whether
                         %the light is blue or red 
                         tTypeSigLocs{3}(count) = sigLocs{vid}{terminals(ccell)}(peak); 
+                        count = count + 1; 
                     end 
                 end 
-                count = count + 1;
             end
         end 
     end 
@@ -1144,6 +1148,24 @@ elseif tTypeQ == 1
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %NEXT REMOVE ZEROS FROM TTYPESIGLOCS
+    
+    %replace rows of all 0s w/NaNs
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)    
+            nonZeroRowsB = all(sortedBdata{vid}{terminals(ccell)} == 0,2);
+            sortedBdata{vid}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
+            nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
+            sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
+            nonZeroRowsV = all(sortedVdata{vid}{terminals(ccell)} == 0,2);
+            sortedVdata{vid}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
+        end 
+    end 
+    
+    
+    
+    
+    
+    
     %NEXT NEXT SORT THE DATA INTO THE DIFFERENT CATEGORIES BASED ON TTYPESIGLOCS
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -1214,11 +1236,15 @@ end
 %below gives me ability to plot single peak BBB traces 
 BdataPeaks = cell(1,length(vidList));
 NBdataPeaks = cell(1,length(vidList));
+normNonWeighted_BdataPeaks = cell(1,length(vidList));
 for vid = 1:length(vidList)
     for ccell = 1:length(terminals)
+       %created weighted data to normalize for number of peaks per video -
+       %helps with averaging across videos 
        BdataPeaks{vid}{terminals(ccell)} = (sortedBdata{vid}{terminals(ccell)})*weights(vid,terminals(ccell));
-       %normalize to baseline period 
+       %normalize to baseline period           
        NBdataPeaks{vid}{terminals(ccell)} = (BdataPeaks{vid}{terminals(ccell)}-mean(mean((BdataPeaks{vid}{terminals(ccell)}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3))))))/(mean(mean(BdataPeaks{vid}{terminals(ccell)}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)))))*100;
+       normNonWeighted_BdataPeaks{vid}{terminals(ccell)} = (sortedBdata{vid}{terminals(ccell)}-mean(mean((sortedBdata{vid}{terminals(ccell)}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3))))))/(mean(mean(sortedBdata{vid}{terminals(ccell)}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)))))*100;
     end 
 end 
 
@@ -1228,11 +1254,15 @@ if smoothQ == 0
 elseif smoothQ == 1
     filtTime = input('How many seconds do you want to smooth your data by? ');
     SNBdataPeaks = cell(1,length(vidList));
+    SNonWeightedBdataPeaks = cell(1,length(vidList));
     for vid = 1:length(vidList)
         for ccell = 1:length(terminals)
             for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
                 [SBPeak_Data] = MovMeanSmoothData(NBdataPeaks{vid}{terminals(ccell)}(peak,:),filtTime,FPSstack);
                 SNBdataPeaks{vid}{terminals(ccell)}(peak,:) = SBPeak_Data;
+                
+                [SNonWeighted_Data] = MovMeanSmoothData(normNonWeighted_BdataPeaks{vid}{terminals(ccell)}(peak,:),filtTime,FPSstack);
+                SNonWeightedBdataPeaks{vid}{terminals(ccell)}(peak,:) = SNonWeighted_Data;                
             end 
         end 
     end 
@@ -1240,9 +1270,10 @@ end
 
 %find where calcium peak onset is 
 changePt = (findchangepts(SNavCdata{terminals(ccell)}))-1;
-%%
+
 %find the BBB traces that increase after calcium peak onset (changePt) 
 SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
+nonWeighted_SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
 SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList));
 for vid = 1:length(vidList)
     for ccell = 1:length(terminals)   
@@ -1251,20 +1282,17 @@ for vid = 1:length(vidList)
         for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
             %if pre changePt mean is less than post changePt mean 
             if mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) < mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
-                SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(count1,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+                SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(count1,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);                              
+                nonWeighted_SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(count1,:) = SNonWeightedBdataPeaks{vid}{terminals(ccell)}(peak,:);
                 count1 = count1+1;
             %find the traces that do not increase after calcium peak onset 
             elseif mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) >= mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
-                SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)}(count,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+                SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)}(count2,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
+                count2 = count2+1;
             end 
         end 
     end 
 end 
-
-
-%%
-
-
 
 
 SNBdataPeaks_IncAfterCa_2 = cell(1,length(vidList));
@@ -1338,9 +1366,11 @@ elseif smoothQ == 1
         SNsemVdata{terminals(ccell)} = sVsem_Data;
     end 
 end 
-%%
-%plot
-for ccell = 3%1:length(terminals)
+
+%% %plot
+allTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+AVSNBdataPeaks_nonWeightedAv = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+for ccell = 1:length(terminals)
     % plot 
     figure;
     Frames = length(avSortedCdata{terminals(ccell)});
@@ -1354,17 +1384,29 @@ for ccell = 3%1:length(terminals)
 %     varargout = boundedline(1:size(SNavCdata{terminals(ccell)},2),SNavCdata{terminals(ccell)},SNsemCdata{terminals(ccell)},'b','transparency', 0.3,'alpha'); 
 %     varargout = boundedline(1:size(SNavBdata{terminals(ccell)},2),SNavBdata{terminals(ccell)},SNsemBdata{terminals(ccell)},'r','transparency', 0.3,'alpha');
 %     varargout = boundedline(1:size(SNavVdata{terminals(ccell)},2),SNavVdata{terminals(ccell)},SNsemVdata{terminals(ccell)},'k','transparency', 0.3,'alpha');
-    for vid = 1:length(vidList)
-        for peak = 1:size(SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)},1)
-            %if the BBB trace is greater after calcium peak onset
-            %(changePt) than before             
-            plot(SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)}(peak,:))       
-        end 
+    testCount = 1;
+%     for vid = 1:length(vidList)
+    for vid = 1:size(SNBdataPeaks_IncAfterCa_2{terminals(ccell)},1)
+        if terminals(ccell) <= length(SNBdataPeaks_IncAfterCa{vid})
+            for peak = 1:size(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)},1)
+%                 %if the BBB trace is greater after calcium peak onset
+%                 %(changePt) than before             
+%                 plot(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(peak,:))  
+
+                allTraces{terminals(ccell)}(testCount,:) = nonWeighted_SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(peak,:);
+%                 plot(allTraces{terminals(ccell)}(testCount,:))
+                testCount = testCount + 1;               
+            end 
+        end
+        plot(SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)}(vid,:),'LineWidth',2) 
     end 
+    AVSNBdataPeaks_nonWeightedAv{terminals(ccell)} = nanmean(allTraces{terminals(ccell)});
+%     plot(AVSNBdataPeaks_nonWeightedAv{terminals(ccell)},'r','LineWidth',4)
     plot(SNavCdata{terminals(ccell)},'b','LineWidth',4)
 %     plot(SNavBdata{terminals(ccell)},'r','LineWidth',2)
-%     plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)    
+%     plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)   %way #2 of averaging (weighted average)  
     plot(AVSNBdataPeaksNotInc{terminals(ccell)},'r','LineWidth',4) 
+    plot([changePt changePt], [-100000 100000], 'k','LineWidth',4)
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;   
     ax.FontSize = 20;
