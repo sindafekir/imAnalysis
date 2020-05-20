@@ -827,7 +827,7 @@ for term = 1:length(Cdata)
 end
 %}
 %% plot peak rate per every n seconds 
- %{
+%{
 winSec = input('How many seconds do you want to know the calcium peak rate? '); 
 winFrames = floor(winSec*FPSstack);
 numPeaks = cell(1,length(Cdata));
@@ -923,7 +923,6 @@ for tType = 1:length(Cdata{1})
         plot(allTermAvPeakNums{tType}(term,:),'Color',colorSet(term,:),'LineWidth',1.5)
     end 
     plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
-%     plot(allTermAvPeakNums{tType},'Color','k')
 %     for col = 1:length(allTermAvPeakNums{tType})
 %         scatter(linspace(col,col,size(allTermAvPeakNums{tType},1)),allTermAvPeakNums{tType}(:,col))
 %     end 
@@ -1058,7 +1057,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-
+%{
 tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 if tTypeQ == 0 
@@ -1240,6 +1239,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
+
 if tTypeQ == 0 
     %below gives me ability to plot single peak BBB traces 
     BdataPeaks = cell(1,length(vidList));
@@ -1481,11 +1481,16 @@ elseif tTypeQ == 1
     
     allBTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
     allCTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    AVSNBdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    AVSNCdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    for ccell = 3%1:length(terminals)
+    allVTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%     AVSNBdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%     AVSNCdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%     AVSNVdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%     Btraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%     Ctraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+%     Vtraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+    for ccell = 6%1:length(terminals)
         % plot 
-        for per = 1:3
+        for per = 1%1:3
             figure;
             Frames = length(avSortedCdata{terminals(ccell)});
             Frames_pre_stim_start = -((Frames-1)/2); 
@@ -1494,24 +1499,73 @@ elseif tTypeQ == 1
             FrameVals = round((1:FPSstack:Frames)+5); 
             ax=gca;
             hold all
-            testCount = 1;
+            count = 1;
             for vid = 1:length(vidList)
                    if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
                         for peak = 1:size(sortedBdata{vid}{terminals(ccell)}{per},1)
-                            allBTraces{terminals(ccell)}(testCount,:) = SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:);
-                            plot(allBTraces{terminals(ccell)}(testCount,:),'r')
-                            allCTraces{terminals(ccell)}(testCount,:) = SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:);
-%                             plot(allCTraces{terminals(ccell)}(testCount,:),'b')
-                            testCount = testCount + 1;               
+                            allBTraces{terminals(ccell)}(count,:) = SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:);
+                            allCTraces{terminals(ccell)}(count,:) = SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:);
+                            allVTraces{terminals(ccell)}(count,:) = SNVdataPeaks{vid}{terminals(ccell)}{per}(peak,:);
+                            count = count + 1;               
                         end 
                    end               
             end 
-            AVSNBdataPeaks{terminals(ccell)} = nanmean(allBTraces{terminals(ccell)},1);
-            AVSNCdataPeaks{terminals(ccell)} = nanmean(allCTraces{terminals(ccell)},1);
-            plot(AVSNBdataPeaks{terminals(ccell)},'k','LineWidth',4)
+            
+            %remove traces that are outliers statistically
+            count2 = 1; 
+            count3 = 1;
+            count4 = 1;
+            for peak = 1:size(allBTraces{terminals(ccell)},1)
+%                 if allBTraces{terminals(ccell)}(peak,:) < nanstd(allBTraces{terminals(ccell)},1)*3                  
+%                     Btraces{terminals(ccell)}(count2,:) = allBTraces{terminals(ccell)}(peak,:);
+%                     count2 = count2 + 1;
+%                 end 
+%                 if allCTraces{terminals(ccell)}(peak,:) < nanstd(allCTraces{terminals(ccell)},1)*3                    
+%                     Ctraces{terminals(ccell)}(count3,:) = allCTraces{terminals(ccell)}(peak,:);
+%                     count3 = count3 + 1;
+%                 end 
+%                 if allVTraces{terminals(ccell)}(peak,:) < nanstd(allVTraces{terminals(ccell)},1)*3%*0.000000000003                    
+%                     Vtraces{terminals(ccell)}(count4,:) = allVTraces{terminals(ccell)}(peak,:);
+%                     count4 = count4 + 1;
+%                 end 
+            end 
+            
+%             %remove traces that are outliers by removing the trace with the lowest value
+%             [BminVal,BminInd] = min(Btraces{terminals(ccell)}(:));
+%             [Brow,~] = find(Btraces{terminals(ccell)} == BminVal);
+%             Btraces{terminals(ccell)}(Brow,:) = [];
+% 
+%             [CminVal,CminInd] = max(Ctraces{terminals(ccell)}(:));
+%             [Crow,~] = find(Ctraces{terminals(ccell)} == CminVal);
+%             Ctraces{terminals(ccell)}(Crow,:) = [];
+            
+%             [VminVal,VminInd] = min(Vtraces{terminals(ccell)}(:));
+%             [Vrow,~] = find(Vtraces{terminals(ccell)} == VminVal);
+%             Vtraces{terminals(ccell)}(Vrow,:) = [];
+
+%             
+%            for peak = 1:size(Btraces{terminals(ccell)},1)
+%                plot(Btraces{terminals(ccell)}(peak,:),'r')                 
+%            end 
+%            for peak = 1:size(Ctraces{terminals(ccell)},1)
+%                plot(Ctraces{terminals(ccell)}(peak,:),'b')                 
+%            end 
+%            for peak = 1:size(Vtraces{terminals(ccell)},1)
+%                plot(Vtraces{terminals(ccell)}(peak,:),'Color',[0.5 0 0])                 
+%            end            
+
+            %get averages
+            AVSNBdataPeaks{terminals(ccell)} = nanmean(Btraces{terminals(ccell)},1);
+            AVSNCdataPeaks{terminals(ccell)} = nanmean(Ctraces{terminals(ccell)},1);
+            AVSNVdataPeaks{terminals(ccell)} = nanmean(Vtraces{terminals(ccell)},1);
+            %plot the averages
+            plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)
             plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
-    %         plot(SNavCdata{terminals(ccell)},'b','LineWidth',4)
-            plot([changePt changePt], [-100000 100000], 'k','LineWidth',4)
+            plot(AVSNVdataPeaks{terminals(ccell)},'Color',[0.5 0 0],'LineWidth',4) %'Color',[0.5 0 0]
+            label2 = sprintf('Terminal %d calcium signal',terminals(ccell));
+            plot([changePt changePt], [-10000000 10000000], 'k','LineWidth',4)
+            legend('BBB signal',label2,'Vessel width','Calcium peak onset')
+            
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 20;
@@ -1761,3 +1815,5 @@ end
 
 %% create stacks that are seperated by trial type 
 %}
+
+%IN IMAGEJ SAVE AS TIFF STACK - THEN JUST CONVERT TIFF TO AVI ELSEWHERE 
