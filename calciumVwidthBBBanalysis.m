@@ -1378,7 +1378,10 @@ if tTypeQ == 0
     end 
 elseif tTypeQ == 1 
     
-    %normalize to baseline period
+    %find where calcium peak onset is 
+    changePt = (findchangepts(SNavCdata{terminals(ccell)}))-1;
+    
+    %normalize
     NsortedBdata = cell(1,length(vidList));
     NsortedCdata = cell(1,length(vidList));
     NsortedVdata = cell(1,length(vidList));
@@ -1386,9 +1389,35 @@ elseif tTypeQ == 1
         for ccell = 1:length(terminals)
             for per = 1:3   
                 if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
-                    NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata{vid}{terminals(ccell)}{per} - (mean(sortedBdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2)))./((mean(sortedBdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-                    NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata{vid}{terminals(ccell)}{per} - (mean(sortedCdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2)))./((mean(sortedCdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-                    NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata{vid}{terminals(ccell)}{per} - (mean(sortedVdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2)))./((mean(sortedVdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
+%                     %this normalizes to the first 1/3 section of the trace
+%                     %(18 frames) 
+%                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata{vid}{terminals(ccell)}{per} - (nanmean(sortedBdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2)))./((nanmean(sortedBdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
+%                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata{vid}{terminals(ccell)}{per} - (nanmean(sortedCdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2)))./((nanmean(sortedCdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
+%                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata{vid}{terminals(ccell)}{per} - (nanmean(sortedVdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2)))./((nanmean(sortedVdata{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
+%                     
+%                     %normalize to 0.5 sec before changePt (calcium peak
+%                     %onset) BLstart 
+%                     BLstart = changePt - floor(0.5*FPSstack);
+%                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata{vid}{terminals(ccell)}{per} - (nanmean(sortedBdata{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))./((nanmean(sortedBdata{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2))))*100;
+%                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata{vid}{terminals(ccell)}{per} - (nanmean(sortedCdata{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))./((nanmean(sortedCdata{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2))))*100;
+%                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata{vid}{terminals(ccell)}{per} - (nanmean(sortedVdata{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))./((nanmean(sortedVdata{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2))))*100;
+
+                      %normalize to middle of the baseline per (to avoid
+                      %smoothing effect 
+                     BLend = changePt - floor(0.5*FPSstack);
+                     BLstart = BLend - floor(0.5*FPSstack);
+                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata{vid}{terminals(ccell)}{per} - (nanmean(sortedBdata{vid}{terminals(ccell)}{per}(:,BLstart:BLend),2)))./((nanmean(sortedBdata{vid}{terminals(ccell)}{per}(:,BLstart:BLend),2))))*100;
+                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata{vid}{terminals(ccell)}{per} - (nanmean(sortedCdata{vid}{terminals(ccell)}{per}(:,BLstart:BLend),2)))./((nanmean(sortedCdata{vid}{terminals(ccell)}{per}(:,BLstart:BLend),2))))*100;
+                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata{vid}{terminals(ccell)}{per} - (nanmean(sortedVdata{vid}{terminals(ccell)}{per}(:,BLstart:BLend),2)))./((nanmean(sortedVdata{vid}{terminals(ccell)}{per}(:,BLstart:BLend),2))))*100;
+               
+% 
+%                     %normalize to changePt 
+%                     Pt = 1;
+%                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata{vid}{terminals(ccell)}{per} - mean(sortedBdata{vid}{terminals(ccell)}{per}(:,Pt)))./(mean(sortedBdata{vid}{terminals(ccell)}{per}(:,Pt))))*100;
+%                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata{vid}{terminals(ccell)}{per} - mean(sortedCdata{vid}{terminals(ccell)}{per}(:,Pt)))./(mean(sortedCdata{vid}{terminals(ccell)}{per}(:,Pt))))*100;
+%                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata{vid}{terminals(ccell)}{per} - mean(sortedVdata{vid}{terminals(ccell)}{per}(:,Pt)))./(mean(sortedVdata{vid}{terminals(ccell)}{per}(:,Pt))))*100;
+%                
+                
                 end 
             end 
         end 
@@ -1426,7 +1455,7 @@ end
 if tTypeQ == 0 
     allTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
     AVSNBdataPeaks_nonWeightedAv = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         % plot 
         figure;
         Frames = length(avSortedCdata{terminals(ccell)});
@@ -1488,9 +1517,9 @@ elseif tTypeQ == 1
 %     Btraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
 %     Ctraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
 %     Vtraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    for ccell = 6%1:length(terminals)
+    for ccell = 3%1:length(terminals)
         % plot 
-        for per = 1%1:3
+        for per = 3%1:3
             figure;
             Frames = length(avSortedCdata{terminals(ccell)});
             Frames_pre_stim_start = -((Frames-1)/2); 
@@ -1530,23 +1559,29 @@ elseif tTypeQ == 1
 %                 end 
             end 
             
-%             %remove traces that are outliers by removing the trace with the lowest value
+            %remove traces that are outliers by removing the trace with the lowest value
 %             [BminVal,BminInd] = min(Btraces{terminals(ccell)}(:));
 %             [Brow,~] = find(Btraces{terminals(ccell)} == BminVal);
 %             Btraces{terminals(ccell)}(Brow,:) = [];
-% 
+            
+            %remove specific trace
+            col = 19;
+            num = 5.2173e+03;
+            [Brow,~] = find(Btraces{terminals(ccell)}(:,col) == num);
+%             Btraces{terminals(ccell)}(Brow,:) = [];
+
 %             [CminVal,CminInd] = max(Ctraces{terminals(ccell)}(:));
 %             [Crow,~] = find(Ctraces{terminals(ccell)} == CminVal);
 %             Ctraces{terminals(ccell)}(Crow,:) = [];
             
-%             [VminVal,VminInd] = min(Vtraces{terminals(ccell)}(:));
+%             [VminVal,VminInd] = max(Vtraces{terminals(ccell)}(:));
 %             [Vrow,~] = find(Vtraces{terminals(ccell)} == VminVal);
 %             Vtraces{terminals(ccell)}(Vrow,:) = [];
 
-%             
-%            for peak = 1:size(Btraces{terminals(ccell)},1)
-%                plot(Btraces{terminals(ccell)}(peak,:),'r')                 
-%            end 
+% %             
+           for peak = 1:size(Btraces{terminals(ccell)},1)
+               plot(Btraces{terminals(ccell)}(peak,:),'r')                 
+           end 
 %            for peak = 1:size(Ctraces{terminals(ccell)},1)
 %                plot(Ctraces{terminals(ccell)}(peak,:),'b')                 
 %            end 
@@ -1559,12 +1594,12 @@ elseif tTypeQ == 1
             AVSNCdataPeaks{terminals(ccell)} = nanmean(Ctraces{terminals(ccell)},1);
             AVSNVdataPeaks{terminals(ccell)} = nanmean(Vtraces{terminals(ccell)},1);
             %plot the averages
-            plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)
-            plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
-            plot(AVSNVdataPeaks{terminals(ccell)},'Color',[0.5 0 0],'LineWidth',4) %'Color',[0.5 0 0]
+            plot(AVSNBdataPeaks{terminals(ccell)},'k','LineWidth',4)
+%             plot(AVSNCdataPeaks{terminals(ccell)},'k','LineWidth',4)
+%             plot(AVSNVdataPeaks{terminals(ccell)},'Color',[0.5 0 0],'LineWidth',4) %'Color',[0.5 0 0]
             label2 = sprintf('Terminal %d calcium signal',terminals(ccell));
             plot([changePt changePt], [-10000000 10000000], 'k','LineWidth',4)
-            legend('BBB signal',label2,'Vessel width','Calcium peak onset')
+%             legend('BBB signal',label2,'Vessel width','Calcium peak onset')
             
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
