@@ -44,13 +44,13 @@ ROIinds = temp5.ROIinds;
 TrialTypes = cell(1,length(vidList));
 state_start_f = cell(1,length(vidList));
 state_end_f = cell(1,length(vidList));
-trialLength = cell(1,length(vidList));
+trialLengths = cell(1,length(vidList));
 for vid = 1:length(vidList)
     [~,stateStartF,stateEndF,FPS,vel_wheel_data,TrialType] = makeHDFchart_redBlueStim(state,framePeriod);
     TrialTypes{vid} = TrialType(1:length(stateStartF),:);
     state_start_f{vid} = floor(stateStartF/3);
     state_end_f{vid} = floor(stateEndF/3);
-    trialLength{vid} = state_end_f{vid} - state_start_f{vid};
+    trialLengths{vid} = state_end_f{vid} - state_start_f{vid};
     
     %make sure the trial lengths are the same per trial type 
     %set ideal trial lengths 
@@ -144,6 +144,93 @@ for tType = 1:length(Bdata)
         end 
     end 
 end 
+%}
+%% organize trial data 
+% cDataFullTrace
+
+dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
+if dataParseType == 0 
+    sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
+    sec_after_stim_end = input("How many seconds after stimulus end do you want to plot? ");
+elseif dataParseType == 1 
+    sec_before_stim_start = 0;
+    sec_after_stim_end = 0; 
+end 
+numTtypes = input('How many different trial types are there? ');
+%%
+
+%determine plotting start and end frames 
+plotStart = cell(1,length(cDataFullTrace));
+plotEnd = cell(1,length(cDataFullTrace));
+for vid = 1:length(cDataFullTrace)
+    count = 1;
+    for trial = 1:length(trialLengths{vid})                       
+        if dataParseType == 0    
+            if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})
+                plotStart{vid}(count) = state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack);
+                plotEnd{vid}(count) = state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack);
+                count = count + 1;
+            end            
+        elseif dataParseType == 1  
+            plotStart{vid}(count) = state_start_f{vid}(trial);
+            plotEnd{vid}(count) = state_end_f{vid}(trial);
+            count = count + 1;
+        end    
+    end 
+end 
+
+%sort the data             
+Ceta = cell(1,length(cDataFullTrace{1}));
+Beta = cell(1,length(cDataFullTrace{1}));
+Veta = cell(1,length(cDataFullTrace{1}));
+for ccell = 1:length(terminals)
+    count1 = 1;
+    count2 = 1;
+    count3 = 1;
+    count4 = 1;
+    for vid = 1:length(cDataFullTrace)    
+        for trial = 1:length(plotStart{vid})        
+            %if the blue light is on
+            if TrialTypes{vid}(trial,2) == 1
+                %if it is a 2 sec trial 
+                if trialLengths{vid}(trial) == lenT1      
+                    Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    count1 = count1 + 1;                    
+                %if it is a 20 sec trial
+                elseif trialLengths{vid}(trial) == lenT2
+                    Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    count2 = count2 + 1;
+                end 
+            %if the red light is on 
+            elseif TrialTypes{vid}(trial,2) == 2
+                %if it is a 2 sec trial 
+                if trialLengths{vid}(trial) == lenT1 
+                    Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    count3 = count3 + 1;                    
+                %if it is a 20 sec trial
+                elseif trialLengths{vid}(trial) == lenT2
+                    Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    count4 = count4 + 1;
+                end             
+            end 
+        end         
+    end
+end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
 %}
 %% smooth trial data if you want
 %{
@@ -1239,7 +1326,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
-
+%{
 if tTypeQ == 0 
     %below gives me ability to plot single peak BBB traces 
     BdataPeaks = cell(1,length(vidList));
@@ -1303,7 +1390,6 @@ if tTypeQ == 0
             end 
         end 
     end 
-
 
     SNBdataPeaks_IncAfterCa_2 = cell(1,length(vidList));
     SNBdataPeaks_NotIncAfterCa_2 = cell(1,length(vidList));
@@ -1446,7 +1532,8 @@ elseif tTypeQ == 1
          end        
     end    
 end 
-%% plot
+
+% plot
 if tTypeQ == 0 
     allTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
     AVSNBdataPeaks_nonWeightedAv = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
@@ -1512,10 +1599,9 @@ elseif tTypeQ == 1
 %     Btraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
 %     Ctraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
 %     Vtraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    for ccell = 3%1:length(terminals)
+    for ccell = 1:length(terminals)
         % plot 
-        for per = 1%:3
-            figCount = 1;
+        for per = 1:3
             fig = figure;
             Frames = length(avSortedCdata{terminals(ccell)});
             Frames_pre_stim_start = -((Frames-1)/2); 
@@ -1622,18 +1708,17 @@ elseif tTypeQ == 1
                 end               
             end 
             set(fig,'position', [500 100 800 800])
-            dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/fig%d.tif',figCount);
-%             export_fig(dir)
-         
-
-%             saveas(fig,dir,'tif')
-%             figCount = figCount + 1;
-%             
+            if per == 1 
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/DAterminal%d_blueLight.tif',terminals(ccell));
+            elseif per == 2
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/DAterminal%d_redLight.tif',terminals(ccell));
+            elseif per == 3
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/DAterminal%d_lightOff.tif',terminals(ccell));
+            end                                     
+%             export_fig(dir)         
         end
     end 
-end 
-    
-
+end    
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
