@@ -1,4 +1,7 @@
 % get the data you need 
+%REMOVE THE CODE THAT GETS TTYPE DATA BECAUSE WE ONLY NEED THE FULL EXP
+%DATA - THIS CODE SEPARATES DATA INTO TTYPE BELOW - THIS IS BETTER SO THE
+%SAME DATA GETS USED FOR EVERYTHING 
 %{
 % get calcium data 
 % vidList = [1,2,3,4,5,7]; %SF56
@@ -94,6 +97,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% reorganize trial data 
+%REMOVE THIS IS NOW OBSOLETE 
 %{
 Cdata = cell(1,length(tData{1}{1}));
 for term = 1:length(tData{1}{1})
@@ -146,8 +150,7 @@ for tType = 1:length(Bdata)
 end 
 %}
 %% organize trial data 
-% cDataFullTrace
-
+%{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -157,7 +160,6 @@ elseif dataParseType == 1
     sec_after_stim_end = 0; 
 end 
 numTtypes = input('How many different trial types are there? ');
-%%
 
 %determine plotting start and end frames 
 plotStart = cell(1,length(cDataFullTrace));
@@ -181,8 +183,8 @@ end
 
 %sort the data             
 Ceta = cell(1,length(cDataFullTrace{1}));
-Beta = cell(1,length(cDataFullTrace{1}));
-Veta = cell(1,length(cDataFullTrace{1}));
+Beta = cell(1,numTtypes);
+Veta = cell(1,numTtypes);
 for ccell = 1:length(terminals)
     count1 = 1;
     count2 = 1;
@@ -201,8 +203,8 @@ for ccell = 1:length(terminals)
                 %if it is a 20 sec trial
                 elseif trialLengths{vid}(trial) == lenT2
                     Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{2}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{2}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
                     count2 = count2 + 1;
                 end 
             %if the red light is on 
@@ -210,14 +212,14 @@ for ccell = 1:length(terminals)
                 %if it is a 2 sec trial 
                 if trialLengths{vid}(trial) == lenT1 
                     Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{3}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{3}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
                     count3 = count3 + 1;                    
                 %if it is a 20 sec trial
                 elseif trialLengths{vid}(trial) == lenT2
                     Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Beta{4}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    Veta{4}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
                     count4 = count4 + 1;
                 end             
             end 
@@ -225,58 +227,70 @@ for ccell = 1:length(terminals)
     end
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
+%remove rows that are all 0 and then add 100 to each trace to avoid
+%negative going values 
+for tType = 1:numTtypes
+    for ccell = 1:length(terminals)    
+        nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
+        Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
+        Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + 100;
+    end 
+    nonZeroRowsB = all(Beta{tType} == 0,2);
+    Beta{tType}(nonZeroRowsB,:) = NaN;
+    Beta{tType} = Beta{tType} + 100;
+    nonZeroRowsV = all(Veta{tType} == 0,2);
+    Veta{tType}(nonZeroRowsV,:) = NaN;
+    Veta{tType} = Veta{tType} + 100;
+end 
 %}
-%% smooth trial data if you want
-%{
+%% baseline if plotting peristimulus data then smooth trial data if you want
+
+%baseline data to average value between 0 sec and -2 sec (0 sec being stim
+%onset) 
+nCeta = cell(1,length(cDataFullTrace{1}));
+nBeta = cell(1,numTtypes);
+nVeta = cell(1,numTtypes);
+if dataParseType == 0 %peristimulus data to plot 
+    %sec_before_stim_start
+    for tType = 1:numTtypes
+        for ccell = 1:length(terminals)
+            nCeta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} ./ mean(Ceta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2); 
+        end 
+        nBeta{tType} = Beta{tType} ./ mean(Beta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2); 
+        nVeta{tType} = Veta{tType} ./ mean(Veta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2); 
+    end 
+    
+elseif dataParseType == 1 %only stimulus data to plot 
+    nCeta = Ceta;
+    nBeta = Beta;
+    nVeta = Veta;
+end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ ==  1
     filtTime = input('How many seconds do you want to smooth your data by? ');
-    sCdata = cell(1,length(Cdata));
-    for term = 1:length(Cdata)
-        for tType = 1:length(Cdata{1})   
-            for trial = 1:size(Cdata{term}{tType},1)
-                [sC_Data] = MovMeanSmoothData(Cdata{term}{tType}(trial,:),filtTime,FPSstack);
-                sCdata{term}{tType}(trial,:) = sC_Data; 
+    nsCeta = cell(1,length(cDataFullTrace{1}));
+    nsBeta = cell(1,numTtypes);
+    nsVeta = cell(1,numTtypes);
+    for tType = 1:numTtypes
+        for ccell = 1:length(terminals)
+            for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
+                [sC_Data] = MovMeanSmoothData(nCeta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
+                nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data;
             end 
         end 
-    end 
-    
-    sBdata = cell(1,length(Bdata));
-    for tType = 1:length(Bdata)   
-        for trial = 1:length(Bdata{tType})
-            [sB_Data] = MovMeanSmoothData(Bdata{tType}{trial},filtTime,FPSstack);
-            sBdata{tType}(trial,:) = sB_Data;             
+        for vTrial = 1:size(nBeta{tType},1)
+            [sB_Data] = MovMeanSmoothData(nBeta{tType}(vTrial,:),filtTime,FPSstack);
+            nsCeta{terminals(ccell)}{tType}(cTrial,:) = sB_Data;
+            
         end 
     end 
-
-    sVdata = cell(1,length(Vdata));
-    for tType = 1:length(Vdata)   
-        for trial = 1:length(Vdata{tType})
-            [sV_Data] = MovMeanSmoothData(Vdata{tType}{trial},filtTime,FPSstack);
-            sVdata{tType}(trial,:) = sV_Data;             
-        end 
-    end     
-    
 elseif smoothQ == 0
-    sCdata = Cdata; 
-    sBdata = cell(1,length(Bdata));
-    for tType = 1:length(Bdata)   
-        for trial = 1:length(Bdata{tType})
-            sBdata{tType}(trial,:) = Bdata{tType}{trial};
-        end 
-    end 
-    sVdata = cell(1,length(Vdata));
-    for tType = 1:length(Vdata)   
-        for trial = 1:length(Vdata{tType})
-            sVdata{tType}(trial,:) = Vdata{tType}{trial};
-        end 
-    end     
+    nsCeta = nCeta;
+    nsBeta = nBeta;
+    nsVeta = nVeta;
 end 
 %}
 %% plot event triggered averages per terminal 
