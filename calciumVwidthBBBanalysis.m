@@ -244,7 +244,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% baseline if plotting peristimulus data then smooth trial data if you want
-%{
+
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
 nCeta = cell(1,length(cDataFullTrace{1}));
@@ -254,10 +254,10 @@ if dataParseType == 0 %peristimulus data to plot
     %sec_before_stim_start
     for tType = 1:numTtypes
         for ccell = 1:length(terminals)
-            nCeta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} ./ mean(Ceta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2); 
+            nCeta{terminals(ccell)}{tType} = (Ceta{terminals(ccell)}{tType} ./ mean(Ceta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
         end 
-        nBeta{tType} = Beta{tType} ./ mean(Beta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2); 
-        nVeta{tType} = Veta{tType} ./ mean(Veta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2); 
+        nBeta{tType} = (Beta{tType} ./ mean(Beta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+        nVeta{tType} = (Veta{tType} ./ mean(Veta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
     end 
     
 elseif dataParseType == 1 %only stimulus data to plot 
@@ -276,90 +276,112 @@ if smoothQ ==  1
         for ccell = 1:length(terminals)
             for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
                 [sC_Data] = MovMeanSmoothData(nCeta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
-                nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data;
+                nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data-100;
             end 
         end 
         for vTrial = 1:size(nBeta{tType},1)
             [sB_Data] = MovMeanSmoothData(nBeta{tType}(vTrial,:),filtTime,FPSstack);
-            nsBeta{tType}(vTrial,:) = sB_Data;
+            nsBeta{tType}(vTrial,:) = sB_Data-100;
             [sV_Data] = MovMeanSmoothData(nVeta{tType}(vTrial,:),filtTime,FPSstack);
-            nsVeta{tType}(vTrial,:) = sV_Data;            
+            nsVeta{tType}(vTrial,:) = sV_Data-100;            
         end 
     end 
 elseif smoothQ == 0
-    nsCeta = nCeta;
-    nsBeta = nBeta;
-    nsVeta = nVeta;
+    nsCeta = cell(1,length(cDataFullTrace{1}));
+    nsBeta = cell(1,numTtypes);
+    nsVeta = cell(1,numTtypes);
+    for tType = 1:numTtypes
+        for ccell = 1:length(terminals)
+            nsCeta{terminals(ccell)}{tType} = nCeta{terminals(ccell)}{tType}-100;
+        end 
+        nsBeta{tType} = nBeta{tType}-100;
+        nsVeta{tType} = nVeta{tType}-100;
+    end 
 end 
 %}
 %% plot event triggered averages per terminal 
 
-for term = 1:length(Data)
-    AVdata = cell(1,length(Data{1}));
-    SEMdata = cell(1,length(Data{1}));
+for ccell = 1:length(terminals)
     baselineEndFrame = floor(20*(FPSstack));
-    for tType = 4%1:length(Data{1})      
-        if isempty(Data{term}{tType}) == 0          
-            AVdata{tType} = mean(sData{term}{tType},1);
-            SEMdata{tType} = std(sData{term}{tType},1)/sqrt(size(Data{term}{tType},1));
-            figure;             
+    AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+    AVbData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+    AVvData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+    for tType = 1:numTtypes
+%     SEMdata = cell(1,length(nsCeta{1}));
+        if isempty(nsCeta{terminals(ccell)}{tType}) == 0          
+            AVcData{tType} = nanmean(nsCeta{terminals(ccell)}{tType},1);
+            AVbData{tType} = nanmean(nsBeta{tType},1);
+            AVvData{tType} = nanmean(nsVeta{tType},1);
+%             SEMdata{tType} = std(nsCeta{terminals(ccell)}{tType},1)/sqrt(size(nsCeta{terminals(ccell)}{tType},1));
+            fig = figure;             
             hold all;
             if tType == 1 || tType == 3 
-                Frames = size(Data{term}{tType},2);        
+                Frames = size(nsCeta{terminals(ccell)}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
                 FrameVals = floor((1:FPSstack*2:Frames)-1); 
             elseif tType == 2 || tType == 4 
-                Frames = size(Data{term}{tType},2);
+                Frames = size(nsCeta{terminals(ccell)}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
                 FrameVals = floor((1:FPSstack*2:Frames)-1); 
             end 
+            plot(AVcData{tType},'b','LineWidth',3)
+            plot(AVbData{tType},'r','LineWidth',3)
+            plot(AVvData{tType},'Color',[0.5 0 0],'LineWidth',3)
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
-        %                 alpha(0.5)   
             elseif tType == 3 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*2)) round(baselineEndFrame+((FPS/numZplanes)*2)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
-        %                 alpha(0.5)                       
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
             elseif tType == 2 
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'b')
-        %                 alpha(0.5)   
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
             elseif tType == 4 
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-        %                 patch([baselineEndFrame round(baselineEndFrame+((FPS/numZplanes)*20)) round(baselineEndFrame+((FPS/numZplanes)*20)) baselineEndFrame],[-5000 -5000 5000 5000],'r')
-        %                 alpha(0.5)  
             end
-            colorSet = varycolor(size(Data{term}{tType},1));
-            for trial = 1:size(Data{term}{tType},1)
-                plot(sData{term}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
-            end 
-            plot(AVdata{tType},'k','LineWidth',3)
+%             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
+%             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
+%                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
+%             end 
+
+            legend('DA calcium','BBB','vessel width')
             ax=gca;
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;
             ax.FontSize = 20;
             xlim([0 Frames])
-            ylim([-200 200])
+            ylim([-30 50])
             xlabel('time (s)')
+            ylabel('percent of baseline')
             if smoothQ == 1
-                title(sprintf('Terminal #%d data smoothed by %0.2f sec',terminals(term),filtTime));
+                title(sprintf('Terminal #%d data smoothed by %0.2f sec',terminals(ccell),filtTime));
             elseif smoothQ == 0
-                title(sprintf('Terminal #%d raw data',terminals(term)));
+                title(sprintf('Terminal #%d data',terminals(ccell)));
             end 
+            
+            set(fig,'position', [500 100 1400 800])
+            if tType == 1
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs/DAterminal%d_ETA_2secBlueLight.tif',terminals(ccell));
+            elseif tType == 2
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs/DAterminal%d_ETA_20secBlueLight.tif',terminals(ccell));
+            elseif tType == 3
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs/DAterminal%d_ETA_2secRedLight.tif',terminals(ccell));
+            elseif tType == 4
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs/DAterminal%d_ETA_20secRedLight.tif',terminals(ccell));
+            end                            
+%             export_fig(dir)         
         end 
     end 
 end 
-
-% plot event triggered averages per terminal (trials staggered) 
+%}
+%% plot event triggered averages per terminal (trials staggered) 
+%NEEDS TO BE EDITED FOR THE NEW VARIABLE NAMES/ORGANIZATION 
+%{
 for term = 1:length(Data)
     AVdata = cell(1,length(Data{1}));
     SEMdata = cell(1,length(Data{1}));
@@ -430,6 +452,7 @@ for term = 1:length(Data)
 end 
 %}
 %% plot event triggered averages of relevant terminals averaged together 
+%NEEDS TO BE EDITED FOR THE NEW VARIABLE NAMES/ORGANIZATION 
 %{
 %define the terminals you want to average 
 % terms = input('What terminals do you want to average? ');
