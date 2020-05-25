@@ -951,7 +951,7 @@ for term = 1:length(Cdata)
 end
 %}
 %% plot peak rate per every n seconds 
-%{
+
 winSec = input('How many seconds do you want to know the calcium peak rate? '); 
 winFrames = floor(winSec*FPSstack);
 numPeaks = cell(1,length(Cdata));
@@ -970,48 +970,49 @@ for term = 1:length(Cdata)
                 end 
             end 
             avTermNumPeaks{term}{tType} = nanmean(numPeaks{term}{tType},1);
+        end
+        %create raster plots per terminal
+        %{
+        subplot(2,2,tType)
+        hold all 
+        stimStartF = floor((FPSstack*20)/winFrames);
+        if tType == 1 || tType == 3
+            stimStopF = stimStartF + floor((FPSstack*2)/winFrames);           
+            Frames = size(avTermNumPeaks{term}{tType},2);        
+            sec_TimeVals = (0:winSec*2:winSec*Frames)-20;
+            FrameVals = (0:2:Frames);            
+        elseif tType == 2 || tType == 4       
+            stimStopF = stimStartF + floor((FPSstack*20)/winFrames);            
+            Frames = size(avTermNumPeaks{term}{tType},2);        
+            sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+            FrameVals = (0:2:Frames);
         end 
+        if tType == 1 || tType == 2
+        plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+        plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+        end 
+        for trial = 1:size(numPeaks{term}{tType},1)
+            plot(numPeaks{term}{tType}(trial,:))
+        end 
+        plot(avTermNumPeaks{term}{tType},'k','LineWidth',2)
 
-%         %create plots per terminal  
-%         subplot(2,2,tType)
-%         hold all 
-%         stimStartF = floor((FPSstack*20)/winFrames);
-%         if tType == 1 || tType == 3
-%             stimStopF = stimStartF + floor((FPSstack*2)/winFrames);           
-%             Frames = size(avTermNumPeaks{term}{tType},2);        
-%             sec_TimeVals = (0:winSec*2:winSec*Frames)-20;
-%             FrameVals = (0:2:Frames);            
-%         elseif tType == 2 || tType == 4       
-%             stimStopF = stimStartF + floor((FPSstack*20)/winFrames);            
-%             Frames = size(avTermNumPeaks{term}{tType},2);        
-%             sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
-%             FrameVals = (0:2:Frames);
-%         end 
-%         if tType == 1 || tType == 2
-%         plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-%         plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
-%         elseif tType == 3 || tType == 4
-%         plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-%         plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
-%         end 
-%         for trial = 1:size(numPeaks{term}{tType},1)
-%             plot(numPeaks{term}{tType}(trial,:))
-%         end 
-%         plot(avTermNumPeaks{term}{tType},'k','LineWidth',2)
-% 
-%         ax=gca;
-%         axis on 
-%         xticks(FrameVals)
-%         ax.XTickLabel = sec_TimeVals;
-% %         yticks(5:10:size(avTermNumPeaks{term}{tType},1)-5)
-% %         ax.YTickLabel = ([]);
-%         ax.FontSize = 10;
-%         xlabel('time (s)')
-%         ylabel('trial')
-%         xlim([1 length(avTermNumPeaks{term}{tType})])
-%         ylim([-1 5])
-%         mtitle = sprintf('Number of calcium peaks. Terminal %d.',terminals(term));
-%         sgtitle(mtitle);
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+%         yticks(5:10:size(avTermNumPeaks{term}{tType},1)-5)
+%         ax.YTickLabel = ([]);
+        ax.FontSize = 10;
+        xlabel('time (s)')
+        ylabel('trial')
+        xlim([1 length(avTermNumPeaks{term}{tType})])
+        ylim([-1 5])
+        mtitle = sprintf('Number of calcium peaks. Terminal %d.',terminals(term));
+        sgtitle(mtitle);
+        %}
     end 
 end 
 
@@ -1027,8 +1028,9 @@ for term = 1:length(Cdata)
 end 
 
 %plot num peaks for all terminals (terminal traces overlaid)
+%{
 fig = figure;
-for term = 1:length(Cdata)   
+for term = 3%1:length(Cdata)   
     for tType = 1:length(Cdata{1})
         subplot(2,2,tType)
         hold all 
@@ -1045,24 +1047,24 @@ for term = 1:length(Cdata)
             FrameVals = (0:2:Frames);
         end 
         colorSet = varycolor(length(Cdata));
-        for term = 1:length(Cdata)
+%         for term = 1:length(Cdata)
             plot(allTermAvPeakNums{tType}(term,:),'Color',colorSet(term,:),'LineWidth',1.5)
-        end 
-        plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
+%         end 
+%         plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
     %     for col = 1:length(allTermAvPeakNums{tType})
     %         scatter(linspace(col,col,size(allTermAvPeakNums{tType},1)),allTermAvPeakNums{tType}(:,col))
     %     end 
         if tType == 1 || tType == 2
-            plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-            plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+%             plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+%             plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
         elseif tType == 3 || tType == 4
-            plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-            plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+%             plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+%             plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
         end 
         ax=gca;
         axis on 
-        xticks(FrameVals)
-        ax.XTickLabel = sec_TimeVals;
+%         xticks(FrameVals)
+%         ax.XTickLabel = sec_TimeVals;
     %         yticks(5:10:size(avTermNumPeaks{term}{tType},1)-5)
     %         ax.YTickLabel = ([]);
         ax.FontSize = 10;
@@ -1073,71 +1075,107 @@ for term = 1:length(Cdata)
 %         label = sprintf('Number of calcium peaks. Terminal %d.',terminals(term));
         label = 'Number of calcium peaks';
         sgtitle(label);
-        legend('terminal 13','terminal 20','terminal 12','terminal 16','terminal 11','terminal 15','terminal 10','terminal 8','terminal 9','terminal 7','terminal 4','Location','EastOutside')
+%         legend('terminal 13','terminal 20','terminal 12','terminal 16','terminal 11','terminal 15','terminal 10','terminal 8','terminal 9','terminal 7','terminal 4','Location','EastOutside')
     end 
     set(fig,'position', [500 100 1800 800])
 %     dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/CaPeakPSTHs/DAterminal%d_PSTH.tif',terminals(term));  
     dir = 'D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/CaPeakPSTHs/DAtermPSTHs.tif'; 
 %     export_fig(dir)
 end 
+%}
 
-
-
-
-
-
-
-
-% 
-% %plot num peaks for all terminals (terminal traces stacked - not overlaid)
-% figure;
-% for tType = 1:length(Cdata{1})
-%     subplot(2,2,tType)
-%     hold all 
-%     stimStartF = floor((FPSstack*20)/winFrames);
-%     if tType == 1 || tType == 3
-%         stimStopF = stimStartF + floor((FPSstack*2)/winFrames);           
-%         Frames = size(allTermAvPeakNums{tType},2);        
-%         sec_TimeVals = (0:winSec*2:winSec*Frames)-20;
-%         FrameVals = (0:2:Frames);            
-%     elseif tType == 2 || tType == 4       
-%         stimStopF = stimStartF + floor((FPSstack*20)/winFrames);            
-%         Frames = size(allTermAvPeakNums{tType},2);        
-%         sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
-%         FrameVals = (0:2:Frames);
+%plot num peaks for all terminals (terminal traces stacked - not overlaid)
+%{
+figure;
+for tType = 1:length(Cdata{1})
+    subplot(2,2,tType)
+    hold all 
+    stimStartF = floor((FPSstack*20)/winFrames);
+    if tType == 1 || tType == 3
+        stimStopF = stimStartF + floor((FPSstack*2)/winFrames);           
+        Frames = size(allTermAvPeakNums{tType},2);        
+        sec_TimeVals = (0:winSec*2:winSec*Frames)-20;
+        FrameVals = (0:2:Frames);            
+    elseif tType == 2 || tType == 4       
+        stimStopF = stimStartF + floor((FPSstack*20)/winFrames);            
+        Frames = size(allTermAvPeakNums{tType},2);        
+        sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+        FrameVals = (0:2:Frames);
+    end 
+    colorSet = varycolor(length(Cdata));
+    yStagTerm = 0.7;
+    for term = 1:length(Cdata)
+        plot(allTermAvPeakNums{tType}(term,:)+yStagTerm,'Color',colorSet(term,:),'LineWidth',1.5)
+        yStagTerm = yStagTerm + 0.7;
+    end 
+%     plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
+%     plot(allTermAvPeakNums{tType},'Color','k')
+%     for col = 1:length(allTermAvPeakNums{tType})
+%         scatter(linspace(col,col,size(allTermAvPeakNums{tType},1)),allTermAvPeakNums{tType}(:,col))
 %     end 
-%     colorSet = varycolor(length(Cdata));
-%     yStagTerm = 0.7;
-%     for term = 1:length(Cdata)
-%         plot(allTermAvPeakNums{tType}(term,:)+yStagTerm,'Color',colorSet(term,:),'LineWidth',1.5)
-%         yStagTerm = yStagTerm + 0.7;
-%     end 
-% %     plot(mean(allTermAvPeakNums{tType}),'Color','k','LineWidth',2)
-% %     plot(allTermAvPeakNums{tType},'Color','k')
-% %     for col = 1:length(allTermAvPeakNums{tType})
-% %         scatter(linspace(col,col,size(allTermAvPeakNums{tType},1)),allTermAvPeakNums{tType}(:,col))
-% %     end 
-%     if tType == 1 || tType == 2
-%         plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-%         plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
-%     elseif tType == 3 || tType == 4
-%         plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-%         plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
-%     end 
-%     ax=gca;
-%     axis on 
-%     xticks(FrameVals)
-%     ax.XTickLabel = sec_TimeVals;
-% %         yticks(5:10:size(avTermNumPeaks{term}{tType},1)-5)
-% %         ax.YTickLabel = ([]);
-%     ax.FontSize = 10;
-%     xlabel('time (s)')
-%     ylabel('number of peaks')
-%     xlim([0 length(avTermNumPeaks{term}{tType})])
-%     ylim([0 8.5])
-%     sgtitle('Number of calcium peaks per terminal');
-%     legend('terminal 17','terminal 15','terminal 12','terminal 10','terminal 8','terminal 7','terminal 6','terminal 5','terminal 4','terminal 3')
-% end 
+    if tType == 1 || tType == 2
+        plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+    elseif tType == 3 || tType == 4
+        plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+        plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+    end 
+    ax=gca;
+    axis on 
+    xticks(FrameVals)
+    ax.XTickLabel = sec_TimeVals;
+%         yticks(5:10:size(avTermNumPeaks{term}{tType},1)-5)
+%         ax.YTickLabel = ([]);
+    ax.FontSize = 10;
+    xlabel('time (s)')
+    ylabel('number of peaks')
+    xlim([0 length(avTermNumPeaks{term}{tType})])
+    ylim([0 8.5])
+    sgtitle('Number of calcium peaks per terminal');
+    legend('terminal 17','terminal 15','terminal 12','terminal 10','terminal 8','terminal 7','terminal 6','terminal 5','terminal 4','terminal 3')
+end 
+%}
+
+%plot histogram of num peaks for all terminals
+fig = figure;
+for term = 3%1:length(Cdata)   
+    for tType = 1:length(Cdata{1})
+        subplot(2,2,tType)
+        hold all 
+        stimStartF = floor((FPSstack*20)/winFrames);
+        if tType == 1 || tType == 3
+            stimStopF = stimStartF + floor((FPSstack*2)/winFrames);           
+            Frames = size(allTermAvPeakNums{tType},2);        
+            sec_TimeVals = (0:winSec*2:winSec*Frames)-20;
+            FrameVals = (0:2:Frames);            
+        elseif tType == 2 || tType == 4       
+            stimStopF = stimStartF + floor((FPSstack*20)/winFrames);            
+            Frames = size(allTermAvPeakNums{tType},2);        
+            sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+            FrameVals = (0:2:Frames);
+        end 
+        data = allTermAvPeakNums{tType}(term,:);
+        histogram(data,5)
+        if tType == 1
+            title('2 sec blue stim')
+        elseif tType == 2
+            title('20 sec blue stim')
+        elseif tType == 3
+            title('2 sec red stim')
+        elseif tType == 4
+            title('20 sec red stim')
+        end 
+        label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
+        sgtitle(label);
+%         legend('terminal 13','terminal 20','terminal 12','terminal 16','terminal 11','terminal 15','terminal 10','terminal 8','terminal 9','terminal 7','terminal 4','Location','EastOutside')
+    end 
+    set(fig,'position', [500 100 1800 800])
+%     dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/CaPeakPSTHs/DAterminal%d_PSTH.tif',terminals(term));  
+    dir = 'D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/CaPeakPSTHs/DAtermPSTHs.tif'; 
+%     export_fig(dir)
+end 
+%}
+
 %}
 %% find calcium peaks per terminal across entire experiment 
 %{
@@ -1198,7 +1236,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% sort data based on ca peak location 
-
+%{
 tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 if tTypeQ == 0 
@@ -1514,6 +1552,7 @@ elseif tTypeQ == 1
     elseif smoothQ == 1
         filtTimeC = 0.2;%input('How many seconds do you want to smooth your data by? ');
         filtTimeV = 0.5;
+        filtTime = input('How many seconds do you want to smooth your data by? ');
         SNBdataPeaks = cell(1,length(vidList));
         SNCdataPeaks = cell(1,length(vidList));
         SNVdataPeaks = cell(1,length(vidList));
@@ -1522,7 +1561,7 @@ elseif tTypeQ == 1
                 for per = 1:3   
                     if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
                         for peak = 1:size(sortedBdata{vid}{terminals(ccell)}{per},1)
-                            [SBPeak_Data] = MovMeanSmoothData(NsortedBdata{vid}{terminals(ccell)}{per}(peak,:),filtTimeV,FPSstack);
+                            [SBPeak_Data] = MovMeanSmoothData(NsortedBdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
                             SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SBPeak_Data;                            
                             [SCPeak_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTimeC,FPSstack);
                             SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;                          
@@ -1604,7 +1643,7 @@ elseif tTypeQ == 1
 %     Btraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
 %     Ctraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
 %     Vtraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         % plot 
         for per = 1:3
             fig = figure;
@@ -1645,6 +1684,7 @@ elseif tTypeQ == 1
             end 
             
             %remove traces that are outliers by removing the trace with the lowest value
+%{            
 %             [BminVal,BminInd] = max(Btraces{terminals(ccell)}(:));
 %             [Brow,~] = find(Btraces{terminals(ccell)} == BminVal);
 %             Btraces{terminals(ccell)}(Brow,:) = [];
@@ -1656,12 +1696,41 @@ elseif tTypeQ == 1
 %             [VminVal,VminInd] = min(Vtraces{terminals(ccell)}(:));
 %             [Vrow,~] = find(Vtraces{terminals(ccell)} == VminVal);
 %             Vtraces{terminals(ccell)}(Vrow,:) = [];
+                
 
             
             %remove specific trace
 %             Btraces{terminals(ccell)}(123,:) = [];
+%}
 
-%             
+            %calculate the 95% confidence interval
+            %{
+            SEMcSpont = (std(Ctraces{terminals(ccell)}{3}))/(sqrt(size(Ctraces{terminals(ccell)}{3},1))); % Standard Error            
+            ts_cSpontLow = tinv(0.025,size(Ctraces{terminals(ccell)}{3},1)-1);% T-Score for 95% CI
+            ts_cSpontHigh = tinv(0.975,size(Ctraces{terminals(ccell)}{3},1)-1);% T-Score for 95% CI
+            CI_cSpontLow = (nanmean(Ctraces{terminals(ccell)}{3},1)) + (ts_cSpontLow*SEMcSpont);  % Confidence Intervals
+            CI_cSpontHigh = (nanmean(Ctraces{terminals(ccell)}{3},1)) + (ts_cSpontHigh*SEMcSpont);  % Confidence Intervals
+            
+            SEMcBlue = (std(Ctraces{terminals(ccell)}{1}))/(sqrt(size(Ctraces{terminals(ccell)}{1},1))); % Standard Error            
+            ts_cBlueLow = tinv(0.025,size(Ctraces{terminals(ccell)}{1},1)-1);% T-Score for 95% CI
+            ts_cBlueHigh = tinv(0.975,size(Ctraces{terminals(ccell)}{1},1)-1);% T-Score for 95% CI
+            CI_cBlueLow = (nanmean(Ctraces{terminals(ccell)}{1},1)) + (ts_cBlueLow*SEMcBlue);  % Confidence Intervals
+            CI_cBlueHigh = (nanmean(Ctraces{terminals(ccell)}{1},1)) + (ts_cBlueHigh*SEMcBlue);  % Confidence Intervals
+            
+            SEMcRed = (std(Ctraces{terminals(ccell)}{2}))/(sqrt(size(Ctraces{terminals(ccell)}{2},1))); % Standard Error            
+            ts_cRedLow = tinv(0.025,size(Ctraces{terminals(ccell)}{2},1)-1);% T-Score for 95% CI
+            ts_cRedHigh = tinv(0.975,size(Ctraces{terminals(ccell)}{2},1)-1);% T-Score for 95% CI
+            CI_cRedLow = (nanmean(Ctraces{terminals(ccell)}{2},1)) + (ts_cRedLow*SEMcRed);  % Confidence Intervals
+            CI_cRedHigh = (nanmean(Ctraces{terminals(ccell)}{2},1)) + (ts_cRedHigh*SEMcRed);  % Confidence Intervals
+       %}
+            SEMb = (std(Btraces{terminals(ccell)}{per}))/(sqrt(size(Btraces{terminals(ccell)}{per},1))); % Standard Error            
+            ts_bLow = tinv(0.025,size(Btraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+            ts_bHigh = tinv(0.975,size(Btraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+            CI_bLow = (nanmean(Btraces{terminals(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+            CI_bHigh = (nanmean(Btraces{terminals(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+            
+            x = 1:length(CI_cSpontLow);
+                    
 %            for peak = 1:size(Btraces{terminals(ccell)}{per},1)
 %                plot(Btraces{terminals(ccell)}{per}(peak,:),'r')                 
 %            end 
@@ -1677,14 +1746,24 @@ elseif tTypeQ == 1
             AVSNCdataPeaks{terminals(ccell)}{per} = nanmean(Ctraces{terminals(ccell)}{per},1);
             AVSNVdataPeaks{terminals(ccell)}{per} = nanmean(Vtraces{terminals(ccell)}{per},1);
             %plot the averages
-            plot(AVSNBdataPeaks{terminals(ccell)}{per},'r','LineWidth',4)
-            plot(AVSNCdataPeaks{terminals(ccell)}{per},'b','LineWidth',4)
+            plot(AVSNBdataPeaks{terminals(ccell)}{per},'r','LineWidth',4)            
+           plot([changePt changePt], [-10000000 10000000], 'k','LineWidth',4)
+%             plot(AVSNCdataPeaks{terminals(ccell)}{3},'k','LineWidth',4)  
+%             plot(AVSNCdataPeaks{terminals(ccell)}{1},'b','LineWidth',4)         
+%             plot(AVSNCdataPeaks{terminals(ccell)}{2},'r','LineWidth',4)
+            
+%             patch([x fliplr(x)],[CI_cSpontLow fliplr(CI_cSpontHigh)],[0.5 0.5 0.5],'EdgeColor','none')
+%             patch([x fliplr(x)],[CI_cBlueLow fliplr(CI_cBlueHigh)],[0 0 0.5],'EdgeColor','none')  
+%             patch([x fliplr(x)],[CI_cRedLow fliplr(CI_cRedHigh)],[0.5 0 0],'EdgeColor','none')
+            patch([x fliplr(x)],[CI_bLow fliplr(CI_bHigh)],[0.5 0 0],'EdgeColor','none')
+          
 %             plot(AVSNVdataPeaks{terminals(ccell)}{per},'Color',[0.5 0 0],'LineWidth',4) %'Color',[0.5 0 0]
             label2 = sprintf('Terminal %d calcium',terminals(ccell));
-            plot([changePt changePt], [-10000000 10000000], 'k','LineWidth',4)
-            legend('BBB signal',label2,'Calcium peak onset','Location','northwest');
+ 
+%             legend('BBB signal',label2,'Calcium peak onset','Location','northwest');
 %             legend('Vessel width','Calcium peak onset','Location','northwest');
-%             legend('BBB signal','Calcium peak onset','Location','northwest');
+            legend('BBB signal','Calcium peak onset','Location','northwest');
+%             legend('spontaneous','blue light on','red light on','Location','northwest');
             
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
@@ -1692,7 +1771,7 @@ elseif tTypeQ == 1
             xlabel('time (s)')
             ylabel('percent change')
             xlim([0 length(SNavCdata{terminals(ccell)})])
-            ylim([-20 100])
+            ylim([-6 11])
 %             ylim([-2 3])
         %     legend('DA calcium','BBB data')
             if smoothQ == 0 
@@ -1705,7 +1784,7 @@ elseif tTypeQ == 1
                 end                 
             elseif smoothQ == 1                
                 if per == 1 
-                    title(sprintf('DA terminal #%d. Blue light on.',terminals(ccell)))
+                    title(sprintf('DA terminal #%d.',terminals(ccell)))
                 elseif per == 2
                     title(sprintf('DA terminal #%d. Red light on.',terminals(ccell)))
                 elseif per == 3
@@ -1714,17 +1793,24 @@ elseif tTypeQ == 1
             end 
             set(fig,'position', [500 100 800 800])
             if per == 1 
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/calciumPeakAligned_BBB_DACa/DAterminal%d_blueLight.tif',terminals(ccell));
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_0.2sSmoothingWithCI.tif',terminals(ccell));
             elseif per == 2
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/calciumPeakAligned_BBB_DACa/DAterminal%d_redLight.tif',terminals(ccell));
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_redLight_0.2sSmoothingWithCI.tif',terminals(ccell));
             elseif per == 3
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/calciumPeakAligned_BBB_DACa/DAterminal%d_lightOff.tif',terminals(ccell));
-            end                                     
-            export_fig(dir)         
+                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_lightOff_0.2sSmoothingWithCI.tif',terminals(ccell));
+            end                                                   
+            alpha(0.3)   % set all patches transparency to 0.3
+            export_fig(dir) 
         end
     end 
 end    
 %}
+
+
+
+
+
+
 %% sort red and green channel stacks based on ca peak location 
 %{
 windSize = 5; %input('How big should the window be around Ca peak in seconds?');
