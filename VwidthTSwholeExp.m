@@ -1,5 +1,5 @@
 %% get just the data you need 
-temp = matfile('SF56_20190718_ROI2_3_regIms_red.mat');
+temp = matfile('SF56_20190718_ROI2_7_regIms_red.mat');
 userInput = temp.userInput; 
 regStacks = temp.regStacks;
 temp2 = matfile('SF56_20190718_ROI2_1_Fdata.mat');
@@ -192,6 +192,7 @@ for z = 1:length(BWstacks)
 end
 
 Vdata = mean(Data{1},1);
+plot(Vdata)
 
 % clearvars -except Vdata
 
