@@ -1522,8 +1522,6 @@ elseif tTypeQ == 1
         SNCdataPeaks = NsortedCdata;
         SNVdataPeaks = NsortedVdata;
     elseif smoothQ == 1
-        filtTimeC = 0.2;%input('How many seconds do you want to smooth your data by? ');
-        filtTimeV = 0.5;
         filtTime = input('How many seconds do you want to smooth your data by? ');
         SNBdataPeaks = cell(1,length(vidList));
         SNCdataPeaks = cell(1,length(vidList));
@@ -1535,9 +1533,9 @@ elseif tTypeQ == 1
                         for peak = 1:size(sortedBdata{vid}{terminals(ccell)}{per},1)
                             [SBPeak_Data] = MovMeanSmoothData(NsortedBdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
                             SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SBPeak_Data;                            
-                            [SCPeak_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTimeC,FPSstack);
+                            [SCPeak_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
                             SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;                          
-                            [SVPeak_Data] = MovMeanSmoothData(NsortedVdata{vid}{terminals(ccell)}{per}(peak,:),filtTimeV,FPSstack);
+                            [SVPeak_Data] = MovMeanSmoothData(NsortedVdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
                             SNVdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SVPeak_Data;                            
                         end 
                     end 
@@ -1717,6 +1715,8 @@ elseif tTypeQ == 1
             
             x = 1:length(CI_bLow{per});
                     
+            %plot single traces
+            %{
 %            for peak = 1:size(Btraces{terminals(ccell)}{per},1)
 %                plot(Btraces{terminals(ccell)}{per}(peak,:),'r')                 
 %            end 
@@ -1727,6 +1727,8 @@ elseif tTypeQ == 1
 %                plot(Vtraces{terminals(ccell)}{per}(peak,:),'Color',[0.5 0 0])                 
 %            end            
 
+%}
+            
             %get averages
             AVSNBdataPeaks{terminals(ccell)}{per} = nanmean(allBTraces{terminals(ccell)}{per},1);
             AVSNCdataPeaks{terminals(ccell)}{per} = nanmean(allCTraces{terminals(ccell)}{per},1);
@@ -1800,7 +1802,11 @@ elseif tTypeQ == 1
 %}
 
 end 
- %plot bar plots 
+
+ %% plot bar plots 
+ %NEXT MAKE BAR PLOTS OF AVERAGE BBB PERM BEFORE AND AFTER CALCIUM PEAK
+ %ONSET (CHANGEPT)
+ 
     for ccell = 3%1:length(terminals)
         maxVals = zeros(1,3);
         maxValInds = zeros(1,3);
@@ -1809,21 +1815,43 @@ end
 %         SEMb_maxVals = zeros(1,3);
 %         STDb_maxVals = zeros(1,3);
         flippedHighCI = cell(1,3);
+        meanCIpreCaPeak_High = zeros(1,3);
+        meanCIpreCaPeak_Low = zeros(1,3);
+        meanCIpostCaPeak_High = zeros(1,3);
+        meanCIpostCaPeak_Low = zeros(1,3);
+        meanValPreCaPeak = zeros(1,3);
+        meanValPostCaPeak = zeros(1,3);
         for per = 1:3
             %find max value from changePt to end 
-            [maxVal, maxValInd] = max(AVSNBdataPeaks{terminals(ccell)}{per}(changePt:end));
-            maxValInd = maxValInd + changePt - 1;
-            maxVals(per) = maxVal;
-            maxValInds(per) = maxValInd;
-            
-            flippedHighCI{per} = fliplr(CI_bHigh{per});
-            CI_bHigh_maxVals(per) = flippedHighCI{per}(maxValInds(per));
-            CI_bLow_maxVals(per) = CI_bLow{per}(maxValInds(per));
+%             [maxVal, maxValInd] = max(AVSNBdataPeaks{terminals(ccell)}{per}(changePt:end));
+%             maxValInd = maxValInd + changePt - 1;
+%             maxVals(per) = maxVal;
+%             maxValInds(per) = maxValInd;
+
+            %get 95% confidence interval of max vals 
+%             flippedHighCI{per} = fliplr(CI_bHigh{per});
+%             CI_bHigh_maxVals(per) = flippedHighCI{per}(maxValInds(per));
+%             CI_bLow_maxVals(per) = CI_bLow{per}(maxValInds(per));
 %             SEMb_maxVals(per) = SEMb{per}(maxValInds(per));
 %             STDb_maxVals(per) = STDb{per}(maxValInds(per));
-            
+
+            %calculate mean values before and after calcium peak onset 
+            meanValPreCaPeak(per) = mean(AVSNBdataPeaks{terminals(ccell)}{per}(1:changePt));
+            meanValPostCaPeak(per) = mean(AVSNBdataPeaks{terminals(ccell)}{per}(changePt:end));
+            %calculate mean 95% confidence intervals before and after
+            %calcium peak onset 
+            flippedHighCI{per} = fliplr(CI_bHigh{per});
+            meanCIpreCaPeak_High(per) = mean(flippedHighCI{per}(1:changePt));
+            meanCIpreCaPeak_Low(per) = mean(CI_bLow{per}(1:changePt));
+            meanCIpostCaPeak_High(per) = mean(flippedHighCI{per}(changePt:end));
+            meanCIpostCaPeak_Low(per) = mean(CI_bLow{per}(changePt:end));                       
         end 
 
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %PICK UP HERE - NEED TO PLOT THE PRE AND POST CALCIUM PEAK BBB WITH
+        %CIS 
+        
         % Plot each number one at a time, calling bar() for each y value.
         barFontSize = 20;
         x = 1:3;
@@ -1853,6 +1881,7 @@ end
         dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_maxChangeInBBBpermFollowingCaPeakAcrossLightConditionsWithCIs_1sSmoothing.tif',terminals(ccell));
 %         export_fig(dir)
     end
+    %}
 % end 
 
 
