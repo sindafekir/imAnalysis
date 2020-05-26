@@ -1546,7 +1546,10 @@ elseif tTypeQ == 1
     %}
 end 
 %% plot
-
+startF = 29;%floor(startTval*FPSstack);
+endF = 41;%floor(startF+(0.8*FPSstack));
+            
+            
 % plot calcium spike triggered averages 
 if tTypeQ == 0 
   %{
@@ -1745,7 +1748,8 @@ elseif tTypeQ == 1
 %             plot(AVSNCdataPeaks2{terminals(ccell)}{2},'r','LineWidth',4)
             %}
             plot([changePt changePt], [-10000000 10000000], 'k','LineWidth',4)
-            
+            plot([startF startF], [-10000000 10000000], 'k','LineWidth',2)
+            plot([endF endF], [-10000000 10000000], 'k','LineWidth',2)
 %             patch([x fliplr(x)],[CI_cSpontLow fliplr(CI_cSpontHigh)],[0.5 0.5 0.5],'EdgeColor','none')
 %             patch([x fliplr(x)],[CI_cBlueLow fliplr(CI_cBlueHigh)],[0 0 0.5],'EdgeColor','none')  
 %             patch([x fliplr(x)],[CI_cRedLow fliplr(CI_cRedHigh)],[0.5 0 0],'EdgeColor','none')
@@ -1803,9 +1807,7 @@ elseif tTypeQ == 1
 
 end 
 
- %% plot bar plots 
- %NEXT MAKE BAR PLOTS OF AVERAGE BBB PERM BEFORE AND AFTER CALCIUM PEAK
- %ONSET (CHANGEPT)
+ % plot bar plots 
  
     for ccell = 3%1:length(terminals)
         maxVals = zeros(1,3);
@@ -1835,22 +1837,19 @@ end
 %             SEMb_maxVals(per) = SEMb{per}(maxValInds(per));
 %             STDb_maxVals(per) = STDb{per}(maxValInds(per));
 
-            %calculate mean values before and after calcium peak onset 
-            meanValPreCaPeak(per) = mean(AVSNBdataPeaks{terminals(ccell)}{per}(1:changePt));
-            meanValPostCaPeak(per) = mean(AVSNBdataPeaks{terminals(ccell)}{per}(changePt:end));
+            %calculate mean values b/w 0.2 and 1 sec 
+            startTval = 2.5 + 0.2;
+%             startF = 35;%floor(startTval*FPSstack);
+%             endF = 38;%floor(startF+(0.8*FPSstack));
+            
+            meanValPostCaPeak(per) = nanmean(AVSNBdataPeaks{terminals(ccell)}{per}(startF:endF));
             %calculate mean 95% confidence intervals before and after
             %calcium peak onset 
             flippedHighCI{per} = fliplr(CI_bHigh{per});
-            meanCIpreCaPeak_High(per) = mean(flippedHighCI{per}(1:changePt));
-            meanCIpreCaPeak_Low(per) = mean(CI_bLow{per}(1:changePt));
-            meanCIpostCaPeak_High(per) = mean(flippedHighCI{per}(changePt:end));
-            meanCIpostCaPeak_Low(per) = mean(CI_bLow{per}(changePt:end));                       
+            meanCIpostCaPeak_High(per) = nanmean(flippedHighCI{per}(startF:endF));
+            meanCIpostCaPeak_Low(per) = nanmean(CI_bLow{per}(startF:endF));                       
         end 
 
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %PICK UP HERE - NEED TO PLOT THE PRE AND POST CALCIUM PEAK BBB WITH
-        %CIS 
         
         % Plot each number one at a time, calling bar() for each y value.
         barFontSize = 20;
@@ -1863,10 +1862,10 @@ end
         hold all
         for b = 1 : 3
             % Plot one single bar as a separate bar series.
-            handleToThisBarSeries(b) = bar(x(b), maxVals(b), 'BarWidth', 0.9);
+            handleToThisBarSeries(b) = bar(x(b), meanValPostCaPeak(b), 'BarWidth', 0.9);
             % Apply the color to this bar series.
             set(handleToThisBarSeries(b), 'FaceColor', barColorMap(b,:));
-            er = errorbar(x,maxVals,CI_bLow_maxVals,CI_bHigh_maxVals);
+            er = errorbar(x,meanValPostCaPeak,meanCIpostCaPeak_Low,meanCIpostCaPeak_High);
             er.LineStyle = 'none';
             er.Color = 'k';
             er.LineWidth = 2;
@@ -1880,6 +1879,11 @@ end
         set(gca,'xtick',[])       
         dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_maxChangeInBBBpermFollowingCaPeakAcrossLightConditionsWithCIs_1sSmoothing.tif',terminals(ccell));
 %         export_fig(dir)
+        if smoothQ == 0 
+            title('Data not smoothed')
+        elseif smoothQ == 1
+            title(sprintf('Data smoothed by %0.2f sec',filtTime))
+        end 
     end
     %}
 % end 
