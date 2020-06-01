@@ -402,7 +402,7 @@ for ccell = 1%:length(terminals)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
             elseif tType == 3 
 %                 plot(AVbData{tType},'k','LineWidth',3)
-                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',2)
+%                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',2)
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
             elseif tType == 2 
@@ -1284,7 +1284,7 @@ for vid = 1%:length(vidList)
         [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals(ccell)},(2/FPSstack),FPSstack);
         
 %         plot((cDataFullTrace{vid}{terminals(ccell)})+150,'b','LineWidth',3)
-        plot(ScDataFullTrace+150,'b','LineWidth',3)
+%         plot(ScDataFullTrace+150,'b','LineWidth',3)
         plot(bDataFullTrace{vid},'r','LineWidth',3)
         
 %         for trial = 1:size(state_start_f{vid},1)
@@ -1307,32 +1307,31 @@ for vid = 1%:length(vidList)
             end 
         end 
 
-        legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
+%         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
 
-
+% 
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 25;
         ax.FontName = 'Times';
-        xLimStart = 509.9*FPSstack;
-        xLimEnd = 520.5*FPSstack; 
-%         xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
+        xLimStart = 256*FPSstack;
+        xLimEnd = 266.5*FPSstack; 
+        xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
         xlim([xLimStart xLimEnd])
-        ylim([-60 350])
+        ylim([-23 80])
         xlabel('time (sec)','FontName','Times')
 %         if smoothQ ==  1
 %             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
 %         elseif smoothQ == 0 
 %             title(sprintf('terminal #%d raw data',terminals(ccell)))
-%         end        
-        %}
+%         end               
     end 
 end 
 %}
 %% sort data based on ca peak location 
 %{
 tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
-windSize = 24; %input('How big should the window be around Ca peak in seconds?');
+windSize = 5; %input('How big should the window be around Ca peak in seconds?');
 if tTypeQ == 0 
     
     sortedCdata = cell(1,length(vidList));
@@ -1544,20 +1543,20 @@ if tTypeQ == 0
      end 
      
     %smoothing option
-    smoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+    smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
     if smoothQ == 0 
         SNavCdata = NavCdata;
         SNavBdata = NavBdata;
         SNavVdata = NavVdata;
     elseif smoothQ == 1
-        filtTime = 0.7;%input('How many seconds do you want to smooth your data by? ');
+        filtTime = input('How many seconds do you want to smooth your data by? ');
         SNBdataPeaks = cell(1,length(vidList));
         SNCdataPeaks = cell(1,length(vidList));
         SNVdataPeaks = cell(1,length(vidList));
         for vid = 1:length(vidList)
             for ccell = 1:length(terminals)
-%                 [sC_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)},filtTime,FPSstack);
-%                 SNCdataPeaks{vid}{terminals(ccell)} = sC_Data;                
+                [sC_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)},filtTime,FPSstack);
+                SNCdataPeaks{vid}{terminals(ccell)} = sC_Data;                
                 [sB_Data] = MovMeanSmoothData(NsortedBdata{vid}{terminals(ccell)},filtTime,FPSstack);
                 SNBdataPeaks{vid}{terminals(ccell)} = sB_Data;
                 [sV_Data] = MovMeanSmoothData(NsortedVdata{vid}{terminals(ccell)},filtTime,FPSstack);
@@ -1651,11 +1650,11 @@ if tTypeQ == 0
     for ccell = 3%1:length(terminals)
         % plot 
         fig = figure;
-        Frames = length(SNBdataPeaks{1}{terminals(ccell)});
+        Frames = 55;%length(SNBdataPeaks{1}{terminals(ccell)});
         Frames_pre_stim_start = -((Frames-1)/2); 
         Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack));
-        FrameVals = round((1:FPSstack:Frames)); 
+%         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack));
+%         FrameVals = round((1:FPSstack:Frames))-7; 
         ax=gca;
         hold all
         count = 1;
@@ -1664,11 +1663,20 @@ if tTypeQ == 0
                 for peak = 1:size(SNCdataPeaks{vid}{terminals(ccell)},1)                    
                     allBTraces{terminals(ccell)}(count,:) = (SNBdataPeaks{vid}{terminals(ccell)}(peak,:)-100); 
                     allCTraces{terminals(ccell)}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}(peak,:)-100);
+%                     plot(allCTraces{terminals(ccell)}(count,:),'b')
                     count = count + 1;
                 end 
             end
         end 
-
+        
+        %randomly plot 100 calcium traces - no replacement: each trace can
+        %only be plotted once 
+        traceInds = randperm(332);
+        for peak = 1:100       
+            plot(allCTraces{terminals(ccell)}(traceInds(peak),:),'b')
+            
+        end 
+        
 %         
 %         for peak = 1:size(allBTraces{terminals(ccell)})
 %         end 
@@ -1693,39 +1701,40 @@ if tTypeQ == 0
         AVSNBdataPeaks{terminals(ccell)} = (nanmean(allBTraces{terminals(ccell)}))-0.3;
         AVSNCdataPeaks{terminals(ccell)} = nanmean(allCTraces{terminals(ccell)});
         
-        plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
-        plot([131 131], [-100000 100000], 'k:','LineWidth',4)
+        plot(AVSNCdataPeaks{terminals(ccell)},'k','LineWidth',4)
+        plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;   
-        ax.FontSize = 25;
+        ax.FontSize = 35;
         ax.FontName = 'Times';
         xlabel('time (s)','FontName','Times')
         ylabel('calcium signal percent change','FontName','Times')
         xLimStart = floor(10*FPSstack);
         xLimEnd = floor(24*FPSstack); 
-        xlim([xLimStart xLimEnd])
+%         xlim([xLimStart xLimEnd])
+        xlim([1 size(AVSNBdataPeaks{terminals(ccell)},2)])
 %         ylim([-1.25 2])
         ylim([-45 100])
 %         legend('DA calcium','BBB data')
+           
         
-        
-        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+%         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
 %         legend('BBB permeability','Calcium signal','Calcium peak onset','Location','northwest');
 
 %         title(sprintf('DA terminal #%d. All light Conditions',terminals(ccell)))
-        title('BBB Permeability Spike Triggered Average','FontName','Times')
+%         title('BBB Permeability Spike Triggered Average','FontName','Times')
         set(fig,'position', [500 100 900 800])
         alpha(0.3)
         dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_1sSmoothingWithCI_allLightConditions.tif',terminals(ccell));
 %             export_fig(dir)         
 
         %add right y axis tick marks for a specific DOD figure. 
-        yyaxis right 
-        plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)
-        patch([x fliplr(x)],[(CI_bLow)-0.3 (fliplr(CI_bHigh))-0.3],[0.5 0 0],'EdgeColor','none')
-        alpha(0.3)
-        set(gca,'YColor',[0 0 0]);
-        ylabel('BBB permeability percent change','FontName','Times')
+%         yyaxis right 
+%         plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)
+%         patch([x fliplr(x)],[(CI_bLow)-0.3 (fliplr(CI_bHigh))-0.3],[0.5 0 0],'EdgeColor','none')
+%         alpha(0.3)
+%         set(gca,'YColor',[0 0 0]);
+%         ylabel('BBB permeability percent change','FontName','Times')
     end
     %}
 elseif tTypeQ == 1
