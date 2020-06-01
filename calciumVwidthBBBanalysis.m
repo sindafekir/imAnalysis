@@ -307,7 +307,7 @@ end
 allNScETA = cell(1,length(nsCeta));
 for tType = 1:numTtypes
     count = 1;
-    for ccell = 3%1:length(terminals)
+    for ccell = 1:length(terminals)
 %     SEMdata = cell(1,length(nsCeta{1}));
         if isempty(nsCeta{terminals(ccell)}{tType}) == 0    
             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
@@ -321,14 +321,19 @@ end
 %average all the red light trials together (2 and 20 second trials) 
 redTrialTtypeInds = [3,4]; %THIS IS CURRENTLY HARD CODED IN, BUT DOESN'T HAVE TO BE. REPLACE EVENTUALLY.
 allRedNScETA = cell(1,length(nsCeta));
+allRedNSbETA = cell(1,numTtypes);
 count = 1; 
+countB = 1;
 for tType = 1:length(redTrialTtypeInds)    
     for trial = 1:size(allNScETA{terminals(1)}{redTrialTtypeInds(tType)},1)
         allRedNScETA{terminals(1)}{3}(count,:) = allNScETA{terminals(1)}{redTrialTtypeInds(tType)}(trial,1:469); 
         count = count + 1;
     end 
+    for Btrial = 1:size(nsBeta{redTrialTtypeInds(tType)},1)
+        allRedNSbETA{3}(countB,:) = nsBeta{redTrialTtypeInds(tType)}(Btrial,1:469);
+        countB = countB + 1;
+    end 
 end 
-
 
 %allRedNScETA is taking the place of nsCeta
 
@@ -345,7 +350,8 @@ for ccell = 1%:length(terminals)
     STDc = cell(1,numTtypes);
     CI_cLow = cell(1,numTtypes);
     CI_cHigh = cell(1,numTtypes);
-    for tType = 3%1:numTtypes
+    fig = figure;
+    for tType = 3%:4%1:numTtypes
 %     SEMdata = cell(1,length(allRedNScETA{1}));
         if isempty(allRedNScETA{terminals(ccell)}{tType}) == 0          
             % calculate the 95% confidence interval 
@@ -366,27 +372,28 @@ for ccell = 1%:length(terminals)
             x = 1:length(CI_bLow{tType});
 
             AVcData{tType} = nanmean(allRedNScETA{terminals(ccell)}{tType},1);
-            AVbData{tType} = nanmean(nsBeta{tType},1);
+%             AVbData{tType} = nanmean(nsBeta{tType},1);
+            AVbData{tType} = nanmean(allRedNSbETA{tType},1);
             AVvData{tType} = nanmean(nsVeta{tType},1);
 %             SEMdata{tType} = std(allRedNScETA{terminals(ccell)}{tType},1)/sqrt(size(allRedNScETA{terminals(ccell)}{tType},1));
-            fig = figure;             
+%             fig = figure;             
             hold all;
             if tType == 1 || tType == 3 
                 Frames = size(allRedNScETA{terminals(ccell)}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*1:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(allRedNScETA{terminals(ccell)}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*1:Frames)-1); 
             end 
             plot(AVcData{tType},'b','LineWidth',3)
-%             plot(AVbData{tType},'r','LineWidth',3)
-%             patch([x fliplr(x)],[CI_bLow{tType} fliplr(CI_bHigh{tType})],[0.5 0 0],'EdgeColor','none')
+            plot(AVbData{tType},'r','LineWidth',3)
+            patch([x fliplr(x)],[CI_bLow{tType} fliplr(CI_bHigh{tType})],[0.5 0 0],'EdgeColor','none')
             patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
 %             patch([x fliplr(x)],[CI_cLow{per} fliplr(CI_cHigh{per})],[0 0 0.5],'EdgeColor','none')
 %             plot(AVvData{tType},'Color',[0.5 0 0],'LineWidth',3)
@@ -394,12 +401,14 @@ for ccell = 1%:length(terminals)
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
             elseif tType == 3 
+%                 plot(AVbData{tType},'k','LineWidth',3)
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
             elseif tType == 2 
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
             elseif tType == 4 
+%                 plot(AVbData{tType},'r','LineWidth',3)
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
             end
@@ -416,7 +425,7 @@ for ccell = 1%:length(terminals)
             ax.FontSize = 25;
             ax.FontName = 'Times';
             xlimStart = floor(18*FPSstack);
-            xlimEnd = floor(22*FPSstack);
+            xlimEnd = floor(30*FPSstack);
             xlim([xlimStart xlimEnd])            
             ylim([-15 30])
             xlabel('time (s)')
