@@ -244,7 +244,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% baseline if plotting peristimulus data then smooth trial data if you want
-
+%{
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
 nCeta = cell(1,length(cDataFullTrace{1}));
@@ -300,14 +300,14 @@ elseif smoothQ == 0
 end 
 %}
 %% plot event triggered averages per terminal 
-
+%{
 %average across all terminals
 %THIS IS TEMPORARY CODE - NEED TO EVENTUALLY EDIT THE AVERAGE PLOTTING CODE
 %TWO SECTIONS DOWN 
 allNScETA = cell(1,length(nsCeta));
 for tType = 1:numTtypes
     count = 1;
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
 %     SEMdata = cell(1,length(nsCeta{1}));
         if isempty(nsCeta{terminals(ccell)}{tType}) == 0    
             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
@@ -339,9 +339,9 @@ end
 
 for ccell = 1%:length(terminals)
     baselineEndFrame = floor(20*(FPSstack));
-    AVcData = cell(1,length(allRedNScETA{terminals(ccell)}{tType}));
-    AVbData = cell(1,length(allRedNScETA{terminals(ccell)}{tType}));
-    AVvData = cell(1,length(allRedNScETA{terminals(ccell)}{tType}));
+    AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+    AVbData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+    AVvData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
     SEMb = cell(1,numTtypes);
     STDb = cell(1,numTtypes);
     CI_bLow = cell(1,numTtypes);
@@ -350,51 +350,51 @@ for ccell = 1%:length(terminals)
     STDc = cell(1,numTtypes);
     CI_cLow = cell(1,numTtypes);
     CI_cHigh = cell(1,numTtypes);
-    fig = figure;
+%     fig = figure;
     for tType = 3%:4%1:numTtypes
-%     SEMdata = cell(1,length(allRedNScETA{1}));
-        if isempty(allRedNScETA{terminals(ccell)}{tType}) == 0          
+%     SEMdata = cell(1,length(nsCeta{1}));
+        if isempty(nsCeta{terminals(ccell)}{tType}) == 0          
             % calculate the 95% confidence interval 
-            SEMb{tType} = (nanstd(nsBeta{tType}))/(sqrt(size(nsBeta{tType},1))); % Standard Error            
-            STDb{tType} = nanstd(nsBeta{tType});
-            ts_bLow = tinv(0.025,size(nsBeta{tType},1)-1);% T-Score for 95% CI
-            ts_bHigh = tinv(0.975,size(nsBeta{tType},1)-1);% T-Score for 95% CI
-            CI_bLow{tType} = (nanmean(nsBeta{tType},1)) + (ts_bLow*SEMb{tType});  % Confidence Intervals
-            CI_bHigh{tType} = (nanmean(nsBeta{tType},1)) + (ts_bHigh*SEMb{tType});  % Confidence Intervals
+            SEMb{tType} = (nanstd(allRedNSbETA{tType}))/(sqrt(size(allRedNSbETA{tType},1))); % Standard Error            
+            STDb{tType} = nanstd(allRedNSbETA{tType});
+            ts_bLow = tinv(0.025,size(allRedNSbETA{tType},1)-1);% T-Score for 95% CI
+            ts_bHigh = tinv(0.975,size(allRedNSbETA{tType},1)-1);% T-Score for 95% CI
+            CI_bLow{tType} = (nanmean(allRedNSbETA{tType},1)) + (ts_bLow*SEMb{tType});  % Confidence Intervals
+            CI_bHigh{tType} = (nanmean(allRedNSbETA{tType},1)) + (ts_bHigh*SEMb{tType});  % Confidence Intervals
             
-            SEMc{terminals(ccell)}{tType} = (nanstd(allRedNScETA{terminals(ccell)}{tType}))/(sqrt(size(allRedNScETA{terminals(ccell)}{tType},1))); % Standard Error            
-            STDc{terminals(ccell)}{tType} = nanstd(allRedNScETA{terminals(ccell)}{tType});
-            ts_cLow = tinv(0.025,size(allRedNScETA{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
-            ts_cHigh = tinv(0.975,size(allRedNScETA{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
-            CI_cLow{terminals(ccell)}{tType} = (nanmean(allRedNScETA{terminals(ccell)}{tType},1)) + (ts_cLow*SEMb{tType});  % Confidence Intervals
-            CI_cHigh{terminals(ccell)}{tType} = (nanmean(allRedNScETA{terminals(ccell)}{tType},1)) + (ts_cHigh*SEMb{tType});  % Confidence Intervals
+            SEMc{terminals(ccell)}{tType} = (nanstd(nsCeta{terminals(ccell)}{tType}))/(sqrt(size(nsCeta{terminals(ccell)}{tType},1))); % Standard Error            
+            STDc{terminals(ccell)}{tType} = nanstd(nsCeta{terminals(ccell)}{tType});
+            ts_cLow = tinv(0.025,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
+            ts_cHigh = tinv(0.975,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
+            CI_cLow{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cLow*SEMb{tType});  % Confidence Intervals
+            CI_cHigh{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cHigh*SEMb{tType});  % Confidence Intervals
             
             x = 1:length(CI_bLow{tType});
 
-            AVcData{tType} = nanmean(allRedNScETA{terminals(ccell)}{tType},1);
-%             AVbData{tType} = nanmean(nsBeta{tType},1);
+            AVcData{tType} = nanmean(nsCeta{terminals(ccell)}{tType},1);
+%             AVbData{tType} = nanmean(allRedNSbETA{tType},1);
             AVbData{tType} = nanmean(allRedNSbETA{tType},1);
             AVvData{tType} = nanmean(nsVeta{tType},1);
-%             SEMdata{tType} = std(allRedNScETA{terminals(ccell)}{tType},1)/sqrt(size(allRedNScETA{terminals(ccell)}{tType},1));
-%             fig = figure;             
+%             SEMdata{tType} = std(nsCeta{terminals(ccell)}{tType},1)/sqrt(size(nsCeta{terminals(ccell)}{tType},1));
+            fig = figure;             
             hold all;
             if tType == 1 || tType == 3 
-                Frames = size(allRedNScETA{terminals(ccell)}{tType},2);        
+                Frames = size(nsCeta{terminals(ccell)}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
                 FrameVals = floor((1:FPSstack*1:Frames)-1); 
             elseif tType == 2 || tType == 4 
-                Frames = size(allRedNScETA{terminals(ccell)}{tType},2);
+                Frames = size(nsCeta{terminals(ccell)}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
                 FrameVals = floor((1:FPSstack*1:Frames)-1); 
             end 
-            plot(AVcData{tType},'b','LineWidth',3)
+%             plot(AVcData{tType},'b','LineWidth',3)
             plot(AVbData{tType},'r','LineWidth',3)
             patch([x fliplr(x)],[CI_bLow{tType} fliplr(CI_bHigh{tType})],[0.5 0 0],'EdgeColor','none')
-            patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
+%             patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
 %             patch([x fliplr(x)],[CI_cLow{per} fliplr(CI_cHigh{per})],[0 0 0.5],'EdgeColor','none')
 %             plot(AVvData{tType},'Color',[0.5 0 0],'LineWidth',3)
             if tType == 1 
@@ -402,6 +402,7 @@ for ccell = 1%:length(terminals)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
             elseif tType == 3 
 %                 plot(AVbData{tType},'k','LineWidth',3)
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',2)
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
             elseif tType == 2 
@@ -412,9 +413,9 @@ for ccell = 1%:length(terminals)
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
             end
-%             colorSet = varycolor(size(allRedNScETA{terminals(ccell)}{tType},1));            
-%             for trial = 1:size(allRedNScETA{terminals(ccell)}{tType},1)
-%                 plot(allRedNScETA{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
+%             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
+%             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
+%                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
 %             end 
 
 %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
@@ -425,7 +426,7 @@ for ccell = 1%:length(terminals)
             ax.FontSize = 25;
             ax.FontName = 'Times';
             xlimStart = floor(18*FPSstack);
-            xlimEnd = floor(30*FPSstack);
+            xlimEnd = floor(32*FPSstack);
             xlim([xlimStart xlimEnd])            
             ylim([-15 30])
             xlabel('time (s)')
@@ -1253,17 +1254,49 @@ end
 
 %}
 %% find calcium peaks per terminal across entire experiment 
-%{
+
 % find peaks and then plot where they are in the entire TS 
 stdTrace = cell(1,length(vidList));
 sigPeaks = cell(1,length(vidList));
 sigLocs = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
+for vid = 1%:length(vidList)
+    for ccell = 3%1:length(terminals)
         %find the peaks 
+%         figure;
+        ax=gca;
+        hold all
         [peaks, locs] = findpeaks(cDataFullTrace{vid}{terminals(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
         %find the sig peaks (peaks above 2 standard deviations from mean) 
         stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
+
+              
+        % below is plotting code 
+        
+        Frames = size(cDataFullTrace{vid}{terminals(ccell)},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+%         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
+        sec_TimeVals = floor(((0:2:(Frames/FPSstack))));
+        min_TimeVals = round(sec_TimeVals/60,2)+7.03;
+        FrameVals = floor((0:(FPSstack*2):Frames)); 
+
+        %smooth the calcium data 
+        [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals(ccell)},(2/FPSstack),FPSstack);
+        
+%         plot((cDataFullTrace{vid}{terminals(ccell)})+150,'b','LineWidth',3)
+        plot(ScDataFullTrace+150,'b','LineWidth',3)
+        plot(bDataFullTrace{vid},'r','LineWidth',3)
+        
+%         for trial = 1:size(state_start_f{vid},1)
+%             if TrialTypes{vid}(trial,2) == 1
+%                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+%                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+%             elseif TrialTypes{vid}(trial,2) == 2
+%                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+%                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+%             end 
+%         end 
+
         count = 1 ; 
         for loc = 1:length(locs)
             if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
@@ -1273,39 +1306,25 @@ for vid = 1:length(vidList)
                 count = count + 1;
             end 
         end 
-                
-        % below is plotting code 
-        %{
-        Frames = size(cDataFullTrace{vid}{ind},2);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
-        min_TimeVals = round(sec_TimeVals/60,2);
-        FrameVals = round((1:FPSstack*50:Frames)-1); 
-        figure;
-        ax=gca;
-        hold all
-        plot(cDataFullTrace{vid}{ind},'Color',[0 0.5 0],'LineWidth',1)
-        for trial = 1:size(state_start_f{vid},1)
-            if TrialTypes{vid}(trial,2) == 1
-                plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-                plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-            elseif TrialTypes{vid}(trial,2) == 2
-                plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-                plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-            end 
-        end 
+
+        legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
+
+
         ax.XTick = FrameVals;
-        ax.XTickLabel = min_TimeVals;
-        ax.FontSize = 20;
-        xlim([0 size(cDataFullTrace{vid}{ind},2)])
-        ylim([-200 200])
-        xlabel('time (min)')
-        if smoothQ ==  1
-            title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
-        elseif smoothQ == 0 
-            title(sprintf('terminal #%d raw data',terminals(ccell)))
-        end        
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xLimStart = 509.9*FPSstack;
+        xLimEnd = 520.5*FPSstack; 
+%         xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
+        xlim([xLimStart xLimEnd])
+        ylim([-60 350])
+        xlabel('time (sec)','FontName','Times')
+%         if smoothQ ==  1
+%             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
+%         elseif smoothQ == 0 
+%             title(sprintf('terminal #%d raw data',terminals(ccell)))
+%         end        
         %}
     end 
 end 
@@ -1313,7 +1332,7 @@ end
 %% sort data based on ca peak location 
 %{
 tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
-windSize = 5; %input('How big should the window be around Ca peak in seconds?');
+windSize = 24; %input('How big should the window be around Ca peak in seconds?');
 if tTypeQ == 0 
     
     sortedCdata = cell(1,length(vidList));
@@ -1632,11 +1651,11 @@ if tTypeQ == 0
     for ccell = 3%1:length(terminals)
         % plot 
         fig = figure;
-        Frames = length(avSortedCdata{terminals(ccell)});
+        Frames = length(SNBdataPeaks{1}{terminals(ccell)});
         Frames_pre_stim_start = -((Frames-1)/2); 
         Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-        FrameVals = round((1:FPSstack:Frames)+5); 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack));
+        FrameVals = round((1:FPSstack:Frames)); 
         ax=gca;
         hold all
         count = 1;
@@ -1656,35 +1675,37 @@ if tTypeQ == 0
 %         plot(allBTraces{terminals(ccell)}(countB,:))
 
         %DETERMINE 95% CI
-        SEMb = (std(allBTraces{terminals(ccell)}))/(sqrt(size(allBTraces{terminals(ccell)},1))); % Standard Error            
+        SEMb = (nanstd(allBTraces{terminals(ccell)}))/(sqrt(size(allBTraces{terminals(ccell)},1))); % Standard Error            
         ts_bLow = tinv(0.025,size(allBTraces{terminals(ccell)},1)-1);% T-Score for 95% CI
         ts_bHigh = tinv(0.975,size(allBTraces{terminals(ccell)},1)-1);% T-Score for 95% CI
         CI_bLow = (nanmean(allBTraces{terminals(ccell)},1)) + (ts_bLow*SEMb);  % Confidence Intervals
         CI_bHigh = (nanmean(allBTraces{terminals(ccell)},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
         
-        SEMc = (std(allCTraces{terminals(ccell)}))/(sqrt(size(allCTraces{terminals(ccell)},1))); % Standard Error            
+        SEMc = (nanstd(allCTraces{terminals(ccell)}))/(sqrt(size(allCTraces{terminals(ccell)},1))); % Standard Error            
         ts_cLow = tinv(0.025,size(allCTraces{terminals(ccell)},1)-1);% T-Score for 95% CI
         ts_cHigh = tinv(0.975,size(allCTraces{terminals(ccell)},1)-1);% T-Score for 95% CI
         CI_cLow = (nanmean(allCTraces{terminals(ccell)},1)) + (ts_cLow*SEMc);  % Confidence Intervals
         CI_cHigh = (nanmean(allCTraces{terminals(ccell)},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
 
-        x = 1:length(CI_cSpontLow);
+        x = 1:length(CI_cLow);
 
         
-        AVSNBdataPeaks{terminals(ccell)} = (nanmean(allBTraces{terminals(ccell)}));
+        AVSNBdataPeaks{terminals(ccell)} = (nanmean(allBTraces{terminals(ccell)}))-0.3;
         AVSNCdataPeaks{terminals(ccell)} = nanmean(allCTraces{terminals(ccell)});
         
         plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
-        plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        plot([131 131], [-100000 100000], 'k:','LineWidth',4)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;   
         ax.FontSize = 25;
         ax.FontName = 'Times';
         xlabel('time (s)','FontName','Times')
         ylabel('calcium signal percent change','FontName','Times')
-        xlim([1 size(allBTraces{terminals(ccell)},2)])
+        xLimStart = floor(10*FPSstack);
+        xLimEnd = floor(24*FPSstack); 
+        xlim([xLimStart xLimEnd])
 %         ylim([-1.25 2])
-        ylim([-40 100])
+        ylim([-45 100])
 %         legend('DA calcium','BBB data')
         
         
@@ -1701,7 +1722,7 @@ if tTypeQ == 0
         %add right y axis tick marks for a specific DOD figure. 
         yyaxis right 
         plot(AVSNBdataPeaks{terminals(ccell)},'r','LineWidth',4)
-        patch([x fliplr(x)],[CI_bLow fliplr(CI_bHigh)],[0.5 0 0],'EdgeColor','none')
+        patch([x fliplr(x)],[(CI_bLow)-0.3 (fliplr(CI_bHigh))-0.3],[0.5 0 0],'EdgeColor','none')
         alpha(0.3)
         set(gca,'YColor',[0 0 0]);
         ylabel('BBB permeability percent change','FontName','Times')
