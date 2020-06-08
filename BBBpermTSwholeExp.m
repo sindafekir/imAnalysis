@@ -200,7 +200,7 @@ for VROI = 1:size(cumData,2)
 end 
 
 
-Bdata = Data{1};
+Bdata = Data;
 
 %{
 
