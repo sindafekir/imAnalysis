@@ -34,7 +34,7 @@ end
 %}
 
 %% separate volume imaging data into separate stacks per z plane and motion correction
-
+%{
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -91,46 +91,68 @@ if volIm == 1
     %package data for output 
     regStacks{2,3} = ggVZstacks3; regStacks{1,3} = 'ggVZstacks3';     
     regStacks{2,4} = rrVZstacks3; regStacks{1,4} = 'rrVZstacks3';
-           
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-%EDIT THE BELOW CODE SO THAT GREEN CHANNEL GETS REGISTERED USING GREEN
-%CHANNEL TEMPLATE AND RED CHANNEL GETS REGISTERED USING RED CHANNEL
-%TEMPLATE 
 
-%AND REMOVE CHANNEL OF INTEREST VARIABLE (BELOW) BECAUSE WE WANT TO
-%REGISTER THE RED AND GREEN CHANNEL AT THE SAME TIME 
-%channelOfInterest = input('What color channel is most relevant? Red = 0. Green = 1. ');
+elseif volIm == 0   
+    disp('2D Motion Correction')
+    %2D register imaging data    
+    gTemplate = mean(greenImageStack,3);
+    [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
+    ggRegZstacks{1} = ggRegStack;
+    rTemplate = mean(redImageStack,3);
+    [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
+    rrRegZstacks{1} = rrRegStack;
 
-
-elseif volIm == 0
-    if channelOfInterest == 1
-        disp('2D Motion Correction')
-        %2D register imaging data    
-        gTemplate = mean(greenImageStack,3);
-        [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
-        ggRegZstacks{1} = ggRegStack;
-%         rTemplate = mean(redImageStack,3);
-%         [grRegStack,~] = registerVesStack(greenImageStack,rTemplate);  
-%         grRegZstacks{1} = grRegStack;
-%         
-        %package data for output 
-        regStacks{2,1} = ggRegZstacks; regStacks{1,1} = 'ggRegZstacks';
-%         regStacks{2,2} = grRegZstacks; regStacks{1,2} = 'grRegZstacks';
-   
-    elseif channelOfInterest == 0
-        disp('2D Motion Correction')
-        %2D register imaging data    
-%         gTemplate = mean(greenImageStack,3);
-%         [rgRegStack,~] = registerVesStack(redImageStack,gTemplate);  
-%         rgRegZstacks{1} = rgRegStack;
-        rTemplate = mean(redImageStack,3);
-        [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
-        rrRegZstacks{1} = rrRegStack;
-        
-        %package data for output 
-%         regStacks{2,1} = rgRegZstacks; regStacks{1,1} = 'rgRegZstacks';
-        regStacks{2,2} = rrRegZstacks; regStacks{1,2} = 'rrRegZstacks';
-    end     
+    %package data for output 
+    regStacks{2,1} = ggRegZstacks; regStacks{1,1} = 'ggRegZstacks';
+    regStacks{2,2} = rrRegZstacks; regStacks{1,2} = 'rrRegZstacks';  
 end 
+%}
+
+%% check registration 
+%{
+if volIm == 1     
+    %check relationship b/w template and 3D registered images
+    count = 1; 
+    ggTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
+    rrTemp2regCorr3D = zeros(size(rZstacks,2),size(rrVZstacks3{1},3));
+    for zPlane = 1:size(gZstacks,2)
+        for ind = 1:size(ggVZstacks3{1},3)
+            ggTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),ggVZstacks3{zPlane}(:,:,ind));
+            rrTemp2regCorr3D(zPlane,ind) = corr2(rTemplate(:,:,count),rrVZstacks3{zPlane}(:,:,ind));
+        end 
+        count = count+2;
+    end 
+    %plot 3D registration for comparison 
+    figure;
+    subplot(1,2,1);
+    hold all; 
+    for zPlane = 1:size(gZstacks,2)
+        plot(ggTemp2regCorr3D(zPlane,:));
+        title({'Correlation Coefficient of 3D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
+    end 
+    subplot(1,2,2);
+    hold all; 
+    for zPlane = 1:size(rZstacks,2)
+        plot(rrTemp2regCorr3D(zPlane,:));
+        title({'Correlation Coefficient of 3D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
+    end     
+elseif volIm == 0 
+    %check relationship b/w template and 2D registered images     
+    ggTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));
+    rrTemp2regCorr2D = zeros(1,size(rrRegZstacks{1},3));
+    for ind = 1:size(ggRegZstacks{1},3)
+        ggTemp2regCorr2D(ind) = corr2(gTemplate,ggRegZstacks{1}(:,:,ind));
+        rrTemp2regCorr2D(ind) = corr2(rTemplate,rrRegZstacks{1}(:,:,ind));
+    end 
+    %plot 2D registrations for comparison 
+    figure;
+    subplot(1,2,1);
+    plot(ggTemp2regCorr2D);
+    title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
+    subplot(1,2,2);
+    plot(rrTemp2regCorr2D);
+    title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
+end 
+%}
+
+%% DO THIS NEXT: SAVE THE STACKS SOMEWHERE 
