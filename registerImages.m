@@ -153,7 +153,7 @@ elseif volIm == 0
 end 
 %}
 
-%% DO THIS NEXT: SAVE THE STACKS SOMEWHERE 
+%% save registered stacks 
 %{
 clearvars -except regStacks
 vid = input('What number video is this? '); 
