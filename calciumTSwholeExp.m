@@ -1,4 +1,6 @@
-% function [TSdataBBBperm] = calciumTSwholeExp(regStacks,userInput)
+%NEED TO UPDATE
+%ADD ROI REUSE FOR BG SUBTRACTION AND INCLUDE CALCIUM ROI GENERATION CODE 
+
 %% get just the data you need 
 temp1 = matfile('SF57_20190717_ROI1_9_regIms_green.mat');
 regStacks = temp1.regStacks;

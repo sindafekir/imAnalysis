@@ -1,11 +1,15 @@
+%NEED TO UPDATE
+%ADD ROI REUSE FOR BG SUBTRACTION AND VESSEL WIDTH ANALYSIS 
+
 %% get just the data you need 
+%{
 temp = matfile('SF56_20190718_ROI2_1_regIms_red.mat');
 userInput = temp.userInput; 
 regStacks = temp.regStacks;
 temp2 = matfile('SF56_20190718_ROI2_1_Fdata.mat');
 FPS = temp2.FPS;
 numZplanes = temp2.numZplanes;
-
+%}
 inputStacks = regStacks{2,4};
 
 %% get rid of frames/trials where registration gets wonky 

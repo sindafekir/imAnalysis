@@ -12,7 +12,6 @@ regMat = matfile(regMatFileName);
 userInput = regMat.userInput; 
 regStacks = regMat.regStacks;
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % get FPS and number of Z planes 
 FPSzPlaneDir = uigetdir('*.*','WHERE IS THE FPS AND Z PLANE NUMBER INFO?');
 cd(FPSzPlaneDir);

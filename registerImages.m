@@ -1,7 +1,5 @@
-%% FINAL GOAL IS TO DO THE BELOW ITERATIVELY FOR ALL THE VIDEOS 
-% SF56 vidList = [1,2,3,4,5,7];
-
 %% set the paramaters 
+%{
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
     splitType = input('How must the data be split? Serial Split = 0. Alternating Split = 1. '); 
@@ -9,7 +7,7 @@ if volIm == 1
 elseif volIm == 0
     numZplanes = 1; 
 end 
-
+%}
 %% get the images 
 %{
 disp('Importing Images')
@@ -156,3 +154,13 @@ end
 %}
 
 %% DO THIS NEXT: SAVE THE STACKS SOMEWHERE 
+%{
+clearvars -except regStacks
+vid = input('What number video is this? '); 
+
+%make the directory and save the images 
+dir1 = input('What folder are you saving these images in? ');
+dir2 = strrep(dir1,'\','/');
+filename = sprintf('%s/regStacks_vid%d',dir2,vid);
+save(filename)
+%}
