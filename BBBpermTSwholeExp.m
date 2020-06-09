@@ -9,10 +9,18 @@ regImDir = uigetdir('*.*','WHERE ARE THE REGISTERED IMAGES?');
 cd(regImDir);
 regMatFileName = uigetfile('*.*','GET THE REGISTERED IMAGES');
 regMat = matfile(regMatFileName);
-userInput = regMat.userInput; 
 regStacks = regMat.regStacks;
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+if chColor == 0 % green channel 
+    data = regStacks{2,3};
+elseif chColor == 1 % red channel 
+    data = regStacks{2,4};
+end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%PICK UP HERE AND THEN MOVE ONTO BBB ROI GENERATION 
+%MOVE FPS AND NUM Z PLANE INFO INTO THE IF VIDNUMQ SECTION BELOW 
 % get FPS and number of Z planes 
 FPSzPlaneDir = uigetdir('*.*','WHERE IS THE FPS AND Z PLANE NUMBER INFO?');
 cd(FPSzPlaneDir);
@@ -21,21 +29,26 @@ FPSzPlaneMat = matfile(FPSzPlaneMatFileName);
 FPS = FPSzPlaneMat.FPS;
 numZplanes = FPSzPlaneMat.numZplanes;
 
-if chColor == 0
-    data = 
-elseif chColor == 1 
-    
-end 
 
-%package data for output 
-regStacks{2,3} = ggVZstacks3; regStacks{1,3} = 'ggVZstacks3';     
-regStacks{2,4} = rrVZstacks3; regStacks{1,4} = 'rrVZstacks3';
+% if this is not the first video of the data set 
+if vidNumQ == 0
+    numZplanes = input('How many Z planes are there? ');
+    framePeriod = input("What is the framePeriod? ");
+    FPS = 1/framePeriod; 
+elseif vidNumQ == 1 
+    % get the background subtraction ROI coordinates 
+    BGROIDir = uigetdir('*.*','WHERE IS THE BACKGROUND SUBTRACTION ROI COORDINATE INFO?');    
+    cd(BGROIDir);   
+    BGROIMatFileName = uigetfile('*.*','GET THE BACKGROUND SUBTRACTION ROI COORDINATES');    
+    BGROIeMat = matfile(BGROIMatFileName);    
+    BG_ROIboundData = BGROIeMat.BG_ROIboundData;
+end 
 
 %% do background subtraction 
 if vidNumQ == 0 
-    [input_Stacks,BG_ROIboundData] = backgroundSubtraction(regStacks{2,4});
-elseif vidNumQ == 1
-    [input_Stacks] = backgroundSubtraction2(regStacks{2,4},BG_ROIboundData);
+    [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
+elseif vidNumQ == 1   
+    [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
 end 
 
 %% average registered imaging data across planes in Z 
@@ -46,42 +59,54 @@ for Z = 1:size(regStacks{2,4},2)
 end 
 inputStacks = mean(inputStackArray,4);
 
+%% get rid of frames/trials where registration gets wonky 
+cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. ');  
+if cutOffFrameQ == 1 
+    cutOffFrame = input('Beyond what frame is the registration wonky? ');  
+    Ims = inputStacks(:,:,1:cutOffFrame);  
+elseif cutOffFrameQ == 0 
+    Ims = inputStacks;
+end 
+clear inputStacks
+inputStacks = Ims; 
+
 %% create non-vascular ROI- x-y plane 
 
-%go to dir w/functions
-% [imAn1funcDir] = getUserInput(userInput,'imAnalysis1_functions Directory');
-% cd(imAn1funcDir); 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%MAKE VIDNUM CHANGES - TO REUSE ROIS 
+if vidNumQ == 0 
+    numROIs = input("How many BBB perm ROIs are we making? "); 
 
-%update userInput 
-UIr = size(userInput,1)+1;
-numROIs = input("How many BBB perm ROIs are we making? "); userInput(UIr,1) = ("How many BBB perm ROIs are we making?"); userInput(UIr,2) = (numROIs); UIr = UIr+1;
+    %for display purposes mostly: average across frames 
+    stackAVsIm = mean(inputStacks,3);
 
-%for display purposes mostly: average across frames 
-stackAVsIm = mean(inputStacks,3);
+    %create the ROI boundaries           
+    ROIboundDatas = cell(1,numROIs);
+    for VROI = 1:numROIs 
+        disp('Create your ROI for BBB perm analysis');
 
-%create the ROI boundaries           
-ROIboundDatas = cell(1,numROIs);
-for VROI = 1:numROIs 
-    disp('Create your ROI for BBB perm analysis');
+        [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
+        ROIboundData{1} = xmins;
+        ROIboundData{2} = ymins;
+        ROIboundData{3} = widths;
+        ROIboundData{4} = heights;
 
-    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
-    ROIboundData{1} = xmins;
-    ROIboundData{2} = ymins;
-    ROIboundData{3} = widths;
-    ROIboundData{4} = heights;
+        ROIboundDatas{VROI} = ROIboundData;
+    end
 
-    ROIboundDatas{VROI} = ROIboundData;
-end
-
-ROIstacks = cell(1,numROIs);
-for VROI = 1:numROIs
-    %use the ROI boundaries to generate ROIstacks 
-    xmins = ROIboundDatas{VROI}{1};
-    ymins = ROIboundDatas{VROI}{2};
-    widths = ROIboundDatas{VROI}{3};
-    heights = ROIboundDatas{VROI}{4};
-    [ROI_stacks] = make_ROIs_notfirst_time(inputStacks,xmins,ymins,widths,heights);
-    ROIstacks{VROI} = ROI_stacks{1};
+    ROIstacks = cell(1,numROIs);
+    for VROI = 1:numROIs
+        %use the ROI boundaries to generate ROIstacks 
+        xmins = ROIboundDatas{VROI}{1};
+        ymins = ROIboundDatas{VROI}{2};
+        widths = ROIboundDatas{VROI}{3};
+        heights = ROIboundDatas{VROI}{4};
+        [ROI_stacks] = make_ROIs_notfirst_time(inputStacks,xmins,ymins,widths,heights);
+        ROIstacks{VROI} = ROI_stacks{1};
+    end 
+elseif vidNumQ == 1 
 end 
 
 %% segment the BBB ROIs - goal: identify non-vascular/non-terminal space 
