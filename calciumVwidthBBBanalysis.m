@@ -1,5 +1,5 @@
 % get the data you need 
-
+%{
 stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
 if stimStateQ == 0 
     state = 8;
@@ -57,9 +57,39 @@ if CAQ == 1
     end 
 end 
 
-
+%get trial data to generate stimulus event triggered averages (ETAs)
+ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
+if ETAQ == 1 
+    state_start_f = cell(1,length(vidList));
+    state_end_f2 = cell(1,length(vidList));
+    TrialTypes = cell(1,length(vidList));
+    trialLengths2 = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+        state_start_f{vid} = floor(statestartf/3);
+        state_end_f2{vid} = floor(stateendf/3);
+        TrialTypes{vid} = trialTypes(1:length(statestartf),:);
+        trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
+    end 
+    
+    % this fixes discrete time rounding errors to ensure the stimuli are
+    % all the correct number of frames long 
+    stimTimeLengths = input('How many seconds are the stims on for? ');
+    stimFrameLengths = floor(stimTimeLengths*FPSstack);
+    state_end_f = cell(1,length(vidList));
+    trialLengths = cell(1,length(vidList));
+    for frameLength = 1:length(stimFrameLengths)
+        for vid = 1:length(vidList)
+            for trial = 1:length(state_start_f{vid})
+                if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
+                    state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
+                    trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
+                end 
+            end 
+        end 
+    end    
+end 
 %}
-
 %% organize trial data 
 %{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
@@ -72,14 +102,14 @@ elseif dataParseType == 1
 end 
 numTtypes = input('How many different trial types are there? ');
 
-%determine plotting start and end frames 
+% determine plotting start and end frames 
 plotStart = cell(1,length(cDataFullTrace));
 plotEnd = cell(1,length(cDataFullTrace));
 for vid = 1:length(cDataFullTrace)
     count = 1;
-    for trial = 1:length(trialLengths{vid})                       
+    for trial = 1:length(state_start_f{vid})                       
         if dataParseType == 0    
-            if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})
+            if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(cDataFullTrace{vid}{terminals(1)})
                 plotStart{vid}(count) = state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack);
                 plotEnd{vid}(count) = state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack);
                 count = count + 1;
@@ -92,10 +122,16 @@ for vid = 1:length(cDataFullTrace)
     end 
 end 
 
-%sort the data             
-Ceta = cell(1,length(cDataFullTrace{1}));
-Beta = cell(1,numTtypes);
-Veta = cell(1,numTtypes);
+%sort the data  
+if CAQ == 1
+    Ceta = cell(1,length(cDataFullTrace{1}));
+end 
+if BBBQ == 1 
+    Beta = cell(1,numTtypes);
+end 
+if VWQ == 1
+    Veta = cell(1,numTtypes);
+end 
 for ccell = 1:length(terminals)
     count1 = 1;
     count2 = 1;
@@ -106,31 +142,63 @@ for ccell = 1:length(terminals)
             %if the blue light is on
             if TrialTypes{vid}(trial,2) == 1
                 %if it is a 2 sec trial 
-                if trialLengths{vid}(trial) == lenT1      
-                    Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{1}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                if trialLengths{vid}(trial) == floor(2*FPSstack)     
+                    if CAQ == 1
+                        Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
+                    if BBBQ == 1 
+                        for BBBroi = 1:length(bDataFullTrace{1})
+                            Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                        end 
+                    end 
+                    if VWQ == 1
+                        Veta{1}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
                     count1 = count1 + 1;                    
                 %if it is a 20 sec trial
-                elseif trialLengths{vid}(trial) == lenT2
-                    Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{2}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{2}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                    if CAQ == 1
+                        Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
+                    if BBBQ == 1 
+                        for BBBroi = 1:length(bDataFullTrace{1})
+                            Beta{BBBroi}{2}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                        end 
+                    end 
+                    if VWQ == 1
+                        Veta{2}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
                     count2 = count2 + 1;
                 end 
             %if the red light is on 
             elseif TrialTypes{vid}(trial,2) == 2
                 %if it is a 2 sec trial 
-                if trialLengths{vid}(trial) == lenT1 
-                    Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{3}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{3}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                if trialLengths{vid}(trial) == floor(2*FPSstack)
+                    if CAQ == 1
+                        Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
+                    if BBBQ == 1 
+                        for BBBroi = 1:length(bDataFullTrace{1})
+                            Beta{BBBroi}{3}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                        end 
+                    end 
+                    if VWQ == 1
+                        Veta{3}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
                     count3 = count3 + 1;                    
                 %if it is a 20 sec trial
-                elseif trialLengths{vid}(trial) == lenT2
-                    Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Beta{4}(count1,:) = bDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                    Veta{4}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                    if CAQ == 1
+                        Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
+                    if BBBQ == 1 
+                        for BBBroi = 1:length(bDataFullTrace{1})
+                            Beta{BBBroi}{4}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                        end 
+                    end 
+                    if VWQ == 1
+                        Veta{4}(count1,:) = vDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                    end 
                     count4 = count4 + 1;
                 end             
             end 
@@ -141,80 +209,136 @@ end
 %remove rows that are all 0 and then add 100 to each trace to avoid
 %negative going values 
 for tType = 1:numTtypes
-    for ccell = 1:length(terminals)    
-        nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
-        Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
-        Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + 100;
+    if CAQ == 1
+        for ccell = 1:length(terminals)    
+            nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
+            Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
+            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + 100;
+        end 
     end 
-    nonZeroRowsB = all(Beta{tType} == 0,2);
-    Beta{tType}(nonZeroRowsB,:) = NaN;
-    Beta{tType} = Beta{tType} + 100;
-    nonZeroRowsV = all(Veta{tType} == 0,2);
-    Veta{tType}(nonZeroRowsV,:) = NaN;
-    Veta{tType} = Veta{tType} + 100;
+    if BBBQ == 1 
+        for BBBroi = 1:length(bDataFullTrace{1})
+            nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
+            Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
+            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + 100;
+        end 
+    end 
+    if VWQ == 1
+        nonZeroRowsV = all(Veta{tType} == 0,2);
+        Veta{tType}(nonZeroRowsV,:) = NaN;
+        Veta{tType} = Veta{tType} + 100;
+    end 
 end 
 %}
 %% baseline if plotting peristimulus data then smooth trial data if you want
 %{
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
-nCeta = cell(1,length(cDataFullTrace{1}));
-nBeta = cell(1,numTtypes);
-nVeta = cell(1,numTtypes);
+if CAQ == 1
+    nCeta = cell(1,length(cDataFullTrace{1}));
+end 
+if BBBQ == 1 
+    nBeta = cell(1,numTtypes);
+end 
+if VWQ == 1
+    nVeta = cell(1,numTtypes);
+end 
 if dataParseType == 0 %peristimulus data to plot 
     %sec_before_stim_start
     for tType = 1:numTtypes
-        for ccell = 1:length(terminals)
-            nCeta{terminals(ccell)}{tType} = (Ceta{terminals(ccell)}{tType} ./ mean(Ceta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+        if CAQ == 1
+            for ccell = 1:length(terminals)
+                nCeta{terminals(ccell)}{tType} = (Ceta{terminals(ccell)}{tType} ./ mean(Ceta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+            end 
         end 
-        nBeta{tType} = (Beta{tType} ./ nanmean(Beta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
-        nVeta{tType} = (Veta{tType} ./ nanmean(Veta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{1})
+                nBeta{BBBroi}{tType} = (Beta{BBBroi}{tType} ./ nanmean(Beta{BBBroi}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+            end 
+        end 
+        if VWQ == 1
+            nVeta{tType} = (Veta{tType} ./ nanmean(Veta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+        end 
     end 
     
 elseif dataParseType == 1 %only stimulus data to plot 
-    nCeta = Ceta;
-    nBeta = Beta;
-    nVeta = Veta;
+    if CAQ == 1
+        nCeta = Ceta;
+    end 
+    if BBBQ == 1 
+        nBeta = Beta;
+    end 
+    if VWQ == 1
+        nVeta = Veta;
+    end 
 end 
 
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
 if smoothQ ==  1
     filtTime = input('How many seconds do you want to smooth your data by? ');
-    nsCeta = cell(1,length(cDataFullTrace{1}));
-    nsBeta = cell(1,numTtypes);
-    nsVeta = cell(1,numTtypes);
+    if CAQ == 1
+        nsCeta = cell(1,length(cDataFullTrace{1}));
+    end 
+    if BBBQ == 1 
+        nsBeta = cell(1,numTtypes);
+    end 
+    if VWQ == 1
+        nsVeta = cell(1,numTtypes);
+    end
     for tType = 1:numTtypes
-        for ccell = 1:length(terminals)
-            for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
-                [sC_Data] = MovMeanSmoothData(nCeta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
-                nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data-100;
+        if CAQ == 1
+            for ccell = 1:length(terminals)
+                for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
+                    [sC_Data] = MovMeanSmoothData(nCeta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
+                    nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data-100;
+                end 
             end 
-        end 
-        for vTrial = 1:size(nBeta{tType},1)
-            [sB_Data] = MovMeanSmoothData(nBeta{tType}(vTrial,:),filtTime,FPSstack);
-            nsBeta{tType}(vTrial,:) = sB_Data-100;
-            [sV_Data] = MovMeanSmoothData(nVeta{tType}(vTrial,:),filtTime,FPSstack);
-            nsVeta{tType}(vTrial,:) = sV_Data-100;            
+        end        
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{1})
+                for vTrial = 1:size(nBeta{BBBroi}{tType},1)
+                    [sB_Data] = MovMeanSmoothData(nBeta{BBBroi}{tType}(vTrial,:),filtTime,FPSstack);
+                    nsBeta{BBBroi}{tType}(vTrial,:) = sB_Data-100;
+                end 
+            end 
+            if VWQ == 1
+                [sV_Data] = MovMeanSmoothData(nVeta{tType}(vTrial,:),filtTime,FPSstack);
+                nsVeta{tType}(vTrial,:) = sV_Data-100;      
+            end 
         end 
     end 
 elseif smoothQ == 0
-    nsCeta = cell(1,length(cDataFullTrace{1}));
-    nsBeta = cell(1,numTtypes);
-    nsVeta = cell(1,numTtypes);
+    if CAQ == 1
+        nsCeta = cell(1,length(cDataFullTrace{1}));
+    end 
+    if BBBQ == 1 
+        nsBeta = cell(1,numTtypes);
+    end 
+    if VWQ == 1
+        nsVeta = cell(1,numTtypes);
+    end 
     for tType = 1:numTtypes
-        for ccell = 1:length(terminals)
-            nsCeta{terminals(ccell)}{tType} = nCeta{terminals(ccell)}{tType}-100;
+        if CAQ == 1
+            for ccell = 1:length(terminals)
+                nsCeta{terminals(ccell)}{tType} = nCeta{terminals(ccell)}{tType}-100;
+            end 
         end 
-        nsBeta{tType} = nBeta{tType}-100;
-        nsVeta{tType} = nVeta{tType}-100;
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{1})
+                nsBeta{BBBroi}{tType} = nBeta{BBBroi}{tType}-100;
+            end 
+        end 
+        if VWQ == 1
+            nsVeta{tType} = nVeta{tType}-100;
+        end 
     end 
 end 
 %}
 %% plot event triggered averages per terminal 
 %{
 %average across all terminals
-%THIS IS TEMPORARY CODE - NEED TO EVENTUALLY EDIT THE AVERAGE PLOTTING CODE
-%TWO SECTIONS DOWN 
+%NEEDS EDITING 
+%{
 allNScETA = cell(1,length(nsCeta));
 for tType = 1:numTtypes
     count = 1;
@@ -228,8 +352,11 @@ for tType = 1:numTtypes
         end 
     end 
 end 
+%}
 
 %average all the red light trials together (2 and 20 second trials) 
+%NEEDS EDITING 
+%{
 redTrialTtypeInds = [3,4]; %THIS IS CURRENTLY HARD CODED IN, BUT DOESN'T HAVE TO BE. REPLACE EVENTUALLY.
 allRedNScETA = cell(1,length(nsCeta));
 allRedNSbETA = cell(1,numTtypes);
@@ -240,89 +367,121 @@ for tType = 1:length(redTrialTtypeInds)
         allRedNScETA{terminals(1)}{3}(count,:) = allNScETA{terminals(1)}{redTrialTtypeInds(tType)}(trial,1:469); 
         count = count + 1;
     end 
-    for Btrial = 1:size(nsBeta{redTrialTtypeInds(tType)},1)
-        allRedNSbETA{3}(countB,:) = nsBeta{redTrialTtypeInds(tType)}(Btrial,1:469);
-        countB = countB + 1;
-    end 
+%     for Btrial = 1:size(nsBeta{redTrialTtypeInds(tType)},1)
+%         allRedNSbETA{3}(countB,:) = nsBeta{redTrialTtypeInds(tType)}(Btrial,1:469);
+%         countB = countB + 1;
+%     end 
 end 
+%}
+BBBpQ = input('Input 1 if you want to plot BBB data. Input 0 otherwise.');
+if BBBpQ == 1
+    BBBroi = input('What BBB ROI data do you want to plot? ');
+end 
+CApQ = input('Input 1 if you want to plot calcium data. Input 0 otherwise.');
+VWpQ = input('Input 1 if you want to plot vessel width data. Input 0 otherwise.');
 
-%allRedNScETA is taking the place of nsCeta
-
-for ccell = 11%1:length(terminals)
+for ccell = 3%1:length(terminals)
     baselineEndFrame = floor(20*(FPSstack));
-    AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
-    AVbData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
-    AVvData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
-    SEMb = cell(1,numTtypes);
-    STDb = cell(1,numTtypes);
-    CI_bLow = cell(1,numTtypes);
-    CI_bHigh = cell(1,numTtypes);
-    SEMc = cell(1,numTtypes);
-    STDc = cell(1,numTtypes);
-    CI_cLow = cell(1,numTtypes);
-    CI_cHigh = cell(1,numTtypes);
+    if CAQ == 1
+        AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+        SEMc = cell(1,numTtypes);
+        STDc = cell(1,numTtypes);
+        CI_cLow = cell(1,numTtypes);
+        CI_cHigh = cell(1,numTtypes);
+    end 
+    if BBBQ == 1
+        AVbData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+        SEMb = cell(1,numTtypes);
+        STDb = cell(1,numTtypes);
+        CI_bLow = cell(1,numTtypes);
+        CI_bHigh = cell(1,numTtypes);
+    end 
+    if VWQ == 1
+        AVvData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+        SEMv = cell(1,numTtypes);
+        STDv = cell(1,numTtypes);
+        CI_vLow = cell(1,numTtypes);
+        CI_vHigh = cell(1,numTtypes);
+    end 
 %     fig = figure;
-    for tType = 4%1:numTtypes
+    for tType = 1:numTtypes
 %     SEMdata = cell(1,length(nsCeta{1}));
-        if isempty(nsCeta{terminals(ccell)}{tType}) == 0          
-            % calculate the 95% confidence interval 
-            SEMb{tType} = (nanstd(allRedNSbETA{tType}))/(sqrt(size(allRedNSbETA{tType},1))); % Standard Error            
-            STDb{tType} = nanstd(allRedNSbETA{tType});
-            ts_bLow = tinv(0.025,size(allRedNSbETA{tType},1)-1);% T-Score for 95% CI
-            ts_bHigh = tinv(0.975,size(allRedNSbETA{tType},1)-1);% T-Score for 95% CI
-            CI_bLow{tType} = (nanmean(allRedNSbETA{tType},1)) + (ts_bLow*SEMb{tType});  % Confidence Intervals
-            CI_bHigh{tType} = (nanmean(allRedNSbETA{tType},1)) + (ts_bHigh*SEMb{tType});  % Confidence Intervals
-            
-            SEMc{terminals(ccell)}{tType} = (nanstd(nsCeta{terminals(ccell)}{tType}))/(sqrt(size(nsCeta{terminals(ccell)}{tType},1))); % Standard Error            
-            STDc{terminals(ccell)}{tType} = nanstd(nsCeta{terminals(ccell)}{tType});
-            ts_cLow = tinv(0.025,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
-            ts_cHigh = tinv(0.975,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
-            CI_cLow{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cLow*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
-            CI_cHigh{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cHigh*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
-            
-            x = 1:length(CI_cLow{terminals(ccell)}{tType});
-
-            AVcData{tType} = nanmean(nsCeta{terminals(ccell)}{tType},1);
-%             AVbData{tType} = nanmean(allRedNSbETA{tType},1);
-            AVbData{tType} = nanmean(allRedNSbETA{tType},1);
-            AVvData{tType} = nanmean(nsVeta{tType},1);
-%             SEMdata{tType} = std(nsCeta{terminals(ccell)}{tType},1)/sqrt(size(nsCeta{terminals(ccell)}{tType},1));
+        if isempty(nsCeta{terminals(ccell)}{tType}) == 0  
+            if CAQ == 1
+                SEMc{terminals(ccell)}{tType} = (nanstd(nsCeta{terminals(ccell)}{tType}))/(sqrt(size(nsCeta{terminals(ccell)}{tType},1))); % Standard Error            
+                STDc{terminals(ccell)}{tType} = nanstd(nsCeta{terminals(ccell)}{tType});
+                ts_cLow = tinv(0.025,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
+                CI_cLow{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cLow*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
+                CI_cHigh{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cHigh*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
+                x = 1:length(CI_cLow{terminals(ccell)}{tType});
+                AVcData{terminals(ccell)}{tType} = nanmean(nsCeta{terminals(ccell)}{tType},1);
+            end 
+            if BBBQ == 1
+                % calculate the 95% confidence interval 
+                SEMb{BBBroi}{tType} = (nanstd(nsBeta{BBBroi}{tType}))/(sqrt(size(nsBeta{BBBroi}{tType},1))); % Standard Error            
+                STDb{BBBroi}{tType} = nanstd(nsBeta{BBBroi}{tType});
+                ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
+                CI_bLow{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bLow*SEMb{BBBroi}{tType});  % Confidence Intervals
+                CI_bHigh{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bHigh*SEMb{BBBroi}{tType});  % Confidence Intervals
+                x = 1:length(CI_bLow{BBBroi}{tType});
+                AVbData{BBBroi}{tType} = nanmean(nsBeta{BBBroi}{tType},1);
+            end 
+            if VWQ == 1
+                % calculate the 95% confidence interval 
+                SEMv{tType} = (nanstd(nsVeta{tType}))/(sqrt(size(nsVeta{tType},1))); % Standard Error            
+                STDv{tType} = nanstd(nsVeta{tType});
+                ts_vLow = tinv(0.025,size(nsVeta{tType},1)-1);% T-Score for 95% CI
+                ts_vHigh = tinv(0.975,size(nsVeta{tType},1)-1);% T-Score for 95% CI
+                CI_vLow{tType} = (nanmean(nsVeta{tType},1)) + (ts_vLow*SEMv{tType});  % Confidence Intervals
+                CI_vHigh{tType} = (nanmean(nsVeta{tType},1)) + (ts_vHigh*SEMv{tType});  % Confidence Intervals
+                x = 1:length(CI_vLow{tType});
+                AVvData{tType} = nanmean(nsVeta{tType},1);
+            end 
+      
             fig = figure;             
             hold all;
             if tType == 1 || tType == 3 
                 Frames = size(nsCeta{terminals(ccell)}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*1:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(nsCeta{terminals(ccell)}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*1:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
             end 
-            plot(AVcData{tType},'b','LineWidth',3)
-%             plot(AVbData{tType},'r','LineWidth',3)
-%             patch([x fliplr(x)],[CI_bLow{tType} fliplr(CI_bHigh{tType})],[0.5 0 0],'EdgeColor','none')
-            patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
-%             patch([x fliplr(x)],[CI_cLow{per} fliplr(CI_cHigh{per})],[0 0 0.5],'EdgeColor','none')
-%             plot(AVvData{tType},'Color',[0.5 0 0],'LineWidth',3)
+            if BBBpQ == 1 
+                plot(AVbData{BBBroi}{tType},'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType} fliplr(CI_bHigh{BBBroi}{tType})],[0.5 0 0],'EdgeColor','none')
+            end 
+            if CApQ == 1 
+                plot(AVcData{terminals(ccell)}{tType},'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
+            end 
+            if VWpQ == 1
+                plot(AVvData{tType},'Color',[0.5 0 0],'LineWidth',3)
+                patch([x fliplr(x)],[CI_vLow{tType} fliplr(CI_vHigh{tType})],[0.5 0 0],'EdgeColor','none')            
+            end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
             elseif tType == 3 
 %                 plot(AVbData{tType},'k','LineWidth',3)
-%                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'k','LineWidth',2)
-                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+%                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
             elseif tType == 2 
                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
                 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
             elseif tType == 4 
 %                 plot(AVbData{tType},'r','LineWidth',3)
-                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
             end
 %             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
 %             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
@@ -339,10 +498,10 @@ for ccell = 11%1:length(terminals)
             xlimStart = floor(18*FPSstack)-10;
             xlimEnd = floor(32*FPSstack)-10;
 %             xlim([xlimStart xlimEnd])  
-            xLimStart = 18*FPSstack;
-            xLimEnd = 32*FPSstack;
-%             xlim([1 length(AVcData{tType})])
-            xlim([xLimStart xLimEnd])
+%             xLimStart = 18*FPSstack;
+%             xLimEnd = 32*FPSstack;
+            xlim([1 length(AVcData{terminals(ccell)}{tType})])
+%             xlim([xLimStart xLimEnd])
             ylim([-20 50])
             xlabel('time (s)')
             ylabel('percent change')
