@@ -1,4 +1,6 @@
 %% set paramaters
+% vidList = [7]; %SF56
+
 vidNumQ = input('Input 0 if this is the first video. Input 1 otherwise. ');
 chColor = input('Input 0 for green channel. Input 1 for red channel. '); 
 
@@ -119,7 +121,7 @@ while segQ == 1
         BWstacks = cell(1,numROIs);
         BW_perim = cell(1,numROIs);
         segOverlays = cell(1,numROIs);         
-        for VROI = 1:length(BBBROIsToSegment)                    
+        for VROI = 2%:length(BBBROIsToSegment)                    
             for frame = 1:size(ROIstacks{BBBROIsToSegment(VROI)},3)
                 [BW,~] = segmentImageBBB(ROIstacks{BBBROIsToSegment(VROI)}(:,:,frame));
                 BWstacks{BBBROIsToSegment(VROI)}(:,:,frame) = BW; 
@@ -154,12 +156,6 @@ end
 
 %% get pixel intensity value of extravascular space and within vessels 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEED TO ADD IN THE ABILITY TO DO VESSEL SEGMENTATION OF ONLY THE BBB ROIS
-% THAT HAVE VESSELS IN THEM 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
 meanPixIntArray = cell(1,numROIs); % pixel intensity outside of the vessel 
 wVmeanPixIntArray = cell(1,numROIs); % pixel intensity within vessel 
 for VROI = 1:numROIs           
@@ -191,15 +187,7 @@ for VROI = 1:numROIs
     % if the BBB ROI does not have a vessel in it
     elseif ismember(VROI,BBBROIsToSegment) == 0       
         for frame = 1:size(ROIstacks{VROI},3)       
-            %PICK UP HERE - NEED TO JUST USE MEAN PIX INTENSITY OF THESE
-            %ROIS BECAUSE THERE IS NO BWSTACKSINV FOR THEM - SINCE THIS IS
-            %MADE BY THE SEGMENTATION- WHICH DIDN'T HAPPEN FOR THESE GUYS
-            stats = regionprops(BWstacksInv{VROI}(:,:,frame),ROIstacks{VROI}(:,:,frame),'MeanIntensity');               
-            ROIpixInts = zeros(1,length(stats));
-            for stat = 1:length(stats)
-                ROIpixInts(stat) = stats(stat).MeanIntensity;
-            end 
-            meanPixIntArray{VROI}(frame) = mean(ROIpixInts);         
+            meanPixIntArray{VROI}(frame) = mean(mean(ROIstacks{VROI}(:,:,frame)));         
         end 
         % turn all rows full of zeros into NaNs 
         allZeroRows = find(all(meanPixIntArray{VROI} == 0,2));
@@ -211,7 +199,7 @@ end
 
            
 %% subtract sliding baseline from raw traces  
-            
+       
 % dataMeds = cell(1,numROIs);
 % DFOF = cell(1,numROIs);
 dataSlidingBLs = cell(1,numROIs);
@@ -219,15 +207,25 @@ wVdataSlidingBLs = cell(1,numROIs);
 Data = cell(1,numROIs);
 WvData = cell(1,numROIs);
 % zData = cell(1,numROIs);
-for VROI = 1:numROIs          
-    %get sliding baseline 
-    [dataSlidingBL]=slidingBaseline(meanPixIntArray{VROI},floor((FPSstack)*10),0.5); %0.5 quantile thresh = the median value                 
-    dataSlidingBLs{VROI} = dataSlidingBL;   
-    [wVdataSlidingBL]=slidingBaseline(wVmeanPixIntArray{VROI},floor((FPSstack)*10),0.5); %0.5 quantile thresh = the median value                 
-    wVdataSlidingBLs{VROI} = wVdataSlidingBL;    
-    %subtract sliding baseline from F
-    Data{VROI} = meanPixIntArray{VROI}-dataSlidingBLs{VROI}; 
-    WvData{VROI} = wVmeanPixIntArray{VROI}-wVdataSlidingBLs{VROI}; 
+for VROI = 1:numROIs 
+    % if the BBB ROI has a vessel in it 
+    if ismember(VROI,BBBROIsToSegment) == 1 
+        %get sliding baseline 
+        [dataSlidingBL]=slidingBaseline(meanPixIntArray{VROI},floor((FPSstack)*10),0.5); %0.5 quantile thresh = the median value                 
+        dataSlidingBLs{VROI} = dataSlidingBL;   
+        [wVdataSlidingBL]=slidingBaseline(wVmeanPixIntArray{VROI},floor((FPSstack)*10),0.5); %0.5 quantile thresh = the median value                 
+        wVdataSlidingBLs{VROI} = wVdataSlidingBL;    
+        %subtract sliding baseline from F
+        Data{VROI} = meanPixIntArray{VROI}-dataSlidingBLs{VROI}; 
+        WvData{VROI} = wVmeanPixIntArray{VROI}-wVdataSlidingBLs{VROI}; 
+    % if the BBB ROI does not have a vessel in it
+    elseif ismember(VROI,BBBROIsToSegment) == 0         
+        %get sliding baseline 
+        [dataSlidingBL]=slidingBaseline(meanPixIntArray{VROI},floor((FPSstack)*10),0.5); %0.5 quantile thresh = the median value                 
+        dataSlidingBLs{VROI} = dataSlidingBL;       
+        %subtract sliding baseline from F
+        Data{VROI} = meanPixIntArray{VROI}-dataSlidingBLs{VROI};        
+    end 
 end 
 
 %% create cumulative pixel intensity traces 
@@ -235,33 +233,49 @@ end
 cumData = cell(1,numROIs);
 wVcumData = cell(1,numROIs);
 for VROI = 1:numROIs
-    for frame = 1:size(Data{VROI},2)
-        if frame == 1 
-            cumData{VROI}(frame) = Data{VROI}(frame);
-            wVcumData{VROI}(frame) = WvData{VROI}(frame);
-        elseif frame > 1 && frame < size(Data{VROI},2)
-            cumData{VROI}(frame) = Data{VROI}(frame)+cumData{VROI}(frame-1);
-            wVcumData{VROI}(frame) = WvData{VROI}(frame)+wVcumData{VROI}(frame-1);
+    % if the BBB ROI has a vessel in it 
+    if ismember(VROI,BBBROIsToSegment) == 1 
+        for frame = 1:size(Data{VROI},2)
+            if frame == 1 
+                cumData{VROI}(frame) = Data{VROI}(frame);
+                wVcumData{VROI}(frame) = WvData{VROI}(frame);
+            elseif frame > 1 && frame < size(Data{VROI},2)
+                cumData{VROI}(frame) = Data{VROI}(frame)+cumData{VROI}(frame-1);
+                wVcumData{VROI}(frame) = WvData{VROI}(frame)+wVcumData{VROI}(frame-1);
+            end 
+        end 
+    % if the BBB ROI does not have a vessel in it
+    elseif ismember(VROI,BBBROIsToSegment) == 0   
+        for frame = 1:size(Data{VROI},2)
+            if frame == 1 
+                cumData{VROI}(frame) = Data{VROI}(frame);
+            elseif frame > 1 && frame < size(Data{VROI},2)
+                cumData{VROI}(frame) = Data{VROI}(frame)+cumData{VROI}(frame-1);
+            end 
         end 
     end 
 end 
 
-%% plot 
+%% plot cumulative pixel intensity plots for BBB ROIs that have vessels in them 
+
 FPM = FPSstack*60;
-figure;
 for VROI = 1:size(cumData,2)   
-    subplot(1,size(cumData,2),VROI)
-    ax = gca;
-    hold all; plot(cumData{VROI},'r','LineWidth',3);plot(wVcumData{VROI},'k','LineWidth',3)
-    %set time in x axis 
-    min_TimeVals = floor(0:5:(size(cumData{VROI},2)/FPM));
-    FrameVals = floor(0:(size(cumData{VROI},2)/((size(cumData{VROI},2)/FPM)/5)):size(cumData{VROI},2));
-    ax.XTick = FrameVals;
-    ax.XTickLabel = min_TimeVals;
-    ax.FontSize = 20;
-    legend('Outside vessel','Inside vessel')
-    xlabel('time (min)');
-    ylabel('pixel intensity rate change')
+    % if the BBB ROI has a vessel in it 
+    if ismember(VROI,BBBROIsToSegment) == 1 
+        figure;
+        ax = gca;
+        hold all; plot(cumData{VROI},'r','LineWidth',3);plot(wVcumData{VROI},'k','LineWidth',3)
+        %set time in x axis 
+        min_TimeVals = floor(0:5:(size(cumData{VROI},2)/FPM));
+        FrameVals = floor(0:(size(cumData{VROI},2)/((size(cumData{VROI},2)/FPM)/5)):size(cumData{VROI},2));
+        ax.XTick = FrameVals;
+        ax.XTickLabel = min_TimeVals;
+        ax.FontSize = 20;
+        legend('Outside vessel','Inside vessel')
+        xlabel('time (min)');
+        ylabel('pixel intensity rate change')
+        title(sprintf('BBB ROI %d',VROI));
+    end 
 end 
 
 Bdata = Data;

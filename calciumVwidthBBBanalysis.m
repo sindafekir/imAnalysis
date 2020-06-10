@@ -1,100 +1,63 @@
 % get the data you need 
-%REMOVE THE CODE THAT GETS TTYPE DATA BECAUSE WE ONLY NEED THE FULL EXP
-%DATA - THIS CODE SEPARATES DATA INTO TTYPE BELOW - THIS IS BETTER SO THE
-%SAME DATA GETS USED FOR EVERYTHING 
-%{
-% get calcium data 
-% vidList = [1,2,3,4,5,7]; %SF56
-% vidList = [1,2,3,4,5,6]; %SF57
-tData = cell(1,length(vidList));
-cDataFullTrace = cell(1,length(vidList));
-for vid = 1:length(vidList)
-%     temp1 = matfile(sprintf('SF56_20190718_ROI2_%d_Fdata_termTtype.mat',vidList(vid)));
-    temp1 = matfile(sprintf('SF57_20190717_ROI1_%d_Fdata.mat',vidList(vid)));
-    tData{vid} = temp1.GtTdataTerm;  
-    cDataFullTrace{vid} = temp1.CcellData;  
-end 
-FPSstack = temp1.FPSstack;
-framePeriod = temp1.framePeriod;
-state = 8;
-terminals = [13,20,12,16,11,15,10,8,9,7,4]; %SF56
-% terminals = [17,15,12,10,8,7,6,5,4,3]; %SF57
 
-% get vessel width and BBB full exp traces
-% bDataFullTrace = cell(1,length(vidList));
-vDataFullTrace = cell(1,length(vidList));
-for vid = 1:length(vidList)
-%     temp2 = matfile(sprintf('SF56_20190718_ROI2_%d_CVBdata_F-SB_terminalWOnoiseFloor_CaPeakAlignedData.mat',vidList(vid)));
-%     temp2 = matfile(sprintf('SF56_20190718_ROI2_%d_Vdata.mat',vidList(vid)));
-    temp2 = matfile(sprintf('SF56_20190718_ROI2_%d_Vdata_V2.mat',vidList(vid)));       
-    vDataFullTrace{vid} = temp2.Vdata; 
-%     bDataFullTrace{vid} = Bdata(1:length(vDataFullTrace{vid})); 
+stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
+if stimStateQ == 0 
+    state = 8;
+elseif stimStateQ == 1
+    state = 7;
 end 
 
-%get vessel width and BBB trial type data
-% temp3 = matfile('SF56_20190718_ROI2_1-5_7_10_BBB.mat');
-% Bdata = temp3.dataToPlot;
-% 
-% temp4 = matfile('SF56_20190718_ROI2_1-3_5_7_VW.mat');
-% Vdata = temp4.dataToPlot;
+framePeriod = input('What is the frame period? ');
+FPS = 1/framePeriod; 
+FPSstack = FPS/3;
 
-%get ROI indices
-% temp5 = matfile('SF56_20190718_ROI2_1-3_5_7_VW_and_1-5_7_10CaData.mat');
-temp5 = matfile('SF57_20190717_DAca_V1-3.mat');
-ROIinds = temp5.ROIinds;
+vidList = input('What videos are you analyzing? ');
 
-% get trial type data 
-TrialTypes = cell(1,length(vidList));
-state_start_f = cell(1,length(vidList));
-state_end_f = cell(1,length(vidList));
-trialLengths = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    [~,stateStartF,stateEndF,FPS,vel_wheel_data,TrialType] = makeHDFchart_redBlueStim(state,framePeriod);
-    TrialTypes{vid} = TrialType(1:length(stateStartF),:);
-    state_start_f{vid} = floor(stateStartF/3);
-    state_end_f{vid} = floor(stateEndF/3);
-    trialLengths{vid} = state_end_f{vid} - state_start_f{vid};
-    
-    %make sure the trial lengths are the same per trial type 
-    %set ideal trial lengths 
-    lenT1 = floor(FPSstack*2); % 2 second trials 
-    lenT2 = floor(FPSstack*20); % 20 second trials 
-    %identify current trial lengths 
-    [kIdx,kMeans] = kmeans(trialLength{vid},2);
-    %edit kMeans list so trialLengths is what they should be 
-    for len = 1:length(kMeans)
-        if kMeans(len)-lenT1 < abs(kMeans(len)-lenT2)
-            kMeans(len) = lenT1;
-        elseif kMeans(len)-lenT1 > abs(kMeans(len)-lenT2)
-            kMeans(len) = lenT2;
-        end 
+BBBQ = input('Input 1 if you want to get BBB data. Input 0 otherwise. ');
+VWQ = input('Input 1 if you want to get vessel width data. Input 0 otherwise. ');
+CAQ = input('Input 1 if you want to get calcium data. Input 0 otherwise. ');
+
+if BBBQ == 1 
+    % get BBB data 
+    BBBDir = uigetdir('*.*','WHERE IS THE BBB DATA?');
+    cd(BBBDir);
+    BBBlabel = input('Give a string example of what the BBB data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+    bDataFullTrace = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        BBBmat = matfile(sprintf(BBBlabel,vidList(vid)));
+        Bdata = BBBmat.Bdata;       
+        bDataFullTrace{vid} = Bdata;
     end 
-    %change state_end_f so all trial lengths match up 
-    for trial = 1:length(state_start_f{vid})
-        state_end_f{vid}(trial,1) = state_start_f{vid}(trial)+kMeans(kIdx(trial));
-    end 
-    trialLength{vid} = state_end_f{vid} - state_start_f{vid};   
 end 
 
-% get red and green channel image stacks 
-redStacks = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    temp6 = matfile(sprintf('SF56_20190718_ROI2_%d_CVBdata_F-SB_terminalWOnoiseFloor_CaPeakAlignedData.mat',vidList(vid)));
-    redStacks{vid} = temp6.inputStacks;
+if VWQ == 1 
+    % get vessel width data 
+    VwDir = uigetdir('*.*','WHERE IS THE VESSEL WIDTH DATA?');
+    cd(VwDir);
+    VWlabel = input('Give a string example of what the vessel width data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+    vDataFullTrace = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        VWmat = matfile(sprintf(VWlabel,vidList(vid)));
+        Vdata = VWmat.Vdata;       
+        vDataFullTrace{vid} = Vdata;
+    end 
 end 
 
-greenStacks = cell(1,length(vidList));
-Zstacks = cell(1,length(vidList));
-imArrays = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    temp6 = matfile(sprintf('SF56_20190718_ROI2_%d_regIms_green.mat',vidList(vid)));
-    Zstack = temp6.regStacks;
-    Zstacks{vid} = Zstack{2,3};
-    for Z = 1:size(Zstacks{vid},2)
-        imArrays{vid}(:,:,:,Z) = Zstacks{vid}{Z};
+if CAQ == 1 
+    % get calcium data 
+    CaDir = uigetdir('*.*','WHERE IS THE CALCIUM DATA?');
+    cd(CaDir);
+    CAlabel = input('Give a string example of what the calcium data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+    terminals = input('What terminals do you care about? Input in correct order. ');
+    cDataFullTrace = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        CAmat = matfile(sprintf(CAlabel,vidList(vid)));
+        CAdata = CAmat.CcellData;       
+        cDataFullTrace{vid} = CAdata;
     end 
-    greenStacks{vid} = mean(imArrays{vid},4);
 end 
+
+
 %}
 
 %% organize trial data 
