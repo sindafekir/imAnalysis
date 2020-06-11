@@ -1568,9 +1568,9 @@ elseif tTypeQ == 1
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
-
+%{
 if tTypeQ == 0 
-    
+    %{
     %find where calcium peak onset is 
     changePt = 21;
 
@@ -1754,16 +1754,11 @@ elseif tTypeQ == 1
     end  
     %}
 end 
-
-% plot
-startF = 32;%floor(startTval*FPSstack);
-endF = 40;%floor(startF+(0.8*FPSstack));
-            
-            
-%% plot calcium spike triggered averages 
+                     
+% plot calcium spike triggered averages 
 BBBroi = input('What BBB ROI do you want to plot? ');
 if tTypeQ == 0 
-    
+    %{
     allCTraces = cell(1,length(SNCdataPeaks{1}));
     allBTraces = cell(1,length(SNCdataPeaks{1}));
     for ccell = 1:length(terminals)
@@ -1859,7 +1854,7 @@ if tTypeQ == 0
         ylabel('BBB permeability percent change','FontName','Times')
         
         title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
-        export_fig(dir) 
+%         export_fig(dir) 
         
     end
     %}
