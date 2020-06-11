@@ -334,8 +334,8 @@ elseif smoothQ == 0
     end 
 end 
 %}
-%% plot event triggered averages per terminal 
-%{
+%% plot event triggered 
+
 %average across all terminals
 %NEEDS EDITING 
 %{
@@ -379,8 +379,11 @@ if BBBpQ == 1
 end 
 CApQ = input('Input 1 if you want to plot calcium data. Input 0 otherwise.');
 VWpQ = input('Input 1 if you want to plot vessel width data. Input 0 otherwise.');
-
-for ccell = 3%1:length(terminals)
+saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
+if saveQ == 1                
+    dir1 = input('What folder are you saving these images in? ');
+end 
+for ccell = 1:length(terminals)
     baselineEndFrame = floor(20*(FPSstack));
     if CAQ == 1
         AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
@@ -404,6 +407,7 @@ for ccell = 3%1:length(terminals)
         CI_vHigh = cell(1,numTtypes);
     end 
 %     fig = figure;
+
     for tType = 1:numTtypes
 %     SEMdata = cell(1,length(nsCeta{1}));
         if isempty(nsCeta{terminals(ccell)}{tType}) == 0  
@@ -457,15 +461,15 @@ for ccell = 3%1:length(terminals)
             end 
             if BBBpQ == 1 
                 plot(AVbData{BBBroi}{tType},'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType} fliplr(CI_bHigh{BBBroi}{tType})],[0.5 0 0],'EdgeColor','none')
+%                 patch([x fliplr(x)],[CI_bLow{BBBroi}{tType} fliplr(CI_bHigh{BBBroi}{tType})],[0.5 0 0],'EdgeColor','none')
             end 
             if CApQ == 1 
                 plot(AVcData{terminals(ccell)}{tType},'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
+%                 patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
             end 
             if VWpQ == 1
                 plot(AVvData{tType},'Color',[0.5 0 0],'LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{tType} fliplr(CI_vHigh{tType})],[0.5 0 0],'EdgeColor','none')            
+%                 patch([x fliplr(x)],[CI_vLow{tType} fliplr(CI_vHigh{tType})],[0.5 0 0],'EdgeColor','none')            
             end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
@@ -502,28 +506,40 @@ for ccell = 3%1:length(terminals)
 %             xLimEnd = 32*FPSstack;
             xlim([1 length(AVcData{terminals(ccell)}{tType})])
 %             xlim([xLimStart xLimEnd])
-            ylim([-20 50])
+            ylim([-30 50])
             xlabel('time (s)')
             ylabel('percent change')
-%             if smoothQ == 1
-%                 title(sprintf('Terminal #%d data smoothed by %0.2f sec',terminals(ccell),filtTime));
-%             elseif smoothQ == 0
-%                 title(sprintf('Terminal #%d data',terminals(ccell)));
-%             end 
-            title({'Optogenetic Stimulation';'Event Triggered Averages'},'FontName','Times');
             
-            set(fig,'position', [500 100 800 800])
-            if tType == 1
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs_Vwidth_V2/DAterminal%d_ETA_2secBlueLight.tif',terminals(ccell));
-            elseif tType == 2
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs_Vwidth_V2/DAterminal%d_ETA_20secBlueLight.tif',terminals(ccell));
-            elseif tType == 3
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs_Vwidth_V2/DAterminal%d_ETA_2secRedLight.tif',terminals(ccell));
-            elseif tType == 4
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/ETAs_Vwidth_V2/DAterminal%d_ETA_20secRedLight.tif',terminals(ccell));
-            end                            
-%             export_fig(dir)
+            % initialize empty string array 
+            label = strings;
+            if BBBpQ == 1
+                label = append(label,sprintf('BBB ROI %d',BBBroi)); 
+            end 
+            if CApQ == 1 
+                label = append(label,sprintf('  Ca ROI %d',terminals(ccell)));
+            end 
+            if VWpQ == 1
+                label = append(label,'  Vessel Width');
+            end 
+            title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            
+            set(fig,'position', [100 100 1800 900])
             alpha(0.5) 
+           %make the directory and save the images            
+            if saveQ == 1                
+                if tType == 1
+                    label2 = (' 2 sec Blue Light');
+                elseif tType == 2
+                    label2 = (' 20 sec Blue Light');
+                elseif tType == 3
+                    label2 = (' 2 sec Red Light');
+                elseif tType == 4
+                    label2 = (' 20 sec Red Light');
+                end   
+                dir2 = strrep(dir1,'\','/');
+                dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                export_fig(dir3)
+            end            
         end 
     end 
 end 
