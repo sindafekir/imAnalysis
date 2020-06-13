@@ -1,4 +1,5 @@
 %% set paramaters
+% vidList = [7]; %SF56
 
 vidNumQ = input('Input 0 if this is the first video. Input 1 otherwise. ');
 chColor = input('Input 0 for green channel. Input 1 for red channel. '); 
@@ -120,7 +121,7 @@ while segQ == 1
 %         BWstacks = cell(1,numROIs);
 %         BW_perim = cell(1,numROIs);
 %         segOverlays = cell(1,numROIs);         
-        for VROI = 3%1:length(BBBROIsToSegment)                    
+        for VROI = 2%1:length(BBBROIsToSegment)                    
             for frame = 1:size(ROIstacks{BBBROIsToSegment(VROI)},3)
                 [BW,~] = segmentImageBBB(ROIstacks{BBBROIsToSegment(VROI)}(:,:,frame));
                 BWstacks{BBBROIsToSegment(VROI)}(:,:,frame) = BW; 
@@ -199,6 +200,8 @@ end
            
 %% subtract sliding baseline from raw traces  
        
+% dataMeds = cell(1,numROIs);
+% DFOF = cell(1,numROIs);
 dataSlidingBLs = cell(1,numROIs);
 wVdataSlidingBLs = cell(1,numROIs);
 Data = cell(1,numROIs);

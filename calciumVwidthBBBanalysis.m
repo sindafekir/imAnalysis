@@ -1,5 +1,5 @@
 % get the data you need 
-%{
+
 stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
 if stimStateQ == 0 
     state = 8;
@@ -91,7 +91,7 @@ if ETAQ == 1
 end 
 %}
 %% organize trial data 
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
