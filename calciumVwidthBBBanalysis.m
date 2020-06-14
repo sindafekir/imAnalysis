@@ -1,5 +1,3 @@
-%% UPDATE THIS SO THAT MULTIPLE VW ROIS CAN BE ANALYZED AND PLOTTED - SIMILARLY TO WHAT I DID WITH THE BBB ROIS 
-
 % get the data you need 
 %{
 stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
@@ -93,7 +91,7 @@ if ETAQ == 1
 end 
 %}
 %% organize trial data 
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -105,6 +103,9 @@ end
 numTtypes = input('How many different trial types are there? ');
 
 % determine plotting start and end frames 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%THIS IS BUGGY NEEDS FIXING SOMETIMES THE PLOT END FRAME IS OFF 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 plotStart = cell(1,length(cDataFullTrace));
 plotEnd = cell(1,length(cDataFullTrace));
 for vid = 1:length(cDataFullTrace)
@@ -124,7 +125,7 @@ for vid = 1:length(cDataFullTrace)
     end 
 end 
 
-%sort the data  
+% sort the data  
 if CAQ == 1
     Ceta = cell(1,length(cDataFullTrace{1}));
 end 
@@ -244,7 +245,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% baseline if plotting peristimulus data then smooth trial data if you want
-%{
+
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
 if CAQ == 1
@@ -356,7 +357,7 @@ elseif smoothQ == 0
 end 
 %}
 %% plot event triggered averages
-%{
+
 %average across all terminals
 %NEEDS EDITING 
 %{
