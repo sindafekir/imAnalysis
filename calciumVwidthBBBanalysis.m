@@ -364,7 +364,7 @@ elseif smoothQ == 0
 end 
 %}
 %% plot event triggered averages
-
+%{
 %average across all terminals
 %NEEDS EDITING 
 %{
@@ -415,7 +415,7 @@ saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
 if saveQ == 1                
     dir1 = input('What folder are you saving these images in? ');
 end 
-for ccell = 1%:length(terminals)
+for ccell = 10%:length(terminals)
     baselineEndFrame = floor(20*(FPSstack));
     if CAQ == 1
         AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
@@ -538,7 +538,7 @@ for ccell = 1%:length(terminals)
 %             xLimEnd = 32*FPSstack;
             xlim([1 length(AVcData{terminals(ccell)}{tType})])
 %             xlim([xLimStart xLimEnd])
-            ylim([-10 10])
+            ylim([-60 80])
             xlabel('time (s)')
             ylabel('percent change')
             
@@ -1798,18 +1798,22 @@ elseif tTypeQ == 1
 end 
 %}                     
 %% plot calcium spike triggered averages 
-%{
+
 BBBQ = input('Input 1 if you want to plot BBB data. ');
-VWQ = input('Input 1 if you want to plot vessel width data. ');
 if BBBQ == 1
     BBBroi = input('What BBB ROI do you want to plot? ');
 end 
+VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
     VWroi = input('What vessel width ROI do you want to plot? ');
 end 
+saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
+if saveQ == 1                
+    dir1 = input('What folder are you saving these images in? ');
+end 
 
 if tTypeQ == 0 
-    %{
+    
     allCTraces = cell(1,length(SNCdataPeaks{1}));
     allBTraces = cell(1,length(SNCdataPeaks{1}));
     allVTraces = cell(1,length(SNCdataPeaks{1}));
@@ -1878,7 +1882,7 @@ if tTypeQ == 0
         
         plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
 %         plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)},'r','LineWidth',4)
-        plot([132 132], [-100000 100000], 'k:','LineWidth',4)
+        plot([123 123], [-100000 100000], 'k:','LineWidth',4)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;   
         ax.FontSize = 35;
@@ -1902,32 +1906,31 @@ if tTypeQ == 0
 %         title('BBB Permeability Spike Triggered Average','FontName','Times')
         set(fig,'position', [500 100 900 800])
         alpha(0.3)
-%         dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/STAs_5BBBrois_DACa_zoomedOut/Terminal%d_BBBroi%d.tif',terminals(ccell),BBBroi);
-        dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/STAs_2VWrois_DACa_zoomedOut/Terminal%d_VWroi%d.tif',terminals(ccell),VWroi);        
 
         %add right y axis tick marks for a specific DOD figure. 
         yyaxis right 
         if BBBQ == 1
             plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)},'r','LineWidth',4)
             patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+            ylabel('BBB permeability percent change','FontName','Times')
+            tlabel = sprintf('Terminal%d_BBBroi%d.',terminals(ccell),BBBroi);
+            title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
         end 
         if VWQ == 1
             plot(AVSNVdataPeaks{VWroi}{terminals(ccell)},'Color',[0.5 0 0],'LineWidth',4)
             patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],[0.8 0 0],'EdgeColor','none')
+            ylabel('Vessel width permeability percent change','FontName','Times')
+            tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
+            title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
         end 
         alpha(0.3)
         set(gca,'YColor',[0 0 0]);
-        if BBBQ == 1
-            ylabel('BBB permeability percent change','FontName','Times')
-            title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
-        end 
-        if VWQ == 1
-            ylabel('Vessel width permeability percent change','FontName','Times')
-            title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
-        end 
-        
-        export_fig(dir) 
-        
+        %make the directory and save the images   
+        if saveQ == 1  
+            dir2 = strrep(dir1,'\','/');
+            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+            export_fig(dir3)
+        end            
     end
     %}
 elseif tTypeQ == 1
