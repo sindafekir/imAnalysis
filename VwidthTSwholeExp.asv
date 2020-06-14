@@ -116,14 +116,13 @@ while segmentVessel == 1
     imageSegmenter(mean(ROIstacks{VROI},3))
     continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
     while continu == 1 
-        BWstacks = cell(1,length(rotStacks));
-        BW_perim = cell(1,length(rotStacks));
-        segOverlays = cell(1,length(rotStacks));        
+        BWstacks = cell(1,numROIs);
+        BW_perim = cell(1,numROIs);
+        segOverlays = cell(1,length(rotStack));        
         for VROI = 1:numROIs 
             for frame = 1:500
                 [BW,~] = segmentImage(ROIstacks{VROI}(:,:,frame));
                 BWstacks{VROI}(:,:,frame) = BW; 
-                %BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW;
                 %get the segmentation boundaries 
                 BW_perim{VROI}(:,:,frame) = bwperim(BW);
                 %overlay segmentation boundaries on data
@@ -171,52 +170,45 @@ for VROI = 1:numROIs
 end 
 
 %remove outliers = max and min value 
-maxVDval = zeros(length(BWstacks),numROIs);
-minVDval = zeros(length(BWstacks),numROIs);
+maxVDval = zeros(1,numROIs);
+minVDval = zeros(1,numROIs);
 for VROI = 1:numROIs
-    maxVDval(Zstack,VROI) = max(vessel_diam{Zstack}{VROI});
-    minVDval(Zstack,VROI) = min(vessel_diam{Zstack}{VROI});
+    maxVDval(VROI) = max(vessel_diam{VROI});
+    minVDval(VROI) = min(vessel_diam{VROI});
 end 
 
-
 %interpolate (average) data at frames that are max or min 
-for Zstack = 1:length(BWstacks)
-    for VROI = 1:numROIs 
-        for frame = 2:size(ROIstacks{1}{1}{1},3) %to avoid edges since i'm interpolating 
-            if vessel_diam{Zstack}{VROI}(:,frame) == maxVDval(Zstack,VROI) || vessel_diam{Zstack}{VROI}(:,frame) == minVDval(Zstack,VROI)
-                vessel_diam2{Zstack}{VROI}(:,frame) = (vessel_diam{Zstack}{VROI}(:,frame-1) + vessel_diam{Zstack}{VROI}(:,frame+1)) / 2 ; 
-            elseif vessel_diam{Zstack}{VROI}(:,frame) ~= maxVDval(Zstack,VROI) || vessel_diam{Zstack}{VROI}(:,frame) ~= minVDval(Zstack,VROI)
-                vessel_diam2{Zstack}{VROI}(:,frame) = vessel_diam{Zstack}{VROI}(:,frame);
+vessel_diam2 = cell(1,numROIs);
+for VROI = 1:numROIs 
+    for frame = 2:size(ROIstacks{VROI},3) %to avoid edges since i'm interpolating 
+        if vessel_diam{VROI}(:,frame) == maxVDval(VROI) || vessel_diam{VROI}(:,frame) == minVDval(VROI) 
+            vessel_diam2{VROI}(:,frame) = (vessel_diam{VROI}(:,frame-1) + vessel_diam{VROI}(:,frame+1)) / 2 ; 
+        elseif vessel_diam{VROI}(:,frame) ~= maxVDval(VROI) || vessel_diam{VROI}(:,frame) ~= minVDval(VROI) 
+            vessel_diam2{VROI}(:,frame) = vessel_diam{VROI}(:,frame);
+        end 
+        if frame == size(ROIstacks{VROI},3)
+            if vessel_diam{VROI}(:,frame) == maxVDval(VROI) || vessel_diam{VROI}(:,frame) == minVDval(VROI) 
+                vessel_diam2{VROI}(:,frame) = (vessel_diam{VROI}(:,frame-1) + vessel_diam{VROI}(:,frame+1)) / 2 ; 
+            elseif vessel_diam{VROI}(:,frame) ~= maxVDval(VROI) || vessel_diam{VROI}(:,frame) ~= minVDval(VROI) 
+                vessel_diam2{VROI}(:,frame) = vessel_diam{VROI}(:,frame);
             end 
         end 
     end 
 end 
 
-%%
-dataMeds = cell(1,length(BWstacks));
-DFOF = cell(1,length(BWstacks));
-dataSlidingBLs = cell(1,length(BWstacks));
+
+%% subtract sliding baseline from raw traces 
+
+dataSlidingBLs = cell(1,numROIs);
 Data = cell(1,length(BWstacks));
-zVData = cell(1,length(BWstacks));
-for z = 1:length(BWstacks)
-    for VROI = 1:numROIs   
-        %get median value per trace
-%         dataMed = median(vessel_diam2{z}{VROI});     
-%         dataMeds{z}(VROI,:) = dataMed;        
-        %compute DF/F using means  
-%         DFOF{z}(VROI,:) = (vessel_diam2{z}{VROI}-dataMeds{z}(VROI,:))./dataMeds{z}(VROI,:);              
-        %get sliding baseline 
-        [dataSlidingBL]=slidingBaseline(vessel_diam2{z}{VROI},floor((FPS/numZplanes)*10),0.5); %0.5 quantile thresh = the median value                 
-        dataSlidingBLs{z}(VROI,:) = dataSlidingBL;     
-        %subtract sliding baseline from DF/F
-        Data{z}(VROI,:) = vessel_diam2{z}{VROI}-dataSlidingBLs{z}(VROI,:);        
-        %z-score data 
-%         zVData{z}(VROI,:) = zscore(Data{z}(VROI,:));
-    end
+for VROI = 1:numROIs              
+    %get sliding baseline 
+    [dataSlidingBL]=slidingBaseline(vessel_diam2{VROI},floor((FPSstack)*10),0.5); %0.5 quantile thresh = the median value                 
+    dataSlidingBLs{VROI} = dataSlidingBL;     
+    %subtract sliding baseline from F
+    Data{VROI} = vessel_diam2{VROI}-dataSlidingBLs{VROI};        
 end
 
-Vdata = mean(Data{1},1);
-plot(Vdata)
+Vdata = Data;
 
-% clearvars -except Vdata
 

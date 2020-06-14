@@ -51,4 +51,3 @@ BW = imerode(BW, se);
 maskedImage = X;
 maskedImage(~BW) = 0;
 end
-

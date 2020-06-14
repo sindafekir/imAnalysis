@@ -123,7 +123,6 @@ while segmentVessel == 1
             for frame = 1:500
                 [BW,~] = segmentImage(ROIstacks{VROI}(:,:,frame));
                 BWstacks{VROI}(:,:,frame) = BW; 
-                %BWstacks{Z}{trialType}{trial}{VROI}(:,:,frame) = BW;
                 %get the segmentation boundaries 
                 BW_perim{VROI}(:,:,frame) = bwperim(BW);
                 %overlay segmentation boundaries on data
@@ -178,14 +177,21 @@ for VROI = 1:numROIs
     minVDval(VROI) = min(vessel_diam{VROI});
 end 
 
-%interpolate (average) data at frames that are max or min 
+%% interpolate (average) data at frames that are max or min 
 vessel_diam2 = cell(1,numROIs);
 for VROI = 1:numROIs 
     for frame = 2:size(ROIstacks{VROI},3) %to avoid edges since i'm interpolating 
-        if vessel_diam{VROI}(:,frame) == maxVDval(VROI) || vessel_diam{VROI}(:,frame) == minVDval(VROI)
+        if vessel_diam{VROI}(:,frame) == maxVDval(VROI) || vessel_diam{VROI}(:,frame) == minVDval(VROI) && frame ~= size(ROIstacks{VROI},3)
             vessel_diam2{VROI}(:,frame) = (vessel_diam{VROI}(:,frame-1) + vessel_diam{VROI}(:,frame+1)) / 2 ; 
-        elseif vessel_diam{VROI}(:,frame) ~= maxVDval(VROI) || vessel_diam{VROI}(:,frame) ~= minVDval(VROI)
+        elseif vessel_diam{VROI}(:,frame) ~= maxVDval(VROI) || vessel_diam{VROI}(:,frame) ~= minVDval(VROI) 
             vessel_diam2{VROI}(:,frame) = vessel_diam{VROI}(:,frame);
+        end 
+        if frame == size(ROIstacks{VROI},3)
+            if vessel_diam{VROI}(:,frame) == maxVDval(VROI) || vessel_diam{VROI}(:,frame) == minVDval(VROI) 
+                vessel_diam2{VROI}(:,frame) = vessel_diam{VROI}(:,frame-1); 
+            elseif vessel_diam{VROI}(:,frame) ~= maxVDval(VROI) || vessel_diam{VROI}(:,frame) ~= minVDval(VROI) 
+                vessel_diam2{VROI}(:,frame) = vessel_diam{VROI}(:,frame);
+            end 
         end 
     end 
 end 

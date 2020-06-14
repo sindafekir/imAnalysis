@@ -1863,9 +1863,9 @@ if tTypeQ == 0
         x = 1:length(CI_cLow);
 
         
-        AVSNBdataPeaks{BBBroi}{terminals(ccell)} = (nanmean(allBTraces{BBBroi}{terminals(ccell)}));
+        AVSNBdataPeaks{BBBroi}{terminals(ccell)} = (nanmean(allBTraces{BBBroi}{terminals(ccell)}))-0.3;
         AVSNCdataPeaks{terminals(ccell)} = nanmean(allCTraces{terminals(ccell)});
-        AVSNVdataPeaks{VWroi}{terminals(ccell)} = (nanmean(allVTraces{VWroi}{terminals(ccell)}));
+        AVSNVdataPeaks{VWroi}{terminals(ccell)} = (nanmean(allVTraces{VWroi}{terminals(ccell)}))-0.3;
         
         plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
 %         plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)},'r','LineWidth',4)
@@ -1893,31 +1893,25 @@ if tTypeQ == 0
 %         title('BBB Permeability Spike Triggered Average','FontName','Times')
         set(fig,'position', [500 100 900 800])
         alpha(0.3)
-%         dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/STAs_5BBBrois_DACa_zoomedOut/Terminal%d_BBBroi%d.tif',terminals(ccell),BBBroi);
-        dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/STAs_2VWrois_DACa_zoomedOut/Terminal%d_VWroi%d.tif',terminals(ccell),VWroi);        
+        dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/STAs_5BBBrois_DACa_zoomedOut/Terminal%d_BBBroi%d.tif',terminals(ccell),BBBroi);
+                
 
         %add right y axis tick marks for a specific DOD figure. 
         yyaxis right 
         if BBBQ == 1
             plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)},'r','LineWidth',4)
-            patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+            patch([x fliplr(x)],[(CI_bLow)-0.3 (fliplr(CI_bHigh))-0.3],[0.5 0 0],'EdgeColor','none')
         end 
         if VWQ == 1
-            plot(AVSNVdataPeaks{VWroi}{terminals(ccell)},'Color',[0.5 0 0],'LineWidth',4)
-            patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],[0.8 0 0],'EdgeColor','none')
+            plot(AVSNVdataPeaks{VWroi}{terminals(ccell)},'r','LineWidth',4)
+            patch([x fliplr(x)],[(CI_vLow)-0.3 (fliplr(CI_vHigh))-0.3],[0.5 0 0],'EdgeColor','none')
         end 
         alpha(0.3)
         set(gca,'YColor',[0 0 0]);
-        if BBBQ == 1
-            ylabel('BBB permeability percent change','FontName','Times')
-            title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
-        end 
-        if VWQ == 1
-            ylabel('Vessel width permeability percent change','FontName','Times')
-            title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
-        end 
+        ylabel('BBB permeability percent change','FontName','Times')
         
-        export_fig(dir) 
+        title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
+%         export_fig(dir) 
         
     end
     %}
