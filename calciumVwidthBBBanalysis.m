@@ -1596,9 +1596,9 @@ elseif tTypeQ == 1
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
-
+%{
 if tTypeQ == 0 
-    
+    %{
     %find where calcium peak onset is 
     changePt = 21;
 
@@ -1788,8 +1788,9 @@ elseif tTypeQ == 1
     end  
     %}
 end 
-                     
+%}                     
 %% plot calcium spike triggered averages 
+%{
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if BBBQ == 1
@@ -1800,7 +1801,7 @@ if VWQ == 1
 end 
 
 if tTypeQ == 0 
-    
+    %{
     allCTraces = cell(1,length(SNCdataPeaks{1}));
     allBTraces = cell(1,length(SNCdataPeaks{1}));
     allVTraces = cell(1,length(SNCdataPeaks{1}));
