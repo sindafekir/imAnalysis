@@ -1,6 +1,3 @@
-%NEED TO UPDATE
-%ADD ROI REUSE FOR BG SUBTRACTION AND INCLUDE CALCIUM ROI GENERATION CODE
-
 %% set paramaters
 
 vidNumQ = input('Input 0 if this is the first video. Input 1 otherwise. ');
@@ -58,12 +55,12 @@ end
 cutOffFrameQ = input('Does the registration ever get wonky? Yes = 1. No = 0. '); 
 if cutOffFrameQ == 1 
     cutOffFrame = input('Beyond what frame is the registration wonky? ');  
-    Ims = cell(1,length(inputStacks));
-    for Z = 1:length(inputStacks)
-        Ims{Z} = inputStacks{Z}(:,:,1:cutOffFrame);  
+    Ims = cell(1,length(input_Stacks));
+    for Z = 1:length(input_Stacks)
+        Ims{Z} = input_Stacks{Z}(:,:,1:cutOffFrame);  
     end 
 elseif cutOffFrameQ == 0 
-    Ims = inputStacks;
+    Ims = input_Stacks;
 end 
 
 clear inputStacks
@@ -109,16 +106,12 @@ FsubSBLs = cell(1,ROIinds(maxCells));
         end
  end        
 
-%% average across z and cells 
+%% average across z 
 
-FsubSBLs2 = cell(1,length(meanPixIntArray));
-FsubSBLs3 = zeros(length(meanPixIntArray),size(meanPixIntArray{2},2));
+CcellData = cell(1,length(meanPixIntArray));
  for ccell = 1:maxCells
-       FsubSBLs2{ROIinds(ccell)} = nanmean(FsubSBLs{ROIinds(ccell)},1);
-       FsubSBLs3(ROIinds(ccell),:) = FsubSBLs2{ROIinds(ccell)};
+       CcellData{ROIinds(ccell)} = nanmean(FsubSBLs{ROIinds(ccell)},1);
  end 
-
-CcellData = nanmean(FsubSBLs3,1);
 
 
 
