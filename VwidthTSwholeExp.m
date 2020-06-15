@@ -68,7 +68,8 @@ inputStacks = Ims;
 if vidNumQ == 0 
     numROIs = input("How many ROIs are we making? ");
     rotStackAngles = zeros(1,numROIs);
-    ROIboundDatas = cell(1,numROIs);   
+    ROIboundDatas = cell(1,numROIs); 
+    ROIstacks = cell(1,numROIs);
     for VROI = 1:numROIs 
         %rotate 
         [rotStack,rotateImAngle] = rotateStack(Ims);       
@@ -81,10 +82,7 @@ if vidNumQ == 0
         ROIboundData{3} = widths;
         ROIboundData{4} = heights;
         ROIboundDatas{VROI} = ROIboundData;
-    end 
-    %use the ROI boundaries to generate ROIstacks 
-    ROIstacks = cell(1,numROIs);
-    for VROI = 1:numROIs 
+        %use the ROI boundaries to generate ROIstacks 
         xmins = ROIboundDatas{VROI}{1};
         ymins = ROIboundDatas{VROI}{2};
         widths = ROIboundDatas{VROI}{3};

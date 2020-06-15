@@ -1798,7 +1798,7 @@ elseif tTypeQ == 1
 end 
 %}                     
 %% plot calcium spike triggered averages 
-
+%{
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
     BBBroi = input('What BBB ROI do you want to plot? ');
@@ -1813,7 +1813,7 @@ if saveQ == 1
 end 
 
 if tTypeQ == 0 
-    
+    %{
     allCTraces = cell(1,length(SNCdataPeaks{1}));
     allBTraces = cell(1,length(SNCdataPeaks{1}));
     allVTraces = cell(1,length(SNCdataPeaks{1}));
