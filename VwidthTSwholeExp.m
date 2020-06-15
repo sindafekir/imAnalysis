@@ -17,12 +17,13 @@ elseif chColor == 1 % red channel
     data = regStacks{2,4};
 end 
 
-% if this is not the first video of the data set 
+% if this is the first video of the data set 
 if vidNumQ == 0
     numZplanes = input('How many Z planes are there? ');
     framePeriod = input("What is the framePeriod? ");
     FPS = 1/framePeriod; 
     FPSstack = FPS/3;
+% if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 
     BGROIDir = uigetdir('*.*','WHERE ARE THE ROI COORDINATES?');    
