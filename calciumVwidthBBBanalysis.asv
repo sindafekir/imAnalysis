@@ -364,7 +364,7 @@ elseif smoothQ == 0
 end 
 %}
 %% plot event triggered averages
-%{
+
 %average across all terminals
 %NEEDS EDITING 
 %{
@@ -415,7 +415,7 @@ saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
 if saveQ == 1                
     dir1 = input('What folder are you saving these images in? ');
 end 
-for ccell = 11%:length(terminals)
+for ccell = 1%:length(terminals)
     baselineEndFrame = floor(20*(FPSstack));
     if CAQ == 1
         AVcData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
@@ -538,7 +538,7 @@ for ccell = 11%:length(terminals)
 %             xLimEnd = 32*FPSstack;
             xlim([1 length(AVcData{terminals(ccell)}{tType})])
 %             xlim([xLimStart xLimEnd])
-            ylim([-100 100])
+            ylim([-60 80])
             xlabel('time (s)')
             ylabel('percent change')
             
@@ -1398,7 +1398,7 @@ for vid = 1:length(vidList)
 %                 if locs(loc) > 197*FPSstack && locs(loc) < 206.5*FPSstack || locs(loc) > 256*FPSstack && locs(loc) < 265.5*FPSstack || locs(loc) > 509*FPSstack && locs(loc) < 518.5*FPSstack
                     sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
                     sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
-%                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
                     count = count + 1;
 %                 end 
             end 
@@ -1608,7 +1608,7 @@ end
 if tTypeQ == 0 
     %{
     %find where calcium peak onset is 
-    changePt = 122;
+    changePt = 21;
 
     %find the BBB traces that increase after calcium peak onset (changePt) 
     %{
