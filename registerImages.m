@@ -32,7 +32,7 @@ end
 %}
 
 %% separate volume imaging data into separate stacks per z plane and motion correction
-%{
+
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -46,7 +46,7 @@ if volIm == 1
     %need minimum 4 planes in Z for 3D registration to work-time to interpolate
     gVolStack5 = zeros(size(gVolStack,1),size(gVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
     rVolStack5 = zeros(size(rVolStack,1),size(rVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
-    for ind = 1:size(gVolStack,4)
+    parfor ind = 1:size(gVolStack,4)
         count = 1;
         for zplane = 1:size(gVolStack,3)+size(gVolStack,3)-1
             if rem(zplane,2) == 0
