@@ -1,6 +1,4 @@
 % get the data you need 
-%THIS ASSUMES YOU'RE DOING VOLUME IMAGING -TWEEK TO BE GOOD FOR 2D MOTION
-%CORRECTION 
 %{
 stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
 if stimStateQ == 0 
@@ -303,7 +301,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% baseline, smooth trial, and plot trial data 
-
+%{
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
 if CAQ == 1

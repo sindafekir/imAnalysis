@@ -32,7 +32,7 @@ end
 %}
 
 %% separate volume imaging data into separate stacks per z plane and motion correction
-%{
+
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 

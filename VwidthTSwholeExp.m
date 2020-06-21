@@ -11,18 +11,13 @@ regMatFileName = uigetfile('*.*','GET THE REGISTERED IMAGES');
 regMat = matfile(regMatFileName);
 regStacks = regMat.regStacks;
 
-if chColor == 0 % green channel 
-    data = regStacks{2,3};
-elseif chColor == 1 % red channel 
-    data = regStacks{2,4};
-end 
-
 % if this is the first video of the data set 
 if vidNumQ == 0
     numZplanes = input('How many Z planes are there? ');
     framePeriod = input("What is the framePeriod? ");
     FPS = 1/framePeriod; 
-    FPSstack = FPS/3;
+    FPSstack = FPS/numZplanes;
+    volQ = input('Input 1 if this is volume imaging data. Input 0 for 2D data. ');
 % if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 
@@ -36,6 +31,21 @@ elseif vidNumQ == 1
     ROIboundDatas = BGROIeMat.ROIboundDatas;
     numROIs = BGROIeMat.numROIs;
     rotStackAngles = BGROIeMat.rotStackAngles;
+    volQ = BGROIeMat.volQ;
+end 
+
+if volQ == 1 
+    if chColor == 0 % green channel 
+        data = regStacks{2,3};
+    elseif chColor == 1 % red channel 
+        data = regStacks{2,4};
+    end 
+elseif volQ == 0 
+    if chColor == 0 % green channel 
+        data = regStacks{2,1};
+    elseif chColor == 1 % red channel 
+        data = regStacks{2,2};
+    end 
 end 
 
 %% do background subtraction 
