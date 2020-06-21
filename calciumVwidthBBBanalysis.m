@@ -1,4 +1,6 @@
 % get the data you need 
+%THIS ASSUMES YOU'RE DOING VOLUME IMAGING -TWEEK TO BE GOOD FOR 2D MOTION
+%CORRECTION 
 %{
 stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
 if stimStateQ == 0 
@@ -147,14 +149,14 @@ end
 numTtypes = input('How many different trial types are there? ');
 
 % determine plotting start and end frames 
-plotStart = cell(1,length(cDataFullTrace));
-plotEnd = cell(1,length(cDataFullTrace));
-for vid = 1:length(cDataFullTrace)
+plotStart = cell(1,length(bDataFullTrace));
+plotEnd = cell(1,length(bDataFullTrace));
+for vid = 1:length(bDataFullTrace)
     count = 1;
     for trial = 1:length(state_start_f{vid})  
         if trialLengths{vid}(trial) ~= 0 
             if dataParseType == 0    
-                if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(cDataFullTrace{vid}{terminals(1)})
+                if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
                     plotStart{vid}(trial) = state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack);
                     plotEnd{vid}(trial) = state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack);
                     
@@ -179,15 +181,20 @@ if VWQ == 1
     Veta = cell(1,length(vDataFullTrace{1}));
 end 
 if dataParseType == 0  
-    for ccell = 1:length(terminals)
+    if CAQ == 0 
+        ccellLen = 1;
+    elseif CAQ == 1 
+        ccellLen = length(terminals);
+    end 
+    for ccell = 1:ccellLen
         count1 = 1;
         count2 = 1;
         count3 = 1;
         count4 = 1;
-        for vid = 1:length(cDataFullTrace)    
+        for vid = 1:length(bDataFullTrace)    
             for trial = 1:length(plotStart{vid}) 
                 if trialLengths{vid}(trial) ~= 0 
-                     if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(cDataFullTrace{vid}{terminals(1)})
+                     if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
                         %if the blue light is on
                         if TrialTypes{vid}(trial,2) == 1
                             %if it is a 2 sec trial 
@@ -410,7 +417,9 @@ end
 % set paramaters for plotting 
 AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
 if AVQ == 1 
-    termList = 1:length(terminals);
+    if CAQ == 1 
+        termList = 1:length(terminals);
+    end 
 end 
 RedAVQ = input('Input 1 to average across all red trials. Input 0 otherwise.');
 if RedAVQ == 1
@@ -456,11 +465,13 @@ if AVQ == 1
         count = 1;
         countB = 1;
         countV = 1;
-        for ccell = termList              
-            for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
-                allNScETA{1}{tType}(count,:) = nsCeta{terminals(ccell)}{tType}(trial,:);
-                count = count + 1;
-            end          
+        for ccell = termList        
+            if CAQ == 1 
+                for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
+                    allNScETA{1}{tType}(count,:) = nsCeta{terminals(ccell)}{tType}(trial,:);
+                    count = count + 1;
+                end        
+            end 
         end 
         for BBBroi = 1:length(bDataFullTrace{1})
             for trial = 1:size(nsBeta{BBBroi}{tType},1)
@@ -494,17 +505,21 @@ if RedAVQ == 1
     countV = 1;
     for tType = 1:length(redTrialTtypeInds)
         if AVQ == 1
-            for trial = 1:size(nsCeta{1}{redTrialTtypeInds(tType)},1)
-                allRedNScETA{1}{3}(count,:) = nsCeta{1}{redTrialTtypeInds(tType)}(trial,1:size(nsCeta{1}{redTrialTtypeInds(1)},2)); 
-                count = count + 1;
-            end
-        elseif AVQ == 0
-            for ccell = termList 
-                for trial = 1:size(nsCeta{terminals(ccell)}{redTrialTtypeInds(tType)},1)
-                    allRedNScETA{terminals(ccell)}{3}(count,:) = nsCeta{terminals(ccell)}{redTrialTtypeInds(tType)}(trial,1:size(nsCeta{terminals(ccell)}{redTrialTtypeInds(1)},2)); 
+            if CAQ == 1 
+                for trial = 1:size(nsCeta{1}{redTrialTtypeInds(tType)},1)
+                    allRedNScETA{1}{3}(count,:) = nsCeta{1}{redTrialTtypeInds(tType)}(trial,1:size(nsCeta{1}{redTrialTtypeInds(1)},2)); 
                     count = count + 1;
-                end 
-            end                
+                end
+            end 
+        elseif AVQ == 0
+            if CAQ == 1 
+                for ccell = termList 
+                    for trial = 1:size(nsCeta{terminals(ccell)}{redTrialTtypeInds(tType)},1)
+                        allRedNScETA{terminals(ccell)}{3}(count,:) = nsCeta{terminals(ccell)}{redTrialTtypeInds(tType)}(trial,1:size(nsCeta{terminals(ccell)}{redTrialTtypeInds(1)},2)); 
+                        count = count + 1;
+                    end 
+                end      
+            end 
         end 
         for Btrial = 1:size(nsBeta{BBBroi}{redTrialTtypeInds(tType)},1)
             allRedNSbETA{BBBroi}{3}(countB,:) = nsBeta{BBBroi}{redTrialTtypeInds(tType)}(Btrial,1:size(nsBeta{BBBroi}{redTrialTtypeInds(1)},2));
@@ -537,144 +552,142 @@ if AVQ == 0
             CI_cHigh = cell(1,numTtypes);
         end 
         if BBBQ == 1
-            AVbData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+            AVbData = cell(1,length(Beta));
             SEMb = cell(1,numTtypes);
             STDb = cell(1,numTtypes);
             CI_bLow = cell(1,numTtypes);
             CI_bHigh = cell(1,numTtypes);
         end 
         if VWQ == 1
-            AVvData = cell(1,length(nsCeta{terminals(ccell)}{tType}));
+            AVvData = cell(1,length(Beta));
             SEMv = cell(1,numTtypes);
             STDv = cell(1,numTtypes);
             CI_vLow = cell(1,numTtypes);
             CI_vHigh = cell(1,numTtypes);
         end 
-        for tType = tTypeList
-            if isempty(nsCeta{terminals(ccell)}{tType}) == 0  
-                if CAQ == 1
-                    SEMc{terminals(ccell)}{tType} = (nanstd(nsCeta{terminals(ccell)}{tType}))/(sqrt(size(nsCeta{terminals(ccell)}{tType},1))); % Standard Error            
-                    STDc{terminals(ccell)}{tType} = nanstd(nsCeta{terminals(ccell)}{tType});
-                    ts_cLow = tinv(0.025,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
-                    ts_cHigh = tinv(0.975,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
-                    CI_cLow{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cLow*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
-                    CI_cHigh{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cHigh*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
-                    x = 1:length(CI_cLow{terminals(ccell)}{tType});
-                    AVcData{terminals(ccell)}{tType} = nanmean(nsCeta{terminals(ccell)}{tType},1);
-                end 
-                if BBBQ == 1
-                    % calculate the 95% confidence interval 
-                    SEMb{BBBroi}{tType} = (nanstd(nsBeta{BBBroi}{tType}))/(sqrt(size(nsBeta{BBBroi}{tType},1))); % Standard Error            
-                    STDb{BBBroi}{tType} = nanstd(nsBeta{BBBroi}{tType});
-                    ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
-                    ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
-                    CI_bLow{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bLow*SEMb{BBBroi}{tType});  % Confidence Intervals
-                    CI_bHigh{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bHigh*SEMb{BBBroi}{tType});  % Confidence Intervals
-                    x = 1:length(CI_bLow{BBBroi}{tType});
-                    AVbData{BBBroi}{tType} = nanmean(nsBeta{BBBroi}{tType},1);
-                end 
-                if VWQ == 1
-                    % calculate the 95% confidence interval 
-                    SEMv{VWroi}{tType} = (nanstd(nsVeta{VWroi}{tType}))/(sqrt(size(nsVeta{VWroi}{tType},1))); % Standard Error            
-                    STDv{VWroi}{tType} = nanstd(nsVeta{VWroi}{tType});
-                    ts_vLow = tinv(0.025,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
-                    ts_vHigh = tinv(0.975,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
-                    CI_vLow{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vLow*SEMv{VWroi}{tType});  % Confidence Intervals
-                    CI_vHigh{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vHigh*SEMv{VWroi}{tType});  % Confidence Intervals
-                    x = 1:length(CI_vLow{VWroi}{tType});
-                    AVvData{VWroi}{tType} = nanmean(nsVeta{VWroi}{tType},1);
-                end 
-                fig = figure;             
-                hold all;
-                if tType == 1 || tType == 3 
-                    Frames = size(nsCeta{terminals(ccell)}{tType},2);        
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
-                    FrameVals = floor((1:FPSstack*1:Frames)-1); 
-                elseif tType == 2 || tType == 4 
-                    Frames = size(nsCeta{terminals(ccell)}{tType},2);
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
-                    FrameVals = floor((1:FPSstack*1:Frames)-1); 
-                end 
-                if BBBpQ == 1 
-                    plot(AVbData{BBBroi}{tType},'r','LineWidth',3)
-                    patch([x fliplr(x)],[CI_bLow{BBBroi}{tType} fliplr(CI_bHigh{BBBroi}{tType})],[0.5 0 0],'EdgeColor','none')
-                end 
-                if CApQ == 1 
-                    plot(AVcData{terminals(ccell)}{tType},'b','LineWidth',3)
-                    patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
-                end 
-                if VWpQ == 1
-                    plot(AVvData{VWroi}{tType},'k','LineWidth',3)
-                    patch([x fliplr(x)],[CI_vLow{VWroi}{tType} fliplr(CI_vHigh{VWroi}{tType})],'k','EdgeColor','none')            
-                end 
-                if tType == 1 
-                    plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-                elseif tType == 3 
-    %                 plot(AVbData{tType},'k','LineWidth',3)
-                    plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
-    %                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
-                elseif tType == 2 
-                    plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
-                elseif tType == 4 
-    %                 plot(AVbData{tType},'r','LineWidth',3)
-                    plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-                end
-    %             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
-    %             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
-    %                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
-    %             end 
-    %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
-    %             legend('vessel width')
-                ax=gca;
-                ax.XTick = FrameVals;
-                ax.XTickLabel = sec_TimeVals;
-                ax.FontSize = 30;
-                ax.FontName = 'Times';
+        for tType = tTypeList          
+            if CAQ == 1
+                SEMc{terminals(ccell)}{tType} = (nanstd(nsCeta{terminals(ccell)}{tType}))/(sqrt(size(nsCeta{terminals(ccell)}{tType},1))); % Standard Error            
+                STDc{terminals(ccell)}{tType} = nanstd(nsCeta{terminals(ccell)}{tType});
+                ts_cLow = tinv(0.025,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(nsCeta{terminals(ccell)}{tType},1)-1);% T-Score for 95% CI
+                CI_cLow{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cLow*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
+                CI_cHigh{terminals(ccell)}{tType} = (nanmean(nsCeta{terminals(ccell)}{tType},1)) + (ts_cHigh*SEMc{terminals(ccell)}{tType});  % Confidence Intervals
+                x = 1:length(CI_cLow{terminals(ccell)}{tType});
+                AVcData{terminals(ccell)}{tType} = nanmean(nsCeta{terminals(ccell)}{tType},1);
+            end 
+            if BBBQ == 1
+                % calculate the 95% confidence interval 
+                SEMb{BBBroi}{tType} = (nanstd(nsBeta{BBBroi}{tType}))/(sqrt(size(nsBeta{BBBroi}{tType},1))); % Standard Error            
+                STDb{BBBroi}{tType} = nanstd(nsBeta{BBBroi}{tType});
+                ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
+                CI_bLow{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bLow*SEMb{BBBroi}{tType});  % Confidence Intervals
+                CI_bHigh{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bHigh*SEMb{BBBroi}{tType});  % Confidence Intervals
+                x = 1:length(CI_bLow{BBBroi}{tType});
+                AVbData{BBBroi}{tType} = nanmean(nsBeta{BBBroi}{tType},1);
+            end 
+            if VWQ == 1
+                % calculate the 95% confidence interval 
+                SEMv{VWroi}{tType} = (nanstd(nsVeta{VWroi}{tType}))/(sqrt(size(nsVeta{VWroi}{tType},1))); % Standard Error            
+                STDv{VWroi}{tType} = nanstd(nsVeta{VWroi}{tType});
+                ts_vLow = tinv(0.025,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
+                ts_vHigh = tinv(0.975,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
+                CI_vLow{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vLow*SEMv{VWroi}{tType});  % Confidence Intervals
+                CI_vHigh{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vHigh*SEMv{VWroi}{tType});  % Confidence Intervals
+                x = 1:length(CI_vLow{VWroi}{tType});
+                AVvData{VWroi}{tType} = nanmean(nsVeta{VWroi}{tType},1);
+            end 
+            fig = figure;             
+            hold all;
+            if tType == 1 || tType == 3 
+                Frames = size(nsBeta{BBBroi}{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*1:Frames)-1); 
+            elseif tType == 2 || tType == 4 
+                Frames = size(nsBeta{BBBroi}{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*1:Frames)-1); 
+            end 
+            if BBBpQ == 1 
+                plot(AVbData{BBBroi}{tType},'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType} fliplr(CI_bHigh{BBBroi}{tType})],[0.5 0 0],'EdgeColor','none')
+            end 
+            if CApQ == 1 
+                plot(AVcData{terminals(ccell)}{tType},'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
+            end 
+            if VWpQ == 1
+                plot(AVvData{VWroi}{tType},'k','LineWidth',3)
+                patch([x fliplr(x)],[CI_vLow{VWroi}{tType} fliplr(CI_vHigh{VWroi}{tType})],'k','EdgeColor','none')            
+            end 
+            if tType == 1 
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            elseif tType == 3 
+%                 plot(AVbData{tType},'k','LineWidth',3)
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+%                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
+            elseif tType == 2 
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
+            elseif tType == 4 
+%                 plot(AVbData{tType},'r','LineWidth',3)
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+            end
+%             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
+%             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
+%                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
+%             end 
+%             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
+%             legend('vessel width')
+            ax=gca;
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 30;
+            ax.FontName = 'Times';
 %                 xLimStart = 17.8*FPSstack;
 %                 xLimEnd = 22*FPSstack;
-                xlim([1 length(AVcData{terminals(ccell)}{tType})])
+            xlim([1 length(AVbData{BBBroi}{tType})])
 %                 xlim([xLimStart xLimEnd])
-                ylim([-100 100])
-                xlabel('time (s)')
-                ylabel('percent change')
-                % initialize empty string array 
-                label = strings;
-                if BBBpQ == 1
-                    label = append(label,sprintf('BBB ROI %d',BBBroi)); 
-                end 
-                if CApQ == 1 
-                    label = append(label,sprintf('  Ca ROI %d',terminals(ccell)));
-                end 
-                if VWpQ == 1
-                    label = append(label,sprintf('Vessel width ROI %d',VWroi));
-                end 
-                title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-                set(fig,'position', [100 100 900 900])
-                alpha(0.5) 
-               %make the directory and save the images            
-                if saveQ == 1                
-                    if tType == 1
-                        label2 = (' 2 sec Blue Light');
-                    elseif tType == 2
-                        label2 = (' 20 sec Blue Light');
-                    elseif tType == 3
-                        label2 = (' 2 sec Red Light');
-                    elseif tType == 4
-                        label2 = (' 20 sec Red Light');
-                    end   
-                    dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
-                    export_fig(dir3)
-                end            
+            ylim([-100 100])
+            xlabel('time (s)')
+            ylabel('percent change')
+            % initialize empty string array 
+            label = strings;
+            if BBBpQ == 1
+                label = append(label,sprintf('BBB ROI %d',BBBroi)); 
             end 
+            if CApQ == 1 
+                label = append(label,sprintf('  Ca ROI %d',terminals(ccell)));
+            end 
+            if VWpQ == 1
+                label = append(label,sprintf('Vessel width ROI %d',VWroi));
+            end 
+            title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            set(fig,'position', [100 100 900 900])
+            alpha(0.5) 
+           %make the directory and save the images            
+            if saveQ == 1                
+                if tType == 1
+                    label2 = (' 2 sec Blue Light');
+                elseif tType == 2
+                    label2 = (' 20 sec Blue Light');
+                elseif tType == 3
+                    label2 = (' 2 sec Red Light');
+                elseif tType == 4
+                    label2 = (' 20 sec Red Light');
+                end   
+                dir2 = strrep(dir1,'\','/');
+                dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                export_fig(dir3)
+            end                      
         end 
     end 
 elseif AVQ == 1
@@ -687,144 +700,142 @@ elseif AVQ == 1
             CI_cHigh = cell(1,numTtypes);
         end 
         if BBBQ == 1
-            AVbData = cell(1,length(nsCeta{1}{tType}));
+            AVbData = cell(1,length(nsBeta{1}{tType}));
             SEMb = cell(1,numTtypes);
             STDb = cell(1,numTtypes);
             CI_bLow = cell(1,numTtypes);
             CI_bHigh = cell(1,numTtypes);
         end 
         if VWQ == 1
-            AVvData = cell(1,length(nsCeta{1}{tType}));
+            AVvData = cell(1,length(nsVeta{1}{tType}));
             SEMv = cell(1,numTtypes);
             STDv = cell(1,numTtypes);
             CI_vLow = cell(1,numTtypes);
             CI_vHigh = cell(1,numTtypes);
         end 
-        for tType = tTypeList
-            if isempty(nsCeta{1}{tType}) == 0  
-                if CAQ == 1
-                    SEMc{1}{tType} = (nanstd(nsCeta{1}{tType}))/(sqrt(size(nsCeta{1}{tType},1))); % Standard Error            
-                    STDc{1}{tType} = nanstd(nsCeta{1}{tType});
-                    ts_cLow = tinv(0.025,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
-                    ts_cHigh = tinv(0.975,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
-                    CI_cLow{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cLow*SEMc{1}{tType});  % Confidence Intervals
-                    CI_cHigh{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cHigh*SEMc{1}{tType});  % Confidence Intervals
-                    x = 1:length(CI_cLow{1}{tType});
-                    AVcData{1}{tType} = nanmean(nsCeta{1}{tType},1);
-                end 
-                if BBBQ == 1
-                    % calculate the 95% confidence interval 
-                    SEMb{1}{tType} = (nanstd(nsBeta{1}{tType}))/(sqrt(size(nsBeta{1}{tType},1))); % Standard Error            
-                    STDb{1}{tType} = nanstd(nsBeta{1}{tType});
-                    ts_bLow = tinv(0.025,size(nsBeta{1}{tType},1)-1);% T-Score for 95% CI
-                    ts_bHigh = tinv(0.975,size(nsBeta{1}{tType},1)-1);% T-Score for 95% CI
-                    CI_bLow{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bLow*SEMb{1}{tType});  % Confidence Intervals
-                    CI_bHigh{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bHigh*SEMb{1}{tType});  % Confidence Intervals
-                    x = 1:length(CI_bLow{1}{tType});
-                    AVbData{1}{tType} = nanmean(nsBeta{1}{tType},1);
-                end 
-                if VWQ == 1
-                    % calculate the 95% confidence interval 
-                    SEMv{1}{tType} = (nanstd(nsVeta{1}{tType}))/(sqrt(size(nsVeta{1}{tType},1))); % Standard Error            
-                    STDv{1}{tType} = nanstd(nsVeta{1}{tType});
-                    ts_vLow = tinv(0.025,size(nsVeta{1}{tType},1)-1);% T-Score for 95% CI
-                    ts_vHigh = tinv(0.975,size(nsVeta{1}{tType},1)-1);% T-Score for 95% CI
-                    CI_vLow{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vLow*SEMv{1}{tType});  % Confidence Intervals
-                    CI_vHigh{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vHigh*SEMv{1}{tType});  % Confidence Intervals
-                    x = 1:length(CI_vLow{1}{tType});
-                    AVvData{1}{tType} = nanmean(nsVeta{1}{tType},1);
-                end 
-                fig = figure;             
-                hold all;
-                if tType == 1 || tType == 3 
-                    Frames = size(nsCeta{1}{tType},2);        
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
-                    FrameVals = floor((1:FPSstack*1:Frames)-1); 
-                elseif tType == 2 || tType == 4 
-                    Frames = size(nsCeta{1}{tType},2);
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
-                    FrameVals = floor((1:FPSstack*1:Frames)-1); 
-                end 
-                if BBBpQ == 1 
-                    plot(AVbData{1}{tType},'r','LineWidth',3)
-                    patch([x fliplr(x)],[CI_bLow{1}{tType} fliplr(CI_bHigh{1}{tType})],[0.5 0 0],'EdgeColor','none')
-                end 
-                if CApQ == 1 
-                    plot(AVcData{1}{tType},'b','LineWidth',3)
-                    patch([x fliplr(x)],[CI_cLow{1}{tType} fliplr(CI_cHigh{1}{tType})],[0 0 0.5],'EdgeColor','none')
-                end 
-                if VWpQ == 1
-                    plot(AVvData{1}{tType},'k','LineWidth',3)
-                    patch([x fliplr(x)],[CI_vLow{1}{tType} fliplr(CI_vHigh{1}{tType})],'k','EdgeColor','none')            
-                end 
-                if tType == 1 
-                    plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-                elseif tType == 3 
-    %                 plot(AVbData{tType},'k','LineWidth',3)
-                    plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
-    %                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
-                elseif tType == 2 
-                    plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
-                elseif tType == 4 
-    %                 plot(AVbData{tType},'r','LineWidth',3)
-                    plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-                end
-    %             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
-    %             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
-    %                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
-    %             end 
-    %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
-    %             legend('vessel width')
-                ax=gca;
-                ax.XTick = FrameVals;
-                ax.XTickLabel = sec_TimeVals;
-                ax.FontSize = 30;
-                ax.FontName = 'Times';
+        for tType = tTypeList            
+            if CAQ == 1
+                SEMc{1}{tType} = (nanstd(nsCeta{1}{tType}))/(sqrt(size(nsCeta{1}{tType},1))); % Standard Error            
+                STDc{1}{tType} = nanstd(nsCeta{1}{tType});
+                ts_cLow = tinv(0.025,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
+                CI_cLow{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cLow*SEMc{1}{tType});  % Confidence Intervals
+                CI_cHigh{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cHigh*SEMc{1}{tType});  % Confidence Intervals
+                x = 1:length(CI_cLow{1}{tType});
+                AVcData{1}{tType} = nanmean(nsCeta{1}{tType},1);
+            end 
+            if BBBQ == 1
+                % calculate the 95% confidence interval 
+                SEMb{1}{tType} = (nanstd(nsBeta{1}{tType}))/(sqrt(size(nsBeta{1}{tType},1))); % Standard Error            
+                STDb{1}{tType} = nanstd(nsBeta{1}{tType});
+                ts_bLow = tinv(0.025,size(nsBeta{1}{tType},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(nsBeta{1}{tType},1)-1);% T-Score for 95% CI
+                CI_bLow{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bLow*SEMb{1}{tType});  % Confidence Intervals
+                CI_bHigh{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bHigh*SEMb{1}{tType});  % Confidence Intervals
+                x = 1:length(CI_bLow{1}{tType});
+                AVbData{1}{tType} = nanmean(nsBeta{1}{tType},1);
+            end 
+            if VWQ == 1
+                % calculate the 95% confidence interval 
+                SEMv{1}{tType} = (nanstd(nsVeta{1}{tType}))/(sqrt(size(nsVeta{1}{tType},1))); % Standard Error            
+                STDv{1}{tType} = nanstd(nsVeta{1}{tType});
+                ts_vLow = tinv(0.025,size(nsVeta{1}{tType},1)-1);% T-Score for 95% CI
+                ts_vHigh = tinv(0.975,size(nsVeta{1}{tType},1)-1);% T-Score for 95% CI
+                CI_vLow{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vLow*SEMv{1}{tType});  % Confidence Intervals
+                CI_vHigh{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vHigh*SEMv{1}{tType});  % Confidence Intervals
+                x = 1:length(CI_vLow{1}{tType});
+                AVvData{1}{tType} = nanmean(nsVeta{1}{tType},1);
+            end 
+            fig = figure;             
+            hold all;
+            if tType == 1 || tType == 3 
+                Frames = size(nsBeta{1}{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*1:Frames)-1); 
+            elseif tType == 2 || tType == 4 
+                Frames = size(nsBeta{1}{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*1:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*1:Frames)-1); 
+            end 
+            if BBBpQ == 1 
+                plot(AVbData{1}{tType},'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{1}{tType} fliplr(CI_bHigh{1}{tType})],[0.5 0 0],'EdgeColor','none')
+            end 
+            if CApQ == 1 
+                plot(AVcData{1}{tType},'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{1}{tType} fliplr(CI_cHigh{1}{tType})],[0 0 0.5],'EdgeColor','none')
+            end 
+            if VWpQ == 1
+                plot(AVvData{1}{tType},'k','LineWidth',3)
+                patch([x fliplr(x)],[CI_vLow{1}{tType} fliplr(CI_vHigh{1}{tType})],'k','EdgeColor','none')            
+            end 
+            if tType == 1 
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            elseif tType == 3 
+%                 plot(AVbData{tType},'k','LineWidth',3)
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+%                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
+            elseif tType == 2 
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
+            elseif tType == 4 
+%                 plot(AVbData{tType},'r','LineWidth',3)
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+            end
+%             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
+%             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
+%                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
+%             end 
+%             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
+%             legend('vessel width')
+            ax=gca;
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 30;
+            ax.FontName = 'Times';
 %                 xLimStart = 18*FPSstack;
 %                 xLimEnd = 32*FPSstack;
-                xlim([1 length(AVcData{1}{tType})])
+            xlim([1 length(AVbData{1}{tType})])
 %                 xlim([xLimStart xLimEnd])
-                ylim([-100 100])
-                xlabel('time (s)')
-                ylabel('percent change')
-                % initialize empty string array 
-                label = strings;
-                if BBBpQ == 1
-                    label = append(label,'BBB ROIs averaged'); 
-                end 
-                if CApQ == 1 
-                    label = append(label,'  Ca ROIs averaged');
-                end 
-                if VWpQ == 1
-                    label = append(label,'Vessel width ROIs averaged ');
-                end 
-                title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-                set(fig,'position', [100 100 900 900])
-                alpha(0.5) 
-               %make the directory and save the images            
-                if saveQ == 1                
-                    if tType == 1
-                        label2 = (' 2 sec Blue Light');
-                    elseif tType == 2
-                        label2 = (' 20 sec Blue Light');
-                    elseif tType == 3
-                        label2 = (' 2 sec Red Light');
-                    elseif tType == 4
-                        label2 = (' 20 sec Red Light');
-                    end   
-                    dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
-                    export_fig(dir3)
-                end            
+            ylim([-100 100])
+            xlabel('time (s)')
+            ylabel('percent change')
+            % initialize empty string array 
+            label = strings;
+            if BBBpQ == 1
+                label = append(label,'BBB ROIs averaged'); 
             end 
+            if CApQ == 1 
+                label = append(label,'  Ca ROIs averaged');
+            end 
+            if VWpQ == 1
+                label = append(label,'Vessel width ROIs averaged ');
+            end 
+            title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            set(fig,'position', [100 100 900 900])
+            alpha(0.5) 
+           %make the directory and save the images            
+            if saveQ == 1                
+                if tType == 1
+                    label2 = (' 2 sec Blue Light');
+                elseif tType == 2
+                    label2 = (' 20 sec Blue Light');
+                elseif tType == 3
+                    label2 = (' 2 sec Red Light');
+                elseif tType == 4
+                    label2 = (' 20 sec Red Light');
+                end   
+                dir2 = strrep(dir1,'\','/');
+                dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                export_fig(dir3)
+            end                 
         end 
 end 
 %}
