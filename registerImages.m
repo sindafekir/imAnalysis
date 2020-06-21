@@ -46,6 +46,7 @@ if volIm == 1
     %need minimum 4 planes in Z for 3D registration to work-time to interpolate
     gVolStack5 = zeros(size(gVolStack,1),size(gVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
     rVolStack5 = zeros(size(rVolStack,1),size(rVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
+    tic
     parfor ind = 1:size(gVolStack,4)
         count = 1;
         for zplane = 1:size(gVolStack,3)+size(gVolStack,3)-1
@@ -59,7 +60,7 @@ if volIm == 1
             end 
         end 
     end 
-
+    toc
     gTemplate = mean(gVolStack5,4);
     rTemplate = mean(rVolStack5,4);
     %create optimizer and metric, setting modality to multimodal because the
