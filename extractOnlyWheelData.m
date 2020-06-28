@@ -10,6 +10,8 @@ LED3_amp=parsedStruct.c3_amp;
 
 [TrialTypes] = determineTrialType(LED1_amp,LED2_amp,LED3_amp);
 
+%%%
+
 state = 8;
 %Find state start and end times 
 [state_start_t,state_end_t] = find_state_bounds(teensyState,sessionTime,state);

@@ -60,16 +60,24 @@ end
 %get trial data to generate stimulus event triggered averages (ETAs)
 ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
 if ETAQ == 1 
+    velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
     TrialTypes = cell(1,length(vidList));
     trialLengths2 = cell(1,length(vidList));
+    velWheelData = cell(1,length(vidList));
+    wDataFullTrace = cell(1,length(vidList));
     for vid = 1:length(vidList)
         [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
         state_start_f{vid} = floor(statestartf/3);
         state_end_f2{vid} = floor(stateendf/3);
         TrialTypes{vid} = trialTypes(1:length(statestartf),:);
         trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
+        if velWheelQ == 1 
+            velWheelData{vid} = vel_wheel_data;
+            %resample wheel data 
+            wDataFullTrace{vid} = resample(velWheelData{vid},length(bDataFullTrace{vid}{1}),length(velWheelData{vid}));
+        end 
     end 
     
     % this fixes discrete time rounding errors to ensure the stimuli are
@@ -156,13 +164,11 @@ for vid = 1:length(bDataFullTrace)
             if dataParseType == 0    
                 if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
                     plotStart{vid}(trial) = state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack);
-                    plotEnd{vid}(trial) = state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack);
-                    
+                    plotEnd{vid}(trial) = state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack);                    
                 end            
             elseif dataParseType == 1  
                 plotStart{vid}(trial) = state_start_f{vid}(trial);
-                plotEnd{vid}(trial) = state_end_f{vid}(trial);
-                
+                plotEnd{vid}(trial) = state_end_f{vid}(trial);                
             end   
         end 
     end 
@@ -178,100 +184,111 @@ end
 if VWQ == 1
     Veta = cell(1,length(vDataFullTrace{1}));
 end 
-if dataParseType == 0  
-    if CAQ == 0 
-        ccellLen = 1;
-    elseif CAQ == 1 
-        ccellLen = length(terminals);
-    end 
-    for ccell = 1:ccellLen
-        count1 = 1;
-        count2 = 1;
-        count3 = 1;
-        count4 = 1;
-        for vid = 1:length(bDataFullTrace)    
-            for trial = 1:length(plotStart{vid}) 
-                if trialLengths{vid}(trial) ~= 0 
-                     if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
-                        %if the blue light is on
-                        if TrialTypes{vid}(trial,2) == 1
-                            %if it is a 2 sec trial 
-                            if trialLengths{vid}(trial) == floor(2*FPSstack)     
-                                if CAQ == 1
-                                    Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                end 
-                                if BBBQ == 1 
-                                    for BBBroi = 1:length(bDataFullTrace{1})
-                                        Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
-                                end 
-                                if VWQ == 1
-                                    for VWroi = 1:length(vDataFullTrace{1})
-                                        Veta{VWroi}{1}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
-                                end 
-                                count1 = count1 + 1;                    
-                            %if it is a 20 sec trial
-                            elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-                                if CAQ == 1
-                                    Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                end 
-                                if BBBQ == 1 
-                                    for BBBroi = 1:length(bDataFullTrace{1})
-                                        Beta{BBBroi}{2}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
-                                end 
-                                if VWQ == 1
-                                    for VWroi = 1:length(vDataFullTrace{1})
-                                        Veta{VWroi}{2}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
-                                end 
-                                count2 = count2 + 1;
-                            end 
-                        %if the red light is on 
-                        elseif TrialTypes{vid}(trial,2) == 2
-                            %if it is a 2 sec trial 
-                            if trialLengths{vid}(trial) == floor(2*FPSstack)
-                                if CAQ == 1
-                                    Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                end 
-                                if BBBQ == 1 
-                                    for BBBroi = 1:length(bDataFullTrace{1})
-                                        Beta{BBBroi}{3}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
-                                end 
-                                if VWQ == 1
-                                    for VWroi = 1:length(vDataFullTrace{1})
-                                        Veta{VWroi}{3}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end
-                                end 
+if velWheelQ == 1 
+    Weta = cell(1,numTtypes);
+end 
 
-                                count3 = count3 + 1;                    
-                            %if it is a 20 sec trial
-                            elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-                                if CAQ == 1
-                                    Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+if CAQ == 0 
+    ccellLen = 1;
+elseif CAQ == 1 
+    ccellLen = length(terminals);
+end 
+for ccell = 1:ccellLen
+    count1 = 1;
+    count2 = 1;
+    count3 = 1;
+    count4 = 1;
+    for vid = 1:length(bDataFullTrace)    
+        for trial = 1:length(plotStart{vid}) 
+            if trialLengths{vid}(trial) ~= 0 
+                 if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
+                    %if the blue light is on
+                    if TrialTypes{vid}(trial,2) == 1
+                        %if it is a 2 sec trial 
+                        if trialLengths{vid}(trial) == floor(2*FPSstack)     
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{1})
+                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
                                 end 
-                                if BBBQ == 1 
-                                    for BBBroi = 1:length(bDataFullTrace{1})
-                                        Beta{BBBroi}{4}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{1})
+                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
                                 end 
-                                if VWQ == 1
-                                    for VWroi = 1:length(vDataFullTrace{1})
-                                        Veta{VWroi}{4}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                                    end 
+                            end 
+                            if velWheelQ == 1 
+                                Weta{1}(count1,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            count1 = count1 + 1;                    
+                        %if it is a 20 sec trial
+                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{1})
+                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
                                 end 
-                                count4 = count4 + 1;
-                            end             
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{1})
+                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                end 
+                            end 
+                            if velWheelQ == 1 
+                                Weta{2}(count2,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            count2 = count2 + 1;
                         end 
+                    %if the red light is on 
+                    elseif TrialTypes{vid}(trial,2) == 2
+                        %if it is a 2 sec trial 
+                        if trialLengths{vid}(trial) == floor(2*FPSstack)
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{1})
+                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{1})
+                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                end
+                            end 
+                            if velWheelQ == 1 
+                                Weta{3}(count3,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            count3 = count3 + 1;                    
+                        %if it is a 20 sec trial
+                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{1})
+                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{1})
+                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                end 
+                            end 
+                            if velWheelQ == 1 
+                                Weta{4}(count4,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                            end 
+                            count4 = count4 + 1;
+                        end             
                     end 
                 end 
-            end         
-        end
-    end 
-elseif dataParseType == 1
-    %THIS NEEDS TO BE ADDED IN EVENTUALLY 
+            end 
+        end         
+    end
 end 
 
 % remove rows that are all 0 and then add 100 to each trace to avoid
@@ -298,9 +315,15 @@ for tType = 1:numTtypes
             Veta{VWroi}{tType} = Veta{VWroi}{tType} + 100;
         end 
     end 
+    if velWheelQ == 1 
+        nonZeroRowsW = all(Weta{tType} == 0,2);
+        Weta{tType}(nonZeroRowsW,:) = NaN;
+        Weta{tType} = Weta{tType} + 100;
+    end 
 end 
 %}
 %% baseline, smooth trial, and plot trial data 
+% ADD IN LOGIC TO PLOT WHEEL VELOCITY DATA 
 %{
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
@@ -312,6 +335,9 @@ if BBBQ == 1
 end 
 if VWQ == 1
     nVeta = cell(1,length(vDataFullTrace{1}));
+end 
+if velWheelQ == 1 
+    nWeta = cell(1,numTtypes);
 end 
 if dataParseType == 0 %peristimulus data to plot 
     %sec_before_stim_start
@@ -331,8 +357,10 @@ if dataParseType == 0 %peristimulus data to plot
                 nVeta{VWroi}{tType} = (Veta{VWroi}{tType} ./ nanmean(Veta{VWroi}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100;        
             end 
         end 
-    end 
-    
+        if velWheelQ == 1 
+             nWeta{tType} = (Weta{tType} ./ nanmean(Weta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+        end 
+    end    
 elseif dataParseType == 1 %only stimulus data to plot 
     if CAQ == 1
         nCeta = Ceta;
@@ -342,6 +370,9 @@ elseif dataParseType == 1 %only stimulus data to plot
     end 
     if VWQ == 1
         nVeta = Veta;
+    end 
+    if velWheelQ == 1 
+        nWeta = Weta; 
     end 
 end 
 
@@ -357,6 +388,9 @@ if smoothQ ==  1
     if VWQ == 1
         nsVeta = cell(1,length(vDataFullTrace{1}));
     end
+    if velWheelQ == 1 
+        nsWeta = cell(1,numTtypes);
+    end 
     for tType = 1:numTtypes
         if CAQ == 1
             for ccell = 1:length(terminals)
@@ -382,33 +416,25 @@ if smoothQ ==  1
                 end 
             end 
         end 
+        if velWheelQ == 1 
+            for wTrial = 1:size(nWeta{tType},1)
+                [sW_Data] = MovMeanSmoothData(nWeta{tType}(wTrial,:),filtTime,FPSstack);
+                nsWeta{tType}(wTrial,:) = sW_Data-100;   
+            end 
+        end 
     end 
 elseif smoothQ == 0
     if CAQ == 1
-        nsCeta = cell(1,length(cDataFullTrace{1}));
+        nsCeta = nCeta;
     end 
     if BBBQ == 1 
-        nsBeta = cell(1,length(bDataFullTrace{1}));
+        nsBeta = nBeta;
     end 
     if VWQ == 1
-        nsVeta = cell(1,length(vDataFullTrace{1}));
+        nsVeta = nVeta;
     end 
-    for tType = 1:numTtypes
-        if CAQ == 1
-            for ccell = 1:length(terminals)
-                nsCeta{terminals(ccell)}{tType} = nCeta{terminals(ccell)}{tType}-100;
-            end 
-        end 
-        if BBBQ == 1 
-            for BBBroi = 1:length(bDataFullTrace{1})
-                nsBeta{BBBroi}{tType} = nBeta{BBBroi}{tType}-100;
-            end 
-        end 
-        if VWQ == 1
-            for VWroi = 1:length(vDataFullTrace{1})
-                nsVeta{VWroi}{tType} = nVeta{VWroi}{tType}-100;
-            end 
-        end 
+    if velWheelQ == 1 
+        nsWeta = nWeta; 
     end 
 end 
 
