@@ -143,7 +143,7 @@ if STAstackQ == 1
 end 
 %}
 %% organize trial data 
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -324,7 +324,7 @@ end
 %}
 %% baseline, smooth trial, and plot trial data 
 % ADD IN LOGIC TO PLOT WHEEL VELOCITY DATA 
-%{
+
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
 if CAQ == 1
@@ -396,7 +396,7 @@ if smoothQ ==  1
             for ccell = 1:length(terminals)
                 for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
                     [sC_Data] = MovMeanSmoothData(nCeta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
-                    nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data-100;
+                    nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data;
                 end 
             end 
         end        
@@ -404,7 +404,7 @@ if smoothQ ==  1
             for BBBroi = 1:length(bDataFullTrace{1})
                 for bTrial = 1:size(nBeta{BBBroi}{tType},1)
                     [sB_Data] = MovMeanSmoothData(nBeta{BBBroi}{tType}(bTrial,:),filtTime,FPSstack);
-                    nsBeta{BBBroi}{tType}(bTrial,:) = sB_Data-100;
+                    nsBeta{BBBroi}{tType}(bTrial,:) = sB_Data;
                 end 
             end 
         end 
@@ -412,14 +412,14 @@ if smoothQ ==  1
             for VWroi = 1:length(vDataFullTrace{1})
                 for vTrial = 1:size(nVeta{VWroi}{tType},1)
                     [sV_Data] = MovMeanSmoothData(nVeta{VWroi}{tType}(vTrial,:),filtTime,FPSstack);
-                    nsVeta{VWroi}{tType}(vTrial,:) = sV_Data-100;   
+                    nsVeta{VWroi}{tType}(vTrial,:) = sV_Data;   
                 end 
             end 
         end 
         if velWheelQ == 1 
             for wTrial = 1:size(nWeta{tType},1)
                 [sW_Data] = MovMeanSmoothData(nWeta{tType}(wTrial,:),filtTime,FPSstack);
-                nsWeta{tType}(wTrial,:) = sW_Data-100;   
+                nsWeta{tType}(wTrial,:) = sW_Data;   
             end 
         end 
     end 
@@ -2119,9 +2119,9 @@ if tTypeQ == 0
         for vid = 1:length(vidList)      
             if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}) == 0
                 for peak = 1:size(SNCdataPeaks{vid}{terminals(ccell)},1)                    
-                    allBTraces{BBBroi}{terminals(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}(peak,:)-100); 
-                    allVTraces{VWroi}{terminals(ccell)}(count,:) = (SNVdataPeaks{vid}{VWroi}{terminals(ccell)}(peak,:)-100); 
-                    allCTraces{terminals(ccell)}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}(peak,:)-100);
+                    allBTraces{BBBroi}{terminals(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}(peak,:)); 
+                    allVTraces{VWroi}{terminals(ccell)}(count,:) = (SNVdataPeaks{vid}{VWroi}{terminals(ccell)}(peak,:)); 
+                    allCTraces{terminals(ccell)}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}(peak,:));
 %                     plot(allCTraces{terminals(ccell)}(count,:),'b')
 %                     plot(allBTraces{BBBroi}{terminals(ccell)}(count,:),'r')
                     count = count + 1;
@@ -2250,9 +2250,9 @@ elseif tTypeQ == 1
             for vid = 1:length(vidList)
                    if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
                         for peak = 1:size(sortedBdata{vid}{terminals(ccell)}{per},1)
-                            allBTraces{terminals(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);
-                            allCTraces{terminals(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);
-                            allVTraces{terminals(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);  
+                            allBTraces{terminals(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:));
+                            allCTraces{terminals(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:));
+                            allVTraces{terminals(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{terminals(ccell)}{per}(peak,:));  
                             count = count + 1;
                         end 
                    end               
@@ -2267,15 +2267,15 @@ elseif tTypeQ == 1
             count4 = 1;
             for peak = 1:size(allBTraces{terminals(ccell)}{per},1)
 %                 if allBTraces{terminals(ccell)}(peak,:) < nanstd(allBTraces{terminals(ccell)},1)*3                  
-                    Btraces{terminals(ccell)}{per}(count2,:) = (allBTraces{terminals(ccell)}{per}(peak,:))-100;
+                    Btraces{terminals(ccell)}{per}(count2,:) = (allBTraces{terminals(ccell)}{per}(peak,:));
                     count2 = count2 + 1;
 %                 end 
 %                 if allCTraces{terminals(ccell)}(peak,:) < nanstd(allCTraces{terminals(ccell)},1)*3                    
-                    Ctraces{terminals(ccell)}{per}(count3,:) = (allCTraces{terminals(ccell)}{per}(peak,:))-100;
+                    Ctraces{terminals(ccell)}{per}(count3,:) = (allCTraces{terminals(ccell)}{per}(peak,:));
                     count3 = count3 + 1;
 %                 end 
 %                 if allVTraces{terminals(ccell)}(peak,:) < nanstd(allVTraces{terminals(ccell)},1)*3%*0.000000000003                    
-                    Vtraces{terminals(ccell)}{per}(count4,:) = (allVTraces{terminals(ccell)}{per}(peak,:))-100;
+                    Vtraces{terminals(ccell)}{per}(count4,:) = (allVTraces{terminals(ccell)}{per}(peak,:));
                     count4 = count4 + 1;
 %                 end 
             end 
