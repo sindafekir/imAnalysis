@@ -425,16 +425,44 @@ if smoothQ ==  1
     end 
 elseif smoothQ == 0
     if CAQ == 1
-        nsCeta = nCeta;
+        nsCeta = cell(1,length(cDataFullTrace{1}));
     end 
     if BBBQ == 1 
-        nsBeta = nBeta;
+        nsBeta = cell(1,length(bDataFullTrace{1}));
     end 
     if VWQ == 1
-        nsVeta = nVeta;
-    end 
+        nsVeta = cell(1,length(vDataFullTrace{1}));
+    end
     if velWheelQ == 1 
-        nsWeta = nWeta; 
+        nsWeta = cell(1,numTtypes);
+    end 
+    for tType = 1:numTtypes
+        if CAQ == 1
+            for ccell = 1:length(terminals)
+                for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
+                    nsCeta{terminals(ccell)}{tType}(cTrial,:) = nCeta{terminals(ccell)}{tType}(cTrial,:)-100;
+                end 
+            end 
+        end        
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{1})
+                for bTrial = 1:size(nBeta{BBBroi}{tType},1)
+                    nsBeta{BBBroi}{tType}(bTrial,:) = nBeta{BBBroi}{tType}(bTrial,:)-100;
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:length(vDataFullTrace{1})
+                for vTrial = 1:size(nVeta{VWroi}{tType},1)
+                    nsVeta{VWroi}{tType}(vTrial,:) = nVeta{VWroi}{tType}(vTrial,:)-100;   
+                end 
+            end 
+        end 
+        if velWheelQ == 1 
+            for wTrial = 1:size(nWeta{tType},1)
+                nsWeta{tType}(wTrial,:) = nWeta{tType}(wTrial,:)-100;   
+            end 
+        end 
     end 
 end 
 
@@ -2525,7 +2553,7 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-%{
+
 % average calcium peak aligned traces across videos 
 greenStackArray2 = cell(1,length(vidList));
 redStackArray2 = cell(1,length(vidList));
@@ -2533,7 +2561,7 @@ avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
 avRedStack2 = cell(1,length(sortedGreenStacks{1}));
 avGreenStack = cell(1,length(sortedGreenStacks{1}));
 avRedStack = cell(1,length(sortedGreenStacks{1}));
-for ccell = 7%:length(terminals)
+for ccell = 1:length(terminals)
     for vid = 1:length(vidList)    
         count = 1;
         for peak = 1:size(sortedGreenStacks{vid}{terminals(ccell)},2)  
@@ -2546,17 +2574,17 @@ for ccell = 7%:length(terminals)
         avGreenStack2{terminals(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals(ccell)},4);
         avRedStack2{terminals(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals(ccell)},4);
     end 
-    avGreenStack{terminals(ccell)} = nanmean(avGreenStack2{terminals(ccell)},4);
-    avRedStack{terminals(ccell)} = nanmean(avRedStack2{terminals(ccell)},4);
+    avGreenStack{terminals(ccell)} = nanmean(avGreenStack2{terminals(ccell)},4)+100;
+    avRedStack{terminals(ccell)} = nanmean(avRedStack2{terminals(ccell)},4)+100;
 end 
 
 BLstart = changePt - floor(0.5*FPSstack);
 NgreenStackAv = cell(1,length(sortedGreenStacks{1}));
 NredStackAv = cell(1,length(sortedGreenStacks{1}));
 % normalize to baseline period 
-for ccell = 7%:length(terminals)
-    NgreenStackAv{terminals(ccell)} = (avGreenStack{terminals(ccell)}./ (nanmean(avGreenStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100;
-    NredStackAv{terminals(ccell)} = (avRedStack{terminals(ccell)}./ (nanmean(avRedStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100;
+for ccell = 1:length(terminals)
+    NgreenStackAv{terminals(ccell)} = ((avGreenStack{terminals(ccell)}./ (nanmean(avGreenStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
+    NredStackAv{terminals(ccell)} = ((avRedStack{terminals(ccell)}./ (nanmean(avRedStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
 end 
 
 %smoothing option
@@ -2570,11 +2598,158 @@ elseif smoothQ == 1
 %     SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);
     SNgreenStackAv = NgreenStackAv;
     SNredStackAv = cell(1,length(sortedGreenStacks{1}));
-    for ccell = 7%:length(terminals)
+    for ccell = 1:length(terminals)
         SNredStackAv{terminals(ccell)} = smoothdata(NredStackAv{terminals(ccell)},3,'movmean',filter_rate);
     end 
 end 
-     
+
+% black out the pixels that are part of calcium ROIs 
+blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
+if blackOutCaROIQ == 1         
+    CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
+    cd(CaROImaskDir);
+    CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
+    CaROImaskMat = matfile(CaROImaskFileName); 
+    CaROImasks = CaROImaskMat.CaROImasks; 
+    % combine Ca ROIs from different planes in Z into one plane 
+    combo = cell(1,numZplanes-1);
+    for it = 1:numZplanes-1
+        if it == 1 
+            combo{it} = or(CaROImasks{1},CaROImasks{2});
+        elseif it > 1
+            combo{it} = or(combo{it-1},CaROImasks{it+1});
+        end 
+    end         
+    %make your combined Ca ROI mask the right size for applying to a 3D
+    %arrray 
+    ind = length(combo);
+    ThreeDCaMask = repmat(combo{ind},1,1,55);
+    %apply new mask to the right channel 
+    rightChan = input('Input 0 to apply Ca ROI mask to green channel. Input 1 for the red channel. ');
+    if rightChan == 0     
+        RightChan = SNgreenStackAv;
+    elseif rightChan == 1
+        RightChan = SNredStackAv;
+    end     
+    for ccell = 1:length(terminals)
+        RightChan{terminals(ccell)}(ThreeDCaMask) = 0;
+    end 
+end 
+
+% create outline of vessel to overlay the %change BBB perm stack 
+segmentVessel = 1;
+while segmentVessel == 1 
+    %select the correct channel for vessel segmentation  
+    vesChan = input('Input 0 to segment vessels in the green channel. Input 1 for the red channel. ');
+    if rightChan == 0     
+        vesChan = avGreenStack;
+    elseif rightChan == 1
+        vesChan = avRedStack;
+    end     
+    % apply Ca ROI mask to the appropriate channel to black out these
+    % pixels 
+    for ccell = 1:length(terminals)
+        vesChan{terminals(ccell)}(ThreeDCaMask) = 0;
+    end 
+    %segment the vessel (small sample of the data) 
+    CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
+    imageSegmenter(mean(vesChan{CaROI},3))
+    continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+    while continu == 1 
+        BWstacks = cell(1,length(vesChan));
+        BW_perim = cell(1,length(vesChan));
+        segOverlays = cell(1,length(vesChan));    
+        for ccell = 1:length(terminals)
+            for frame = 1:size(vesChan{terminals(ccell)},3)
+                [BW,~] = segmentImageVesselFOV(vesChan{terminals(ccell)}(:,:,frame));
+                BWstacks{terminals(ccell)}(:,:,frame) = BW; 
+                %get the segmentation boundaries 
+                BW_perim{terminals(ccell)}(:,:,frame) = bwperim(BW);
+                %overlay segmentation boundaries on data
+                segOverlays{terminals(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals(ccell)}(:,:,frame)), BW_perim{terminals(ccell)}(:,:,frame), [.3 1 .3]);   
+            end   
+        end 
+        continu = 0;
+    end 
+    %play segmentation boundaries over images 
+    implay(segOverlays{CaROI})
+    %ask about segmentation quality 
+    segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+    if segmentVessel == 1
+        clear BWthreshold BWopenRadius BW se boundaries
+    end 
+end
+%% NEXT: CREATE A CUSTOM COLOR MAP (CHECK COMPOSITE CODE) THAT HIGHLIGHTS 2% CHANGES THAN APPLY THIS COLORMAP TO IMOVERLAY
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+vesOverRightChan = cell(1,length(vesChan)); 
+scaledRightChan = cell(1,length(vesChan)); 
+cRightChan = cell(1,length(vesChan)); 
+for ccell = 1:length(terminals)
+    %black out pixels that belong to vessels         
+    RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
+    %find the upper and lower bounds of your custom color map 
+    maxValue = max(max(max(max(RightChan{terminals(ccell)}))));
+    minValue = min(min(min(min(RightChan{terminals(ccell)}))));
+    bounds = [maxValue,minValue];
+    %determine the absolute difference between the max and min % change
+    boundsAbsDiff = abs(diff(bounds,1,2));
+    boundsAbs = abs(bounds);
+
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+    % Create colormap that is green for negative, red for positive,
+    % and a chunk inthe middle that is black.
+    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+    
+    %view the colormap and a sample image *for troubleshooting purposes 
+    imagesc(RightChan{terminals(ccell)}(:,:,27),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
+    colorbar;
+    colormap(cMap);
+    axis off;
+    
+    
+    % SO I FIGURED OUT HOW TO MAKE THE COLORMAP BOUNDS THE SAME ACROSS THE
+    % ENTIRE STACK BY SEETING THE COLORMAP BOUNDS IN IMAGESC - THE NEXT
+    % STEP IS TO TRY TO SAVE EACH FRAME AS THE IMAGESC OUTPUT SO I CAN PUT
+    % THE VESSEL WIDTH OUTLINE ON TOP 
+    
+    %HERE IS THE SOLUTION: FIGURE OUT HOW TO SAVE CURRENT IMAGE AS IT IS
+    %CURRENTLY PLOTTED AFTER IMAGESC TO A NEW ARRAY - INSTEAD OF USING
+    %IND2RGB 
+    
+    testframe = getframe(gca);
+    testframe2 = testframe.cdata;
+    imshow(testframe2);  colorbar;
+    colormap(cMap);
+    
+    %THE ABOVE WORKS TO GET THE IMAGE WITH THE RIGHT EXACT COLORS, BUT THE
+    %INDEX IS LOST, MEANING THE % CHANGE VALUE PER PIXEL IS LOST SO THE
+    %SCALEBAR GOES BACK TO 0-1
+    
+%     %apply custom color map 
+%     for frame = 1:size(vesChan{terminals(ccell)},3)
+%         cRightChan{terminals(ccell)}(:,:,frame) = ind2rgb(scaledRightChan{terminals(ccell)}(:,:,frame),cMap);
+%     end 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+    %}
+    
+%     for frame = 1:size(vesChan{terminals(ccell)},3)
+%         %overlay segmentation boundaries on the % change image stack 
+%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame), [.3 1 .3]);         
+% %         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
+%     end 
+end 
+%play segmentation boundaries over images 
+% implay(vesOverRightChan{CaROI})
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 %}
 %% save the stack 
 %{
