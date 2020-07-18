@@ -31,6 +31,7 @@ disp('Select rows that do not contain vessels for background subtraction.')
 [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
 % determine what rows were selected so far 
 ymax = height + ymin - 1;
+xmax = width + xmin - 1;
 rowsSelected = ymin:ymax;
 % if all rows were not selected display what rows were selected and give
 % option to select more rows 
@@ -40,17 +41,18 @@ if length(rowsSelected) < length(allRows) % if there are less rows selected than
     rowsNotSelected = ~ismember(allRows,rowsSelected); 
     RowInds = find(rowsNotSelected);
     % let the user know what rows still need selection 
-    
-    % @@@@@@@@@@@@@@@@@@@
-% BELOW NEEDS EDITING 
-% @@@@@@@@@@@@@@@@@@@
-
-    % INSTEAD OF DISPLAYING THE INDEX OF WHAT ROWS STILL NEED SELECTION -
-    % THIS WOULD WORK BETTER IF I DRAW THE ROI BOUNDARIES MADE SO FAR
-    % DURING NEXT ROUND OF ROI SELECTION 
     disp('These rows still need selection:')
     disp(RowInds)
+                 
+    % PICK UP HERE- USE THE X AND Y MIN AND MAXES TO CREATE ROI COORDINATES
+    % IN X-Y PLANE FOR PLOTTING OVER THE ORIGINAL IMAGE 
+    % @@@@@@@@@@@@@@@@@@@
+    % BELOW NEEDS EDITING 
+    % @@@@@@@@@@@@@@@@@@@
     
+    %overlay background subtraction ROIs (so far) on image of FOV 
+    imshow(reg__Stacks{1}(:,:,1),[0 1000]); hold on; plot() 
+
 
 
     % select additional rows that do not contain vessels for background subtraction -
