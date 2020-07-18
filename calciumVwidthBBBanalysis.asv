@@ -2683,8 +2683,15 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+% Create colormap that is green for negative, red for positive,
+% and a chunk inthe middle that is black.
+greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+
+
 vesOverRightChan = cell(1,length(vesChan)); 
-scaledRightChan = cell(1,length(vesChan)); 
 cRightChan = cell(1,length(vesChan)); 
 for ccell = 1:length(terminals)
     %black out pixels that belong to vessels         
@@ -2698,57 +2705,56 @@ for ccell = 1:length(terminals)
     boundsAbs = abs(bounds);
 
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %remove negative values from the arrays 
+    RightChan{terminals(ccell)} = RightChan{terminals(ccell)} + ceil(max(boundsAbs));
+
+% %     %view the colormap and a sample image *for troubleshooting purposes 
+%     imagesc(RightChan{terminals(ccell)}(:,:,27),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
+%     colorbar;
+%     colormap(cMap);
+%     axis off;
     
-    % Create colormap that is green for negative, red for positive,
-    % and a chunk inthe middle that is black.
-    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
-    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
-    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+%     testframe = getframe(gca);
+%     testframe2 = testframe.cdata;
+%     imshow(testframe2);  colorbar;
+%     colormap(cMap); caxis([-(ceil(max(boundsAbs))),ceil(max(boundsAbs))]);
     
-    %view the colormap and a sample image *for troubleshooting purposes 
-    imagesc(RightChan{terminals(ccell)}(:,:,27),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
-    colorbar;
-    colormap(cMap);
-    axis off;
-    
-    
-    % SO I FIGURED OUT HOW TO MAKE THE COLORMAP BOUNDS THE SAME ACROSS THE
-    % ENTIRE STACK BY SEETING THE COLORMAP BOUNDS IN IMAGESC - THE NEXT
-    % STEP IS TO TRY TO SAVE EACH FRAME AS THE IMAGESC OUTPUT SO I CAN PUT
-    % THE VESSEL WIDTH OUTLINE ON TOP 
-    
-    %HERE IS THE SOLUTION: FIGURE OUT HOW TO SAVE CURRENT IMAGE AS IT IS
-    %CURRENTLY PLOTTED AFTER IMAGESC TO A NEW ARRAY - INSTEAD OF USING
-    %IND2RGB 
-    
-    testframe = getframe(gca);
-    testframe2 = testframe.cdata;
-    imshow(testframe2);  colorbar;
-    colormap(cMap);
-    
-    %THE ABOVE WORKS TO GET THE IMAGE WITH THE RIGHT EXACT COLORS, BUT THE
-    %INDEX IS LOST, MEANING THE % CHANGE VALUE PER PIXEL IS LOST SO THE
-    %SCALEBAR GOES BACK TO 0-1
-    
-%     %apply custom color map 
-%     for frame = 1:size(vesChan{terminals(ccell)},3)
-%         cRightChan{terminals(ccell)}(:,:,frame) = ind2rgb(scaledRightChan{terminals(ccell)}(:,:,frame),cMap);
-%     end 
+    %apply custom color map 
+    for frame = 1:size(vesChan{terminals(ccell)},3)
+        %IND2RGB DOESN'T LIKE THE NEGATIVE VALUES IN RIGHTCHAN
+        curFrame = RightChan{terminals(ccell)}(:,:,frame);
+        cRightChan{terminals(ccell)}(:,:,frame) = ind2rgb(curFrame,cMap);
+    end 
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    
-    %}
     
 %     for frame = 1:size(vesChan{terminals(ccell)},3)
 %         %overlay segmentation boundaries on the % change image stack 
 %         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame), [.3 1 .3]);         
 % %         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
 %     end 
+%}
 end 
-%play segmentation boundaries over images 
-% implay(vesOverRightChan{CaROI})
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+%%
+
+%apply custom color map colors and ranges to video
+vid = implay(RightChan{CaROI});
+%find the upper and lower bounds of your custom color map 
+maxValue = max(max(max(max(RightChan{CaROI}))));
+minValue = min(min(min(min(RightChan{CaROI}))));
+bounds = [maxValue,minValue];
+boundsAbs = abs(bounds);
+minBound = -(ceil(max(boundsAbs))); 
+maxBound = ceil(max(boundsAbs)); 
+%apply custom color map to video 
+vid.Visual.ColorMap.MapExpression = 'cMap';
+%apply appropriate pixel bounds to color map based on data
+vid.Visual.setPropertyValue('UseDataRange',true);
+vid.Visual.setPropertyValue('DataRangeMin',minBound);
+vid.Visual.setPropertyValue('DataRangeMax',maxBound);
+
+
+
 
 %}
 %% save the stack 

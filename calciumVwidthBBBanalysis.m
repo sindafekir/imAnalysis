@@ -2553,7 +2553,8 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-
+% WORKING PROGRESS- NEED TO RESCALE CUSTOM COLOR MAP TO BE FROM 0 TO 1 
+%{
 % average calcium peak aligned traces across videos 
 greenStackArray2 = cell(1,length(vidList));
 redStackArray2 = cell(1,length(vidList));
@@ -2679,12 +2680,21 @@ while segmentVessel == 1
         clear BWthreshold BWopenRadius BW se boundaries
     end 
 end
-%% NEXT: CREATE A CUSTOM COLOR MAP (CHECK COMPOSITE CODE) THAT HIGHLIGHTS 2% CHANGES THAN APPLY THIS COLORMAP TO IMOVERLAY
+
+% NEXT: CREATE A CUSTOM COLOR MAP (CHECK COMPOSITE CODE) THAT HIGHLIGHTS 2% CHANGES THAN APPLY THIS COLORMAP TO IMOVERLAY
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%WORKING ON THIS PART: NEED TO RESCALE THE COLOR MAP TO BE FROM 0 TO 1 -
+%OLD 0 IS NOW 0.5
+
+% Create colormap that is green for negative, red for positive,
+% and a chunk inthe middle that is black.
+greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+
 vesOverRightChan = cell(1,length(vesChan)); 
-scaledRightChan = cell(1,length(vesChan)); 
 cRightChan = cell(1,length(vesChan)); 
 for ccell = 1:length(terminals)
     %black out pixels that belong to vessels         
@@ -2696,59 +2706,58 @@ for ccell = 1:length(terminals)
     %determine the absolute difference between the max and min % change
     boundsAbsDiff = abs(diff(bounds,1,2));
     boundsAbs = abs(bounds);
+    minBound = -(ceil(max(boundsAbs))); 
+    maxBound = ceil(max(boundsAbs)); 
 
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %remove negative values from the arrays 
+%     RightChan{terminals(ccell)} = RightChan{terminals(ccell)} + ceil(max(boundsAbs));
+
+% %     %view the colormap and a sample image *for troubleshooting purposes 
+%     imagesc(RightChan{terminals(ccell)}(:,:,27),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
+%     colorbar;
+%     colormap(cMap);
+%     axis off;
     
-    % Create colormap that is green for negative, red for positive,
-    % and a chunk inthe middle that is black.
-    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
-    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
-    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+%     testframe = getframe(gca);
+%     testframe2 = testframe.cdata;
+%     imshow(testframe2);  colorbar;
+%     colormap(cMap); caxis([-(ceil(max(boundsAbs))),ceil(max(boundsAbs))]);
     
-    %view the colormap and a sample image *for troubleshooting purposes 
-    imagesc(RightChan{terminals(ccell)}(:,:,27),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
-    colorbar;
-    colormap(cMap);
-    axis off;
-    
-    
-    % SO I FIGURED OUT HOW TO MAKE THE COLORMAP BOUNDS THE SAME ACROSS THE
-    % ENTIRE STACK BY SEETING THE COLORMAP BOUNDS IN IMAGESC - THE NEXT
-    % STEP IS TO TRY TO SAVE EACH FRAME AS THE IMAGESC OUTPUT SO I CAN PUT
-    % THE VESSEL WIDTH OUTLINE ON TOP 
-    
-    %HERE IS THE SOLUTION: FIGURE OUT HOW TO SAVE CURRENT IMAGE AS IT IS
-    %CURRENTLY PLOTTED AFTER IMAGESC TO A NEW ARRAY - INSTEAD OF USING
-    %IND2RGB 
-    
-    testframe = getframe(gca);
-    testframe2 = testframe.cdata;
-    imshow(testframe2);  colorbar;
-    colormap(cMap);
-    
-    %THE ABOVE WORKS TO GET THE IMAGE WITH THE RIGHT EXACT COLORS, BUT THE
-    %INDEX IS LOST, MEANING THE % CHANGE VALUE PER PIXEL IS LOST SO THE
-    %SCALEBAR GOES BACK TO 0-1 RANGE INSTEAD OF THE CORRECT % CHANGE RANGE 
-    
-%     %apply custom color map 
-%     for frame = 1:size(vesChan{terminals(ccell)},3)
-%         cRightChan{terminals(ccell)}(:,:,frame) = ind2rgb(scaledRightChan{terminals(ccell)}(:,:,frame),cMap);
-%     end 
+    %apply custom color map 
+    for frame = 1:size(vesChan{terminals(ccell)},3)
+        %IND2RGB DOESN'T LIKE THE NEGATIVE VALUES IN RIGHTCHAN
+        curFrame = RightChan{terminals(ccell)}(:,:,frame);
+        cRightChan{terminals(ccell)}(:,:,frame) = ind2rgb(curFrame,cMap);
+    end 
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  
+
+    %NEXT STEP IS TO USE THE ABOVE COMMENTED OUT CODE TO CREATE RGB STACKS
+    %USING OUR CUSTOM COLORMAP FOR INPUT INTO IMOVERLAY 
     
-    %}
-    
-%     for frame = 1:size(vesChan{terminals(ccell)},3)
-%         %overlay segmentation boundaries on the % change image stack 
-%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame), [.3 1 .3]);         
-% %         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
-%     end 
+    %overlay segmentation boundaries on the % change image stack 
+    for frame = 1:size(vesChan{terminals(ccell)},3)       
+        vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame),[.3 1 .3]);         
+%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
+    end 
 end 
-%play segmentation boundaries over images 
-% implay(vesOverRightChan{CaROI})
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+%apply custom color map colors and ranges to video
+vid = implay(RightChan{CaROI});
+%find the upper and lower bounds of your custom color map 
+maxValue = max(max(max(max(RightChan{CaROI}))));
+minValue = min(min(min(min(RightChan{CaROI}))));
+bounds = [maxValue,minValue];
+boundsAbs = abs(bounds);
+minBound = -(ceil(max(boundsAbs))); 
+maxBound = ceil(max(boundsAbs)); 
+%apply custom color map to video 
+vid.Visual.ColorMap.MapExpression = 'cMap';
+%apply appropriate pixel bounds to color map based on data
+vid.Visual.setPropertyValue('UseDataRange',true);
+vid.Visual.setPropertyValue('DataRangeMin',minBound);
+vid.Visual.setPropertyValue('DataRangeMax',maxBound);
 
 %}
 %% save the stack 
@@ -2800,115 +2809,3 @@ end
 
 implay(redGreen)
 %}
-%% create multiple BBB ROIs 
-%{
-% numROIs = input("How many BBB perm ROIs are we making? "); 
-% %for display purposes mostly: average across frames 
-% stackAVsIm = mean(redStackAv,3);
-% %create the ROI boundaries           
-% ROIboundDatas = cell(1,numROIs);
-% for VROI = 1:numROIs 
-%     label = sprintf('Create ROI %d for BBB perm analysis',VROI);
-%     disp(label);
-%     [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
-%     ROIboundData{1} = xmins;
-%     ROIboundData{2} = ymins;
-%     ROIboundData{3} = widths;
-%     ROIboundData{4} = heights;
-%     ROIboundDatas{VROI} = ROIboundData;
-% end
-
-SNROIstacks = cell(1,numROIs);
-ROIstacks = cell(1,numROIs);
-for VROI = 1:numROIs
-    %use the ROI boundaries to generate ROIstacks 
-    xmins = ROIboundDatas{VROI}{1};
-    ymins = ROIboundDatas{VROI}{2};
-    widths = ROIboundDatas{VROI}{3};
-    heights = ROIboundDatas{VROI}{4};
-    [SNROI_stacks] = make_ROIs_notfirst_time(SNredStackAv,xmins,ymins,widths,heights);
-    SNROIstacks{VROI} = SNROI_stacks{1};
-    [ROI_stacks] = make_ROIs_notfirst_time(redStackAv,xmins,ymins,widths,heights);
-    ROIstacks{VROI} = ROI_stacks{1};
-end 
-
-%create mask of where vessels are - frame by frame 
-BWstacks = cell(1,numROIs);
-BW_perim = cell(1,numROIs);
-segOverlays = cell(1,numROIs);         
-for VROI = 1:numROIs  
-    BWstacks{VROI} = zeros(size(ROIstacks{VROI},1),size(ROIstacks{VROI},2),size(ROIstacks{VROI},3));
-    for frame = 1:size(ROIstacks{VROI},3)
-%         [BW,~] = segmentImageBBB(ROIstacks{VROI}(:,:,frame));
-%         BWstacks{VROI}(:,:,frame) = BW; 
-        %get the segmentation boundaries 
-        BW_perim{VROI}(:,:,frame) = bwperim(BWstacks{VROI}(:,:,frame));
-        %overlay segmentation boundaries on data
-        segOverlays{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{VROI}(:,:,frame)), BW_perim{VROI}(:,:,frame), [.3 1 .3]);
-    end               
-end      
-% 
-% %check segmentation 
-% if numROIs == 1 
-%     %play segmentation boundaries over images 
-%     implay(segOverlays{1})
-% elseif numROIs > 1 
-%     VROI = input("What BBB ROI do you want to see? ");
-%     %play segmentation boundaries over images 
-%     implay(segOverlays{VROI})
-% end 
-
-% invert the mask
-BWstacksInv = cell(1,numROIs);
-for VROI = 1:numROIs                
-    for frame = 1:size(ROIstacks{VROI},3)                            
-        BWstacksInv{VROI}(:,:,frame) = ~(BWstacks{VROI}(:,:,frame)); 
-    end         
-end 
-
-%apply the mask and get pixel intensities
-meanPixIntArray = cell(1,numROIs);
-for VROI = 1:numROIs           
-    for frame = 1:size(ROIstacks{VROI},3)   
-        stats = regionprops(BWstacksInv{VROI}(:,:,frame),SNROIstacks{VROI}(:,:,frame),'MeanIntensity');
-        for stat = 1:length(stats)
-            ROIpixInts(stat) = stats(stat).MeanIntensity;
-        end 
-        meanPixIntArray{VROI}(frame) = mean(ROIpixInts);   
-    end 
-end 
-
-% plot BBB ROI pixel intensities 
-figure;
-Frames = length(avSortedCdata{terminals(ccell)});
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-FrameVals = round((1:FPSstack:Frames)+5); 
-ax=gca;
-hold all
-plot(SNavCdata{term},'b','LineWidth',2);
-for VROI = 1:numROIs
-    plot(meanPixIntArray{VROI},'LineWidth',2);
-end 
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;   
-ax.FontSize = 20;
-xlabel('time (s)')
-ylabel('percent change')
-xlim([0 length(SNavCdata{terminals(ccell)})])
-ylim([-20 100])
-legend('Terminal 12 calcium','BBB ROI 1','BBB ROI 2','BBB ROI 3','BBB ROI 4','BBB ROI 5') %'Terminal 12 calcium',
-if smoothQ == 0 
-    title(sprintf('DA terminal #%d.',term))
-elseif smoothQ == 1
-    title(sprintf('DA terminal #%d. %0.2f sec smoothing.',term,filtTime))
-end 
-
-
-%% show all trials that go into BBB trace for terminal 12 
-
-%% create stacks that are seperated by trial type 
-%}
-
-%IN IMAGEJ SAVE AS TIFF STACK - THEN JUST CONVERT TIFF TO AVI ELSEWHERE 
