@@ -53,10 +53,22 @@ elseif volQ == 0
 end 
 
 %% do background subtraction 
+% if vidNumQ == 0 
+%     [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
+% elseif vidNumQ == 1   
+%     [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
+% end 
+
+%WORKING HERE- UPDATE BACKGROUND SUBTRACTION SO THAT EACH ROW GETS
+%NORMALIZED TO ITSELF 
+
+%select rows that do not have vessel in them 
 if vidNumQ == 0 
-    [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
+    % CURRENTLY MAKING CHANGES TO THE BELOW FUNCTION 
+    [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
 elseif vidNumQ == 1   
-    [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
+    % NEED TO MAKE THIS FUNCTION NEXT 
+    [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
 end 
 
 %% average registered imaging data across planes in Z 

@@ -2554,7 +2554,7 @@ end
 %}
 %% create red and green channel stack averages around calcium peak location 
 % WORKING PROGRESS- NEED TO RESCALE CUSTOM COLOR MAP TO BE FROM 0 TO 1 
-%{
+
 % average calcium peak aligned traces across videos 
 greenStackArray2 = cell(1,length(vidList));
 redStackArray2 = cell(1,length(vidList));
