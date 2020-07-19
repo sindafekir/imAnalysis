@@ -24,14 +24,6 @@ if blackOutCaROIQ == 1
     end    
 end 
 
-% @@@@@@@@@@@@@@@@@@@
-% BELOW NEEDS EDITING 
-% @@@@@@@@@@@@@@@@@@@
-
-% TO DO:
-% TEST THE CODE TO MAKE SURE IT ITERATES THROUGH ALL Z PLANES AND SAVES ALL
-% DATA 
-%%
 % select rows for background subtraction - this code goes through multiple
 % rounds of row selection - make sure to select rows where they do not have
 % blacked out pixels (from the calcium ROI removal) or vessels 
@@ -42,10 +34,16 @@ widths = cell(1,length(CaROImasks));
 heights = cell(1,length(CaROImasks));
 xmaxs = cell(1,length(CaROImasks));
 ymaxs = cell(1,length(CaROImasks));
-BG_ROIboundData = cell(1,4);
+BG_ROIboundData = cell(2,6);
+BG_ROIboundData{1,1} = 'X min'; 
+BG_ROIboundData{1,2} = 'X max'; 
+BG_ROIboundData{1,3} = 'Y min'; 
+BG_ROIboundData{1,4} = 'Y max'; 
+BG_ROIboundData{1,5} = 'width'; 
+BG_ROIboundData{1,6} = 'height'; 
 for z = 1:length(CaROImasks)
-    figure;
-    disp(fprintf('This is Z plane #%d.',z))
+    figure; 
+    fprintf('This is Z plane #%d.  ',z)
     % display prompt so user knows what to do 
     disp('Select rows that do not contain vessels for background subtraction.')
     % select rows that do not contain vessels for background subtraction -
@@ -58,8 +56,8 @@ for z = 1:length(CaROImasks)
     widths{z}(it) = width;
     heights{z}(it) = height;
     % determine what rows were selected so far 
-    ymax = height + ymin - 1;
-    xmax = width + xmin - 1;
+    ymax = height + ymin;
+    xmax = width + xmin;
     xmaxs{z}(it) = xmax;
     ymaxs{z}(it) = ymax;
     rowsSelected = ymin:ymax;
@@ -91,47 +89,38 @@ for z = 1:length(CaROImasks)
         xmins{z}(it) = xmin;
         ymins{z}(it) = ymin;
         % determine what rows were selected so far 
-        ymax = height + ymin - 1;
-        xmax = width + xmin - 1;
+        ymax = height + ymin;
+        xmax = width + xmin;
         xmaxs{z}(it) = xmax;
         ymaxs{z}(it) = ymax;
         widths{z}(it) = width;
         heights{z}(it) = height;
         rowsSelected = [rowsSelected,ymin:ymax];
     end 
-    BG_ROIboundData{1} = xmins;
-    BG_ROIboundData{2} = ymins;
-    BG_ROIboundData{3} = widths;
-    BG_ROIboundData{4} = heights;
+    BG_ROIboundData{2,1} = xmins;
+    BG_ROIboundData{2,2} = xmaxs;
+    BG_ROIboundData{2,3} = ymins;
+    BG_ROIboundData{2,4} = ymaxs;
+    BG_ROIboundData{2,5} = widths;
+    BG_ROIboundData{2,6} = heights;
 end 
-
-%@@@@@@@@@@@@@@@@@@@@
-%%
-
-% NEED TO EVENTUALLY:
-% FIGURE OUT WHAT TO DO ABOUT OVERLAPPING ROW SELECTION - FOR NOW I DON'T
-% HAVE ANY OVERLAP SO GET ALL BELOW CODE WORKING WITHOUT OVERLAP FIRST AND THEN MAKE IT
-% MORE COMPLICATED 
-
 
 % determine average pixel intensity of each frame and row in the control
 % ROIs
-% @@@@@@@@@@@@@@@@@@@
-% BELOW NEEDS EDITING 
-% @@@@@@@@@@@@@@@@@@@
-BGpixInt = cell(1,length(reg__Stacks));
-for stack = 1:length(reg__Stacks)
-    BGpixInt{stack} = mean(mean(BG_ROIstacks{stack}{1}));
+BGpixInt = cell(1,length(CaROImasks));
+for z = 1:length(CaROImasks)
+    for i = 1:length(ROIstacks{z})
+        BGpixInt{z}{i} = mean(ROIstacks{z}{i}{1},2);
+    end 
 end 
 
-% do background subtraction 
-% @@@@@@@@@@@@@@@@@@@
-% BELOW NEEDS EDITING 
-% @@@@@@@@@@@@@@@@@@@
-stackOut = cell(1,length(reg__Stacks));
-for stack = 1:length(reg__Stacks) 
-    for frame = 1:size(BGpixInt{1},3)
-        stackOut{stack}(:,:,frame) = (reg__Stacks{stack}(:,:,frame)-BGpixInt{stack}(:,:,frame));
+% do background subtraction per row 
+stackOut = cell(1,length(CaROImasks));
+for z = 1:length(CaROImasks)
+    for i = 1:length(ROIstacks{z})        
+        for frame = 1:size(ROIstacks{z}{i}{1},3)          
+            stackOut{z}(BG_ROIboundData{2,3}{z}(i):BG_ROIboundData{2,4}{z}(i),:,frame) = (reg__Stacks{z}(BG_ROIboundData{2,3}{z}(i):BG_ROIboundData{2,4}{z}(i),:,frame)-BGpixInt{z}{i}(:,:,frame));
+        end         
     end 
 end 
 
