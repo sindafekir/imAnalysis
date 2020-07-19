@@ -64,7 +64,6 @@ end
 
 %select rows that do not have vessel in them 
 if vidNumQ == 0 
-    % CURRENTLY MAKING CHANGES TO THE BELOW FUNCTION 
     [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
 elseif vidNumQ == 1   
     % NEED TO MAKE THIS FUNCTION NEXT 
