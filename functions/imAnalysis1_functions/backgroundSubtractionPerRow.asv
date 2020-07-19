@@ -24,29 +24,60 @@ if blackOutCaROIQ == 1
     end    
 end 
 
+% @@@@@@@@@@@@@@@@@@@
+% BELOW NEEDS EDITING 
+% @@@@@@@@@@@@@@@@@@@
+
+% NEED TO:
+% SAVE ROI COORDINATES AND ROIS EACH TIME
+% APPEND TO ROWS SELECTED VARIABLE
+% PLOT MULTIPLE ROIS 
+
 % display prompt so user knows what to do 
 disp('Select rows that do not contain vessels for background subtraction.')
 % select rows that do not contain vessels for background subtraction -
 % create mask 
 [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
+it = 1; 
+xmins(it) = xmin;
+ymins(it) = ymin;
 % determine what rows were selected so far 
 ymax = height + ymin - 1;
+xmax = width + xmin - 1;
+xmaxs(it) = xmax;
+ymaxs(it) = ymax;
 rowsSelected = ymin:ymax;
 % if all rows were not selected display what rows were selected and give
 % option to select more rows 
 allRows = 1:size(reg__Stacks{1},1); % row indices possible 
 if length(rowsSelected) < length(allRows) % if there are less rows selected than the total number of rows possible
-    
-% @@@@@@@@@@@@@@@@@@@
-% BELOW NEEDS EDITING 
-% @@@@@@@@@@@@@@@@@@@
-    
     % find the rows that were not selected 
     rowsNotSelected = ~ismember(allRows,rowsSelected); 
-    indi
-    
+    RowInds = find(rowsNotSelected);
+    % let the user know what rows still need selection 
+    disp('These rows still need selection:')
+    disp(RowInds)                    
+    %overlay background subtraction ROIs (so far) on image of FOV 
+    subplot(1,2,1)
+    x = [xmins(it),xmaxs(it),xmaxs(it),xmins(it),xmins(it)];
+    y = [ymins(it),ymins(it),ymaxs(it),ymaxs(it),ymins(it)];
+    imshow(reg__Stacks{1}(:,:,1),[0 1000]); hold on; plot(x,y,'r','LineWidth',2) 
+    % select additional rows that do not contain vessels for background subtraction -
+    % create mask
+    subplot(1,2,2)
+    [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
+    it = it + 1;
+    xmins(it) = xmin;
+    ymins(it) = ymin;
+    % determine what rows were selected so far 
+    ymax = height + ymin - 1;
+    xmax = width + xmin - 1;
+    xmaxs(it) = xmax;
+    ymaxs(it) = ymax;
+    rowsSelected = ymin:ymax;
 end 
 
+%@@@@@@@@@@@@@@@@@@@@
 
 
 % apply mask to each frame to get background pixel intensity per row 

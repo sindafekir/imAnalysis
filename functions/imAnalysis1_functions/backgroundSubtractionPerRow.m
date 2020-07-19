@@ -29,44 +29,60 @@ disp('Select rows that do not contain vessels for background subtraction.')
 % select rows that do not contain vessels for background subtraction -
 % create mask 
 [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
+it = 1; 
+ROIstacks{it} = ROI_stack;
+xmins(it) = xmin;
+ymins(it) = ymin;
 % determine what rows were selected so far 
 ymax = height + ymin - 1;
 xmax = width + xmin - 1;
+xmaxs(it) = xmax;
+ymaxs(it) = ymax;
 rowsSelected = ymin:ymax;
 % if all rows were not selected display what rows were selected and give
 % option to select more rows 
 allRows = 1:size(reg__Stacks{1},1); % row indices possible 
-if length(rowsSelected) < length(allRows) % if there are less rows selected than the total number of rows possible
+while length(rowsSelected) < length(allRows) % if there are less rows selected than the total number of rows possible
     % find the rows that were not selected 
     rowsNotSelected = ~ismember(allRows,rowsSelected); 
     RowInds = find(rowsNotSelected);
     % let the user know what rows still need selection 
     disp('These rows still need selection:')
-    disp(RowInds)
-                 
-    % PICK UP HERE- USE THE X AND Y MIN AND MAXES TO CREATE ROI COORDINATES
-    % IN X-Y PLANE FOR PLOTTING OVER THE ORIGINAL IMAGE 
-    % @@@@@@@@@@@@@@@@@@@
-    % BELOW NEEDS EDITING 
-    % @@@@@@@@@@@@@@@@@@@
-    
+    disp(RowInds)                    
     %overlay background subtraction ROIs (so far) on image of FOV 
-    imshow(reg__Stacks{1}(:,:,1),[0 1000]); hold on; plot() 
-
-
-
+    subplot(1,2,1)
+    imshow(reg__Stacks{1}(:,:,1),[0 1000]);
+    hold all; 
+    for i = 1:it
+        x = [xmins(i),xmaxs(i),xmaxs(i),xmins(i),xmins(i)];
+        y = [ymins(i),ymins(i),ymaxs(i),ymaxs(i),ymins(i)];
+        plot(x,y,'r','LineWidth',2) 
+    end
     % select additional rows that do not contain vessels for background subtraction -
-    % create mask 
+    % create mask
+    subplot(1,2,2)
     [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
-
+    it = it + 1;
+    ROIstacks{it} = ROI_stack;
+    xmins(it) = xmin;
+    ymins(it) = ymin;
+    % determine what rows were selected so far 
+    ymax = height + ymin - 1;
+    xmax = width + xmin - 1;
+    xmaxs(it) = xmax;
+    ymaxs(it) = ymax;
+    rowsSelected = [rowsSelected,ymin:ymax];
 end 
 
-
-
-% apply mask to each frame to get background pixel intensity per row 
+%@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@
 % BELOW NEEDS EDITING 
 % @@@@@@@@@@@@@@@@@@@
+
+% NEED TO:
+% FIGURE OUT WHAT TO DO ABOUT OVERLAPPING ROW SELECTION 
+
+% apply mask to each frame to get background pixel intensity per row 
 BG_ROIboundData = cell(1,length(reg__Stacks));
 BG_ROIstacks = cell(1,length(reg__Stacks));
 for stack = 1:length(reg__Stacks)
@@ -93,6 +109,9 @@ for stack = 1:length(reg__Stacks)
         BG_ROIstacks{stack} = ROI_stacks;
     end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@
+
 
 % determine average pixel intensity of each frame and row in the control
 % ROIs
