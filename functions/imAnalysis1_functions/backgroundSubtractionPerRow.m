@@ -29,34 +29,43 @@ end
 % @@@@@@@@@@@@@@@@@@@
 
 % TO DO:
-% FINISH ADDING IN ABILITY TO ITERATE THROUGH Z PLANES 
-% TEST THE CODE 
-
+% TEST THE CODE TO MAKE SURE IT ITERATES THROUGH ALL Z PLANES AND SAVES ALL
+% DATA 
+%%
 % select rows for background subtraction - this code goes through multiple
 % rounds of row selection - make sure to select rows where they do not have
 % blacked out pixels (from the calcium ROI removal) or vessels 
+ROIstacks = cell(1,length(CaROImasks));
+xmins = cell(1,length(CaROImasks));
+ymins = cell(1,length(CaROImasks));
+widths = cell(1,length(CaROImasks));
+heights = cell(1,length(CaROImasks));
+xmaxs = cell(1,length(CaROImasks));
+ymaxs = cell(1,length(CaROImasks));
+BG_ROIboundData = cell(1,4);
 for z = 1:length(CaROImasks)
+    figure;
     disp(fprintf('This is Z plane #%d.',z))
     % display prompt so user knows what to do 
     disp('Select rows that do not contain vessels for background subtraction.')
     % select rows that do not contain vessels for background subtraction -
     % create mask 
-    [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
+    [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{z});
     it = 1; 
-    ROIstacks{it} = ROI_stack;
-    xmins(it) = xmin;
-    ymins(it) = ymin;
-    widths(it) = width;
-    heights(it) = height;
+    ROIstacks{z}{it} = ROI_stack;
+    xmins{z}(it) = xmin;
+    ymins{z}(it) = ymin;
+    widths{z}(it) = width;
+    heights{z}(it) = height;
     % determine what rows were selected so far 
     ymax = height + ymin - 1;
     xmax = width + xmin - 1;
-    xmaxs(it) = xmax;
-    ymaxs(it) = ymax;
+    xmaxs{z}(it) = xmax;
+    ymaxs{z}(it) = ymax;
     rowsSelected = ymin:ymax;
     % if all rows were not selected display what rows were selected and give
     % option to select more rows 
-    allRows = 1:size(reg__Stacks{1},1); % row indices possible 
+    allRows = 1:size(reg__Stacks{z},1); % row indices possible 
     while length(rowsSelected) < length(allRows) % if there are less rows selected than the total number of rows possible
         % find the rows that were not selected 
         rowsNotSelected = ~ismember(allRows,rowsSelected); 
@@ -66,38 +75,38 @@ for z = 1:length(CaROImasks)
         disp(RowInds)                    
         %overlay background subtraction ROIs (so far) on image of FOV 
         subplot(1,2,1)
-        imshow(reg__Stacks{1}(:,:,1),[0 1000]);
+        imshow(reg__Stacks{z}(:,:,1),[0 1000]);
         hold all; 
         for i = 1:it
-            x = [xmins(i),xmaxs(i),xmaxs(i),xmins(i),xmins(i)];
-            y = [ymins(i),ymins(i),ymaxs(i),ymaxs(i),ymins(i)];
+            x = [xmins{z}(i),xmaxs{z}(i),xmaxs{z}(i),xmins{z}(i),xmins{z}(i)];
+            y = [ymins{z}(i),ymins{z}(i),ymaxs{z}(i),ymaxs{z}(i),ymins{z}(i)];
             plot(x,y,'r','LineWidth',2) 
         end
         % select additional rows that do not contain vessels for background subtraction -
         % create mask
         subplot(1,2,2)
-        [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{1});
+        [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{z});
         it = it + 1;
-        ROIstacks{it} = ROI_stack;
-        xmins(it) = xmin;
-        ymins(it) = ymin;
+        ROIstacks{z}{it} = ROI_stack;
+        xmins{z}(it) = xmin;
+        ymins{z}(it) = ymin;
         % determine what rows were selected so far 
         ymax = height + ymin - 1;
         xmax = width + xmin - 1;
-        xmaxs(it) = xmax;
-        ymaxs(it) = ymax;
-        widths(it) = width;
-        heights(it) = height;
+        xmaxs{z}(it) = xmax;
+        ymaxs{z}(it) = ymax;
+        widths{z}(it) = width;
+        heights{z}(it) = height;
         rowsSelected = [rowsSelected,ymin:ymax];
     end 
-    BG_ROIboundData{z}{1} = xmins;
-    BG_ROIboundData{z}{2} = ymins;
-    BG_ROIboundData{z}{3} = widths;
-    BG_ROIboundData{z}{4} = heights;
+    BG_ROIboundData{1} = xmins;
+    BG_ROIboundData{2} = ymins;
+    BG_ROIboundData{3} = widths;
+    BG_ROIboundData{4} = heights;
 end 
 
 %@@@@@@@@@@@@@@@@@@@@
-
+%%
 
 % NEED TO EVENTUALLY:
 % FIGURE OUT WHAT TO DO ABOUT OVERLAPPING ROW SELECTION - FOR NOW I DON'T
