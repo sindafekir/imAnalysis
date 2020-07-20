@@ -3,6 +3,7 @@ function [stackOut,BG_ROIboundData] = backgroundSubtractionPerRow(reg__Stacks)
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
 if blackOutCaROIQ == 1         
+    reg__Stacks2 = reg__Stacks;
     % get the Ca ROI coordinates 
     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
     cd(CaROImaskDir);
@@ -18,9 +19,9 @@ if blackOutCaROIQ == 1
         % convert CaROImasks from double to logical 
         CaROImasks{z} = logical(CaROImasks{z});
         % make your Ca ROI masks the right size for applying to a 3D array 
-        threeDCaMask{z} = repmat(CaROImasks{z},1,1,size(reg__Stacks{z},3));
+        threeDCaMask{z} = repmat(CaROImasks{z},1,1,size(reg__Stacks2{z},3));
         % apply your Ca ROI masks to the images 
-        reg__Stacks{z}(threeDCaMask{z}) = 0;
+        reg__Stacks2{z}(threeDCaMask{z}) = 0;
     end    
 end 
 
@@ -48,7 +49,7 @@ for z = 1:length(CaROImasks)
     disp('Select rows that do not contain vessels for background subtraction.')
     % select rows that do not contain vessels for background subtraction -
     % create mask 
-    [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{z});
+    [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks2{z});
     it = 1; 
     ROIstacks{z}{it} = ROI_stack;
     xmins{z}(it) = xmin;
@@ -73,7 +74,7 @@ for z = 1:length(CaROImasks)
         disp(RowInds)                    
         %overlay background subtraction ROIs (so far) on image of FOV 
         subplot(1,2,1)
-        imshow(reg__Stacks{z}(:,:,1),[0 1000]);
+        imshow(reg__Stacks2{z}(:,:,1),[0 1000]);
         hold all; 
         for i = 1:it
             x = [xmins{z}(i),xmaxs{z}(i),xmaxs{z}(i),xmins{z}(i),xmins{z}(i)];
@@ -83,7 +84,7 @@ for z = 1:length(CaROImasks)
         % select additional rows that do not contain vessels for background subtraction -
         % create mask
         subplot(1,2,2)
-        [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks{z});
+        [ROI_stack,xmin,ymin,width,height] = firstTimeCreateROIs(1,reg__Stacks2{z});
         it = it + 1;
         ROIstacks{z}{it} = ROI_stack;
         xmins{z}(it) = xmin;
@@ -111,6 +112,16 @@ BGpixInt = cell(1,length(CaROImasks));
 for z = 1:length(CaROImasks)
     for i = 1:length(ROIstacks{z})
         BGpixInt{z}{i} = mean(ROIstacks{z}{i}{1},2);
+    end 
+end 
+
+% ensure the size of the ROI boundaries does not accidentally exceed the
+% size of the FOV
+for z = 1:length(CaROImasks)
+    for i = 1:length(ROIstacks{z})
+        if BG_ROIboundData{2,4}{z}(i) > size(reg__Stacks{1},1)
+            BG_ROIboundData{2,4}{z}(i) = size(reg__Stacks{1},1);
+        end 
     end 
 end 
 
