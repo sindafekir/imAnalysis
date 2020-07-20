@@ -1,8 +1,8 @@
 function [stackOut] = backgroundSubtractionPerRow2(reg__Stacks,BG_ROIboundData)
 
-ROIstacks = cell(1,length(CaROImasks));
-for z = 1:length(CaROImasks)
-    for i = 1:length(BG_ROIboundData{2,1})
+ROIstacks = cell(1,length(reg__Stacks));
+for z = 1:length(reg__Stacks)
+    for i = 1:length(BG_ROIboundData{2,1}{z})
         % get the back ground ROI coordinates 
         xmins = BG_ROIboundData{2,1}{z}(i);
         ymins = BG_ROIboundData{2,3}{z}(i);
@@ -16,16 +16,16 @@ end
 
 % determine average pixel intensity of each frame and row in the control
 % ROIs
-BGpixInt = cell(1,length(CaROImasks));
-for z = 1:length(CaROImasks)
+BGpixInt = cell(1,length(reg__Stacks));
+for z = 1:length(reg__Stacks)
     for i = 1:length(ROIstacks{z})
         BGpixInt{z}{i} = mean(ROIstacks{z}{i}{1},2);
     end 
 end 
 
 % do background subtraction per row 
-stackOut = cell(1,length(CaROImasks));
-for z = 1:length(CaROImasks)
+stackOut = cell(1,length(reg__Stacks));
+for z = 1:length(reg__Stacks)
     for i = 1:length(ROIstacks{z})        
         for frame = 1:size(ROIstacks{z}{i}{1},3)          
             stackOut{z}(BG_ROIboundData{2,3}{z}(i):BG_ROIboundData{2,4}{z}(i),:,frame) = (reg__Stacks{z}(BG_ROIboundData{2,3}{z}(i):BG_ROIboundData{2,4}{z}(i),:,frame)-BGpixInt{z}{i}(:,:,frame));

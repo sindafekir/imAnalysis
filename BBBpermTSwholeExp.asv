@@ -33,7 +33,7 @@ elseif vidNumQ == 1
     BG_ROIboundData = BGROIeMat.BG_ROIboundData;
     FPSstack = BGROIeMat.FPSstack;
     numZplanes = BGROIeMat.numZplanes;
-    ROIboundData = BGROIeMat.ROIboundData;
+    ROIboundDatas = BGROIeMat.ROIboundDatas;
     numROIs = BGROIeMat.numROIs;
     BBBROIsToSegment = BGROIeMat.BBBROIsToSegment;
     volQ = BGROIeMat.volQ;
@@ -67,7 +67,8 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%NEXT: UPDATE BACKGROUND SUBTRACTION IN OTHER .M FILES 
+%NEXT: TEST BGSUBTRACTIONPERROW2 AND THEN UPDATE BACKGROUND SUBTRACTION IN
+%OTHER .M FILES 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -98,7 +99,7 @@ if vidNumQ == 0
     %for display purposes mostly: average across frames 
     stackAVsIm = mean(inputStacks,3);
     %create the ROI boundaries           
-    ROIboundData = cell(1,numROIs);
+    ROIboundDatas = cell(1,numROIs);
     for VROI = 1:numROIs 
         disp('Create your ROI for BBB perm analysis');
         [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
@@ -106,15 +107,15 @@ if vidNumQ == 0
         ROIboundData{2} = ymins;
         ROIboundData{3} = widths;
         ROIboundData{4} = heights;
-        ROIboundData{VROI} = ROIboundData;
+        ROIboundDatas{VROI} = ROIboundData;
     end
     ROIstacks = cell(1,numROIs);
     for VROI = 1:numROIs
         %use the ROI boundaries to generate ROIstacks 
-        xmins = ROIboundData{VROI}{1};
-        ymins = ROIboundData{VROI}{2};
-        widths = ROIboundData{VROI}{3};
-        heights = ROIboundData{VROI}{4};
+        xmins = ROIboundDatas{VROI}{1};
+        ymins = ROIboundDatas{VROI}{2};
+        widths = ROIboundDatas{VROI}{3};
+        heights = ROIboundDatas{VROI}{4};
         [ROI_stacks] = make_ROIs_notfirst_time(inputStacks,xmins,ymins,widths,heights);
         ROIstacks{VROI} = ROI_stacks{1};
     end 
@@ -122,10 +123,10 @@ elseif vidNumQ == 1
     ROIstacks = cell(1,numROIs);
     for VROI = 1:numROIs
         %use the ROI boundaries to generate ROIstacks 
-        xmins = ROIboundData{VROI}{1};
-        ymins = ROIboundData{VROI}{2};
-        widths = ROIboundData{VROI}{3};
-        heights = ROIboundData{VROI}{4};
+        xmins = ROIboundDatas{VROI}{1};
+        ymins = ROIboundDatas{VROI}{2};
+        widths = ROIboundDatas{VROI}{3};
+        heights = ROIboundDatas{VROI}{4};
         [ROI_stacks] = make_ROIs_notfirst_time(inputStacks,xmins,ymins,widths,heights);
         ROIstacks{VROI} = ROI_stacks{1};
     end 
