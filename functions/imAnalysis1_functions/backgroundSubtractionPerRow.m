@@ -2,8 +2,8 @@ function [stackOut,BG_ROIboundData] = backgroundSubtractionPerRow(reg__Stacks)
 
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
+reg__Stacks2 = reg__Stacks;
 if blackOutCaROIQ == 1         
-    reg__Stacks2 = reg__Stacks;
     % get the Ca ROI coordinates 
     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
     cd(CaROImaskDir);
