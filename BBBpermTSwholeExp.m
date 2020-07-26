@@ -64,14 +64,6 @@ elseif vidNumQ == 1
     [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%NEXT: UPDATE BACKGROUND SUBTRACTION IN OTHER .M FILES 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %% average registered imaging data across planes in Z 
 clear inputStackArray
 inputStackArray = zeros(size(input_Stacks{1},1),size(input_Stacks{1},2),size(input_Stacks{1},3),size(input_Stacks,2));
