@@ -2682,13 +2682,6 @@ while segmentVessel == 1
     end 
 end
 
-% NEXT: CREATE A CUSTOM COLOR MAP (CHECK COMPOSITE CODE) THAT HIGHLIGHTS 2% CHANGES THAN APPLY THIS COLORMAP TO IMOVERLAY
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%WORKING ON THIS PART: NEED TO RESCALE THE COLOR MAP TO BE FROM 0 TO 1 -
-%OLD 0 IS NOW 0.5
-
 % Create colormap that is green for negative, red for positive,
 % and a chunk inthe middle that is black.
 greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
@@ -2696,14 +2689,11 @@ redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
 cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 
 vesOverRightChan = cell(1,length(vesChan)); 
-cRightChan = cell(1,length(vesChan)); 
-scaledRightChan = cell(1,length(vesChan)); 
-for ccell = 3%1:length(terminals)
+for ccell = 1:length(terminals)
     %black out pixels that belong to vessels         
     RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
     %find the upper and lower bounds of your data (per calcium ROI) 
     maxValue = max(max(max(max(RightChan{terminals(ccell)}))));
-    minValue = min(min(min(min(RightChan{terminals(ccell)}))));
     bounds = [maxValue,-(maxValue)];
     %determine the absolute difference between the max and min % change
     boundsAbsDiff = abs(diff(bounds,1,2));
@@ -2711,73 +2701,15 @@ for ccell = 3%1:length(terminals)
     minBound = -(ceil(max(boundsAbs))); 
     maxBound = ceil(max(boundsAbs)); 
 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %rescale values so they fit between 0 and 1 - because ind2rgb does not
-    %like negative values 
-    scaledRightChan{terminals(ccell)} = rescale(RightChan{terminals(ccell)},'InputMin',minValue,'InputMax',maxValue);
-
-    %view the colormap and a sample image *for troubleshooting purposes 
-    imagesc(RightChan{terminals(ccell)}(:,:,1),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
-    imshow(scaledRightChan{terminals(ccell)}(:,:,1))
-    colorbar;
-    colormap(cMap);
-%     axis off;
-    %% PICK UP HERE- FIGURED OUT HOW TO GET RGB OUTPUT FROM IND2RGB, BUT IT IS STILL NOT OUTPUTTING THE RIGHT PICTURE 
-    %apply custom color map 
-    for frame = 1%:size(vesChan{terminals(ccell)},3)
-        curFrame = scaledRightChan{terminals(ccell)}(:,:,frame);
-        %IND2RGB IS MAKING THE OUTPUT ARRAY ENTIRELY RED (ALL 1s)
-        RGB = ind2rgb(curFrame,jet); % in place of jet should be cMap - our custom color map 
-        cRightChan{terminals(ccell)}(:,:,:,frame) = RGB;
-    end 
-    %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  
-
-    %NEXT STEP IS TO USE THE ABOVE COMMENTED OUT CODE TO CREATE RGB STACKS
-    %USING OUR CUSTOM COLORMAP FOR INPUT INTO IMOVERLAY 
-    
     %overlay segmentation boundaries on the % change image stack 
-%     for frame = 1:size(vesChan{terminals(ccell)},3)       
-%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame),[.3 1 .3]);         
-% %         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
-%     end 
+    %PICK UP HERE - NEED TO MAKE IMOVERLAY2 NOT OPEN IMAGES PER FRAME -
+    %OTHERWISE THIS WILL TAKE FOREVER 
+    for frame = 1:size(vesChan{terminals(ccell)},3)       
+        vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay2(BW_perim{terminals(ccell)}(:,:,frame),RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound],[],cMap,0.7);
+    end 
 end 
 
-%apply custom color map colors and ranges to video
-vid = implay(RightChan{CaROI});
-%find the upper and lower bounds of your custom color map 
-maxValue = max(max(max(max(RightChan{CaROI}))));
-minValue = min(min(min(min(RightChan{CaROI}))));
-bounds = [maxValue,-(maxValue)];
-% bounds = [maxValue,minValue];
-boundsAbs = abs(bounds);
-minBound = -(ceil(max(boundsAbs))); 
-maxBound = ceil(max(boundsAbs)); 
-%apply custom color map to video 
-vid.Visual.ColorMap.MapExpression = 'cMap';
-%apply appropriate pixel bounds to color map based on data
-vid.Visual.setPropertyValue('UseDataRange',true);
-vid.Visual.setPropertyValue('DataRangeMin',minBound);
-vid.Visual.setPropertyValue('DataRangeMax',maxBound);
 
-
-
-%apply custom color map colors and ranges to video
-vid = implay(scaledRightChan{CaROI});
-%find the upper and lower bounds of your custom color map 
-maxValue = max(max(max(max(scaledRightChan{CaROI}))));
-minValue = min(min(min(min(scaledRightChan{CaROI}))));
-bounds = [maxValue,-(maxValue)];
-% bounds = [maxValue,minValue];
-boundsAbs = abs(bounds);
-minBound = -(ceil(max(boundsAbs))); 
-maxBound = ceil(max(boundsAbs)); 
-%apply custom color map to video 
-vid.Visual.ColorMap.MapExpression = 'cMap';
-%apply appropriate pixel bounds to color map based on data
-vid.Visual.setPropertyValue('UseDataRange',true);
-vid.Visual.setPropertyValue('DataRangeMin',minBound);
-vid.Visual.setPropertyValue('DataRangeMax',maxBound);
 %}
 %% save the stack 
 %{

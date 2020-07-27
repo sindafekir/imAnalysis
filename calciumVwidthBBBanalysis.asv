@@ -2712,22 +2712,23 @@ for ccell = 3%1:length(terminals)
     maxBound = ceil(max(boundsAbs)); 
 
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %rescale values so they fit between 0 and 1 
+    %rescale values so they fit between 0 and 1 - because ind2rgb does not
+    %like negative values 
     scaledRightChan{terminals(ccell)} = rescale(RightChan{terminals(ccell)},'InputMin',minValue,'InputMax',maxValue);
 
-%     %view the colormap and a sample image *for troubleshooting purposes 
+    %view the colormap and a sample image *for troubleshooting purposes 
     imagesc(RightChan{terminals(ccell)}(:,:,1),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
     imshow(scaledRightChan{terminals(ccell)}(:,:,1))
     colorbar;
     colormap(cMap);
 %     axis off;
-    %%
+    %% PICK UP HERE- FIGURED OUT HOW TO GET RGB OUTPUT FROM IND2RGB, BUT IT IS STILL NOT OUTPUTTING THE RIGHT PICTURE 
     %apply custom color map 
-    for frame = 1:size(vesChan{terminals(ccell)},3)
-        %IND2RGB DOESN'T LIKE THE NEGATIVE VALUES IN RIGHTCHAN
+    for frame = 1%:size(vesChan{terminals(ccell)},3)
         curFrame = scaledRightChan{terminals(ccell)}(:,:,frame);
         %IND2RGB IS MAKING THE OUTPUT ARRAY ENTIRELY RED (ALL 1s)
-        cRightChan{terminals(ccell)}(:,:,:,frame) = ind2rgb(curFrame,cMap);
+        RGB = ind2rgb(curFrame,cMap); % in place of jet should be cMap - our custom color map 
+        cRightChan{terminals(ccell)}(:,:,:,frame) = RGB;
     end 
     %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   
@@ -2736,10 +2737,10 @@ for ccell = 3%1:length(terminals)
     %USING OUR CUSTOM COLORMAP FOR INPUT INTO IMOVERLAY 
     
     %overlay segmentation boundaries on the % change image stack 
-%     for frame = 1:size(vesChan{terminals(ccell)},3)       
-%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame),[.3 1 .3]);         
-% %         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
-%     end 
+    for frame = 1:size(vesChan{terminals(ccell)},3)       
+        vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay(RightChan{terminals(ccell)}(:,:,frame), BW_perim{terminals(ccell)}(:,:,frame),[.3 1 .3]);         
+%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imfuse(RightChan{terminals(ccell)}(:,:,frame),BW_perim{terminals(ccell)}(:,:,frame),'ColorChannels',[1 2 0],'Scaling','none');   
+    end 
 end 
 
 %apply custom color map colors and ranges to video
