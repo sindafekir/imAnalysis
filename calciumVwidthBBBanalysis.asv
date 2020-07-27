@@ -2712,23 +2712,22 @@ for ccell = 3%1:length(terminals)
     maxBound = ceil(max(boundsAbs)); 
 
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %rescale values so they fit between 0 and 1 - because ind2rgb does not
-    %like negative values 
+    %rescale values so they fit between 0 and 1 
     scaledRightChan{terminals(ccell)} = rescale(RightChan{terminals(ccell)},'InputMin',minValue,'InputMax',maxValue);
 
-    %view the colormap and a sample image *for troubleshooting purposes 
+%     %view the colormap and a sample image *for troubleshooting purposes 
     imagesc(RightChan{terminals(ccell)}(:,:,1),[-(ceil(max(boundsAbs))),ceil(max(boundsAbs))])
     imshow(scaledRightChan{terminals(ccell)}(:,:,1))
     colorbar;
     colormap(cMap);
 %     axis off;
-    %% PICK UP HERE- FIGURED OUT HOW TO GET RGB OUTPUT FROM IND2RGB, BUT IT IS STILL NOT OUTPUTTING THE RIGHT PICTURE 
+    %%
     %apply custom color map 
-    for frame = 1%:size(vesChan{terminals(ccell)},3)
+    for frame = 1:size(vesChan{terminals(ccell)},3)
+        %IND2RGB DOESN'T LIKE THE NEGATIVE VALUES IN RIGHTCHAN
         curFrame = scaledRightChan{terminals(ccell)}(:,:,frame);
         %IND2RGB IS MAKING THE OUTPUT ARRAY ENTIRELY RED (ALL 1s)
-        RGB = ind2rgb(curFrame,jet); % in place of jet should be cMap - our custom color map 
-        cRightChan{terminals(ccell)}(:,:,:,frame) = RGB;
+        cRightChan{terminals(ccell)}(:,:,:,frame) = ind2rgb(curFrame,cMap);
     end 
     %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   
