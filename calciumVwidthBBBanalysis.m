@@ -2533,7 +2533,7 @@ end
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
-windSize = 24; %input('How big should the window be around Ca peak in seconds?');
+windSize = input('How big should the window be around Ca peak in seconds?'); %24
 sortedGreenStacks = cell(1,length(vidList));
 sortedRedStacks = cell(1,length(vidList));
 for vid = 1:length(vidList)
