@@ -2689,7 +2689,7 @@ redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
 cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 
 vesOverRightChan = cell(1,length(vesChan)); 
-for ccell = 1:length(terminals)
+for ccell = 3%1:length(terminals)
     %black out pixels that belong to vessels         
     RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
     %find the upper and lower bounds of your data (per calcium ROI) 
@@ -2702,10 +2702,44 @@ for ccell = 1:length(terminals)
     maxBound = ceil(max(boundsAbs)); 
 
     %overlay segmentation boundaries on the % change image stack 
-    %PICK UP HERE - NEED TO MAKE IMOVERLAY2 NOT OPEN IMAGES PER FRAME -
-    %OTHERWISE THIS WILL TAKE FOREVER 
-    for frame = 1:size(vesChan{terminals(ccell)},3)       
-        vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay2(BW_perim{terminals(ccell)}(:,:,frame),RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound],[],cMap,0.7);
+    for frame = 1%:size(vesChan{terminals(ccell)},3)    
+        figure('Visible','on');     
+        % create the % change image with the right white and black point
+        % boundaries and colormap 
+        imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar        
+        % get the x-y coordinates of the vessel outline
+        [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.
+        xy = [x, y]; % Two columns. Column 1=x, column 2=y;        
+        % plot the vessel outline over the % change image 
+        hold on;
+        scatter(x,y,'white','.');
+        ax = gca;
+        ax.Visible = 'off';
+        
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %PICK UP HERE: SAVE CURRENT IMAGE DIRECLY TO FOLDER AND THEN USE
+        %THOSE IMAGES TO CREATE A VIDEO 
+        
+        %USE BELOW SAMPLE CODES 
+        
+        %FROM LE INTERNET 
+        for i=1:30
+          % code to show image number i
+          saveas(gcf,['filename' num2str(i) '.png']);
+        end
+        
+        % FROM ME 
+        % save registered stacks 
+        clearvars -except regStacks
+        vid = input('What number video is this? '); 
+
+        %make the directory and save the images 
+        dir1 = input('What folder are you saving these images in? ');
+        dir2 = strrep(dir1,'\','/');
+        filename = sprintf('%s/regStacks_vid%d',dir2,vid);
+        save(filename)
+
     end 
 end 
 
