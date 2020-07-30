@@ -2533,7 +2533,7 @@ end
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
-windSize = 5; %input('How big should the window be around Ca peak in seconds?');
+windSize = 24; %input('How big should the window be around Ca peak in seconds?');
 sortedGreenStacks = cell(1,length(vidList));
 sortedRedStacks = cell(1,length(vidList));
 for vid = 1:length(vidList)
@@ -2554,7 +2554,6 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-% WORKING PROGRESS- NEED TO RESCALE CUSTOM COLOR MAP TO BE FROM 0 TO 1 
 
 % average calcium peak aligned traces across videos 
 greenStackArray2 = cell(1,length(vidList));
@@ -2701,111 +2700,37 @@ for ccell = 3%1:length(terminals)
     minBound = -(ceil(max(boundsAbs))); 
     maxBound = ceil(max(boundsAbs)); 
 
-    %overlay segmentation boundaries on the % change image stack 
-    %PICK UP HERE - RIP CODE FROM IMOVERLAY2 TO CREATE OVERLAY IMAGE THAT I
-    %WANT B/C THIS FUNCTION DOES NOT OUTPUT CORRECTLY, ALTHOUGH IT DOES
-    %SHOW THE RIGHT IMAGE 
-    for frame = 1%:size(vesChan{terminals(ccell)},3)    
-        figure('Visible','on');
-        
-%         % To have a grayscale background, replicate image to 3-channels
-%         % (this is the vessel outline)
-%         B = repmat(mat2gray(double(BW_perim{terminals(ccell)}(:,:,frame))),[1,1,3]);
-%         
-%         % Display the back image
-%         hB = imagesc(B);axis image off;
-        
-        % Add the front image on top of the back image; the front image is
-        % the % change data 
-        
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        
+    %overlay segmentation boundaries on the % change image stack and save
+    %images
+    dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
+    dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+    for frame = 1:size(vesChan{terminals(ccell)},3)    
+        figure('Visible','off');     
         % create the % change image with the right white and black point
         % boundaries and colormap 
-        imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap)
-        
+        imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar        
         % get the x-y coordinates of the vessel outline
-        [y, x] = find(M);  % x and y are column vectors.
-        xy = [x, y]; % Two columns. Column 1=x, column 2=y;
-        
+        [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.
+        xy = [x, y]; % Two columns. Column 1=x, column 2=y;        
         % plot the vessel outline over the % change image 
         hold on;
-%         plot();
-
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
-        
-    
-%         % Make the foreground image transparent
-%         set(hF,'AlphaData',0.5)
-%         
-%         vesOverRightChan{terminals(ccell)}(:,:,:,frame) = imoverlay2(BW_perim{terminals(ccell)}(:,:,frame),RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound],[],cMap,0.7);
-%         
-        %{
-        % imoverlay2(B,F,climF,climB,cmap,alpha,haxes)
-        B = BW_perim{terminals(ccell)}(:,:,frame);
-        F = RightChan{terminals(ccell)}(:,:,frame);
-        climF = [minBound,maxBound];
-        climB = [];
-        cmap = cMap;
-        alpha = 0.7; 
-         
-        % Create a figure unless axes is provided
-        f=figure('Visible','off',...
-            'Units','pixels','Renderer','opengl');
-        pos = get(f,'Position');
-        set(f,'Position',[pos(1),pos(2),size(B,2),size(B,1)]);
-        haxes = axes;
-        set(haxes,'Position',[0,0,1,1]);
-        movegui(f,'center');
-        % Create colormap
-        cmapSize = 100; % default size of 60 shows visible discretization
-        colormap(cmap);
-        
-        % To have a grayscale background, replicate image to 3-channels
-        B = repmat(mat2gray(double(B)),[1,1,3]);
-        
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  
-        % Display the back image
-        axes(haxes);
-        hB = imagesc(B);axis image off;
-        % set(gca,'Position',[0,0,1,1]);
-        %}
-    
+        scatter(x,y,'white','.');
+        ax = gca;
+        ax.Visible = 'off';
+        ax.FontSize = 20;
+        %save current figure to file 
+        filename = sprintf('%s/term%d_frame%d',dir2,terminals(ccell),frame);
+        saveas(gca,[filename '.png'])
     end 
 end 
 
+%NEXT: 
+%MAKE VIDEOS LONGER IN TIME 
+%CHANGE MAX WHITE POINT TO 5% 
+%NEED TO ITERATIVELY MAKE NEW FOLDER PER TERMINAL IN THE SAVING PROCESS 
 
 %}
-%% save the stack 
-%{
-%set saving parameters
-channel = 1;%input('Input 0 to save green channel. Input 1 to save red channel. ');
-if channel == 0 
-    color = 'Green';
-    Ims = NgreenStackAv;
-elseif channel == 1
-    color = 'Red';
-    Ims = SNredStackAv;
-end 
-term = input('What terminal data are we saving? ');
-dir1 = input('What folder are you saving these images in? ');
-dir2 = strrep(dir1,'\','/');
-% dir3 = (sprintf('%s/SmoothedNormalized%sStackAv_Terminal%dCalciumSpikes',dir2,color,term));
-dir3 = (sprintf('%s/Normalized%sStackAv_Terminal%dSpikeTriggeredAv',dir2,color,term));
 
-%make image gray scale 16 bit
-% Ims_index = uint16((Ims - min(Ims(:))) * (65536 / (max(Ims(:)) - min(Ims(:)))));
-Ims_index{term} = uint16(Ims{term}(:,:,:));
-
-%make the directory and save the images 
-mkdir(dir3);
-for frame = 1:size(Ims{term},3)
-    folder = sprintf('%s/%s_Im_%d.tif',dir3,color,frame');
-    imwrite(Ims_index{term}(:,:,frame),folder);
-end 
-%}
 %% create composite stack
 %THIS NEEDS FURTHER EDITING BECAUSE THE COMPOSITE STACK IS REALLY DIM
 %{

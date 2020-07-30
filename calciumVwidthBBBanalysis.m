@@ -2533,7 +2533,7 @@ end
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
-windSize = 5; %input('How big should the window be around Ca peak in seconds?');
+windSize = 24; %input('How big should the window be around Ca peak in seconds?');
 sortedGreenStacks = cell(1,length(vidList));
 sortedRedStacks = cell(1,length(vidList));
 for vid = 1:length(vidList)
@@ -2554,7 +2554,6 @@ for vid = 1:length(vidList)
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
-% WORKING PROGRESS- NEED TO RESCALE CUSTOM COLOR MAP TO BE FROM 0 TO 1 
 
 % average calcium peak aligned traces across videos 
 greenStackArray2 = cell(1,length(vidList));
@@ -2701,9 +2700,12 @@ for ccell = 3%1:length(terminals)
     minBound = -(ceil(max(boundsAbs))); 
     maxBound = ceil(max(boundsAbs)); 
 
-    %overlay segmentation boundaries on the % change image stack 
-    for frame = 1%:size(vesChan{terminals(ccell)},3)    
-        figure('Visible','on');     
+    %overlay segmentation boundaries on the % change image stack and save
+    %images
+    dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
+    dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+    for frame = 1:size(vesChan{terminals(ccell)},3)    
+        figure('Visible','off');     
         % create the % change image with the right white and black point
         % boundaries and colormap 
         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar        
@@ -2715,64 +2717,19 @@ for ccell = 3%1:length(terminals)
         scatter(x,y,'white','.');
         ax = gca;
         ax.Visible = 'off';
-        
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %PICK UP HERE: SAVE CURRENT IMAGE DIRECLY TO FOLDER AND THEN USE
-        %THOSE IMAGES TO CREATE A VIDEO 
-        
-        %USE BELOW SAMPLE CODES 
-        
-        %FROM LE INTERNET 
-        for i=1:30
-          % code to show image number i
-          saveas(gcf,['filename' num2str(i) '.png']);
-        end
-        
-        % FROM ME 
-        % save registered stacks 
-        clearvars -except regStacks
-        vid = input('What number video is this? '); 
-
-        %make the directory and save the images 
-        dir1 = input('What folder are you saving these images in? ');
-        dir2 = strrep(dir1,'\','/');
-        filename = sprintf('%s/regStacks_vid%d',dir2,vid);
-        save(filename)
-
+        ax.FontSize = 20;
+        %save current figure to file 
+        filename = sprintf('%s/term%d_frame%d',dir2,terminals(ccell),frame);
+        saveas(gca,[filename '.png'])
     end 
 end 
 
+%NEXT: 
+%CHANGE MAX WHITE POINT TO 5% 
+%NEED TO ITERATIVELY MAKE NEW FOLDER PER TERMINAL IN THE SAVING PROCESS 
 
 %}
-%% save the stack 
-%{
-%set saving parameters
-channel = 1;%input('Input 0 to save green channel. Input 1 to save red channel. ');
-if channel == 0 
-    color = 'Green';
-    Ims = NgreenStackAv;
-elseif channel == 1
-    color = 'Red';
-    Ims = SNredStackAv;
-end 
-term = input('What terminal data are we saving? ');
-dir1 = input('What folder are you saving these images in? ');
-dir2 = strrep(dir1,'\','/');
-% dir3 = (sprintf('%s/SmoothedNormalized%sStackAv_Terminal%dCalciumSpikes',dir2,color,term));
-dir3 = (sprintf('%s/Normalized%sStackAv_Terminal%dSpikeTriggeredAv',dir2,color,term));
 
-%make image gray scale 16 bit
-% Ims_index = uint16((Ims - min(Ims(:))) * (65536 / (max(Ims(:)) - min(Ims(:)))));
-Ims_index{term} = uint16(Ims{term}(:,:,:));
-
-%make the directory and save the images 
-mkdir(dir3);
-for frame = 1:size(Ims{term},3)
-    folder = sprintf('%s/%s_Im_%d.tif',dir3,color,frame');
-    imwrite(Ims_index{term}(:,:,frame),folder);
-end 
-%}
 %% create composite stack
 %THIS NEEDS FURTHER EDITING BECAUSE THE COMPOSITE STACK IS REALLY DIM
 %{
