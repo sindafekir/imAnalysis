@@ -16,6 +16,9 @@ vidList = input('What videos are you analyzing? ');
 BBBQ = input('Input 1 if you want to get BBB data. Input 0 otherwise. ');
 VWQ = input('Input 1 if you want to get vessel width data. Input 0 otherwise. ');
 CAQ = input('Input 1 if you want to get calcium data. Input 0 otherwise. ');
+STAstackQ = input('Input 1 to import red and green channel stacks. Input 0 otherwise. ');
+tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
+ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
 
 if BBBQ == 1 
     % get BBB data 
@@ -58,8 +61,7 @@ if CAQ == 1
 end 
 
 %get trial data to generate stimulus event triggered averages (ETAs)
-ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
-if ETAQ == 1 
+if ETAQ == 1 || tTypeQ == 1
     velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
@@ -98,7 +100,6 @@ if ETAQ == 1
     end    
 end 
 
-STAstackQ = input('Input 1 to import red and green channel stacks. Input 0 otherwise. ');
 if STAstackQ == 1
     % get registered images 
     regImDir = uigetdir('*.*','WHERE ARE THE REGISTERED IMAGES?');
@@ -113,7 +114,7 @@ if STAstackQ == 1
     greenStackArray = cell(1,length(vidList));
     greenStacks = cell(1,length(vidList));
     redStacks = cell(1,length(vidList));
-    for vid = 2:length(vidList)
+    for vid = 1:length(vidList)
         cd(regImDir);
         redMat = matfile(sprintf(redlabel,vidList(vid)));       
         redRegStacks = redMat.regStacks;
@@ -122,17 +123,25 @@ if STAstackQ == 1
         greenRegStacks = greenMat.regStacks;
         greenStacks1{vid} = greenRegStacks{2,3};      
         % do background subtraction 
+        %{
         if vid == 1 
-            [redStacks_BS,BG_ROIboundData] = backgroundSubtractionPerRow(redStacks1{vid});
+%             [redStacks_BS,BG_ROIboundData] = backgroundSubtractionPerRow(redStacks1{vid});
+            [redStacks_BS,BG_ROIboundData] = backgroundSubtraction(redStacks1{vid});
             redStacksBS{vid} = redStacks_BS;
-            [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
+%             [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
+            [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
             greenStacksBS{vid} = greenStacks_BS;
         else
-            [redStacks_BS] = backgroundSubtractionPerRow2(redStacks1{vid},BG_ROIboundData);
+%             [redStacks_BS] = backgroundSubtractionPerRow2(redStacks1{vid},BG_ROIboundData);
+            [redStacks_BS] = backgroundSubtraction2(redStacks1{vid},BG_ROIboundData);
             redStacksBS{vid} = redStacks_BS;
-            [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
+%             [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
+            [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
             greenStacksBS{vid} = greenStacks_BS;
         end 
+        %}
+        redStacksBS = redStacks1;
+        greenStacksBS = greenStacks1; 
         % average registered imaging data across planes in Z 
         for Z = 1:size(redStacks1{1},2)
             redStackArray{vid}(:,:,:,Z) = redStacksBS{vid}{Z};
@@ -1693,141 +1702,92 @@ end
 %}
 %% find calcium peaks per terminal across entire experiment 
 %{
-% find peaks and then plot where they are in the entire TS 
-stdTrace = cell(1,length(vidList));
-sigPeaks = cell(1,length(vidList));
-sigLocs = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
-        %find the peaks 
-%         figure;
-%         ax=gca;
-%         hold all
-        [peaks, locs] = findpeaks(cDataFullTrace{vid}{terminals(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
-        %find the sig peaks (peaks above 2 standard deviations from mean) 
-        stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
-        count = 1 ; 
-        for loc = 1:length(locs)
-            if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
-                %if the peaks fall within the time windows used for the BBB
-                %trace examples in the DOD figure 
-%                 if locs(loc) > 197*FPSstack && locs(loc) < 206.5*FPSstack || locs(loc) > 256*FPSstack && locs(loc) < 265.5*FPSstack || locs(loc) > 509*FPSstack && locs(loc) < 518.5*FPSstack
-                    sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
-                    sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
-%                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-                    count = count + 1;
-%                 end 
-            end 
-        end 
-              
-        % below is plotting code 
-        %{
-        Frames = size(cDataFullTrace{vid}{terminals(ccell)},2);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-%         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
-        sec_TimeVals = floor(((0:2:(Frames/FPSstack))));
-        min_TimeVals = round(sec_TimeVals/60,2)+7.03;
-        FrameVals = floor((0:(FPSstack*2):Frames)); 
-
-        %smooth the calcium data 
-        [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals(ccell)},(2/FPSstack),FPSstack);
-        
-%         plot((cDataFullTrace{vid}{terminals(ccell)})+150,'b','LineWidth',3)
-%         plot(ScDataFullTrace+150,'b','LineWidth',3)
-        plot(bDataFullTrace{vid},'r','LineWidth',3)
-        
-%         for trial = 1:size(state_start_f{vid},1)
-%             if TrialTypes{vid}(trial,2) == 1
-%                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-%                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-%             elseif TrialTypes{vid}(trial,2) == 2
-%                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-%                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-%             end 
-%         end 
-
-        count = 1 ; 
-        for loc = 1:length(locs)
-            if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
-                sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
-                sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
-                plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-                count = count + 1;
-            end 
-        end 
-
-%         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
-
-% 
-        ax.XTick = FrameVals;
-        ax.XTickLabel = sec_TimeVals;
-        ax.FontSize = 25;
-        ax.FontName = 'Times';
-        xLimStart = 256*FPSstack;
-        xLimEnd = 266.5*FPSstack; 
-        xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
-        xlim([xLimStart xLimEnd])
-        ylim([-23 80])
-        xlabel('time (sec)','FontName','Times')
-%         if smoothQ ==  1
-%             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
-%         elseif smoothQ == 0 
-%             title(sprintf('terminal #%d raw data',terminals(ccell)))
-%         end    
-           %}
-    end 
-end 
-%}
-%% sort data based on ca peak location 
-%{
-tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
-% windSize = 24; %input('How big should the window be around Ca peak in seconds?');
-windSize = 5;
 if tTypeQ == 0 
-    
-    sortedCdata = cell(1,length(vidList));
-    sortedBdata = cell(1,length(vidList));
-    sortedVdata = cell(1,length(vidList));
+    % find peaks and then plot where they are in the entire TS 
+    stdTrace = cell(1,length(vidList));
+    sigPeaks = cell(1,length(vidList));
+    sigLocs = cell(1,length(vidList));
     for vid = 1:length(vidList)
         for ccell = 1:length(terminals)
-            for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
-                if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
-                    start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
-                    stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
-                    if start == 0 
-                        start = 1 ;
-                        stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
-                    end                
-                    for BBBroi = 1:length(bDataFullTrace{1})
-                        sortedBdata{vid}{BBBroi}{terminals(ccell)}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                    end 
-                    sortedCdata{vid}{terminals(ccell)}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                    for VWroi = 1:length(vDataFullTrace{1})
-                        sortedVdata{vid}{VWroi}{terminals(ccell)}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
-                    end 
+            %find the peaks 
+    %         figure;
+    %         ax=gca;
+    %         hold all
+            [peaks, locs] = findpeaks(cDataFullTrace{vid}{terminals(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+            %find the sig peaks (peaks above 2 standard deviations from mean) 
+            stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
+            count = 1 ; 
+            for loc = 1:length(locs)
+                if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
+                    %if the peaks fall within the time windows used for the BBB
+                    %trace examples in the DOD figure 
+    %                 if locs(loc) > 197*FPSstack && locs(loc) < 206.5*FPSstack || locs(loc) > 256*FPSstack && locs(loc) < 265.5*FPSstack || locs(loc) > 509*FPSstack && locs(loc) < 518.5*FPSstack
+                        sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
+                        sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
+    %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                        count = count + 1;
+    %                 end 
                 end 
             end 
-        end 
-    end 
-    %replace rows of all 0s w/NaNs
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)    
-            for BBBroi = 1:length(bDataFullTrace{1})
-                nonZeroRowsB = all(sortedBdata{vid}{BBBroi}{terminals(ccell)} == 0,2);
-                sortedBdata{vid}{BBBroi}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
-            end 
-            nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
-            sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
-            for VWroi = 1:length(vDataFullTrace{1})
-                nonZeroRowsV = all(sortedVdata{vid}{VWroi}{terminals(ccell)} == 0,2);
-                sortedVdata{vid}{VWroi}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
-            end 
-        end 
-    end 
-    
-elseif tTypeQ == 1 
+            % below is plotting code 
+            %{
+            Frames = size(cDataFullTrace{vid}{terminals(ccell)},2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+    %         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
+            sec_TimeVals = floor(((0:2:(Frames/FPSstack))));
+            min_TimeVals = round(sec_TimeVals/60,2)+7.03;
+            FrameVals = floor((0:(FPSstack*2):Frames)); 
 
+            %smooth the calcium data 
+            [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals(ccell)},(2/FPSstack),FPSstack);
+
+    %         plot((cDataFullTrace{vid}{terminals(ccell)})+150,'b','LineWidth',3)
+    %         plot(ScDataFullTrace+150,'b','LineWidth',3)
+            plot(bDataFullTrace{vid},'r','LineWidth',3)
+
+    %         for trial = 1:size(state_start_f{vid},1)
+    %             if TrialTypes{vid}(trial,2) == 1
+    %                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+    %                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+    %             elseif TrialTypes{vid}(trial,2) == 2
+    %                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+    %                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+    %             end 
+    %         end 
+
+            count = 1 ; 
+            for loc = 1:length(locs)
+                if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
+                    sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
+                    sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
+                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                    count = count + 1;
+                end 
+            end 
+
+    %         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
+
+    % 
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 25;
+            ax.FontName = 'Times';
+            xLimStart = 256*FPSstack;
+            xLimEnd = 266.5*FPSstack; 
+            xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
+            xlim([xLimStart xLimEnd])
+            ylim([-23 80])
+            xlabel('time (sec)','FontName','Times')
+    %         if smoothQ ==  1
+    %             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
+    %         elseif smoothQ == 0 
+    %             title(sprintf('terminal #%d raw data',terminals(ccell)))
+    %         end    
+               %}
+        end 
+    end 
+elseif tTypeQ == 1
     %tTypeSigLocs{1} = blue light
     %tTypeSigLocs{2} = red light
     %tTypeSigLocs{3} = ISI
@@ -1837,8 +1797,7 @@ elseif tTypeQ == 1
         count = 1;
         count1 = 1;
         count2 = 1;
-        for vid = 1:length(vidList)
-        
+        for vid = 1:length(vidList)       
             for peak = 1:length(sigLocs{vid}{terminals(ccell)})  
                 %if the peak location is less than all of the
                 %state start frames 
@@ -1890,8 +1849,56 @@ elseif tTypeQ == 1
             end 
         end 
     end 
+end 
+%}
+%% sort data based on ca peak location 
+%{
+windSize = input('How big should the window be around Ca peak in seconds?');
+% windSize = 24; 
+% windSize = 5;
+if tTypeQ == 0 
+    sortedCdata = cell(1,length(vidList));
+    sortedBdata = cell(1,length(vidList));
+    sortedVdata = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)
+            for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
+                if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
+                    start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
+                    stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
+                    if start == 0 
+                        start = 1 ;
+                        stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
+                    end                
+                    for BBBroi = 1:length(bDataFullTrace{1})
+                        sortedBdata{vid}{BBBroi}{terminals(ccell)}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                    end 
+                    sortedCdata{vid}{terminals(ccell)}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                    for VWroi = 1:length(vDataFullTrace{1})
+                        sortedVdata{vid}{VWroi}{terminals(ccell)}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                    end 
+                end 
+            end 
+        end 
+    end 
+    %replace rows of all 0s w/NaNs
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)    
+            for BBBroi = 1:length(bDataFullTrace{1})
+                nonZeroRowsB = all(sortedBdata{vid}{BBBroi}{terminals(ccell)} == 0,2);
+                sortedBdata{vid}{BBBroi}{terminals(ccell)}(nonZeroRowsB,:) = NaN;
+            end 
+            nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)} == 0,2);
+            sortedCdata{vid}{terminals(ccell)}(nonZeroRowsC,:) = NaN;
+            for VWroi = 1:length(vDataFullTrace{1})
+                nonZeroRowsV = all(sortedVdata{vid}{VWroi}{terminals(ccell)} == 0,2);
+                sortedVdata{vid}{VWroi}{terminals(ccell)}(nonZeroRowsV,:) = NaN;
+            end 
+        end 
+    end 
     
-    %sort C,B,V data 
+elseif tTypeQ == 1 
+    %sort C,B,V calcium peak time locked data (into different categories depending on whether a light was on and color light) 
     sortedCdata = cell(1,length(vidList));
     sortedBdata = cell(1,length(vidList));
     sortedVdata = cell(1,length(vidList));
@@ -1917,7 +1924,7 @@ elseif tTypeQ == 1
                 end 
             end 
         end 
-    end 
+    end  
 end 
 %}
 %% normalize to baseline period and plot calcium peak aligned data
@@ -2533,55 +2540,112 @@ end
 %}
 %% sort red and green channel stacks based on ca peak location 
 %{
-windSize = input('How big should the window be around Ca peak in seconds?'); %24
-sortedGreenStacks = cell(1,length(vidList));
-sortedRedStacks = cell(1,length(vidList));
-for vid = 1:length(vidList)
-    for ccell = 1:length(terminals)
-        for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
-            if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
-                start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
-                stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
-                if start == 0 
-                    start = 1 ;
-                    stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
-                end                
-                sortedGreenStacks{vid}{terminals(ccell)}{peak} = greenStacks{vid}(:,:,start:stop);
-                sortedRedStacks{vid}{terminals(ccell)}{peak} = redStacks{vid}(:,:,start:stop);
+windSize = input('How big should the window be around Ca peak in seconds? '); %24
+if tTypeQ == 0 
+    sortedGreenStacks = cell(1,length(vidList));
+    sortedRedStacks = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        for ccell = 1:length(terminals)
+            for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
+                if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
+                    start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
+                    stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
+                    if start == 0 
+                        start = 1 ;
+                        stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
+                    end                
+                    sortedGreenStacks{vid}{terminals(ccell)}{peak} = greenStacks{vid}(:,:,start:stop);
+                    sortedRedStacks{vid}{terminals(ccell)}{peak} = redStacks{vid}(:,:,start:stop);
+                end 
             end 
         end 
     end 
+elseif tTypeQ == 1
+    %tTypeSigLocs{vid}{CaROI}{1} = blue light
+    %tTypeSigLocs{vid}{CaROI}{2} = red light
+    %tTypeSigLocs{vid}{CaROI}{3} = ISI
+    sortedGreenStacks = cell(1,length(vidList));
+    sortedRedStacks = cell(1,length(vidList));
+    for vid = 1:length(vidList)  
+        for ccell = 1:length(terminals)   
+            for per = 1:3 
+                for peak = 1:length(tTypeSigLocs{vid}{terminals(ccell)}{per})                    
+                    if tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)-floor((windSize/2)*FPSstack) > 0 && tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                                     
+                        start = tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)-floor((windSize/2)*FPSstack);
+                        stop = tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)+floor((windSize/2)*FPSstack); 
+                        if start == 0 
+                            start = 1 ;
+                            stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
+                        end                
+                        sortedGreenStacks{vid}{terminals(ccell)}{per}{peak} = greenStacks{vid}(:,:,start:stop);
+                        sortedRedStacks{vid}{terminals(ccell)}{per}{peak} = redStacks{vid}(:,:,start:stop);
+                    end 
+                end 
+            end 
+        end 
+    end   
 end 
 %}
 %% create red and green channel stack averages around calcium peak location 
 
 % average calcium peak aligned traces across videos 
-greenStackArray2 = cell(1,length(vidList));
-redStackArray2 = cell(1,length(vidList));
-avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
-avRedStack2 = cell(1,length(sortedGreenStacks{1}));
-avGreenStack = cell(1,length(sortedGreenStacks{1}));
-avRedStack = cell(1,length(sortedGreenStacks{1}));
-for ccell = 1:length(terminals)
-    for vid = 1:length(vidList)    
-        count = 1;
-        for peak = 1:size(sortedGreenStacks{vid}{terminals(ccell)},2)  
-            if isempty(sortedGreenStacks{vid}{terminals(ccell)}{peak}) == 0
-                greenStackArray2{vid}{terminals(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals(ccell)}{peak};
-                redStackArray2{vid}{terminals(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals(ccell)}{peak};
-                count = count + 1;
-            end 
-        end
-        avGreenStack2{terminals(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals(ccell)},4);
-        avRedStack2{terminals(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals(ccell)},4);
+if tTypeQ == 0 
+    greenStackArray2 = cell(1,length(vidList));
+    redStackArray2 = cell(1,length(vidList));
+    avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
+    avRedStack2 = cell(1,length(sortedGreenStacks{1}));
+    avGreenStack = cell(1,length(sortedGreenStacks{1}));
+    avRedStack = cell(1,length(sortedGreenStacks{1}));
+    for ccell = 1:length(terminals)
+        for vid = 1:length(vidList)    
+            count = 1;
+            for peak = 1:size(sortedGreenStacks{vid}{terminals(ccell)},2)  
+                if isempty(sortedGreenStacks{vid}{terminals(ccell)}{peak}) == 0
+                    greenStackArray2{vid}{terminals(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals(ccell)}{peak};
+                    redStackArray2{vid}{terminals(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals(ccell)}{peak};
+                    count = count + 1;
+                end 
+            end
+            avGreenStack2{terminals(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals(ccell)},4);
+            avRedStack2{terminals(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals(ccell)},4);
+        end 
+        avGreenStack{terminals(ccell)} = nanmean(avGreenStack2{terminals(ccell)},4)+100;
+        avRedStack{terminals(ccell)} = nanmean(avRedStack2{terminals(ccell)},4)+100;
     end 
-    avGreenStack{terminals(ccell)} = nanmean(avGreenStack2{terminals(ccell)},4)+100;
-    avRedStack{terminals(ccell)} = nanmean(avRedStack2{terminals(ccell)},4)+100;
+elseif tTypeQ == 1
+    per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
+    greenStackArray2 = cell(1,length(vidList));
+    redStackArray2 = cell(1,length(vidList));
+    avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
+    avRedStack2 = cell(1,length(sortedGreenStacks{1}));
+    avGreenStack = cell(1,length(sortedGreenStacks{1}));
+    avRedStack = cell(1,length(sortedGreenStacks{1}));
+    for ccell = 3%1:length(terminals)
+        for vid = 1:length(vidList)    
+            count = 1;
+            for peak = 1:size(sortedGreenStacks{vid}{terminals(ccell)}{per},2)  
+                if isempty(sortedGreenStacks{vid}{terminals(ccell)}{per}{peak}) == 0
+                    greenStackArray2{vid}{terminals(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals(ccell)}{per}{peak};
+                    redStackArray2{vid}{terminals(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals(ccell)}{per}{peak};
+                    count = count + 1;
+                end 
+            end
+            avGreenStack2{terminals(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals(ccell)},4);
+            avRedStack2{terminals(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals(ccell)},4);
+        end 
+        avGreenStack{terminals(ccell)} = nanmean(avGreenStack2{terminals(ccell)},4)+100;
+        avRedStack{terminals(ccell)} = nanmean(avRedStack2{terminals(ccell)},4)+100;
+    end 
 end 
+clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
 
+%PICK UP HERE- NEED TO ADD IN THE ABILITY TO MAKE VESSEL OUTLINE FOR VIDEOS
+%USING SEPARATE/OPTIMAL PIPELINE 
+
+changePt = floor(length(avGreenStack{terminals(ccell)})/2)-2; 
 BLstart = changePt - floor(0.5*FPSstack);
-NgreenStackAv = cell(1,length(sortedGreenStacks{1}));
-NredStackAv = cell(1,length(sortedGreenStacks{1}));
+NgreenStackAv = cell(1,length(avGreenStack));
+NredStackAv = cell(1,length(avGreenStack));
 % normalize to baseline period 
 for ccell = 1:length(terminals)
     NgreenStackAv{terminals(ccell)} = ((avGreenStack{terminals(ccell)}./ (nanmean(avGreenStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
@@ -2598,11 +2662,12 @@ elseif smoothQ == 1
     filter_rate = FPSstack*filtTime; 
 %     SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);
     SNgreenStackAv = NgreenStackAv;
-    SNredStackAv = cell(1,length(sortedGreenStacks{1}));
+    SNredStackAv = cell(1,length(NgreenStackAv));
     for ccell = 1:length(terminals)
         SNredStackAv{terminals(ccell)} = smoothdata(NredStackAv{terminals(ccell)},3,'movmean',filter_rate);
     end 
 end 
+clearvars NgreenStackAv NredStackAv
 
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
@@ -2613,6 +2678,7 @@ if blackOutCaROIQ == 1
     CaROImaskMat = matfile(CaROImaskFileName); 
     CaROImasks = CaROImaskMat.CaROImasks; 
     % combine Ca ROIs from different planes in Z into one plane 
+    numZplanes = input('How many planes in Z are there? ');
     combo = cell(1,numZplanes-1);
     for it = 1:numZplanes-1
         if it == 1 
@@ -2626,16 +2692,19 @@ if blackOutCaROIQ == 1
     ind = length(combo);
     ThreeDCaMask = repmat(combo{ind},1,1,55);
     %apply new mask to the right channel 
-    rightChan = input('Input 0 to apply Ca ROI mask to green channel. Input 1 for the red channel. ');
+    rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
     if rightChan == 0     
         RightChan = SNgreenStackAv;
+        otherChan = SNredStackAv;
     elseif rightChan == 1
         RightChan = SNredStackAv;
+        otherChan = SNgreenStackAv;
     end     
     for ccell = 1:length(terminals)
         RightChan{terminals(ccell)}(ThreeDCaMask) = 0;
     end 
 end 
+clearvars SNgreenStackAv SNredStackAv
 
 % create outline of vessel to overlay the %change BBB perm stack 
 segmentVessel = 1;
@@ -2687,47 +2756,94 @@ greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
 redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
 cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 
-vesOverRightChan = cell(1,length(vesChan)); 
-for ccell = 3%1:length(terminals)
-    %black out pixels that belong to vessels         
-    RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
-    %find the upper and lower bounds of your data (per calcium ROI) 
-    maxValue = max(max(max(max(RightChan{terminals(ccell)}))));
-    bounds = [maxValue,-(maxValue)];
-    %determine the absolute difference between the max and min % change
-    boundsAbsDiff = abs(diff(bounds,1,2));
-    boundsAbs = abs(bounds);
-    minBound = -(ceil(max(boundsAbs))); 
-    maxBound = ceil(max(boundsAbs)); 
-
-    %overlay segmentation boundaries on the % change image stack and save
-    %images
-    dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
-    dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
-    for frame = 1:size(vesChan{terminals(ccell)},3)    
+%save the other channel first to ensure that all Ca ROIs show an average
+%peak in the same frame 
+dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
+dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+for ccell = 1:length(terminals)
+    %create a new folder per calcium ROI 
+    newFolder = sprintf('CaROI_%d_calciumSignal',terminals(ccell));
+    mkdir(dir2,newFolder)
+     for frame = 1:size(vesChan{terminals(ccell)},3)    
         figure('Visible','off');     
-        % create the % change image with the right white and black point
-        % boundaries and colormap 
-        imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar        
-        % get the x-y coordinates of the vessel outline
-        [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.
-        xy = [x, y]; % Two columns. Column 1=x, column 2=y;        
-        % plot the vessel outline over the % change image 
-        hold on;
-        scatter(x,y,'white','.');
-        ax = gca;
-        ax.Visible = 'off';
-        ax.FontSize = 20;
+        imagesc(otherChan{terminals(ccell)}(:,:,frame),[10,30])
         %save current figure to file 
-        filename = sprintf('%s/term%d_frame%d',dir2,terminals(ccell),frame);
+        filename = sprintf('%s/CaROI_%d_calciumSignal/CaROI_%d_frame%d',dir2,terminals(ccell),terminals(ccell),frame);
         saveas(gca,[filename '.png'])
-    end 
+     end 
 end 
 
-%NEXT: 
-%CHANGE MAX WHITE POINT TO 5% 
-%NEED TO ITERATIVELY MAKE NEW FOLDER PER TERMINAL IN THE SAVING PROCESS 
+% conditional statement that ensures you checked the other channel
+% to make sure Ca ROIs show an average peak in the same frame, before
+% moving onto the next step 
+CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
 
+if CaFrameQ == 1 
+    CaEventFrame = input('What frame did the Ca events happen in? ');
+    %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
+    %the vessel is (because they're distracting), and save these images to a
+    %folder of your choosing (there will be subFolders per calcium ROI)
+    for ccell = 3%1:length(terminals)
+        %black out pixels that belong to vessels         
+        RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
+        %find the upper and lower bounds of your data (per calcium ROI) 
+        maxValue = max(max(max(max(RightChan{terminals(ccell)}))));
+        bounds = [maxValue,-(maxValue)];
+        %determine the absolute difference between the max and min % change
+        boundsAbsDiff = abs(diff(bounds,1,2));
+        boundsAbs = abs(bounds);
+        minBound = -(ceil(max(boundsAbs))); 
+        maxBound = ceil(max(boundsAbs)); 
+        %create a new folder per calcium ROI 
+        newFolder = sprintf('CaROI_%d_BBBsignal',terminals(ccell));
+        mkdir(dir2,newFolder)
+        %overlay segmentation boundaries on the % change image stack and save
+        %images
+        for frame = 1:size(vesChan{terminals(ccell)},3)   
+            % get the x-y coordinates of the Ca ROI         
+            % find the pixels that are over 20 in value 
+            clearvars CAy CAx
+            [CAy, CAx] = find(otherChan{terminals(ccell)}(:,:,frame) >= 20);  % x and y are column vectors.
+            figure('Visible','off');     
+            % create the % change image with the right white and black point
+            % boundaries and colormap 
+    %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
+            imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 5% and the min point -5%                 
+            % get the x-y coordinates of the vessel outline
+            [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
+            % plot the vessel outline over the % change image 
+            hold on;
+            scatter(x,y,'white','.');
+            % plot the GCaMP signal marker in the right frame 
+            if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                hold on;
+                scatter(CAx,CAy,100,'white','filled');
+                %get border coordinates 
+                colLen = size(RightChan{terminals(ccell)},2);
+                rowLen = size(RightChan{terminals(ccell)},1);
+                edg1_x = repelem(1,rowLen);
+                edg1_y = 1:rowLen;
+                edg2_x = repelem(colLen,rowLen);
+                edg2_y = 1:rowLen;
+                edg3_x = 1:colLen;
+                edg3_y = repelem(1,colLen);
+                edg4_x = 1:colLen;
+                edg4_y = repelem(rowLen,colLen);
+                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                hold on;
+                scatter(edg_x,edg_y,200,'white','filled','square');               
+            end 
+            ax = gca;
+            ax.Visible = 'off';
+            ax.FontSize = 20;
+            %save current figure to file 
+            filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals(ccell),terminals(ccell),frame);
+            saveas(gca,[filename '.png'])
+        end     
+    end 
+end 
 %}
 
 %% create composite stack
