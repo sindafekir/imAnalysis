@@ -2671,11 +2671,16 @@ clearvars NgreenStackAv NredStackAv
 %spatial smoothing option
 spatSmoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if spatSmoothQ == 1 
-    sigma = ('What sigma do you want to use for Gaussian spatial filtering? ');
+%     sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
     redIn = SNredStackAv; 
     clearvars SNredStackAv
+    % create your kernal for smoothing by convolution 
+%     K = 0.125*ones(3);
+%     K = 0.125*ones(6);
+    K = 0.125*ones(9);
     for ccell = 3%1:length(terminals)
-        SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+%         SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+        SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
     end 
 end 
 
@@ -2821,8 +2826,10 @@ if CaFrameQ == 1
             % boundaries and colormap 
     %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
-            imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-1,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-1:0.5:1)%this makes the max point 1% and the min point -1% 
+            imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-2:1:2)%this makes the max point 1% and the min point -1% 
+
             % get the x-y coordinates of the vessel outline
             [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
             % plot the vessel outline over the % change image 
