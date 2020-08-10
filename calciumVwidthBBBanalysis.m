@@ -122,8 +122,7 @@ if STAstackQ == 1
         greenMat = matfile(sprintf(greenlabel,vidList(vid)));       
         greenRegStacks = greenMat.regStacks;
         greenStacks1{vid} = greenRegStacks{2,3};      
-        % do background subtraction 
-        %{
+        % do background subtraction; per row BG subtraction = new code      
         if vid == 1 
 %             [redStacks_BS,BG_ROIboundData] = backgroundSubtractionPerRow(redStacks1{vid});
             [redStacks_BS,BG_ROIboundData] = backgroundSubtraction(redStacks1{vid});
@@ -139,9 +138,12 @@ if STAstackQ == 1
             [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
             greenStacksBS{vid} = greenStacks_BS;
         end 
-        %}
+        
+        % below code is useful if you're not doing BG subtraction
+        %{
         redStacksBS = redStacks1;
         greenStacksBS = greenStacks1; 
+        %}
         % average registered imaging data across planes in Z 
         for Z = 1:size(redStacks1{1},2)
             redStackArray{vid}(:,:,:,Z) = redStacksBS{vid}{Z};
@@ -2539,7 +2541,7 @@ end
 % end 
 %}
 %% sort red and green channel stacks based on ca peak location 
-%{
+
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 if tTypeQ == 0 
     sortedGreenStacks = cell(1,length(vidList));
@@ -2649,7 +2651,7 @@ for ccell = 3%1:length(terminals)
     NredStackAv{terminals(ccell)} = ((avRedStack{terminals(ccell)}./ (nanmean(avRedStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
 end 
 
-%smoothing option
+%temporal smoothing option
 smoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if smoothQ == 0 
     SNgreenStackAv = NgreenStackAv;
@@ -2665,6 +2667,17 @@ elseif smoothQ == 1
     end 
 end 
 clearvars NgreenStackAv NredStackAv
+
+%spatial smoothing option
+spatSmoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+if spatSmoothQ == 1 
+    sigma = ('What sigma do you want to use for Gaussian spatial filtering? ');
+    redIn = SNredStackAv; 
+    clearvars SNredStackAv
+    for ccell = 3%1:length(terminals)
+        SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+    end 
+end 
 
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
@@ -2759,7 +2772,7 @@ dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the direct
 dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
 CaROItimingCheckQ = input('Do you need to save the Ca data? Input 1 for yest. 0 for no. ');
 if CaROItimingCheckQ == 1 
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         %create a new folder per calcium ROI 
         newFolder = sprintf('CaROI_%d_calciumSignal',terminals(ccell));
         mkdir(dir2,newFolder)
@@ -2808,7 +2821,8 @@ if CaFrameQ == 1
             % boundaries and colormap 
     %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
-            imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 5% and the min point -5%                 
+            imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-1,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-1:0.5:1)%this makes the max point 1% and the min point -1% 
             % get the x-y coordinates of the vessel outline
             [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
             % plot the vessel outline over the % change image 
@@ -2868,7 +2882,7 @@ implay(redGreen)
 %}
 
 %% create multiple BBB ROIs 
-
+%{
 % numROIs = input("How many BBB perm ROIs are we making? "); 
 % %for display purposes mostly: average across frames 
 % stackAVsIm = mean(redStackAv,3);
