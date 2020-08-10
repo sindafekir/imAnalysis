@@ -17,7 +17,7 @@ BBBQ = input('Input 1 if you want to get BBB data. Input 0 otherwise. ');
 VWQ = input('Input 1 if you want to get vessel width data. Input 0 otherwise. ');
 CAQ = input('Input 1 if you want to get calcium data. Input 0 otherwise. ');
 STAstackQ = input('Input 1 to import red and green channel stacks. Input 0 otherwise. ');
-tTypeQ = input('Do you want to seperate peaks by trial type? No = 0. Yes = 1. ');
+tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
 ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
 
 if BBBQ == 1 
@@ -1708,7 +1708,7 @@ if tTypeQ == 0
     sigPeaks = cell(1,length(vidList));
     sigLocs = cell(1,length(vidList));
     for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
+        for ccell = 3%1:length(terminals)
             %find the peaks 
     %         figure;
     %         ax=gca;
@@ -1793,7 +1793,7 @@ elseif tTypeQ == 1
     %tTypeSigLocs{3} = ISI
     clear tTypeSigLocs
     tTypeSigLocs = cell(1,length(vidList));
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         count = 1;
         count1 = 1;
         count2 = 1;
@@ -1839,7 +1839,7 @@ elseif tTypeQ == 1
        
     %remove all zeros 
     for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)    
+        for ccell = 3%1:length(terminals)    
             for per = 1:3
                 if isempty (tTypeSigLocs{vid}{terminals(ccell)}{per}) == 0 
 %                 [~,zeroLocs_tTypeSigLocs] = find(~tTypeSigLocs{vid}{terminals(ccell)}{per});
@@ -2545,7 +2545,7 @@ if tTypeQ == 0
     sortedGreenStacks = cell(1,length(vidList));
     sortedRedStacks = cell(1,length(vidList));
     for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
+        for ccell = 3%1:length(terminals)
             for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
                 if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
                     start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
@@ -2567,7 +2567,7 @@ elseif tTypeQ == 1
     sortedGreenStacks = cell(1,length(vidList));
     sortedRedStacks = cell(1,length(vidList));
     for vid = 1:length(vidList)  
-        for ccell = 1:length(terminals)   
+        for ccell = 3%1:length(terminals)   
             for per = 1:3 
                 for peak = 1:length(tTypeSigLocs{vid}{terminals(ccell)}{per})                    
                     if tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)-floor((windSize/2)*FPSstack) > 0 && tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                                     
@@ -2596,7 +2596,7 @@ if tTypeQ == 0
     avRedStack2 = cell(1,length(sortedGreenStacks{1}));
     avGreenStack = cell(1,length(sortedGreenStacks{1}));
     avRedStack = cell(1,length(sortedGreenStacks{1}));
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         for vid = 1:length(vidList)    
             count = 1;
             for peak = 1:size(sortedGreenStacks{vid}{terminals(ccell)},2)  
@@ -2639,15 +2639,12 @@ elseif tTypeQ == 1
 end 
 clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
 
-%PICK UP HERE- NEED TO ADD IN THE ABILITY TO MAKE VESSEL OUTLINE FOR VIDEOS
-%USING SEPARATE/OPTIMAL PIPELINE 
-
 changePt = floor(length(avGreenStack{terminals(ccell)})/2)-2; 
 BLstart = changePt - floor(0.5*FPSstack);
 NgreenStackAv = cell(1,length(avGreenStack));
 NredStackAv = cell(1,length(avGreenStack));
 % normalize to baseline period 
-for ccell = 1:length(terminals)
+for ccell = 3%1:length(terminals)
     NgreenStackAv{terminals(ccell)} = ((avGreenStack{terminals(ccell)}./ (nanmean(avGreenStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
     NredStackAv{terminals(ccell)} = ((avRedStack{terminals(ccell)}./ (nanmean(avRedStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
 end 
@@ -2663,7 +2660,7 @@ elseif smoothQ == 1
 %     SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);
     SNgreenStackAv = NgreenStackAv;
     SNredStackAv = cell(1,length(NgreenStackAv));
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         SNredStackAv{terminals(ccell)} = smoothdata(NredStackAv{terminals(ccell)},3,'movmean',filter_rate);
     end 
 end 
@@ -2690,7 +2687,7 @@ if blackOutCaROIQ == 1
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
     ind = length(combo);
-    ThreeDCaMask = repmat(combo{ind},1,1,55);
+    ThreeDCaMask = repmat(combo{ind},1,1,size(SNredStackAv{terminals(ccell)},3));
     %apply new mask to the right channel 
     rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
     if rightChan == 0     
@@ -2700,7 +2697,7 @@ if blackOutCaROIQ == 1
         RightChan = SNredStackAv;
         otherChan = SNgreenStackAv;
     end     
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         RightChan{terminals(ccell)}(ThreeDCaMask) = 0;
     end 
 end 
@@ -2718,7 +2715,7 @@ while segmentVessel == 1
     end     
     % apply Ca ROI mask to the appropriate channel to black out these
     % pixels 
-    for ccell = 1:length(terminals)
+    for ccell = 3%1:length(terminals)
         vesChan{terminals(ccell)}(ThreeDCaMask) = 0;
     end 
     %segment the vessel (small sample of the data) 
@@ -2729,7 +2726,7 @@ while segmentVessel == 1
         BWstacks = cell(1,length(vesChan));
         BW_perim = cell(1,length(vesChan));
         segOverlays = cell(1,length(vesChan));    
-        for ccell = 1:length(terminals)
+        for ccell = 3%1:length(terminals)
             for frame = 1:size(vesChan{terminals(ccell)},3)
                 [BW,~] = segmentImageVesselFOV(vesChan{terminals(ccell)}(:,:,frame));
                 BWstacks{terminals(ccell)}(:,:,frame) = BW; 
@@ -2760,24 +2757,26 @@ cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 %peak in the same frame 
 dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
 dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
-for ccell = 1:length(terminals)
-    %create a new folder per calcium ROI 
-    newFolder = sprintf('CaROI_%d_calciumSignal',terminals(ccell));
-    mkdir(dir2,newFolder)
-     for frame = 1:size(vesChan{terminals(ccell)},3)    
-        figure('Visible','off');     
-        imagesc(otherChan{terminals(ccell)}(:,:,frame),[10,30])
-        %save current figure to file 
-        filename = sprintf('%s/CaROI_%d_calciumSignal/CaROI_%d_frame%d',dir2,terminals(ccell),terminals(ccell),frame);
-        saveas(gca,[filename '.png'])
-     end 
+CaROItimingCheckQ = input('Do you need to save the Ca data? Input 1 for yest. 0 for no. ');
+if CaROItimingCheckQ == 1 
+    for ccell = 1:length(terminals)
+        %create a new folder per calcium ROI 
+        newFolder = sprintf('CaROI_%d_calciumSignal',terminals(ccell));
+        mkdir(dir2,newFolder)
+         for frame = 1:size(vesChan{terminals(ccell)},3)    
+            figure('Visible','off');     
+            imagesc(otherChan{terminals(ccell)}(:,:,frame),[10,30])
+            %save current figure to file 
+            filename = sprintf('%s/CaROI_%d_calciumSignal/CaROI_%d_frame%d',dir2,terminals(ccell),terminals(ccell),frame);
+            saveas(gca,[filename '.png'])
+         end 
+    end 
 end 
 
 % conditional statement that ensures you checked the other channel
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
-
 if CaFrameQ == 1 
     CaEventFrame = input('What frame did the Ca events happen in? ');
     %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
@@ -2867,3 +2866,116 @@ end
 
 implay(redGreen)
 %}
+
+%% create multiple BBB ROIs 
+
+% numROIs = input("How many BBB perm ROIs are we making? "); 
+% %for display purposes mostly: average across frames 
+% stackAVsIm = mean(redStackAv,3);
+% %create the ROI boundaries           
+% ROIboundDatas = cell(1,numROIs);
+% for VROI = 1:numROIs 
+%     label = sprintf('Create ROI %d for BBB perm analysis',VROI);
+%     disp(label);
+%     [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
+%     ROIboundData{1} = xmins;
+%     ROIboundData{2} = ymins;
+%     ROIboundData{3} = widths;
+%     ROIboundData{4} = heights;
+%     ROIboundDatas{VROI} = ROIboundData;
+% end
+
+SNROIstacks = cell(1,numROIs);
+ROIstacks = cell(1,numROIs);
+for VROI = 1:numROIs
+    %use the ROI boundaries to generate ROIstacks 
+    xmins = ROIboundDatas{VROI}{1};
+    ymins = ROIboundDatas{VROI}{2};
+    widths = ROIboundDatas{VROI}{3};
+    heights = ROIboundDatas{VROI}{4};
+    [SNROI_stacks] = make_ROIs_notfirst_time(SNredStackAv,xmins,ymins,widths,heights);
+    SNROIstacks{VROI} = SNROI_stacks{1};
+    [ROI_stacks] = make_ROIs_notfirst_time(redStackAv,xmins,ymins,widths,heights);
+    ROIstacks{VROI} = ROI_stacks{1};
+end 
+
+%create mask of where vessels are - frame by frame 
+BWstacks = cell(1,numROIs);
+BW_perim = cell(1,numROIs);
+segOverlays = cell(1,numROIs);         
+for VROI = 1:numROIs  
+    BWstacks{VROI} = zeros(size(ROIstacks{VROI},1),size(ROIstacks{VROI},2),size(ROIstacks{VROI},3));
+    for frame = 1:size(ROIstacks{VROI},3)
+%         [BW,~] = segmentImageBBB(ROIstacks{VROI}(:,:,frame));
+%         BWstacks{VROI}(:,:,frame) = BW; 
+        %get the segmentation boundaries 
+        BW_perim{VROI}(:,:,frame) = bwperim(BWstacks{VROI}(:,:,frame));
+        %overlay segmentation boundaries on data
+        segOverlays{VROI}(:,:,:,frame) = imoverlay(mat2gray(ROIstacks{VROI}(:,:,frame)), BW_perim{VROI}(:,:,frame), [.3 1 .3]);
+    end               
+end      
+% 
+% %check segmentation 
+% if numROIs == 1 
+%     %play segmentation boundaries over images 
+%     implay(segOverlays{1})
+% elseif numROIs > 1 
+%     VROI = input("What BBB ROI do you want to see? ");
+%     %play segmentation boundaries over images 
+%     implay(segOverlays{VROI})
+% end 
+
+% invert the mask
+BWstacksInv = cell(1,numROIs);
+for VROI = 1:numROIs                
+    for frame = 1:size(ROIstacks{VROI},3)                            
+        BWstacksInv{VROI}(:,:,frame) = ~(BWstacks{VROI}(:,:,frame)); 
+    end         
+end 
+
+%apply the mask and get pixel intensities
+meanPixIntArray = cell(1,numROIs);
+for VROI = 1:numROIs           
+    for frame = 1:size(ROIstacks{VROI},3)   
+        stats = regionprops(BWstacksInv{VROI}(:,:,frame),SNROIstacks{VROI}(:,:,frame),'MeanIntensity');
+        for stat = 1:length(stats)
+            ROIpixInts(stat) = stats(stat).MeanIntensity;
+        end 
+        meanPixIntArray{VROI}(frame) = mean(ROIpixInts);   
+    end 
+end 
+
+% plot BBB ROI pixel intensities 
+figure;
+Frames = length(avSortedCdata{terminals(ccell)});
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+FrameVals = round((1:FPSstack:Frames)+5); 
+ax=gca;
+hold all
+plot(SNavCdata{term},'b','LineWidth',2);
+for VROI = 1:numROIs
+    plot(meanPixIntArray{VROI},'LineWidth',2);
+end 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;   
+ax.FontSize = 20;
+xlabel('time (s)')
+ylabel('percent change')
+xlim([0 length(SNavCdata{terminals(ccell)})])
+ylim([-20 100])
+legend('Terminal 12 calcium','BBB ROI 1','BBB ROI 2','BBB ROI 3','BBB ROI 4','BBB ROI 5') %'Terminal 12 calcium',
+if smoothQ == 0 
+    title(sprintf('DA terminal #%d.',term))
+elseif smoothQ == 1
+    title(sprintf('DA terminal #%d. %0.2f sec smoothing.',term,filtTime))
+end 
+
+
+%% show all trials that go into BBB trace for terminal 12 
+
+%% create stacks that are seperated by trial type 
+%}
+
+%IN IMAGEJ SAVE AS TIFF STACK - THEN JUST CONVERT TIFF TO AVI ELSEWHERE 

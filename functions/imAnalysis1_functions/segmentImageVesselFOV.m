@@ -19,7 +19,7 @@ end
 
 % Threshold image - manual threshold
 % BW = X > 1.686300e-01;
-BW = X > 0.4; %for no BG subtraction
+BW = X > 0.25; %for no BG subtraction
 
 % Open mask with disk
 radius = 1;
