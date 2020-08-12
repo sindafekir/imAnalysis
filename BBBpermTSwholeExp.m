@@ -57,11 +57,24 @@ elseif volQ == 0
 end 
 
 %% do background subtraction 
-%select rows that do not have vessels or GCaMP in them 
-if vidNumQ == 0 
-    [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
-elseif vidNumQ == 1   
-    [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
+BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
+if BGsubQ == 0
+    input_Stacks = data;
+elseif BGsubQ == 1 
+    BGsubTypeQ = input('Input 0 to select one background region and do a simple background subtraction of the mean pixel intensity of that region. Input 1 if you want to do row by row background subtraction. ');
+    if BGsubTypeQ == 0 
+        if vidNumQ == 0 
+            [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
+        elseif vidNumQ == 1   
+            [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
+        end 
+    elseif BGsubTypeQ == 1
+        if vidNumQ == 0 
+            [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
+        elseif vidNumQ == 1   
+            [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
+        end 
+    end 
 end 
 
 %% average registered imaging data across planes in Z 
@@ -90,7 +103,7 @@ if vidNumQ == 0
     %for display purposes mostly: average across frames 
     stackAVsIm = mean(inputStacks,3);
     %create the ROI boundaries           
-    ROIboundData = cell(1,numROIs);
+    ROIboundDatas = cell(1,numROIs);
     for VROI = 1:numROIs 
         disp('Create your ROI for BBB perm analysis');
         [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1, stackAVsIm);
@@ -98,15 +111,15 @@ if vidNumQ == 0
         ROIboundData{2} = ymins;
         ROIboundData{3} = widths;
         ROIboundData{4} = heights;
-        ROIboundData{VROI} = ROIboundData;
+        ROIboundDatas{VROI} = ROIboundData;
     end
     ROIstacks = cell(1,numROIs);
     for VROI = 1:numROIs
         %use the ROI boundaries to generate ROIstacks 
-        xmins = ROIboundData{VROI}{1};
-        ymins = ROIboundData{VROI}{2};
-        widths = ROIboundData{VROI}{3};
-        heights = ROIboundData{VROI}{4};
+        xmins = ROIboundDatas{VROI}{1};
+        ymins = ROIboundDatas{VROI}{2};
+        widths = ROIboundDatas{VROI}{3};
+        heights = ROIboundDatas{VROI}{4};
         [ROI_stacks] = make_ROIs_notfirst_time(inputStacks,xmins,ymins,widths,heights);
         ROIstacks{VROI} = ROI_stacks{1};
     end 
@@ -114,10 +127,10 @@ elseif vidNumQ == 1
     ROIstacks = cell(1,numROIs);
     for VROI = 1:numROIs
         %use the ROI boundaries to generate ROIstacks 
-        xmins = ROIboundData{VROI}{1};
-        ymins = ROIboundData{VROI}{2};
-        widths = ROIboundData{VROI}{3};
-        heights = ROIboundData{VROI}{4};
+        xmins = ROIboundDatas{VROI}{1};
+        ymins = ROIboundDatas{VROI}{2};
+        widths = ROIboundDatas{VROI}{3};
+        heights = ROIboundDatas{VROI}{4};
         [ROI_stacks] = make_ROIs_notfirst_time(inputStacks,xmins,ymins,widths,heights);
         ROIstacks{VROI} = ROI_stacks{1};
     end 

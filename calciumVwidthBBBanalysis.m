@@ -2684,16 +2684,16 @@ clearvars NgreenStackAv NredStackAv
 %spatial smoothing option
 spatSmoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if spatSmoothQ == 1 
-%     sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
+    sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
     redIn = SNredStackAv; 
     clearvars SNredStackAv
     % create your kernal for smoothing by convolution 
 %     K = 0.125*ones(3);
 %     K = 0.125*ones(6);
-    K = 0.125*ones(9);
+%     K = 0.125*ones(9);
     for ccell = 3%1:length(terminals)
-%         SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
-        SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
+        SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+%         SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
     end 
 end 
 
@@ -2738,7 +2738,7 @@ clearvars SNgreenStackAv SNredStackAv
 segmentVessel = 1;
 while segmentVessel == 1 
     %select the correct channel for vessel segmentation  
-    vesChan = input('Input 0 to segment vessels in the green channel. Input 1 for the red channel. ');
+    vesChan = rightChan;
     if rightChan == 0     
         vesChan = avGreenStack;
     elseif rightChan == 1
@@ -2778,11 +2778,18 @@ while segmentVessel == 1
     end 
 end
 
-% Create colormap that is green for negative, red for positive,
-% and a chunk inthe middle that is black.
-greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
-redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
-cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
+if cMapQ == 0
+    % Create colormap that is green for positive, red for negative,
+    % and a chunk inthe middle that is black.
+    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+elseif cMapQ == 1
+    % Create colormap that is green at max and black at min
+    greenColorMap = linspace(0, 1, 256);
+    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+end 
 
 %save the other channel first to ensure that all Ca ROIs show an average
 %peak in the same frame 
@@ -2839,11 +2846,16 @@ if CaFrameQ == 1
             % boundaries and colormap 
     %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
-            imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-1,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-1:0.5:1)%this makes the max point 1% and the min point -1% 
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-2:1:2)%this makes the max point 1% and the min point -1% 
 %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-8,8]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-8:2:8)%this makes the max point 1% and the min point -1% 
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-3,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-3:1.5:3)%this makes the max point 1% and the min point -1% 
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:3)%this makes the max point 1% and the min point -1% 
+%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
+            imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:1)%this makes the max point 1% and the min point -1% 
 
+            
             % get the x-y coordinates of the vessel outline
             [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
             % plot the vessel outline over the % change image 
