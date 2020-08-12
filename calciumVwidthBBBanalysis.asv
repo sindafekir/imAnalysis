@@ -19,9 +19,9 @@ STAstackQ = input('Input 1 to import red and green channel stacks. Input 0 other
 tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
 ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
 if STAstackQ == 1
-    BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
+    BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwi');
     if BGsubQ == 1
-        BGsubTypeQ = input('Input 0 to select one background region and do a simple background subtraction of the mean pixel intensity of that region. Input 1 if you want to do row by row background subtraction. ');
+        BGsubTypeQ = input('Input 0 to select one background region and do a simple background subtraction of the mean pixel intensity of that region per frame. Input 1 if you want to do row by row background subtraction. ');
     end 
 end 
 
@@ -126,37 +126,30 @@ if STAstackQ == 1
         redStacks1{vid} = redRegStacks{2,4};
         greenMat = matfile(sprintf(greenlabel,vidList(vid)));       
         greenRegStacks = greenMat.regStacks;
-        greenStacks1{vid} = greenRegStacks{2,3};     
-        if BGsubQ == 0 
-            redStacksBS = redStacks1;
-            greenStacksBS = greenStacks1; 
-        elseif BGsubQ == 1
-            if BGsubTypeQ == 0 
-                if vid == 1 
-                    [redStacks_BS,BG_ROIboundData] = backgroundSubtraction(redStacks1{vid});
-                    redStacksBS{vid} = redStacks_BS;
-                    [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
-                    greenStacksBS{vid} = greenStacks_BS;
-                else
-                    [redStacks_BS] = backgroundSubtraction2(redStacks1{vid},BG_ROIboundData);
-                    redStacksBS{vid} = redStacks_BS;
-                    [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
-                    greenStacksBS{vid} = greenStacks_BS;
-                end 
-            elseif BGsubTypeQ == 1
-                if vid == 1 
-                    [redStacks_BS,BG_ROIboundData] = backgroundSubtractionPerRow(redStacks1{vid});
-                    redStacksBS{vid} = redStacks_BS;
-                    [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
-                    greenStacksBS{vid} = greenStacks_BS;
-                else
-                    [redStacks_BS] = backgroundSubtractionPerRow2(redStacks1{vid},BG_ROIboundData);
-                    redStacksBS{vid} = redStacks_BS;
-                    [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
-                    greenStacksBS{vid} = greenStacks_BS;
-                end 
-            end 
-        end               
+        greenStacks1{vid} = greenRegStacks{2,3};      
+        % do background subtraction; per row BG subtraction = new code   
+        
+        if vid == 1 
+%             [redStacks_BS,BG_ROIboundData] = backgroundSubtractionPerRow(redStacks1{vid});
+            [redStacks_BS,BG_ROIboundData] = backgroundSubtraction(redStacks1{vid});
+            redStacksBS{vid} = redStacks_BS;
+%             [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
+            [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
+            greenStacksBS{vid} = greenStacks_BS;
+        else
+%             [redStacks_BS] = backgroundSubtractionPerRow2(redStacks1{vid},BG_ROIboundData);
+            [redStacks_BS] = backgroundSubtraction2(redStacks1{vid},BG_ROIboundData);
+            redStacksBS{vid} = redStacks_BS;
+%             [greenStacks_BS] = backgroundSubtractionPerRow2(greenStacks1{vid},BG_ROIboundData);
+            [greenStacks_BS] = backgroundSubtraction2(greenStacks1{vid},BG_ROIboundData);
+            greenStacksBS{vid} = greenStacks_BS;
+        end 
+       
+        % below code is useful if you're not doing BG subtraction 
+        %{
+        redStacksBS = redStacks1;
+        greenStacksBS = greenStacks1; 
+        %}
         % average registered imaging data across planes in Z 
         for Z = 1:size(redStacks1{1},2)
             redStackArray{vid}(:,:,:,Z) = redStacksBS{vid}{Z};
