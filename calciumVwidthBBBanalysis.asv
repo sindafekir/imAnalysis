@@ -2911,6 +2911,8 @@ end
 
 %% average 3 frames (of STA videos) around a specific time point
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %specify what time point you want to see 
 timePoint = input('What time point do you want to see? (0 sec being when the calcium spike peaks). ');
 %figure out what frames correspond to around that time point 
@@ -2919,31 +2921,7 @@ frames = [framePoint-1,framePoint,framePoint+1];
 %specify what Ca ROIs you want to see 
 CaROIq = input('Input 0 to look at all the Ca ROIs. Input 1 to select a specific Ca ROI. ');
 if CaROIq == 0 
-    snapShot = cell(1,length(RightChan));
-    for ccell = 1:length(terminals)
-        snapShot{terminals(ccell)} = (RightChan{terminals(ccell)}(:,:,frames(1))+RightChan{terminals(ccell)}(:,:,frames(2))+RightChan{terminals(ccell)}(:,:,frames(3)));
-        figure('Visible','on'); 
-        imagesc(snapShot{terminals(ccell)},[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)
-        % get the x-y coordinates of the vessel outline
-        [y, x] = find(BW_perim{terminals(ccell)}(:,:,framePoint));  % x and y are column vectors. 
-        hold on;
-        scatter(x,y,'white','.');
-        ax = gca;
-        ax.Visible = 'off';
-        ax.FontSize = 20;
-    end 
 elseif CaROIq == 1 
-    CaROI = input('What Ca ROI do you want to see? ');
-    snapShot{terminals(ccell)} = (RightChan{CaROI}(:,:,frames(1))+RightChan{CaROI}(:,:,frames(2))+RightChan{CaROI}(:,:,frames(3)));
-    figure('Visible','on'); 
-    imagesc(snapShot{CaROI},[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)
-    % get the x-y coordinates of the vessel outline
-    [y, x] = find(BW_perim{CaROI}(:,:,framePoint));  % x and y are column vectors. 
-    hold on;
-    scatter(x,y,'white','.');
-    ax = gca;
-    ax.Visible = 'off';
-    ax.FontSize = 20;
 end 
 
 
