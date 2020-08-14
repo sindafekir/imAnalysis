@@ -2617,7 +2617,7 @@ elseif tTypeQ == 1
     end   
 end 
 %}
-%% create red and green channel stack averages around calcium peak location 
+%% create red and green channel stack averages around calcium peak location (STA stacks) 
 
 % average calcium peak aligned traces across videos 
 if tTypeQ == 0 
@@ -2681,18 +2681,36 @@ for ccell = 1:length(terminals)
 end 
 
 %temporal smoothing option
-smoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if smoothQ == 0 
     SNgreenStackAv = NgreenStackAv;
     SNredStackAv = NredStackAv;
 elseif smoothQ == 1
-    filtTime = 0.7;%input('How many seconds do you want to smooth your data by? ');
+    filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
     filter_rate = FPSstack*filtTime; 
-%     SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);
-    SNgreenStackAv = NgreenStackAv;
-    SNredStackAv = cell(1,length(NgreenStackAv));
-    for ccell = 1:length(terminals)
-        SNredStackAv{terminals(ccell)} = smoothdata(NredStackAv{terminals(ccell)},3,'movmean',filter_rate);
+    tempFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
+    if tempFiltChanQ == 0
+        SNredStackAv = cell(1,length(NgreenStackAv));
+        SNgreenStackAv = cell(1,length(NgreenStackAv));
+        for ccell = 1:length(terminals)
+            SNredStackAv{terminals(ccell)} = smoothdata(NredStackAv{terminals(ccell)},3,'movmean',filter_rate);
+            SNgreenStackAv{terminals(ccell)} = smoothdata(NgreenStackAv{terminals(ccell)},3,'movmean',filter_rate);
+        end 
+    elseif tempFiltChanQ == 1
+        tempSmoothChanQ = input('Input 0 to temporally smooth green channel. Input 1 for red channel. ');
+        if tempSmoothChanQ == 0
+            SNredStackAv = NredStackAv;
+            SNgreenStackAv = cell(1,length(NgreenStackAv));
+            for ccell = 1:length(terminals)
+                SNgreenStackAv{terminals(ccell)} = smoothdata(NgreenStackAv{terminals(ccell)},3,'movmean',filter_rate);
+            end 
+        elseif tempSmoothChanQ == 1
+            SNredStackAv = cell(1,length(NgreenStackAv));
+            SNgreenStackAv = NgreenStackAv;
+            for ccell = 1:length(terminals)
+                SNredStackAv{terminals(ccell)} = smoothdata(NredStackAv{terminals(ccell)},3,'movmean',filter_rate);               
+            end 
+        end 
     end 
 end 
 clearvars NgreenStackAv NredStackAv
