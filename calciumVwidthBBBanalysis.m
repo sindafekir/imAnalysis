@@ -2570,7 +2570,7 @@ end
 % end 
 %}
 %% sort red and green channel stacks based on ca peak location 
-%{
+
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 if tTypeQ == 0 
     sortedGreenStacks = cell(1,length(vidList));
@@ -2681,7 +2681,7 @@ for ccell = 1:length(terminals)
 end 
 
 %temporal smoothing option
-smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
 if smoothQ == 0 
     SNgreenStackAv = NgreenStackAv;
     SNredStackAv = NredStackAv;
@@ -2716,7 +2716,7 @@ end
 clearvars NgreenStackAv NredStackAv
 
 %spatial smoothing option
-spatSmoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
 if spatSmoothQ == 1 
     spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
     spatFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');

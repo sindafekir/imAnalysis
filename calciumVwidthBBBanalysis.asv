@@ -2742,6 +2742,7 @@ if spatSmoothQ == 1
     elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
         spatSmoothChanQ = input('Input 0 to spatially smooth the green channel. Input 1 for the red channel. ');
         if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
             if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
                 greenIn = SNgreenStackAv;
                 clearvars SNgreenStackAv
@@ -2751,27 +2752,29 @@ if spatSmoothQ == 1
             elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
                 redIn = SNredStackAv; 
                 clearvars SNredStackAv 
-                
+                for ccell = 1:length(terminals)
+                    SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+                end 
             end        
         elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
             if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
                 greenIn = SNgreenStackAv;
                 clearvars SNgreenStackAv
+                for ccell = 1:length(terminals)
+                    SNgreenStackAv{terminals(ccell)} = convn(greenIn{terminals(ccell)},K,'same');
+                end 
             elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
                 redIn = SNredStackAv; 
                 clearvars SNredStackAv 
+                for ccell = 1:length(terminals)
+                    SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
+                end 
             end                          
         end 
-        
-        
-
     end 
-    
-
-
-
-    
-
 end 
 
 % black out the pixels that are part of calcium ROIs 
