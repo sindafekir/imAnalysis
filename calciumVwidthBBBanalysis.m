@@ -2716,18 +2716,64 @@ end
 clearvars NgreenStackAv NredStackAv
 
 %spatial smoothing option
-spatSmoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+spatSmoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
 if spatSmoothQ == 1 
-    sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
-    redIn = SNredStackAv; 
-    clearvars SNredStackAv
-    % create your kernal for smoothing by convolution 
-%     K = 0.125*ones(3);
-%     K = 0.125*ones(6);
-%     K = 0.125*ones(9);
-    for ccell = 1:length(terminals)
-        SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
-%         SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
+    spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
+    spatFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
+    if spatFiltChanQ == 0 % if you want to spatially smooth both channels 
+        redIn = SNredStackAv; 
+        greenIn = SNgreenStackAv;
+        clearvars SNredStackAv SNgreenStackAv
+        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
+                for ccell = 1:length(terminals)
+                    SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+                    SNgreenStackAv{terminals(ccell)} = imgaussfilt(greenIn{terminals(ccell)},sigma);
+                end 
+        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
+                for ccell = 1:length(terminals)
+                    SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
+                    SNgreenStackAv{terminals(ccell)} = convn(greenIn{terminals(ccell)},K,'same');
+                end 
+        end 
+    elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
+        spatSmoothChanQ = input('Input 0 to spatially smooth the green channel. Input 1 for the red channel. ');
+        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
+            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
+                greenIn = SNgreenStackAv;
+                clearvars SNgreenStackAv
+                for ccell = 1:length(terminals)
+                    SNgreenStackAv{terminals(ccell)} = imgaussfilt(greenIn{terminals(ccell)},sigma);
+                end 
+            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
+                redIn = SNredStackAv; 
+                clearvars SNredStackAv 
+                for ccell = 1:length(terminals)
+                    SNredStackAv{terminals(ccell)} = imgaussfilt(redIn{terminals(ccell)},sigma);
+                end 
+            end        
+        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
+            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
+                greenIn = SNgreenStackAv;
+                clearvars SNgreenStackAv
+                for ccell = 1:length(terminals)
+                    SNgreenStackAv{terminals(ccell)} = convn(greenIn{terminals(ccell)},K,'same');
+                end 
+            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
+                redIn = SNredStackAv; 
+                clearvars SNredStackAv 
+                for ccell = 1:length(terminals)
+                    SNredStackAv{terminals(ccell)} = convn(redIn{terminals(ccell)},K,'same');
+                end 
+            end                          
+        end 
     end 
 end 
 
