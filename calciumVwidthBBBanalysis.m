@@ -2570,7 +2570,7 @@ end
 % end 
 %}
 %% sort red and green channel stacks based on ca peak location 
-
+%{
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 if tTypeQ == 0 
     sortedGreenStacks = cell(1,length(vidList));
@@ -2618,7 +2618,7 @@ elseif tTypeQ == 1
 end 
 %}
 %% create red and green channel stack averages around calcium peak location (STA stacks) 
-
+%{
 % average calcium peak aligned traces across videos 
 if tTypeQ == 0 
     greenStackArray2 = cell(1,length(vidList));
@@ -2972,9 +2972,8 @@ if CaFrameQ == 1
     end 
 end 
 %}
-
 %% average 3 frames (of STA videos) around a specific time point
-
+%{
 %specify what time point you want to see 
 timePoint = input('What time point do you want to see? (0 sec being when the calcium spike peaks). ');
 %figure out what frames correspond to around that time point 
@@ -3009,8 +3008,7 @@ elseif CaROIq == 1
     ax.Visible = 'off';
     ax.FontSize = 20;
 end 
-
-
+%}
 %% create composite stack
 %THIS NEEDS FURTHER EDITING BECAUSE THE COMPOSITE STACK IS REALLY DIM
 %{
@@ -3032,7 +3030,6 @@ end
 
 implay(redGreen)
 %}
-
 %% create multiple BBB ROIs 
 %{
 % numROIs = input("How many BBB perm ROIs are we making? "); 
@@ -3143,5 +3140,3 @@ end
 
 %% create stacks that are seperated by trial type 
 %}
-
-%IN IMAGEJ SAVE AS TIFF STACK - THEN JUST CONVERT TIFF TO AVI ELSEWHERE 
