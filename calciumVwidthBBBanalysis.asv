@@ -1,74 +1,95 @@
 % get the data you need 
-%{
-stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
-if stimStateQ == 0 
-    state = 8;
-elseif stimStateQ == 1
-    state = 7;
-end 
 
 %set the paramaters 
-framePeriod = input('What is the frame period? ');
-FPS = 1/framePeriod; 
-FPSstack = FPS/3;
-vidList = input('What videos are you analyzing? ');
-BBBQ = input('Input 1 if you want to get BBB data. Input 0 otherwise. ');
-VWQ = input('Input 1 if you want to get vessel width data. Input 0 otherwise. ');
-CAQ = input('Input 1 if you want to get calcium data. Input 0 otherwise. ');
-if CAQ == 1
-    tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
-end 
-STAstackQ = input('Input 1 to import red and green channel stacks. Input 0 otherwise. ');
 ETAQ = input('Input 1 if you want to plot event triggered averages. Input 0 if otherwise. '); 
-if STAstackQ == 1
+STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
+distQ = input('Input 1 if you want to determine distance of Ca ROIs from vessel. Input 0 otherwise. ');
+if STAstackQ == 1 || distQ == 1 
     BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
     if BGsubQ == 1
         BGsubTypeQ = input('Input 0 to select one background region and do a simple background subtraction of the mean pixel intensity of that region. Input 1 if you want to do row by row background subtraction. ');
     end 
 end 
-
-if BBBQ == 1 
-    % get BBB data 
-    BBBDir = uigetdir('*.*','WHERE IS THE BBB DATA?');
-    cd(BBBDir);
-    BBBlabel = input('Give a string example of what the BBB data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-    bDataFullTrace = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        BBBmat = matfile(sprintf(BBBlabel,vidList(vid)));
-        Bdata = BBBmat.Bdata;       
-        bDataFullTrace{vid} = Bdata;
+if ETAQ == 1 || STAstackQ == 1 
+    stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
+    if stimStateQ == 0 
+        state = 8;
+    elseif stimStateQ == 1
+        state = 7;
+    end 
+    framePeriod = input('What is the frame period? ');
+    FPS = 1/framePeriod; 
+    FPSstack = FPS/3;
+    vidList = input('What videos are you analyzing? ');
+end 
+if ETAQ == 1 && STAstackQ == 0 
+    BBBQ = input('Input 1 if you want to get BBB data. Input 0 otherwise. ');
+    VWQ = input('Input 1 if you want to get vessel width data. Input 0 otherwise. ');
+    CAQ = input('Input 1 if you want to get calcium data. Input 0 otherwise. ');
+    if CAQ == 1
+        tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
+    end 
+end 
+if STAstackQ == 1 && ETAQ == 0
+    CAQ = 1;
+    if CAQ == 1
+        tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
+    end 
+end 
+if ETAQ == 1 && STAstackQ == 1 
+    BBBQ = input('Input 1 if you want to get BBB data. Input 0 otherwise. ');
+    VWQ = input('Input 1 if you want to get vessel width data. Input 0 otherwise. ');
+    CAQ = 1;
+    if CAQ == 1
+        tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
     end 
 end 
 
-if VWQ == 1 
-    % get vessel width data 
-    VwDir = uigetdir('*.*','WHERE IS THE VESSEL WIDTH DATA?');
-    cd(VwDir);
-    VWlabel = input('Give a string example of what the vessel width data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-    vDataFullTrace = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        VWmat = matfile(sprintf(VWlabel,vidList(vid)));
-        Vdata = VWmat.Vdata;       
-        vDataFullTrace{vid} = Vdata;
+%% get your data 
+if ETAQ == 1
+    if BBBQ == 1 
+        % get BBB data 
+        BBBDir = uigetdir('*.*','WHERE IS THE BBB DATA?');
+        cd(BBBDir);
+        BBBlabel = input('Give a string example of what the BBB data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+        bDataFullTrace = cell(1,length(vidList));
+        for vid = 1:length(vidList)
+            BBBmat = matfile(sprintf(BBBlabel,vidList(vid)));
+            Bdata = BBBmat.Bdata;       
+            bDataFullTrace{vid} = Bdata;
+        end 
+    end 
+    if VWQ == 1 
+        % get vessel width data 
+        VwDir = uigetdir('*.*','WHERE IS THE VESSEL WIDTH DATA?');
+        cd(VwDir);
+        VWlabel = input('Give a string example of what the vessel width data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+        vDataFullTrace = cell(1,length(vidList));
+        for vid = 1:length(vidList)
+            VWmat = matfile(sprintf(VWlabel,vidList(vid)));
+            Vdata = VWmat.Vdata;       
+            vDataFullTrace{vid} = Vdata;
+        end 
     end 
 end 
-
-if CAQ == 1 
-    % get calcium data 
-    CaDir = uigetdir('*.*','WHERE IS THE CALCIUM DATA?');
-    cd(CaDir);
-    CAlabel = input('Give a string example of what the calcium data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-    terminals = input('What terminals do you care about? Input in correct order. ');
-    cDataFullTrace = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        CAmat = matfile(sprintf(CAlabel,vidList(vid)));
-        CAdata = CAmat.CcellData;       
-        cDataFullTrace{vid} = CAdata;
+if ETAQ == 1 || STAstackQ == 1 
+    if CAQ == 1 
+        % get calcium data 
+        CaDir = uigetdir('*.*','WHERE IS THE CALCIUM DATA?');
+        cd(CaDir);
+        CAlabel = input('Give a string example of what the calcium data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+        terminals = input('What terminals do you care about? Input in correct order. ');
+        cDataFullTrace = cell(1,length(vidList));
+        for vid = 1:length(vidList)
+            CAmat = matfile(sprintf(CAlabel,vidList(vid)));
+            CAdata = CAmat.CcellData;       
+            cDataFullTrace{vid} = CAdata;
+        end 
     end 
-end 
+end
 
 %get trial data to generate stimulus event triggered averages (ETAs)
-if ETAQ == 1 || tTypeQ == 1
+if ETAQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)
     velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
@@ -167,6 +188,33 @@ if STAstackQ == 1
         redStacks{vid} = mean(redStackArray{vid},4);
         greenStacks{vid} = mean(greenStackArray{vid},4);
     end 
+end 
+
+if distQ == 1
+    % get registered images 
+    regImDir = uigetdir('*.*','WHERE ARE THE REGISTERED IMAGES?');
+    cd(regImDir);   
+    redlabel = uigetfile('*.*','SELECT .MAT FILE WITH RED REGISTERED IMAGES'); 
+    redMat = matfile(redlabel);       
+    redRegStacks = redMat.regStacks;
+    redStacks1 = redRegStacks{2,4};   
+    if BGsubQ == 0 
+        redStacks = redStacks1;
+    elseif BGsubQ == 1
+        if BGsubTypeQ == 0        
+            [redStacks_BS,BG_ROIboundData,CaROImasks] = backgroundSubtraction(redStacks1);
+            redStacks = redStacks_BS;
+        elseif BGsubTypeQ == 1
+            [redStacks_BS,BG_ROIboundData,CaROImasks] = backgroundSubtractionPerRow(redStacks1);
+            redStacks = redStacks_BS;
+        end 
+    end 
+    %average all the frames per Z plane 
+    redZstack = zeros(size(redStacks{1},1),size(redStacks{1},2),length(redStacks));
+    for Z = 1:length(redStacks)
+        redZstack(:,:,Z) = mean(redStacks{Z},3);
+    end 
+%     clearvars except- redZstacks greenZstacks distQ 
 end 
 %}
 %% organize trial data 
@@ -2618,7 +2666,7 @@ elseif tTypeQ == 1
 end 
 %}
 %% create red and green channel stack averages around calcium peak location (STA stacks) 
-
+%{
 % average calcium peak aligned traces across videos 
 if tTypeQ == 0 
     greenStackArray2 = cell(1,length(vidList));
@@ -2681,7 +2729,7 @@ for ccell = 1:length(terminals)
 end 
 
 %temporal smoothing option
-smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
 if smoothQ == 0 
     SNgreenStackAv = NgreenStackAv;
     SNredStackAv = NredStackAv;
@@ -2716,7 +2764,7 @@ end
 clearvars NgreenStackAv NredStackAv
 
 %spatial smoothing option
-spatSmoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
 if spatSmoothQ == 1 
     spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
     spatFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
@@ -2972,9 +3020,8 @@ if CaFrameQ == 1
     end 
 end 
 %}
-
 %% average 3 frames (of STA videos) around a specific time point
-
+%{
 %specify what time point you want to see 
 timePoint = input('What time point do you want to see? (0 sec being when the calcium spike peaks). ');
 %figure out what frames correspond to around that time point 
@@ -3009,8 +3056,7 @@ elseif CaROIq == 1
     ax.Visible = 'off';
     ax.FontSize = 20;
 end 
-
-
+%}
 %% create composite stack
 %THIS NEEDS FURTHER EDITING BECAUSE THE COMPOSITE STACK IS REALLY DIM
 %{
@@ -3032,7 +3078,6 @@ end
 
 implay(redGreen)
 %}
-
 %% create multiple BBB ROIs 
 %{
 % numROIs = input("How many BBB perm ROIs are we making? "); 
@@ -3143,5 +3188,8 @@ end
 
 %% create stacks that are seperated by trial type 
 %}
+%% determine how far away each terminal is from the vessel of interest 
 
-%IN IMAGEJ SAVE AS TIFF STACK - THEN JUST CONVERT TIFF TO AVI ELSEWHERE 
+
+redStacksBS{vid}{Z};
+            greenStackArray{vid}(:,:,:,Z) = greenStacksBS{vid}{Z};

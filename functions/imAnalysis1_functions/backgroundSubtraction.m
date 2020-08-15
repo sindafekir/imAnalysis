@@ -1,4 +1,4 @@
-function [stackOut,BG_ROIboundData] = backgroundSubtraction(reg__Stacks)
+function [stackOut,BG_ROIboundData,CaROImask] = backgroundSubtraction(reg__Stacks)
 
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
@@ -9,7 +9,8 @@ if blackOutCaROIQ == 1
     cd(CaROImaskDir);
     CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
     CaROImaskMat = matfile(CaROImaskFileName); 
-    CaROImasks = CaROImaskMat.CaROImasks;    
+    CaROImasks = CaROImaskMat.CaROImasks; 
+    CaROImask = CaROImasks;
     % apply the Ca ROI masks to the images   
     threeDCaMask = cell(1,length(CaROImasks));
     for z = 1:length(CaROImasks)
