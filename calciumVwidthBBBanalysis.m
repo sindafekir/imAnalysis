@@ -3189,7 +3189,17 @@ end
 %% create stacks that are seperated by trial type 
 %}
 %% determine how far away each terminal is from the vessel of interest 
-if distQ == 1
-    
+if distQ == 1 
+    % manually draw vessel outline 
+    Vcoords = cell(1,length(CaROImasks));
+    for z = 1:length(CaROImasks)
+        imshow(redZstack(:,:,z),[0 1000])
+        ROIdata = drawfreehand(gca);
+        Vcoords{z} = ROIdata.Position;
+        outLineQ = input(sprintf('Input 1 if you are done drawing the outline for Z = %d. ',z));
+        if outLineQ == 1
+            close all
+        end 
+    end   
 end 
 
