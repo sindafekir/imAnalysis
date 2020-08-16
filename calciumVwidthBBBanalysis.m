@@ -3244,15 +3244,221 @@ if distQ == 1
     end 
 end 
 %}
-%%
+%% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks 
+%{
+%find when the BBB signal peaks (within 5 sec around the calcium peak.
+%this is 2.5 seconds either side of 0 sec. 0 being when the calcium signal
+%peaks)
+framePeriod = input('What is the frame period? ');
+FPS = 1/framePeriod; 
+FPSstack = FPS/3;
+CaPeakFrame = input('In what frame does the Ca signal peak? ');
+maxBBBvals = zeros(1,length(terminals));
+maxBBBvalInds = zeros(1,length(terminals));
+maxBBBvalTimePoints = zeros(1,length(terminals));
+for ccell = 1:length(terminals)
+    %find max value 
+    maxBBBvals(ccell) = max(AVSNBdataPeaks{1}{terminals(ccell)});
+    %find index of each BBB max value 
+    maxBBBvalInds(ccell) = find(AVSNBdataPeaks{1}{terminals(ccell)} == maxBBBvals(ccell));
+    %convert index to time in sec relative to 0 sec = when the calcium peak
+    %occurs 
+    maxBBBvalTimePoints(ccell) = (maxBBBvalInds(ccell)-CaPeakFrame)/FPSstack;
+end 
 
+figure;
+scatter(minDistsMicrons,maxBBBvalTimePoints,'k','filled')
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('Distance from Vessel (microns)','FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 
+figure;
+scatter(minDistsMicrons,maxBBBvals,'k','filled')
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('Distance from Vessel (microns)','FontName','Times')
+ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 
+figure;
+scatter(maxBBBvals,maxBBBvalTimePoints,'k','filled')
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
 
+%}
+%% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks (across mice)
 
+mouseNum = input('How many mice do you want to use to create scatter plots of vessel-Ca ROI distance and BBB perm metrics? ');
+minDistsMicrons = cell(1,mouseNum);
+maxBBBvalTimePoints = cell(1,mouseNum);
+maxBBBvals = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    dataDir = uigetdir('*.*',sprintf('WHERE IS THE DISTANCE VS BBB PERM DATA FOR MOUSE %d',mouse));
+    cd(dataDir);
+    dataDirFileName = uigetfile('*.*',sprintf('GET THE DISTANCE VS BBB PERM DATA FOR MOUSE %d',mouse)); 
+    dataMat = matfile(dataDirFileName); 
+    minDistsMicrons{mouse} = dataMat.minDistsMicrons; 
+    maxBBBvalTimePoints{mouse} = dataMat.maxBBBvalTimePoints; 
+    maxBBBvals{mouse} = dataMat.maxBBBvals; 
+end 
 
+% scatter plots. each mouse a different color. each mouse gets regression
+% line. 
 
+%@@@@@@@@@@@@@@@@  ONE  @@@@@@@@@@@@@@@@@@@
+figure;
+color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+for mouse = 1:mouseNum
+    scatter(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},'filled','MarkerFaceColor',color(mouse,:))
+    hold on;
+    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
+    fit = polyfit(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},1);
+    % Make 50 fitted samples from 0 to max min distance
+    xFit = linspace(0, 50, 50);
+    % Get the estimated values with polyval()
+    yFit = polyval(fit, xFit);
+    % Plot the fit
+    plot(xFit, yFit, 'MarkerFaceColor',color(mouse,:), 'MarkerSize', 15, 'LineWidth', 2);
+end 
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('Distance from Vessel (microns)','FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+xlim([0 48])
 
+%@@@@@@@@@@@@@@@@  TWO  @@@@@@@@@@@@@@@@@@@
+figure;
+for mouse = 1:mouseNum
+    scatter(minDistsMicrons{mouse},maxBBBvals{mouse},'filled','MarkerFaceColor',color(mouse,:))
+    hold on;
+    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
+    fit = polyfit(minDistsMicrons{mouse},maxBBBvals{mouse},1);
+    % Make 50 fitted samples from 0 to max min distance
+    xFit = linspace(0, 50, 50);
+    % Get the estimated values with polyval()
+    yFit = polyval(fit, xFit);
+    % Plot the fit
+    plot(xFit, yFit, 'MarkerFaceColor',color(mouse,:), 'MarkerSize', 15, 'LineWidth', 2);
+end 
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('Distance from Vessel (microns)','FontName','Times')
+ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+xlim([0 48])
 
+%@@@@@@@@@@@@@@@@  THREE  @@@@@@@@@@@@@@@@@@@
+figure;
+for mouse = 1:mouseNum
+    scatter(maxBBBvals{mouse},maxBBBvalTimePoints{mouse},'filled','MarkerFaceColor',color(mouse,:))
+    hold on;
+    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
+    fit = polyfit(maxBBBvals{mouse},maxBBBvalTimePoints{mouse},1);
+    % Make 50 fitted samples from 0 to max min distance
+    xFit = linspace(0, 1.6, 50);
+    % Get the estimated values with polyval()
+    yFit = polyval(fit, xFit);
+    % Plot the fit
+    plot(xFit, yFit, 'MarkerFaceColor',color(mouse,:), 'MarkerSize', 15, 'LineWidth', 2);
+end  
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
+xlim([0 1.6])
+%}
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% all black. one regression line for all animals combined. 
 
+%@@@@@@@@@@@@@@@@  ONE  @@@@@@@@@@@@@@@@@@@
+figure;
+for mouse = 2:mouseNum
+    if mouse == 2
+       miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+       miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+    elseif mouse > 2
+       minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+       maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
+    end 
+end 
+scatter(minDistMicronsAllMice,maxBBBvalTimePointsAllMice,'filled','k')
+hold on;
+% Do the regression with polyfit.  Fit a straight line through the noisy y values.
+fit = polyfit(minDistMicronsAllMice,maxBBBvalTimePointsAllMice,1);
+% Make 50 fitted samples from 0 to max min distance
+xFit = linspace(0, 50, 50);
+% Get the estimated values with polyval()
+yFit = polyval(fit, xFit);
+% Plot the fit
+plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('Distance from Vessel (microns)','FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+xlim([0 48])
+
+%@@@@@@@@@@@@@@@@  TWO  @@@@@@@@@@@@@@@@@@@
+figure;
+for mouse = 2:mouseNum
+    if mouse == 2
+       miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+       miceData2 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+    elseif mouse > 2
+       minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+       maxBBBvalsAllMice = horzcat(miceData2,maxBBBvals{mouse});
+    end 
+end 
+scatter(minDistMicronsAllMice,maxBBBvalsAllMice,'filled','k')
+hold on;
+% Do the regression with polyfit.  Fit a straight line through the noisy y values.
+fit = polyfit(minDistsMicrons{mouse},maxBBBvals{mouse},1);
+% Make 50 fitted samples from 0 to max min distance
+xFit = linspace(0, 50, 50);
+% Get the estimated values with polyval()
+yFit = polyval(fit, xFit);
+% Plot the fit
+plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('Distance from Vessel (microns)','FontName','Times')
+ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+xlim([0 48])
+
+%@@@@@@@@@@@@@@@@  THREE  @@@@@@@@@@@@@@@@@@@
+figure;
+for mouse = 2:mouseNum
+    if mouse == 2
+       miceData1 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+       miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+    elseif mouse > 2
+       maxBBBvalsAllMice = horzcat(miceData1,maxBBBvals{mouse});
+       maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
+    end 
+end 
+scatter(maxBBBvalsAllMice,maxBBBvalTimePointsAllMice,'filled','k')
+hold on;
+% Do the regression with polyfit.  Fit a straight line through the noisy y values.
+fit = polyfit(maxBBBvals{mouse},maxBBBvalTimePoints{mouse},1);
+% Make 50 fitted samples from 0 to max min distance
+xFit = linspace(0, 1.6, 50);
+% Get the estimated values with polyval()
+yFit = polyval(fit, xFit);
+% Plot the fit
+plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
+xlim([0 1.6])
