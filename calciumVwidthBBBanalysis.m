@@ -3188,18 +3188,71 @@ end
 
 %% create stacks that are seperated by trial type 
 %}
-%% determine how far away each terminal is from the vessel of interest 
+%% determine how far away each terminal is from the vessel of interest (the minimum distance) 
+%{
 if distQ == 1 
-    % manually draw vessel outline 
-    Vcoords = cell(1,length(CaROImasks));
+    terminals = input('What Ca ROIs do you care about? '); 
+    XpixDist = input('How many microns per pixel are there in the X direction? '); 
+    YpixDist = input('How many microns per pixel are there in the Y direction? '); 
+    ZpixDist = input('How many microns per pixel are there in the Z direction? '); 
+    %get all of the coordinates - for the vessel you care about and all of
+    %the Ca ROIs you care about 
+    Vinds = cell(1,length(CaROImasks));
+    CaROIinds = cell(1,length(CaROImasks));
+    distsMicrons = cell(1,length(CaROImasks));
+    minDistsMicrons1 = zeros(length(CaROImasks),length(terminals)); 
     for z = 1:length(CaROImasks)
         imshow(redZstack(:,:,z),[0 1000])
-        ROIdata = drawfreehand(gca);
-        Vcoords{z} = ROIdata.Position;
+        ROIdata = drawfreehand(gca);  % manually draw vessel outline
+        %get the vessel outline coordinates 
+        Vinds{z} = ROIdata.Position;
+        VxMicrons = (Vinds{z}(:,2))*XpixDist;
+        VyMicrons = (Vinds{z}(:,1))*YpixDist;
         outLineQ = input(sprintf('Input 1 if you are done drawing the outline for Z = %d. ',z));
         if outLineQ == 1
             close all
         end 
-    end   
+        %get the coordinates for every Ca ROI
+        for ccell = 1:length(terminals)
+            [CaROIx,CaROIy] = find(CaROImasks{z} == terminals(ccell));
+            CaROIinds{z}{ccell}(:,2) = CaROIx;
+            CaROIinds{z}{ccell}(:,1) = CaROIy; 
+            if  isempty(CaROIinds{z}{ccell}) == 0 
+                CaROIxMicrons = CaROIx*XpixDist; 
+                CaROIyMicrons = CaROIy*YpixDist;            
+                %determine the euclidean distance in pixels between each Ca ROI
+                %pixel and hand drawn vessel outline
+                for CaROIcoord = 1:size(CaROIinds{z}{ccell},1)
+                    for Vcoord = 1:size(Vinds{z},1)
+                        distsMicrons{z}{ccell}(CaROIcoord,Vcoord) = sqrt(((VxMicrons(Vcoord)-CaROIxMicrons(CaROIcoord))^2)+((VyMicrons(Vcoord)-CaROIyMicrons(CaROIcoord))^2)+(((z*ZpixDist)-(z*ZpixDist))^2)); 
+                    end 
+                end 
+                %determine the minimum distance in pixels between every Ca ROI
+                %and the vessel part 1 
+                minDistsMicrons1(z,ccell) = min(min(distsMicrons{z}{ccell})); 
+            end 
+        end       
+    end 
+    %remove zeros from the minDistsMicrons1 array - these zeros are only
+    %there because that particular Ca ROI isn't in that plane in Z 
+    minDistsMicrons1(minDistsMicrons1 == 0) = NaN;
+    %determine the minimum distance in pixels between every Ca ROI
+    %and the vessel part 2 
+    minDistsMicrons = zeros(1,length(terminals));
+    for ccell = 1:length(terminals)
+        minDistsMicrons(ccell) = min(minDistsMicrons1(:,ccell));
+    end 
 end 
+%}
+%%
+
+
+
+
+
+
+
+
+
+
 
