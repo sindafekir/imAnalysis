@@ -3246,6 +3246,13 @@ end
 %}
 %% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks 
 %{
+%get the BBB data 
+dataDir = uigetdir('*.*','WHERE IS THE BBB STA DATA?');
+cd(dataDir);
+dataDirFileName = uigetfile('*.*','GET THE BBB STA DATA'); 
+dataMat = matfile(dataDirFileName); 
+AVSNBdataPeaks = dataMat.AVSNBdataPeaks; 
+
 %find when the BBB signal peaks (within 5 sec around the calcium peak.
 %this is 2.5 seconds either side of 0 sec. 0 being when the calcium signal
 %peaks)
@@ -3271,7 +3278,7 @@ scatter(minDistsMicrons,maxBBBvalTimePoints,'k','filled')
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('Distance from Vessel (microns)','FontName','Times')
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 
 figure;
@@ -3279,7 +3286,7 @@ scatter(minDistsMicrons,maxBBBvals,'k','filled')
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('Distance from Vessel (microns)','FontName','Times')
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
 ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 
 figure;
@@ -3292,7 +3299,7 @@ ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
 
 %}
 %% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks (across mice)
-
+%{
 mouseNum = input('How many mice do you want to use to create scatter plots of vessel-Ca ROI distance and BBB perm metrics? ');
 minDistsMicrons = cell(1,mouseNum);
 maxBBBvalTimePoints = cell(1,mouseNum);
@@ -3328,7 +3335,7 @@ end
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('Distance from Vessel (microns)','FontName','Times')
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 xlim([0 48])
 
@@ -3349,7 +3356,7 @@ end
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('Distance from Vessel (microns)','FontName','Times')
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
 ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 xlim([0 48])
 
@@ -3373,7 +3380,6 @@ ax.FontName = 'Times';
 xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
 xlim([0 1.6])
-%}
 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -3403,7 +3409,7 @@ plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('Distance from Vessel (microns)','FontName','Times')
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 xlim([0 48])
 
@@ -3431,7 +3437,7 @@ plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('Distance from Vessel (microns)','FontName','Times')
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
 ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 xlim([0 48])
 
@@ -3462,3 +3468,31 @@ ax.FontName = 'Times';
 xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
 xlim([0 1.6])
+%}
+%% 3D scatter plot of Ca ROI distance metric, BBB perm-Ca Peak time delay, and BBB perm max peak amp
+
+% 3D scatter plot. each mouse a different color. 
+
+%@@@@@@@@@@@@@@@@  ONE  @@@@@@@@@@@@@@@@@@@
+figure;
+color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+for mouse = 1:length(minDistsMicrons)
+    %THIS ISN'T WORKING- DON'T KNOW WHY - ALSO NEED TO DECIDE WHETHER TO
+    %ADD REGRESSION LINES OR NOT 
+    scatter(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},maxBBBvals{mouse},'filled','MarkerFaceColor',color(mouse,:))
+    hold on;
+    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
+    fit = polyfit(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},1);
+    % Make 50 fitted samples from 0 to max min distance
+    xFit = linspace(0, 50, 50);
+    % Get the estimated values with polyval()
+    yFit = polyval(fit, xFit);
+    % Plot the fit
+%     plot(xFit, yFit, 'MarkerFaceColor',color(mouse,:), 'MarkerSize', 15, 'LineWidth', 2);
+end 
+ax = gca;
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+xlim([0 48])
