@@ -3472,27 +3472,75 @@ xlim([0 1.6])
 %% 3D scatter plot of Ca ROI distance metric, BBB perm-Ca Peak time delay, and BBB perm max peak amp
 
 % 3D scatter plot. each mouse a different color. 
-
-%@@@@@@@@@@@@@@@@  ONE  @@@@@@@@@@@@@@@@@@@
 figure;
 color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+rotate3d on
 for mouse = 1:length(minDistsMicrons)
-    %THIS ISN'T WORKING- DON'T KNOW WHY - ALSO NEED TO DECIDE WHETHER TO
-    %ADD REGRESSION LINES OR NOT 
-    scatter(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},maxBBBvals{mouse},'filled','MarkerFaceColor',color(mouse,:))
+    scatter3(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},maxBBBvals{mouse},'filled','MarkerFaceColor',color(mouse,:))
     hold on;
-    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
-    fit = polyfit(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},1);
-    % Make 50 fitted samples from 0 to max min distance
-    xFit = linspace(0, 50, 50);
-    % Get the estimated values with polyval()
-    yFit = polyval(fit, xFit);
-    % Plot the fit
-%     plot(xFit, yFit, 'MarkerFaceColor',color(mouse,:), 'MarkerSize', 15, 'LineWidth', 2);
+    %3D ordinary least squares regression 
+    %put data in same array for convenience 
+    data(:,1) = minDistsMicrons{mouse}';
+    data(:,2) = maxBBBvalTimePoints{mouse}';
+    data(:,3) = maxBBBvals{mouse}';
+    % best-fit plane
+    C = [data(:,1) data(:,2) ones(size(data,1),1)] \ data(:,3);    % coefficients
+    % evaluate it on a regular grid covering the domain of the data
+    [xx,yy] = meshgrid(0:2:50, -3:.5:3);
+    zz = C(1)*xx + C(2)*yy + C(3);
+    line(data(:,1), data(:,2), data(:,3), 'LineStyle','none', ...
+    'Marker','.', 'MarkerSize',25, 'Color',color(mouse,:))
+    surface(xx, yy, zz, ...
+    'FaceColor','interp', 'EdgeColor',color(mouse,:), 'FaceAlpha',0.2)
+    clear data
 end 
 ax = gca;
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+% xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+xlabel('Distance From  Vessel(microns)','FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 xlim([0 48])
+
+%%
+% 3D scatter plot. All mice same color 
+for mouse = 2:mouseNum
+    if mouse == 2
+       miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+       miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+       miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+    elseif mouse > 2
+       minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+       maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
+       maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
+    end 
+end 
+figure;
+rotate3d on
+scatter3(minDistMicronsAllMice,maxBBBvalTimePointsAllMice,maxBBBvalsAllMice,'filled','k')
+hold on;
+%3D ordinary least squares regression 
+%put data in same array for convenience 
+data(:,1) = minDistMicronsAllMice';
+data(:,2) = maxBBBvalTimePointsAllMice';
+data(:,3) = maxBBBvalsAllMice';
+% best-fit plane
+C = [data(:,1) data(:,2) ones(size(data,1),1)] \ data(:,3);    % coefficients
+% evaluate it on a regular grid covering the domain of the data
+[xx,yy] = meshgrid(0:2:50, -3:.5:3);
+zz = C(1)*xx + C(2)*yy + C(3);
+line(data(:,1), data(:,2), data(:,3), 'LineStyle','none', ...
+'Marker','.', 'MarkerSize',25, 'Color','k')
+surface(xx, yy, zz, ...
+'FaceColor','interp', 'EdgeColor','k', 'FaceAlpha',0.2)
+scatter3(minDistMicronsAllMice(3),maxBBBvalTimePointsAllMice(3),maxBBBvalsAllMice(3),'filled','r')
+ax = gca;
+ax.FontSize = 20;
+ax.FontName = 'Times';
+% xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+xlabel('Distance From  Vessel(microns)','FontName','Times')
+ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+xlim([0 48])
+clear data
