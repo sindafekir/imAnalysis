@@ -2008,11 +2008,11 @@ end
 %}
 %% normalize to baseline period and plot calcium peak aligned data
 %{
+%find where calcium peak onset is 
+%changePt = (findchangepts(SNavCdata{terminals(ccell)}))-1;    
+changePt = 23;
 if tTypeQ == 0 
     %{
-    %find where calcium peak onset is 
-    changePt = 23;
-
     %find the BBB traces that increase after calcium peak onset (changePt) 
     %{
     SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
@@ -2101,13 +2101,13 @@ if tTypeQ == 0
      end 
      
     %smoothing option
-    smoothQ = 1;%input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+    smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
     if smoothQ == 0 
-%         SNavCdata = NavCdata;
-%         SNavBdata = NavBdata;
-%         SNavVdata = NavVdata;
+        SNBdataPeaks = NsortedBdata;
+        SNCdataPeaks = NsortedCdata;
+        SNVdataPeaks = NsortedVdata;
     elseif smoothQ == 1
-        filtTime = 0.7;%input('How many seconds do you want to smooth your data by? ');
+        filtTime = input('How many seconds do you want to smooth your data by? ');
         SNBdataPeaks = cell(1,length(vidList));
 %         SNCdataPeaks = cell(1,length(vidList));
         SNVdataPeaks = cell(1,length(vidList));
@@ -2130,9 +2130,6 @@ if tTypeQ == 0
     %} 
 elseif tTypeQ == 1 
     %{
-    %find where calcium peak onset is 
-%     changePt = (findchangepts(SNavCdata{terminals(ccell)}))-1;
-    
     %normalize
     NsortedBdata = cell(1,length(vidList));
     NsortedCdata = cell(1,length(vidList));
@@ -2142,29 +2139,41 @@ elseif tTypeQ == 1
     sortedVdata2 = cell(1,length(vidList));
      for vid = 1:length(vidList)
         for ccell = 1:length(terminals)
-            for per = 1:3   
-                if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
-                    
-                    %the data needs to be added to because there are some
-                    %negative gonig points which mess up the normalizing 
-                    sortedBdata2{vid}{terminals(ccell)}{per} = sortedBdata{vid}{terminals(ccell)}{per} + 100;
-                    sortedCdata2{vid}{terminals(ccell)}{per} = sortedCdata{vid}{terminals(ccell)}{per} + 100;
-                    sortedVdata2{vid}{terminals(ccell)}{per} = sortedVdata{vid}{terminals(ccell)}{per} + 100;
-                     
-                      %this normalizes to the first 1/3 section of the trace
-                      %(18 frames) 
-%{
-%                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedBdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-%                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-%                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
-%}                     
-                    %normalize to 0.5 sec before changePt (calcium peak
-                    %onset) BLstart 
-                    BLstart = changePt - floor(0.5*FPSstack);
-                    NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedBdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;
-                    NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;
-                    NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;
+            if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}) == 0 
+                for per = 1:3      
+                    if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
+                        if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
+                            %the data needs to be added to because there are some
+                            %negative gonig points which mess up the normalizing 
+                            for BBBroi = 1:length(bDataFullTrace{1})                        
+                                sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = sortedBdata{vid}{BBBroi}{terminals(ccell)}{per} + 100;                       
+                            end                 
+                            sortedCdata2{vid}{terminals(ccell)}{per} = sortedCdata{vid}{terminals(ccell)}{per} + 100;               
+                            for VWroi = 1:length(vDataFullTrace{1})                   
+                                sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = sortedVdata{vid}{VWroi}{terminals(ccell)}{per} + 100;                 
+                            end 
 
+                              %this normalizes to the first 1/3 section of the trace
+                              %(18 frames) 
+            %{
+            %                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedBdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
+            %                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
+            %                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
+            %}                     
+                            %normalize to 0.5 sec before changePt (calcium peak
+                            %onset) BLstart 
+                            BLstart = changePt - floor(0.5*FPSstack);
+                            for BBBroi = 1:length(bDataFullTrace{1})
+                                if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
+                                    NsortedBdata{vid}{BBBroi}{terminals(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                
+                                end 
+                            end 
+                            NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;               
+                            for VWroi = 1:length(vDataFullTrace{1})                    
+                                NsortedVdata{vid}{VWroi}{terminals(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                    
+                            end 
+                        end 
+                    end 
                 end 
             end 
         end 
@@ -2178,19 +2187,26 @@ elseif tTypeQ == 1
     elseif smoothQ == 1
         filtTime = input('How many seconds do you want to smooth your data by? ');
         SNBdataPeaks = cell(1,length(vidList));
-        SNCdataPeaks = cell(1,length(vidList));
+%         SNCdataPeaks = cell(1,length(vidList));
         SNVdataPeaks = cell(1,length(vidList));
+        SNCdataPeaks = NsortedCdata;
          for vid = 1:length(vidList)
             for ccell = 1:length(terminals)
                 for per = 1:3   
-                    if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
-                        for peak = 1:size(sortedBdata{vid}{terminals(ccell)}{per},1)
-                            [SBPeak_Data] = MovMeanSmoothData(NsortedBdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                            SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SBPeak_Data;                            
-                            [SCPeak_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                            SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;                          
-                            [SVPeak_Data] = MovMeanSmoothData(NsortedVdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                            SNVdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SVPeak_Data;                            
+                    if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
+                        if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
+                            for peak = 1:size(sortedBdata{vid}{1}{terminals(ccell)}{per},1)
+                                for BBBroi = 1:length(bDataFullTrace{1})
+                                    [SBPeak_Data] = MovMeanSmoothData(NsortedBdata{vid}{BBBroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
+                                    SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(peak,:) = SBPeak_Data; 
+                                end 
+    %                             [SCPeak_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
+    %                             SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;                       
+                                for VWroi = 1:length(vDataFullTrace{1})
+                                    [SVPeak_Data] = MovMeanSmoothData(NsortedVdata{vid}{VWroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
+                                    SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(peak,:) = SVPeak_Data;     
+                                end 
+                            end 
                         end 
                     end 
                 end 
@@ -2237,26 +2253,21 @@ if tTypeQ == 0
                     allBTraces{BBBroi}{terminals(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}(peak,:)-100); 
                     allVTraces{VWroi}{terminals(ccell)}(count,:) = (SNVdataPeaks{vid}{VWroi}{terminals(ccell)}(peak,:)-100); 
                     allCTraces{terminals(ccell)}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}(peak,:)-100);
-%                     plot(allCTraces{terminals(ccell)}(count,:),'b')
-%                     plot(allBTraces{BBBroi}{terminals(ccell)}(count,:),'r')
                     count = count + 1;
                 end 
             end
         end 
         
-%         %randomly plot 100 calcium traces - no replacement: each trace can
-%         %only be plotted once 
-%         traceInds = randperm(332);
-%         for peak = 1:100       
-%             plot(allCTraces{terminals(ccell)}(traceInds(peak),:),'b')
-%             
-%         end 
+        %randomly plot 100 calcium traces - no replacement: each trace can
+        %only be plotted once 
+        %{
+        traceInds = randperm(332);
+        for peak = 1:100       
+            plot(allCTraces{terminals(ccell)}(traceInds(peak),:),'b')
+            
+        end 
+        %}
         
-%         
-%         for peak = 1:size(allBTraces{terminals(ccell)})
-%         end 
-%         plot(allBTraces{terminals(ccell)}(countB,:))
-
         %DETERMINE 95% CI
         SEMb = (nanstd(allBTraces{BBBroi}{terminals(ccell)}))/(sqrt(size(allBTraces{BBBroi}{terminals(ccell)},1))); % Standard Error            
         ts_bLow = tinv(0.025,size(allBTraces{BBBroi}{terminals(ccell)},1)-1);% T-Score for 95% CI
@@ -2277,14 +2288,13 @@ if tTypeQ == 0
         CI_vHigh = (nanmean(allVTraces{VWroi}{terminals(ccell)},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
 
         x = 1:length(CI_cLow);
-
         
+        %get averages
         AVSNBdataPeaks{BBBroi}{terminals(ccell)} = (nanmean(allBTraces{BBBroi}{terminals(ccell)}));
         AVSNCdataPeaks{terminals(ccell)} = nanmean(allCTraces{terminals(ccell)});
         AVSNVdataPeaks{VWroi}{terminals(ccell)} = (nanmean(allVTraces{VWroi}{terminals(ccell)}));
         
         plot(AVSNCdataPeaks{terminals(ccell)},'b','LineWidth',4)
-%         plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)},'r','LineWidth',4)
         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;   
@@ -2294,19 +2304,10 @@ if tTypeQ == 0
         ylabel('calcium signal percent change','FontName','Times')
         xLimStart = floor(10*FPSstack);
         xLimEnd = floor(24*FPSstack); 
-%         xlim([xLimStart xLimEnd])
-%         xlim([1 xLimEnd])
         xlim([1 size(AVSNBdataPeaks{BBBroi}{terminals(ccell)},2)])
-%         ylim([-1.25 2])
         ylim([-60 100])
-%         legend('DA calcium','BBB data')
            
-        
         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-%         legend('BBB permeability','Calcium signal','Calcium peak onset','Location','northwest');
-
-%         title(sprintf('DA terminal #%d. All light Conditions',terminals(ccell)))
-%         title('BBB Permeability Spike Triggered Average','FontName','Times')
         set(fig,'position', [500 100 900 800])
         alpha(0.3)
 
@@ -2340,63 +2341,58 @@ if tTypeQ == 0
     %}
 elseif tTypeQ == 1
     %{
-    allBTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    allCTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    allVTraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%     AVSNBdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%     AVSNCdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%     AVSNVdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%     Btraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%     Ctraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-%     Vtraces = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    for ccell = 3%1:length(terminals)
+    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
+    allCTraces = cell(1,length(SNCdataPeaks{1}));
+    allBTraces = cell(1,length(SNCdataPeaks{1}));
+    allVTraces = cell(1,length(SNCdataPeaks{1}));
+    for ccell = 1:length(terminals)
         % plot    
-        
-        for per = 1:3
-           fig = figure; 
-            Frames = length(avSortedCdata{terminals(ccell)});
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames)+5); 
-            ax=gca;
-            hold all
-            count = 1;
-            for vid = 1:length(vidList)
-                   if isempty(sortedBdata{vid}{terminals(ccell)}{per}) == 0 
-                        for peak = 1:size(sortedBdata{vid}{terminals(ccell)}{per},1)
-                            allBTraces{terminals(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);
+        fig = figure; 
+        Frames = size(SNBdataPeaks{1}{BBBroi}{terminals(ccell)}{3},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+        FrameVals = round((1:FPSstack:Frames)+5); 
+        ax=gca;
+        hold all
+        count = 1;
+        for vid = 1:length(vidList)
+               if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
+                    if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
+                        for peak = 1:size(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per},1)
+                            allBTraces{BBBroi}{terminals(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(peak,:)-100);
                             allCTraces{terminals(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);
-                            allVTraces{terminals(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);  
+                            allVTraces{VWroi}{terminals(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(peak,:)-100);  
                             count = count + 1;
                         end 
-                   end               
-            end 
-        
-        
-            %remove traces that are outliers 
-            %{
-            %statistically
-            count2 = 1; 
-            count3 = 1;
-            count4 = 1;
-            for peak = 1:size(allBTraces{terminals(ccell)}{per},1)
+                    end
+               end               
+        end 
+
+
+        %remove traces that are outliers 
+        %{
+        %statistically
+        count2 = 1; 
+        count3 = 1;
+        count4 = 1;
+        for peak = 1:size(allBTraces{terminals(ccell)}{per},1)
 %                 if allBTraces{terminals(ccell)}(peak,:) < nanstd(allBTraces{terminals(ccell)},1)*3                  
-                    Btraces{terminals(ccell)}{per}(count2,:) = (allBTraces{terminals(ccell)}{per}(peak,:))-100;
-                    count2 = count2 + 1;
+                Btraces{terminals(ccell)}{per}(count2,:) = (allBTraces{terminals(ccell)}{per}(peak,:))-100;
+                count2 = count2 + 1;
 %                 end 
 %                 if allCTraces{terminals(ccell)}(peak,:) < nanstd(allCTraces{terminals(ccell)},1)*3                    
-                    Ctraces{terminals(ccell)}{per}(count3,:) = (allCTraces{terminals(ccell)}{per}(peak,:))-100;
-                    count3 = count3 + 1;
+                Ctraces{terminals(ccell)}{per}(count3,:) = (allCTraces{terminals(ccell)}{per}(peak,:))-100;
+                count3 = count3 + 1;
 %                 end 
 %                 if allVTraces{terminals(ccell)}(peak,:) < nanstd(allVTraces{terminals(ccell)},1)*3%*0.000000000003                    
-                    Vtraces{terminals(ccell)}{per}(count4,:) = (allVTraces{terminals(ccell)}{per}(peak,:))-100;
-                    count4 = count4 + 1;
+                Vtraces{terminals(ccell)}{per}(count4,:) = (allVTraces{terminals(ccell)}{per}(peak,:))-100;
+                count4 = count4 + 1;
 %                 end 
-            end 
-            
-            %remove traces that are outliers by removing the trace with the lowest value
-            
+        end 
+
+        %remove traces that are outliers by removing the trace with the lowest value
+
 %             [BminVal,BminInd] = max(Btraces{terminals(ccell)}(:));
 %             [Brow,~] = find(Btraces{terminals(ccell)} == BminVal);
 %             Btraces{terminals(ccell)}(Brow,:) = [];
@@ -2408,129 +2404,82 @@ elseif tTypeQ == 1
 %             [VminVal,VminInd] = min(Vtraces{terminals(ccell)}(:));
 %             [Vrow,~] = find(Vtraces{terminals(ccell)} == VminVal);
 %             Vtraces{terminals(ccell)}(Vrow,:) = [];
-                
 
-            
-            %remove specific trace
+
+
+        %remove specific trace
 %             Btraces{terminals(ccell)}(123,:) = [];
 %}
 
-            %calculate the 95% confidence interval
-            %{
-            SEMcSpont = (std(allCTraces{terminals(ccell)}{3}))/(sqrt(size(allCTraces{terminals(ccell)}{3},1))); % Standard Error            
-            ts_cSpontLow = tinv(0.025,size(allCTraces{terminals(ccell)}{3},1)-1);% T-Score for 95% CI
-            ts_cSpontHigh = tinv(0.975,size(allCTraces{terminals(ccell)}{3},1)-1);% T-Score for 95% CI
-            CI_cSpontLow = (nanmean(allCTraces{terminals(ccell)}{3},1)) + (ts_cSpontLow*SEMcSpont);  % Confidence Intervals
-            CI_cSpontHigh = (nanmean(allCTraces{terminals(ccell)}{3},1)) + (ts_cSpontHigh*SEMcSpont);  % Confidence Intervals
-            
-            SEMcBlue = (std(allCTraces{terminals(ccell)}{1}))/(sqrt(size(allCTraces{terminals(ccell)}{1},1))); % Standard Error            
-            ts_cBlueLow = tinv(0.025,size(allCTraces{terminals(ccell)}{1},1)-1);% T-Score for 95% CI
-            ts_cBlueHigh = tinv(0.975,size(allCTraces{terminals(ccell)}{1},1)-1);% T-Score for 95% CI
-            CI_cBlueLow = (nanmean(allCTraces{terminals(ccell)}{1},1)) + (ts_cBlueLow*SEMcBlue);  % Confidence Intervals
-            CI_cBlueHigh = (nanmean(allCTraces{terminals(ccell)}{1},1)) + (ts_cBlueHigh*SEMcBlue);  % Confidence Intervals
-            
-            SEMcRed = (std(allCTraces{terminals(ccell)}{2}))/(sqrt(size(allCTraces{terminals(ccell)}{2},1))); % Standard Error            
-            ts_cRedLow = tinv(0.025,size(allCTraces{terminals(ccell)}{2},1)-1);% T-Score for 95% CI
-            ts_cRedHigh = tinv(0.975,size(allCTraces{terminals(ccell)}{2},1)-1);% T-Score for 95% CI
-            CI_cRedLow = (nanmean(allCTraces{terminals(ccell)}{2},1)) + (ts_cRedLow*SEMcRed);  % Confidence Intervals
-            CI_cRedHigh = (nanmean(allCTraces{terminals(ccell)}{2},1)) + (ts_cRedHigh*SEMcRed);  % Confidence Intervals
-       %}
-%             SEMb{per} = (std(allBTraces{terminals(ccell)}{per}))/(sqrt(size(allBTraces{terminals(ccell)}{per},1))); % Standard Error            
-%             STDb{per} = std(allBTraces{terminals(ccell)}{per});
-%             ts_bLow = tinv(0.025,size(allBTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
-%             ts_bHigh = tinv(0.975,size(allBTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
-%             CI_bLow{per} = (nanmean(allBTraces{terminals(ccell)}{per},1)) + (ts_bLow*SEMb{per});  % Confidence Intervals
-%             CI_bHigh{per} = (nanmean(allBTraces{terminals(ccell)}{per},1)) + (ts_bHigh*SEMb{per});  % Confidence Intervals
-            
-            x = 1:length(CI_cBlueLow);
-                    
-            %plot single traces
-            %{
-%            for peak = 1:size(Btraces{terminals(ccell)}{per},1)
-%                plot(Btraces{terminals(ccell)}{per}(peak,:),'r')                 
-%            end 
-%            for peak = 1:size(Ctraces{terminals(ccell)}{per},1)
-%                plot(Ctraces{terminals(ccell)}{per}(peak,:),'b')                 
-%            end 
-%            for peak = 1:size(Vtraces{terminals(ccell)}{per},1)
-%                plot(Vtraces{terminals(ccell)}{per}(peak,:),'Color',[0.5 0 0])                 
-%            end            
-
-%}
-            
-            %get averages
-            AVSNBdataPeaks{terminals(ccell)}{per} = nanmean(allBTraces{terminals(ccell)}{per},1);
-            AVSNCdataPeaks{terminals(ccell)}{per} = nanmean(allCTraces{terminals(ccell)}{per},1);
-            AVSNVdataPeaks{terminals(ccell)}{per} = nanmean(allVTraces{terminals(ccell)}{per},1);
-            %plot the averages
-%             plot(AVSNBdataPeaks{terminals(ccell)}{per},'r','LineWidth',4)            
-           %{
-           AVSNCdataPeaks1{terminals(ccell)}{1} = nanmean(allCTraces{terminals(ccell)}{1},1);
-           AVSNCdataPeaks2{terminals(ccell)}{2} = nanmean(allCTraces{terminals(ccell)}{2},1);
-           AVSNCdataPeaks3{terminals(ccell)}{3} = nanmean(allCTraces{terminals(ccell)}{3},1);
-           
-            plot(AVSNCdataPeaks3{terminals(ccell)}{3},'k','LineWidth',4)  
-            plot(AVSNCdataPeaks1{terminals(ccell)}{1},'b','LineWidth',4)         
-            plot(AVSNCdataPeaks2{terminals(ccell)}{2},'r','LineWidth',4)
-            %}
-            plot([changePt changePt], [-10000000 10000000], 'k:','LineWidth',4)
-%             plot([startF startF], [-10000000 10000000], 'k','LineWidth',2)
-%             plot([endF endF], [-10000000 10000000], 'k','LineWidth',2)
-            patch([x fliplr(x)],[CI_cSpontLow fliplr(CI_cSpontHigh)],[0.5 0.5 0.5],'EdgeColor','none')
-            patch([x fliplr(x)],[CI_cBlueLow fliplr(CI_cBlueHigh)],[0 0 0.5],'EdgeColor','none')  
-            patch([x fliplr(x)],[CI_cRedLow fliplr(CI_cRedHigh)],[0.5 0 0],'EdgeColor','none')
-%             patch([x fliplr(x)],[CI_bLow{per} fliplr(CI_bHigh{per})],[0.5 0 0],'EdgeColor','none')
-          
-%             plot(AVSNVdataPeaks{terminals(ccell)}{per},'Color',[0.5 0 0],'LineWidth',4) %'Color',[0.5 0 0]
-%             label2 = sprintf('Terminal %d calcium',terminals(ccell));
- 
-%             legend('BBB signal',label2,'Calcium peak onset','Location','northwest');
-%             legend('Vessel width','Calcium peak onset','Location','northwest');
-%             legend('BBB signal','Calcium peak onset','Location','northwest');
-            legend('spontaneous','blue light on','red light on','calcium peak onset','Location','northwest','FontName','Times');
-            
-            ax.XTick = FrameVals;
-            ax.XTickLabel = sec_TimeVals;   
-            ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xlabel('time (s)','FontName','Times')
-            ylabel('percent change','FontName','Times')
-            xlim([1 length(AVSNBdataPeaks{terminals(ccell)}{per})])
-            ylim([-25 120])
-%             ylim([-2 3])
-        %     legend('DA calcium','BBB data')
+        %calculate the 95% confidence interval
+        SEMb = (nanstd(allBTraces{BBBroi}{terminals(ccell)}{per}))/(sqrt(size(allBTraces{BBBroi}{terminals(ccell)}{per},1))); % Standard Error            
+        ts_bLow = tinv(0.025,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        ts_bHigh = tinv(0.975,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        CI_bLow = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+        CI_bHigh = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
         
-%             per = 1;    
-            if smoothQ == 0 
-                if per == 1 
-%                     title(sprintf('DA terminal #%d. Blue light on.',terminals(ccell)))
-                    title('DA Terminal GCaMP6s Spike Triggered Averages','FontName','Times')
-                elseif per == 2
-                    title(sprintf('DA terminal #%d. Red light on.',terminals(ccell)))
-                elseif per == 3
-                    title(sprintf('DA terminal #%d. ISI period.',terminals(ccell)))
-                end                 
-            elseif smoothQ == 1                
-                if per == 1 
-                    title(sprintf('DA terminal #%d. Blue light on.',terminals(ccell)))
-                elseif per == 2
-                    title(sprintf('DA terminal #%d. Red light on.',terminals(ccell)))
-                elseif per == 3
-                    title(sprintf('DA terminal #%d. Lights off.',terminals(ccell)))
-                end               
-            end 
-            set(fig,'position', [500 100 900 800])
-            
-            if per == 1 
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_1sSmoothingWithCI.tif',terminals(ccell));
-            elseif per == 2
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_redLight_1sSmoothingWithCI.tif',terminals(ccell));
-            elseif per == 3
-                dir = sprintf('D:/70kD_RhoB/DAT-Chrimson-GCaMP/SF56_20190718/figures/Terminal12/DAterminal%d_lightOff_1sSmoothingWithCI.tif',terminals(ccell));
-            end                                                   
-            alpha(0.3)   % set all patches transparency to 0.3
-%             export_fig(dir) 
-        end
+        SEMc = (nanstd(allCTraces{terminals(ccell)}{per}))/(sqrt(size(allCTraces{terminals(ccell)}{per},1))); % Standard Error            
+        ts_cLow = tinv(0.025,size(allCTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        ts_cHigh = tinv(0.975,size(allCTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        CI_cLow = (nanmean(allCTraces{terminals(ccell)}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+        CI_cHigh = (nanmean(allCTraces{terminals(ccell)}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+        
+        SEMv = (nanstd(allVTraces{VWroi}{terminals(ccell)}{per}))/(sqrt(size(allVTraces{VWroi}{terminals(ccell)}{per},1))); % Standard Error            
+        ts_vLow = tinv(0.025,size(allVTraces{VWroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        ts_vHigh = tinv(0.975,size(allVTraces{VWroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        CI_vLow = (nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+        CI_vHigh = (nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals        
+
+        x = 1:length(CI_cLow);
+
+        %get averages
+        AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per} = nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1);
+        AVSNCdataPeaks{terminals(ccell)}{per} = nanmean(allCTraces{terminals(ccell)}{per},1);
+        AVSNVdataPeaks{VWroi}{terminals(ccell)}{per} = nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1);
+  
+        plot(AVSNCdataPeaks{terminals(ccell)}{per},'b','LineWidth',4)
+        plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('calcium signal percent change','FontName','Times')
+        xLimStart = floor(10*FPSstack);
+        xLimEnd = floor(24*FPSstack); 
+        xlim([1 size(AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per},2)])
+        ylim([-60 100])
+           
+        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+        set(fig,'position', [500 100 900 800])
+        alpha(0.3)
+
+        %add right y axis tick marks for a specific DOD figure. 
+        yyaxis right 
+        if BBBQ == 1
+            plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per},'r','LineWidth',4)
+            patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+            ylabel('BBB permeability percent change','FontName','Times')
+            tlabel = sprintf('Terminal%d_BBBroi%d.',terminals(ccell),BBBroi);
+            title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
+%             title('BBB permeability Spike Triggered Average')
+        end 
+        if VWQ == 1
+            plot(AVSNVdataPeaks{VWroi}{terminals(ccell)}{per},'k','LineWidth',4)
+            patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
+            ylabel('Vessel width percent change','FontName','Times')
+            tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
+%             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
+            title('Vessel Width Spike Triggered Average')
+        end 
+        alpha(0.3)
+        set(gca,'YColor',[0 0 0]);
+        %make the directory and save the images   
+        if saveQ == 1  
+            dir2 = strrep(dir1,'\','/');
+            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+            export_fig(dir3)
+        end        
     end 
     %}    
 end 
@@ -3253,49 +3202,104 @@ dataDirFileName = uigetfile('*.*','GET THE BBB STA DATA');
 dataMat = matfile(dataDirFileName); 
 AVSNBdataPeaks = dataMat.AVSNBdataPeaks; 
 
-%find when the BBB signal peaks (within 5 sec around the calcium peak.
-%this is 2.5 seconds either side of 0 sec. 0 being when the calcium signal
-%peaks)
 framePeriod = input('What is the frame period? ');
 FPS = 1/framePeriod; 
 FPSstack = FPS/3;
 CaPeakFrame = input('In what frame does the Ca signal peak? ');
-maxBBBvals = zeros(1,length(terminals));
-maxBBBvalInds = zeros(1,length(terminals));
-maxBBBvalTimePoints = zeros(1,length(terminals));
-for ccell = 1:length(terminals)
-    %find max value 
-    maxBBBvals(ccell) = max(AVSNBdataPeaks{1}{terminals(ccell)});
-    %find index of each BBB max value 
-    maxBBBvalInds(ccell) = find(AVSNBdataPeaks{1}{terminals(ccell)} == maxBBBvals(ccell));
-    %convert index to time in sec relative to 0 sec = when the calcium peak
-    %occurs 
-    maxBBBvalTimePoints(ccell) = (maxBBBvalInds(ccell)-CaPeakFrame)/FPSstack;
+
+BBBroi = input('What BBB ROI do you care about? ');
+lightQ = input('Input 0 for all light conditions. Input 1 to be more specific. ');
+
+if lightQ == 0 
+    %find when the BBB signal peaks (within 5 sec around the calcium peak.
+    %this is 2.5 seconds either side of 0 sec. 0 being when the calcium signal
+    %peaks)
+    maxBBBvals = zeros(1,length(terminals));
+    maxBBBvalInds = zeros(1,length(terminals));
+    maxBBBvalTimePoints = zeros(1,length(terminals));
+    for ccell = 1:length(terminals)
+        %find max value 
+        maxBBBvals(ccell) = max(AVSNBdataPeaks{BBBroi}{terminals(ccell)});
+        %find index of each BBB max value 
+        maxBBBvalInds(ccell) = find(AVSNBdataPeaks{BBBroi}{terminals(ccell)} == maxBBBvals(ccell));
+        %convert index to time in sec relative to 0 sec = when the calcium peak
+        %occurs 
+        maxBBBvalTimePoints(ccell) = (maxBBBvalInds(ccell)-CaPeakFrame)/FPSstack;
+    end 
+elseif lightQ == 1   
+    %find when the BBB signal peaks (within 5 sec around the calcium peak.
+    %this is 2.5 seconds either side of 0 sec. 0 being when the calcium signal
+    %peaks)
+    maxBBBvals = cell(1,3);
+    maxBBBvalInds = cell(1,3);
+    maxBBBvalTimePoints = cell(1,3);
+    for per = 1:3 
+        for ccell = 1:length(terminals)
+            %find max value 
+            maxBBBvals{per}(ccell) = max(AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per});
+            %find index of each BBB max value 
+            maxBBBvalInds{per}(ccell) = find(AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per} == maxBBBvals{per}(ccell));
+            %convert index to time in sec relative to 0 sec = when the calcium peak
+            %occurs 
+            maxBBBvalTimePoints{per}(ccell) = (maxBBBvalInds{per}(ccell)-CaPeakFrame)/FPSstack;
+        end   
+    end 
 end 
 
-figure;
-scatter(minDistsMicrons,maxBBBvalTimePoints,'k','filled')
-ax = gca;
-ax.FontSize = 25;
-ax.FontName = 'Times';
-xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+if lightQ == 0 
+    figure;
+    scatter(minDistsMicrons,maxBBBvalTimePoints,'k','filled')
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    % xlabel('Distance From Vessel (microns)','FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 
-figure;
-scatter(minDistsMicrons,maxBBBvals,'k','filled')
-ax = gca;
-ax.FontSize = 25;
-ax.FontName = 'Times';
-xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    figure;
+    scatter(minDistsMicrons,maxBBBvals,'k','filled')
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    % xlabel('Distance From Vessel (microns)','FontName','Times')
+    ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 
-figure;
-scatter(maxBBBvals,maxBBBvalTimePoints,'k','filled')
-ax = gca;
-ax.FontSize = 25;
-ax.FontName = 'Times';
-xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
-ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
+    figure;
+    scatter(maxBBBvals,maxBBBvalTimePoints,'k','filled')
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
+elseif lightQ == 1
+    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
+    figure;
+    scatter(minDistsMicrons,maxBBBvalTimePoints{per},'k','filled')
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    % xlabel('Distance From Vessel (microns)','FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+
+    figure;
+    scatter(minDistsMicrons,maxBBBvals{per},'k','filled')
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    % xlabel('Distance From Vessel (microns)','FontName','Times')
+    ylabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+
+    figure;
+    scatter(maxBBBvals{per},maxBBBvalTimePoints{per},'k','filled')
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
+end 
 
 %}
 %% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks (across mice)
@@ -3470,7 +3474,7 @@ ylabel({'Time Lag Between Ca';'and BBB Perm Peaks'},'FontName','Times')
 xlim([0 1.6])
 %}
 %% 3D scatter plot of Ca ROI distance metric, BBB perm-Ca Peak time delay, and BBB perm max peak amp
-
+%{
 % 3D scatter plot. each mouse a different color. 
 figure;
 color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
@@ -3479,6 +3483,7 @@ for mouse = 1:length(minDistsMicrons)
     scatter3(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},maxBBBvals{mouse},'filled','MarkerFaceColor',color(mouse,:))
     hold on;
     %3D ordinary least squares regression 
+    %{
     %put data in same array for convenience 
     data(:,1) = minDistsMicrons{mouse}';
     data(:,2) = maxBBBvalTimePoints{mouse}';
@@ -3492,7 +3497,8 @@ for mouse = 1:length(minDistsMicrons)
     'Marker','.', 'MarkerSize',25, 'Color',color(mouse,:))
     surface(xx, yy, zz, ...
     'FaceColor','interp', 'EdgeColor',color(mouse,:), 'FaceAlpha',0.2)
-    clear data
+    clear data 
+    %}
 end 
 ax = gca;
 ax.FontSize = 25;
@@ -3501,9 +3507,8 @@ ax.FontName = 'Times';
 xlabel('Distance From  Vessel(microns)','FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
-xlim([0 48])
+% xlim([0 48])
 
-%%
 % 3D scatter plot. All mice same color 
 for mouse = 2:mouseNum
     if mouse == 2
@@ -3521,6 +3526,7 @@ rotate3d on
 scatter3(minDistMicronsAllMice,maxBBBvalTimePointsAllMice,maxBBBvalsAllMice,'filled','k')
 hold on;
 %3D ordinary least squares regression 
+%{
 %put data in same array for convenience 
 data(:,1) = minDistMicronsAllMice';
 data(:,2) = maxBBBvalTimePointsAllMice';
@@ -3534,6 +3540,7 @@ line(data(:,1), data(:,2), data(:,3), 'LineStyle','none', ...
 'Marker','.', 'MarkerSize',25, 'Color','k')
 surface(xx, yy, zz, ...
 'FaceColor','interp', 'EdgeColor','k', 'FaceAlpha',0.2)
+%}
 scatter3(minDistMicronsAllMice(3),maxBBBvalTimePointsAllMice(3),maxBBBvalsAllMice(3),'filled','r')
 ax = gca;
 ax.FontSize = 20;
@@ -3542,5 +3549,195 @@ ax.FontName = 'Times';
 xlabel('Distance From  Vessel(microns)','FontName','Times')
 ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
-xlim([0 48])
+% xlim([0 48])
 clear data
+%}
+%% plot data 2D distance x time lag. make the size of the dot related to BBB peak amplitude 
+%{
+if lightQ == 0 
+    % 2D scatter plot. each mouse a different color. 
+    figure;
+    color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+    for mouse = 1:length(minDistsMicrons)
+        for point = 1:length(minDistsMicrons{mouse})
+            scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}(point),maxBBBvals{mouse}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
+            hold on;
+        end  
+    end 
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    % xlabel('Distance From  Vessel(microns)','FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+    zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+
+    % 2D scatter plot. All mice same color 
+    figure;
+    for mouse = 2:mouseNum
+        if mouse == 2
+           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+           miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+           miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+        elseif mouse > 2
+           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+           maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
+           maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
+        end 
+    end 
+    for point = 1:length(minDistMicronsAllMice)
+        scatter(minDistMicronsAllMice(point),maxBBBvalTimePointsAllMice(point),maxBBBvalsAllMice(point)*100,'filled','k') 
+        hold on;
+    end  
+    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
+    fit = polyfit(minDistMicronsAllMice,maxBBBvalTimePointsAllMice,1);
+    % Make 50 fitted samples from 0 to max min distance
+    xFit = linspace(0, 200, 200);
+    % Get the estimated values with polyval()
+    yFit = polyval(fit, xFit);
+    % Plot the fit
+    plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Enters Brain (microns)'},'FontName','Times')
+    % xlabel('Distance From  Vessel(microns)','FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+    zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    scatter(minDistsMicrons{1}(3),maxBBBvalTimePoints{1}(3),maxBBBvals{1}(3)*100,'filled','r') 
+    % scatter(minDistsMicrons{3}(10),maxBBBvalTimePoints{3}(10),maxBBBvals{3}(10)*100,'filled','b') 
+    xlim([0 120])
+elseif lightQ == 1 
+    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
+    % 2D scatter plot. each mouse a different color. 
+    figure;
+    color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+    for mouse = 1:length(minDistsMicrons)
+        for point = 1:length(minDistsMicrons{mouse})
+            scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}{per}(point),maxBBBvals{mouse}{per}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
+            hold on;
+        end  
+    end 
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+%     xlabel('Distance From  Vessel (microns)','FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+    zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+
+    % 2D scatter plot. All mice same color 
+    figure;
+    for mouse = 2:mouseNum
+        if mouse == 2
+           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+           miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
+           miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
+        elseif mouse > 2
+           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+           maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
+           maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
+        end 
+    end 
+    for point = 1:length(minDistMicronsAllMice)
+        scatter(minDistMicronsAllMice(point),maxBBBvalTimePointsAllMice{per}(point),maxBBBvalsAllMice{per}(point)*100,'filled','k') 
+        hold on;
+    end  
+    % Do the regression with polyfit.  Fit a straight line through the noisy y values.
+    fit = polyfit(minDistMicronsAllMice,maxBBBvalTimePointsAllMice{per},1);
+    % Make 50 fitted samples from 0 to max min distance
+    xFit = linspace(0, 200, 200);
+    % Get the estimated values with polyval()
+    yFit = polyval(fit, xFit);
+    % Plot the fit
+%     plot(xFit, yFit, 'k', 'MarkerSize', 15, 'LineWidth', 2);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+%     xlabel('Distance From  Vessel (microns)','FontName','Times')
+    ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+    zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    scatter(minDistsMicrons{1}(3),maxBBBvalTimePoints{1}{per}(3),maxBBBvals{1}{per}(3)*100,'filled','r') 
+    % scatter(minDistsMicrons{3}(10),maxBBBvalTimePoints{3}(10),maxBBBvals{3}(10)*100,'filled','b') 
+%     xlim([0 120])
+end 
+%}
+%% make nice histograms of distance and BBB data 
+%{
+if lightQ == 0 
+    figure;
+    h = histogram(minDistMicronsAllMice,20);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+%     xlabel('Distance From  Vessel (microns)','FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    h.FaceColor = [0 0.3 0.3];
+    
+    figure;
+    h = histogram(maxBBBvalTimePointsAllMice,20);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    h.FaceColor = [0 0.3 0.3];
+    
+    figure;
+    h = histogram(maxBBBvalsAllMice,20);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    h.FaceColor = [0 0.3 0.3];
+elseif lightQ == 1 
+    maxBBBvalTimePointsAllMice = cell(1,3);
+    maxBBBvalsAllMice = cell(1,3);
+    for per = 1:3 
+        for mouse = 2:mouseNum
+            if mouse == 2
+               miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+               miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
+               miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
+            elseif mouse > 2
+               minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+               maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
+               maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
+            end 
+        end 
+    end 
+    
+    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
+    
+    figure;
+    h = histogram(minDistMicronsAllMice,20);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+%     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    xlabel('Distance From  Vessel (microns)','FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    h.FaceColor = [0 0.3 0.3];
+    
+    figure;
+    h = histogram(maxBBBvalTimePointsAllMice{per},20);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    h.FaceColor = [0 0.3 0.3];
+    
+    figure;
+    h = histogram(maxBBBvalsAllMice{per},20);
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    h.FaceColor = [0 0.3 0.3];
+end 
+%}
