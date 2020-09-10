@@ -135,9 +135,13 @@ CcellData = cell(1,length(meanPixIntArray));
        CcellData{ROIinds(ccell)} = nanmean(FsubSBLs{ROIinds(ccell)},1);
  end 
 
+%% plot calcium traces per Ca ROI to get an idea for what Ca ROIs hit a noise floor 
 
-
-
+ for ccell = 1:maxCells
+     figure;
+     plot(CcellData{ROIinds(ccell)})
+     title(sprintf('Ca ROI %d',ROIinds(ccell)))
+ end 
 
 
  
