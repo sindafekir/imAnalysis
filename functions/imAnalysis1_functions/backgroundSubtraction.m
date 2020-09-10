@@ -30,7 +30,7 @@ end
 BG_ROIboundData = cell(1,length(reg__Stacks));
 BG_ROIstacks = cell(1,length(reg__Stacks));
 for stack = 1:length(reg__Stacks)
-    data = reg__Stacks{stack};
+    data = reg__Stacks2{stack};
     if stack == 1
         [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,data);
         BG_ROIboundData{stack}{1} = xmins;

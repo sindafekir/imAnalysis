@@ -7,7 +7,7 @@ distQ = input('Input 1 if you want to determine distance of Ca ROIs from vessel.
 if STAstackQ == 1 || distQ == 1 
     BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
     if BGsubQ == 1
-        BGsubTypeQ = input('Input 0 to select one background region and do a simple background subtraction of the mean pixel intensity of that region. Input 1 if you want to do row by row background subtraction. ');
+        BGsubTypeQ = input('Input 0 to do a simple background subtraction. Input 1 if you want to do row by row background subtraction. ');
     end 
 end 
 if ETAQ == 1 || STAstackQ == 1 
@@ -542,6 +542,7 @@ elseif smoothQ == 0
 end 
 
 %% set paramaters for plotting 
+%{
 AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
 if AVQ == 1 
     if CAQ == 1 
@@ -1251,56 +1252,56 @@ end
 
 %}
 %% compare terminal calcium activity - create correlograms
-%{
-AVdata = cell(1,length(Cdata));
-for term = 1:length(Cdata)
-    for tType = 1:length(Cdata{1})      
-        AVdata{term}{tType} = mean(sCdata{term}{tType},1);
+
+AVdata = cell(1,length(nsCeta));
+for term = 1:length(terminals)
+    for tType = 1:length(nsCeta{terminals(1)})      
+        AVdata{term}{tType} = mean(nsCeta{terminals(term)}{tType},1);
     end 
 end 
 
 dataQ = input('Input 0 if you want to compare the entire TS. Input 1 if you want to compare stim period data. Input 2 if you want to compare baseline period data.');
 if dataQ == 0 
-    corData = cell(1,length(Cdata{1}));
-    corAVdata = cell(1,length(Cdata{1}));
-    for tType = 1:length(Cdata{1})    
-       for term1 = 1:length(Cdata)
-           for term2 = 1:length(Cdata)
-               for trial = 1:size(Cdata{1}{tType},1)
-                   corData{tType}{trial}(term1,term2) = corr2(sCdata{term1}{tType}(trial,:),sCdata{term2}{tType}(trial,:));                  
+    corData = cell(1,length(nsCeta{terminals(1)}));
+    corAVdata = cell(1,length(nsCeta{terminals(1)}));
+    for tType = 1:length(nsCeta{terminals(1)})  
+       for term1 = 1:length(terminals)
+           for term2 = 1:length(terminals)
+               for trial = 1:size(nsCeta{terminals(term1)}{tType},1)
+                   corData{tType}{trial}(term1,term2) = corr2(nsCeta{terminals(term1)}{tType}(trial,:),nsCeta{terminals(term2)}{tType}(trial,:));                  
                end 
                corAVdata{tType}(term1,term2) = corr2(AVdata{term1}{tType},AVdata{term2}{tType});
            end 
        end 
     end 
 elseif dataQ == 1 
-    corData = cell(1,length(Cdata{1}));
-    corAVdata = cell(1,length(Cdata{1}));
-    for tType = 1:length(Cdata{1})    
-       for term1 = 1:length(Cdata)
-           for term2 = 1:length(Cdata)
+    corData = cell(1,length(nsCeta{terminals(1)}));
+    corAVdata = cell(1,length(nsCeta{terminals(1)}));
+    for tType = 1:length(nsCeta{terminals(1)}) 
+       for term1 = 1:length(terminals)
+           for term2 = 1:length(terminals)
                stimOnFrame = floor(FPSstack*20);
                if tType == 1 || tType == 3 
                    stimOffFrame = stimOnFrame + floor(FPSstack*20);
                elseif tType == 2 || tType == 4
                    stimOffFrame = stimOnFrame + floor(FPSstack*2);
-               end 
-               for trial = 1:size(Cdata{1}{tType},1)
-                   corData{tType}{trial}(term1,term2) = corr2(sCdata{term1}{tType}(trial,stimOnFrame:stimOffFrame),sCdata{term2}{tType}(trial,stimOnFrame:stimOffFrame));
+               end                
+               for trial = 1:size(nsCeta{terminals(term1)}{tType},1)                  
+                   corData{tType}{trial}(term1,term2) = corr2(nsCeta{terminals(term1)}{tType}(trial,stimOnFrame:stimOffFrame),nsCeta{terminals(term2)}{tType}(trial,stimOnFrame:stimOffFrame));
                end 
                corAVdata{tType}(term1,term2) = corr2(AVdata{term1}{tType}(stimOnFrame:stimOffFrame),AVdata{term2}{tType}(stimOnFrame:stimOffFrame));
            end 
        end 
     end 
 elseif dataQ == 2
-    corData = cell(1,length(Cdata{1}));
-    corAVdata = cell(1,length(Cdata{1}));
-    for tType = 1:length(Cdata{1})    
-       for term1 = 1:length(Cdata)
-           for term2 = 1:length(Cdata)
+    corData = cell(1,length(nsCeta{terminals(1)}));
+    corAVdata =cell(1,length(nsCeta{terminals(1)}));
+    for tType = 1:length(nsCeta{terminals(1)}) 
+       for term1 = 1:length(terminals)
+           for term2 = 1:length(terminals)
                baselineEndFrame = floor(FPSstack*20);
-               for trial = 1:size(Cdata{1}{tType},1)
-                   corData{tType}{trial}(term1,term2) = corr2(sCdata{term1}{tType}(trial,1:baselineEndFrame),sCdata{term2}{tType}(trial,1:baselineEndFrame));
+               for trial = 1:size(nsCeta{terminals(term1)}{tType},1)  
+                   corData{tType}{trial}(term1,term2) = corr2(nsCeta{terminals(term1)}{tType}(trial,1:baselineEndFrame),nsCeta{terminals(term2)}{tType}(trial,1:baselineEndFrame));
                end 
                corAVdata{tType}(term1,term2) = corr2(AVdata{term1}{tType}(1:baselineEndFrame),AVdata{term2}{tType}(1:baselineEndFrame));
            end 
@@ -1309,7 +1310,7 @@ elseif dataQ == 2
 end 
 
 % plot cross correlelograms 
-for tType = 1:length(Cdata{1})
+for tType = 1:length(nsCeta{terminals(1)}) 
     % plot averaged trial data
     figure;
     imagesc(corAVdata{tType})
@@ -1374,7 +1375,7 @@ for tType = 1:length(Cdata{1})
            sgtitle(mtitle,'FontSize',20);
        end 
     end 
-   for trial = 1:size(Cdata{1}{tType},1)
+   for trial = 1:size(nsCeta{terminals(term1)}{tType},1)  
        subplot(2,4,trial)
        imagesc(corData{tType}{trial})
        colorbar 
@@ -2716,7 +2717,7 @@ clearvars NgreenStackAv NredStackAv
 spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
 if spatSmoothQ == 1 
     spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
-    spatFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
+    spatFiltChanQ= input('Input 0 to spatially smooth both channels. Input 1 otherwise. ');
     if spatFiltChanQ == 0 % if you want to spatially smooth both channels 
         redIn = SNredStackAv; 
         greenIn = SNgreenStackAv;
@@ -2811,49 +2812,53 @@ if blackOutCaROIQ == 1
 end 
 clearvars SNgreenStackAv SNredStackAv
 
-% create outline of vessel to overlay the %change BBB perm stack 
-segmentVessel = 1;
-while segmentVessel == 1 
-    %select the correct channel for vessel segmentation  
-    vesChan = rightChan;
-    if rightChan == 0     
-        vesChan = avGreenStack;
-    elseif rightChan == 1
-        vesChan = avRedStack;
-    end     
-    % apply Ca ROI mask to the appropriate channel to black out these
-    % pixels 
-    for ccell = 1:length(terminals)
-        vesChan{terminals(ccell)}(ThreeDCaMask) = 0;
-    end 
-    %segment the vessel (small sample of the data) 
-    CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
-    imageSegmenter(mean(vesChan{CaROI},3))
-    continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
-    while continu == 1 
-        BWstacks = cell(1,length(vesChan));
-        BW_perim = cell(1,length(vesChan));
-        segOverlays = cell(1,length(vesChan));    
+AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
+if AVQ == 0 
+    % create outline of vessel to overlay the %change BBB perm stack 
+    segmentVessel = 1;
+    while segmentVessel == 1 
+        %select the correct channel for vessel segmentation  
+        vesChan = rightChan;
+        if rightChan == 0     
+            vesChan = avGreenStack;
+        elseif rightChan == 1
+            vesChan = avRedStack;
+        end     
+        % apply Ca ROI mask to the appropriate channel to black out these
+        % pixels 
         for ccell = 1:length(terminals)
-            for frame = 1:size(vesChan{terminals(ccell)},3)
-                [BW,~] = segmentImageVesselFOV(vesChan{terminals(ccell)}(:,:,frame));
-                BWstacks{terminals(ccell)}(:,:,frame) = BW; 
-                %get the segmentation boundaries 
-                BW_perim{terminals(ccell)}(:,:,frame) = bwperim(BW);
-                %overlay segmentation boundaries on data
-                segOverlays{terminals(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals(ccell)}(:,:,frame)), BW_perim{terminals(ccell)}(:,:,frame), [.3 1 .3]);   
-            end   
+            vesChan{terminals(ccell)}(ThreeDCaMask) = 0;
         end 
-        continu = 0;
-    end 
-    %play segmentation boundaries over images 
-    implay(segOverlays{CaROI})
-    %ask about segmentation quality 
-    segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-    if segmentVessel == 1
-        clear BWthreshold BWopenRadius BW se boundaries
-    end 
-end
+        %segment the vessel (small sample of the data) 
+        CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
+        imageSegmenter(mean(vesChan{CaROI},3))
+        continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        while continu == 1 
+            BWstacks = cell(1,length(vesChan));
+            BW_perim = cell(1,length(vesChan));
+            segOverlays = cell(1,length(vesChan));    
+            for ccell = 1:length(terminals)
+                for frame = 1:size(vesChan{terminals(ccell)},3)
+    %                     [BW,~] = segmentImageVesselFOV_SF58(vesChan{terminals(ccell)}(:,:,frame));
+                    [BW,~] = segmentImageVesselFOV(vesChan{terminals(ccell)}(:,:,frame));
+                    BWstacks{terminals(ccell)}(:,:,frame) = BW; 
+                    %get the segmentation boundaries 
+                    BW_perim{terminals(ccell)}(:,:,frame) = bwperim(BW);
+                    %overlay segmentation boundaries on data
+                    segOverlays{terminals(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals(ccell)}(:,:,frame)), BW_perim{terminals(ccell)}(:,:,frame), [.3 1 .3]);   
+                end   
+            end 
+            continu = 0;
+        end 
+        %play segmentation boundaries over images 
+        implay(segOverlays{CaROI})
+        %ask about segmentation quality 
+        segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+        if segmentVessel == 1
+            clear BWthreshold BWopenRadius BW se boundaries
+        end 
+    end
+end 
 
 cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
 if cMapQ == 0
@@ -2894,78 +2899,161 @@ end
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
 if CaFrameQ == 1 
     CaEventFrame = input('What frame did the Ca events happen in? ');
-    %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
-    %the vessel is (because they're distracting), and save these images to a
-    %folder of your choosing (there will be subFolders per calcium ROI)
-    for ccell = 1:length(terminals)
-        %black out pixels that belong to vessels         
-        RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
-        %find the upper and lower bounds of your data (per calcium ROI) 
-        maxValue = max(max(max(max(RightChan{terminals(ccell)}))));
-        bounds = [maxValue,-(maxValue)];
-        %determine the absolute difference between the max and min % change
-        boundsAbsDiff = abs(diff(bounds,1,2));
-        boundsAbs = abs(bounds);
-        minBound = -(ceil(max(boundsAbs))); 
-        maxBound = ceil(max(boundsAbs)); 
-        %create a new folder per calcium ROI 
-        newFolder = sprintf('CaROI_%d_BBBsignal',terminals(ccell));
-        mkdir(dir2,newFolder)
-        %overlay segmentation boundaries on the % change image stack and save
-        %images
-        for frame = 1:size(vesChan{terminals(ccell)},3)   
-            % get the x-y coordinates of the Ca ROI         
-            % find the pixels that are over 20 in value 
-            clearvars CAy CAx
-            [CAy, CAx] = find(otherChan{terminals(ccell)}(:,:,frame) >= 20);  % x and y are column vectors.
-            figure('Visible','off');     
-            % create the % change image with the right white and black point
-            % boundaries and colormap 
-    %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-1,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-1:0.5:1)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-2:1:2)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-8,8]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-8:2:8)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-3,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-3:1.5:3)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:3)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:1)%this makes the max point 1% and the min point -1% 
-%             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.75]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.75)%this makes the max point 1% and the min point -1% 
-            imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
+    if AVQ == 0  
+        %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
+        %the vessel is (because they're distracting), and save these images to a
+        %folder of your choosing (there will be subFolders per calcium ROI)
+        for ccell = 1:length(terminals)
+            %black out pixels that belong to vessels         
+            RightChan{terminals(ccell)}(BWstacks{terminals(ccell)}) = 0;
+            %find the upper and lower bounds of your data (per calcium ROI) 
+            maxValue = max(max(max(max(RightChan{terminals(ccell)}))));
+            bounds = [maxValue,-(maxValue)];
+            %determine the absolute difference between the max and min % change
+            boundsAbsDiff = abs(diff(bounds,1,2));
+            boundsAbs = abs(bounds);
+            minBound = -(ceil(max(boundsAbs))); 
+            maxBound = ceil(max(boundsAbs)); 
+            %create a new folder per calcium ROI 
+            newFolder = sprintf('CaROI_%d_BBBsignal',terminals(ccell));
+            mkdir(dir2,newFolder)
+            %overlay segmentation boundaries on the % change image stack and save
+            %images
+            for frame = 1:size(vesChan{terminals(ccell)},3)   
+                % get the x-y coordinates of the Ca ROI         
+                % find the pixels that are over 20 in value 
+                clearvars CAy CAx
+                [CAy, CAx] = find(otherChan{terminals(ccell)}(:,:,frame) >= 20);  % x and y are column vectors.
+                figure('Visible','off');     
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                %{
+        %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-1,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-1:0.5:1)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-2:1:2)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-8,8]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-8:2:8)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-3,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-3:1.5:3)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:3)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:1)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.75]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.75)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
+                %}
+                imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.25]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.05:0.25)%this makes the max point 1% and the min point -1% 
 
-            % get the x-y coordinates of the vessel outline
-            [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
-            % plot the vessel outline over the % change image 
-            hold on;
-            scatter(x,y,'white','.');
-            % plot the GCaMP signal marker in the right frame 
-            if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                % get the x-y coordinates of the vessel outline
+                [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
+                % plot the vessel outline over the % change image 
                 hold on;
-                scatter(CAx,CAy,100,'white','filled');
-                %get border coordinates 
-                colLen = size(RightChan{terminals(ccell)},2);
-                rowLen = size(RightChan{terminals(ccell)},1);
-                edg1_x = repelem(1,rowLen);
-                edg1_y = 1:rowLen;
-                edg2_x = repelem(colLen,rowLen);
-                edg2_y = 1:rowLen;
-                edg3_x = 1:colLen;
-                edg3_y = repelem(1,colLen);
-                edg4_x = 1:colLen;
-                edg4_y = repelem(rowLen,colLen);
-                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
-                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                scatter(x,y,'white','.');
+                % plot the GCaMP signal marker in the right frame 
+                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                    hold on;
+                    scatter(CAx,CAy,100,'white','filled');
+                    %get border coordinates 
+                    colLen = size(RightChan{terminals(ccell)},2);
+                    rowLen = size(RightChan{terminals(ccell)},1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    scatter(edg_x,edg_y,200,'white','filled','square');               
+                end 
+                ax = gca;
+                ax.Visible = 'off';
+                ax.FontSize = 20;
+                %save current figure to file 
+                filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals(ccell),terminals(ccell),frame);
+                saveas(gca,[filename '.png'])
+            end     
+        end 
+    elseif AVQ == 1
+        termsToAv = input('Input what terminal STA videos you want to average. '); 
+        STAterms = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3),length(termsToAv));
+        STAtermsVesChans = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3),length(termsToAv));        
+        for termToAv = 1:length(termsToAv)
+            %create 4D array containing all relevant terminals 
+            STAterms(:,:,:,termToAv) = RightChan{termsToAv(termToAv)};
+            STAtermsVesChans(:,:,:,termToAv) = vesChan{termsToAv(termToAv)};
+        end 
+        % average terminals of your choosing 
+        STAav = mean(STAterms,4);
+        STAavVesVid = mean(STAtermsVesChans,4);
+        
+        clear BW BWstacks BW_perim segOverlays
+        BWstacks = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3));
+        BW_perim = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3));
+        for frame = 1:size(STAavVesVid,3)
+            [BW,~] = segmentImageVesselFOV_SF58(STAavVesVid(:,:,frame));
+            BWstacks(:,:,frame) = BW; 
+            %get the segmentation boundaries 
+            BW_perim(:,:,frame) = bwperim(BW);
+            %overlay segmentation boundaries on data
+            segOverlays(:,:,:,frame) = imoverlay(mat2gray(STAavVesVid(:,:,frame)), BW_perim(:,:,frame), [.3 1 .3]);   
+        end 
+        %play segmentation boundaries over images 
+        implay(segOverlays)
+        
+        segQ = input('Input 1 if the segmentation was good. ');
+        if segQ == 1
+            %black out pixels that belong to vessels  
+            BWstacks = ~BWstacks;
+            STAav(~BWstacks) = 0;
+            for frame = 1:size(STAavVesVid,3)
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                figure('Visible','off');  
+                imagesc(STAav(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
+                % get the x-y coordinates of the vessel outline
+                [y, x] = find(BW_perim(:,:,frame));  % x and y are column vectors.     
+                % plot the vessel outline over the % change image 
                 hold on;
-                scatter(edg_x,edg_y,200,'white','filled','square');               
+                scatter(x,y,'white','.');
+                % plot the GCaMP signal marker in the right frame 
+                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)     
+                    % get the x-y coordinates of the Ca ROIs         
+                    % find the pixels that are over 20 in value 
+                    clearvars CAy CAx
+                    for termToAv = 1:length(termsToAv)
+                        [CAy, CAx] = find(otherChan{termsToAv(termToAv)}(:,:,frame) >= 20);  % x and y are column vectors.
+                        hold on;
+                        scatter(CAx,CAy,100,'white','filled');
+                    end 
+                    %get border coordinates 
+                    colLen = size(STAav,2);
+                    rowLen = size(STAav,1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    scatter(edg_x,edg_y,200,'white','filled','square');               
+                end 
+                ax = gca;
+                ax.Visible = 'off';
+                ax.FontSize = 20;
+                %save current figure to file 
+                termsString1 = string(termsToAv);
+                termsString = join(termsString1,'_');
+                filename = sprintf('%s/CaROIs_%s_frame%d',dir2,termsString,frame);
+                saveas(gca,[filename '.png'])
             end 
-            ax = gca;
-            ax.Visible = 'off';
-            ax.FontSize = 20;
-            %save current figure to file 
-            filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals(ccell),terminals(ccell),frame);
-            saveas(gca,[filename '.png'])
-        end     
+        end 
     end 
 end 
 %}
@@ -3558,19 +3646,23 @@ if lightQ == 0
     % 2D scatter plot. each mouse a different color. 
     figure;
     color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+%     color = [1 0 0; 0.3 1 0.3; 0.2 0.6 .7];
     for mouse = 1:length(minDistsMicrons)
         for point = 1:length(minDistsMicrons{mouse})
             scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}(point),maxBBBvals{mouse}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
             hold on;
+            text(minDistsMicrons{mouse}(point)+0.5,maxBBBvalTimePoints{mouse}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
         end  
+        
     end 
     ax = gca;
     ax.FontSize = 25;
     ax.FontName = 'Times';
     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-    % xlabel('Distance From  Vessel(microns)','FontName','Times')
+%     xlabel('Distance From  Vessel (microns)','FontName','Times')
     ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
     zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    
 
     % 2D scatter plot. All mice same color 
     figure;
@@ -3600,14 +3692,15 @@ if lightQ == 0
     ax = gca;
     ax.FontSize = 25;
     ax.FontName = 'Times';
-    xlabel({'Distance From Where Vessel';'Enters Brain (microns)'},'FontName','Times')
-    % xlabel('Distance From  Vessel(microns)','FontName','Times')
+%     xlabel({'Distance From Where Vessel';'Enters Brain (microns)'},'FontName','Times')
+    xlabel('Distance From  Vessel (microns)','FontName','Times')
     ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
     zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     scatter(minDistsMicrons{1}(3),maxBBBvalTimePoints{1}(3),maxBBBvals{1}(3)*100,'filled','r') 
     % scatter(minDistsMicrons{3}(10),maxBBBvalTimePoints{3}(10),maxBBBvals{3}(10)*100,'filled','b') 
     xlim([0 120])
 elseif lightQ == 1 
+    
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
     % 2D scatter plot. each mouse a different color. 
     figure;
@@ -3616,13 +3709,14 @@ elseif lightQ == 1
         for point = 1:length(minDistsMicrons{mouse})
             scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}{per}(point),maxBBBvals{mouse}{per}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
             hold on;
+            text(minDistsMicrons{mouse}(point)+0.5,maxBBBvalTimePoints{mouse}{per}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
         end  
     end 
     ax = gca;
     ax.FontSize = 25;
     ax.FontName = 'Times';
-    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-%     xlabel('Distance From  Vessel (microns)','FontName','Times')
+%     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    xlabel('Distance From  Vessel (microns)','FontName','Times')
     ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
     zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 
@@ -3671,8 +3765,8 @@ if lightQ == 0
     ax = gca;
     ax.FontSize = 25;
     ax.FontName = 'Times';
-    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-%     xlabel('Distance From  Vessel (microns)','FontName','Times')
+%     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    xlabel('Distance From  Vessel (microns)','FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
     h.FaceColor = [0 0.3 0.3];
     

@@ -33,9 +33,9 @@ if vidNumQ == 0
 % if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 
-    BGROIDir = uigetdir('*.*','WHERE IS THE .MAT FILE FOR THE PREVIOUS VIDEO?');    
+    BGROIDir = uigetdir('*.*','WHERE IS THE ?');    
     cd(BGROIDir);   
-    BGROIMatFileName = uigetfile('*.*','GET PARAMATERS FROM PREVIOUS VIDEO .MAT FILE');    
+    BGROIMatFileName = uigetfile('*.*','GET THE ROI COORDINATES');    
     BGROIeMat = matfile(BGROIMatFileName);    
     BG_ROIboundData = BGROIeMat.BG_ROIboundData;
     FPSstack = BGROIeMat.FPSstack;
@@ -62,15 +62,8 @@ if vidNumQ == 0
         end 
     end 
 elseif vidNumQ == 1   
-    if BGsubQ == 0 
-        input_Stacks = data;
-    elseif BGsubQ == 1
-        if BGsubTypeQ == 0 
-            [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
-        elseif BGsubTypeQ == 1
-            [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
-        end 
-    end  
+    
+    [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
 end 
 
 %% get rid of frames/trials where registration gets wonky 
