@@ -16,19 +16,19 @@ regStacks = regMat.regStacks;
 if vidNumQ == 0
     framePeriod = input("What is the framePeriod? ");
     FPS = 1/framePeriod; 
-    FPSstack = FPS/numZplanes;
     volQ = input('Input 1 if this is volume imaging data. Input 0 for 2D data. ');
     if volQ == 1 
         numZplanes = input('How many Z planes are there? ');
     elseif volQ == 0
         numZplanes = 1;
     end 
+    FPSstack = FPS/numZplanes;
 % if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 
-    BGROIDir = uigetdir('*.*','WHERE ARE THE ROI COORDINATES?');    
+    BGROIDir = uigetdir('*.*','WHERE IS THE .MAT FILE FOR THE PREVIOUS VIDEO?');    
     cd(BGROIDir);   
-    BGROIMatFileName = uigetfile('*.*','GET THE ROI COORDINATES');    
+    BGROIMatFileName = uigetfile('*.*','GET PARAMATERS FROM PREVIOUS VIDEO .MAT FILE');    
     BGROIeMat = matfile(BGROIMatFileName);    
     BG_ROIboundData = BGROIeMat.BG_ROIboundData;
     FPSstack = BGROIeMat.FPSstack;
@@ -37,9 +37,8 @@ elseif vidNumQ == 1
     numROIs = BGROIeMat.numROIs;
     BBBROIsToSegment = BGROIeMat.BBBROIsToSegment;
     volQ = BGROIeMat.volQ;
-%     if chColor == 0 % green channel 
-%         BWstacks = BGROIeMat.BWstacks;
-%     end 
+    BGsubQ = BGROIeMat.BGsubQ;
+    BGsubTypeQ = BGROIeMat.BGsubTypeQ;
 end  
 
 if volQ == 1 
@@ -57,24 +56,29 @@ elseif volQ == 0
 end 
 
 %% do background subtraction 
-BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
-if BGsubQ == 0
-    input_Stacks = data;
-elseif BGsubQ == 1 
-    BGsubTypeQ = input('Input 0 to select one background region and do a simple background subtraction of the mean pixel intensity of that region. Input 1 if you want to do row by row background subtraction. ');
-    if BGsubTypeQ == 0 
-        if vidNumQ == 0 
+%select rows that do not have vessels or GCaMP in them 
+if vidNumQ == 0 
+    BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
+    if BGsubQ == 0 
+        input_Stacks = data;
+    elseif BGsubQ == 1
+        BGsubTypeQ = input('Input 0 to do a simple background subtraction. Input 1 if you want to do row by row background subtraction. ');
+        if BGsubTypeQ == 0 
             [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
-        elseif vidNumQ == 1   
-            [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
-        end 
-    elseif BGsubTypeQ == 1
-        if vidNumQ == 0 
+        elseif BGsubTypeQ == 1
             [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
-        elseif vidNumQ == 1   
-            [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
         end 
     end 
+elseif vidNumQ == 1   
+    if BGsubQ == 0 
+        input_Stacks = data;
+    elseif BGsubQ == 1
+        if BGsubTypeQ == 0 
+            [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
+        elseif BGsubTypeQ == 1
+            [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
+        end 
+    end  
 end 
 
 %% average registered imaging data across planes in Z 
