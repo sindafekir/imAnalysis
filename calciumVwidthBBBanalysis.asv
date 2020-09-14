@@ -541,7 +541,7 @@ elseif smoothQ == 0
     end 
 end 
 
-% set paramaters for plotting 
+%% set paramaters for plotting 
 %{
 AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
 if AVQ == 1 
@@ -981,7 +981,6 @@ elseif AVQ == 1
         end 
 end 
 %}
-%}
 %% plot event triggered averages per terminal (trials staggered) 
 %NEEDS TO BE EDITED FOR THE NEW VARIABLE NAMES/ORGANIZATION 
 %{
@@ -1253,7 +1252,7 @@ end
 
 %}
 %% compare terminal calcium activity - create correlograms
-%{
+
 AVdata = cell(1,length(nsCeta));
 for term = 1:length(terminals)
     for tType = 1:length(nsCeta{terminals(1)})      
@@ -1377,7 +1376,7 @@ for tType = 1:length(nsCeta{terminals(1)})
        end 
     end 
    for trial = 1:size(nsCeta{terminals(term1)}{tType},1)  
-       subplot(2,8,trial)
+       subplot(2,4,trial)
        imagesc(corData{tType}{trial})
        colorbar 
        ax=gca;
@@ -2599,7 +2598,7 @@ end
 % end 
 %}
 %% sort red and green channel stacks based on ca peak location 
-%{
+
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 if tTypeQ == 0 
     sortedGreenStacks = cell(1,length(vidList));
@@ -2647,7 +2646,7 @@ elseif tTypeQ == 1
 end 
 %}
 %% create red and green channel stack averages around calcium peak location (STA stacks) 
-%{
+
 % average calcium peak aligned traces across videos 
 if tTypeQ == 0 
     greenStackArray2 = cell(1,length(vidList));
@@ -2958,6 +2957,7 @@ if CaFrameQ == 1
                 figure('Visible','off');     
                 % create the % change image with the right white and black point
                 % boundaries and colormap 
+                
         %         imagesc(RightChan{terminals(ccell)}(:,:,frame),[minBound,maxBound]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-5,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-5:2.5:5)%this makes the max point 5% and the min point -5%     
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2.5,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',[-2.5,-1.5,-0.5,0,0.5,1.5,2.5])%this makes the max point 2.5% and the min point -2.5%   
@@ -2965,12 +2965,12 @@ if CaFrameQ == 1
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-2,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-2:1:2)%this makes the max point 1% and the min point -1% 
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-8,8]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-8:2:8)%this makes the max point 1% and the min point -1% 
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-3,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-3:1.5:3)%this makes the max point 1% and the min point -1% 
-%                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:3)%this makes the max point 1% and the min point -1% 
-%                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:2)%this makes the max point 1% and the min point -1% 
-                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
-%                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:1)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:3)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
+    %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:1)%this makes the max point 1% and the min point -1% 
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.75]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.75)%this makes the max point 1% and the min point -1% 
-%                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
+                imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
+  
 %                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.25]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.05:0.25)%this makes the max point 1% and the min point -1% 
 
                 % get the x-y coordinates of the vessel outline
@@ -3312,7 +3312,7 @@ if distQ == 1
 end 
 %}
 %% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks 
-%{
+
 %get the BBB data 
 dataDir = uigetdir('*.*','WHERE IS THE BBB STA DATA?');
 cd(dataDir);

@@ -20,8 +20,9 @@ end
 % Threshold image - manual threshold
 % BW = X > 0.25; %for new and old BG subtraction SF-56
 %   BW = X > 0.42; %for no BG subtraction SF-56
-BW = X > 0.17; %for new and old BG subtraction SF-57
+% BW = X > 0.17; %for new and old BG subtraction SF-57
 % BW = X > 0.16; %for new and old BG subtraction SF-58
+BW = X > 0.35; %for new and old BG subtraction SF-63
   
 % Open mask with disk
 radius = 1;
