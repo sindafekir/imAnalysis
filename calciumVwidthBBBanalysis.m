@@ -1783,92 +1783,92 @@ end
 %}
 %% find calcium peaks per terminal across entire experiment 
 %{
-if tTypeQ == 0 
-    % find peaks and then plot where they are in the entire TS 
-    stdTrace = cell(1,length(vidList));
-    sigPeaks = cell(1,length(vidList));
-    sigLocs = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
-            %find the peaks 
-    %         figure;
-    %         ax=gca;
-    %         hold all
-            [peaks, locs] = findpeaks(cDataFullTrace{vid}{terminals(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
-            %find the sig peaks (peaks above 2 standard deviations from mean) 
-            stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
-                    %if the peaks fall within the time windows used for the BBB
-                    %trace examples in the DOD figure 
-    %                 if locs(loc) > 197*FPSstack && locs(loc) < 206.5*FPSstack || locs(loc) > 256*FPSstack && locs(loc) < 265.5*FPSstack || locs(loc) > 509*FPSstack && locs(loc) < 518.5*FPSstack
-                        sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
-                        sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
-    %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-                        count = count + 1;
-    %                 end 
-                end 
-            end 
-            % below is plotting code 
-            %{
-            Frames = size(cDataFullTrace{vid}{terminals(ccell)},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-    %         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
-            sec_TimeVals = floor(((0:2:(Frames/FPSstack))));
-            min_TimeVals = round(sec_TimeVals/60,2)+7.03;
-            FrameVals = floor((0:(FPSstack*2):Frames)); 
 
-            %smooth the calcium data 
-            [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals(ccell)},(2/FPSstack),FPSstack);
-
-    %         plot((cDataFullTrace{vid}{terminals(ccell)})+150,'b','LineWidth',3)
-    %         plot(ScDataFullTrace+150,'b','LineWidth',3)
-            plot(bDataFullTrace{vid},'r','LineWidth',3)
-
-    %         for trial = 1:size(state_start_f{vid},1)
-    %             if TrialTypes{vid}(trial,2) == 1
-    %                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-    %                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-    %             elseif TrialTypes{vid}(trial,2) == 2
-    %                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-    %                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-    %             end 
-    %         end 
-
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
+% find peaks and then plot where they are in the entire TS 
+stdTrace = cell(1,length(vidList));
+sigPeaks = cell(1,length(vidList));
+sigLocs = cell(1,length(vidList));
+for vid = 1:length(vidList)
+    for ccell = 1:length(terminals)
+        %find the peaks 
+%         figure;
+%         ax=gca;
+%         hold all
+        [peaks, locs] = findpeaks(cDataFullTrace{vid}{terminals(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+        %find the sig peaks (peaks above 2 standard deviations from mean) 
+        stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
+        count = 1 ; 
+        for loc = 1:length(locs)
+            if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
+                %if the peaks fall within the time windows used for the BBB
+                %trace examples in the DOD figure 
+%                 if locs(loc) > 197*FPSstack && locs(loc) < 206.5*FPSstack || locs(loc) > 256*FPSstack && locs(loc) < 265.5*FPSstack || locs(loc) > 509*FPSstack && locs(loc) < 518.5*FPSstack
                     sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
                     sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
-                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+%                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
                     count = count + 1;
-                end 
+%                 end 
             end 
-
-    %         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
-
-    % 
-            ax.XTick = FrameVals;
-            ax.XTickLabel = sec_TimeVals;
-            ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xLimStart = 256*FPSstack;
-            xLimEnd = 266.5*FPSstack; 
-            xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
-            xlim([xLimStart xLimEnd])
-            ylim([-23 80])
-            xlabel('time (sec)','FontName','Times')
-    %         if smoothQ ==  1
-    %             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
-    %         elseif smoothQ == 0 
-    %             title(sprintf('terminal #%d raw data',terminals(ccell)))
-    %         end    
-               %}
         end 
+        % below is plotting code 
+        %{
+        Frames = size(cDataFullTrace{vid}{terminals(ccell)},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+%         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*50:Frames_post_stim_start)/FPSstack)+51);
+        sec_TimeVals = floor(((0:2:(Frames/FPSstack))));
+        min_TimeVals = round(sec_TimeVals/60,2)+7.03;
+        FrameVals = floor((0:(FPSstack*2):Frames)); 
+
+        %smooth the calcium data 
+        [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals(ccell)},(2/FPSstack),FPSstack);
+
+%         plot((cDataFullTrace{vid}{terminals(ccell)})+150,'b','LineWidth',3)
+%         plot(ScDataFullTrace+150,'b','LineWidth',3)
+        plot(bDataFullTrace{vid},'r','LineWidth',3)
+
+%         for trial = 1:size(state_start_f{vid},1)
+%             if TrialTypes{vid}(trial,2) == 1
+%                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+%                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+%             elseif TrialTypes{vid}(trial,2) == 2
+%                 plot([state_start_f{vid}(trial) state_start_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+%                 plot([state_end_f{vid}(trial) state_end_f{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+%             end 
+%         end 
+
+        count = 1 ; 
+        for loc = 1:length(locs)
+            if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
+                sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
+                sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
+                plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                count = count + 1;
+            end 
+        end 
+
+%         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
+
+% 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xLimStart = 256*FPSstack;
+        xLimEnd = 266.5*FPSstack; 
+        xlim([0 size(cDataFullTrace{vid}{terminals(ccell)},2)])
+        xlim([xLimStart xLimEnd])
+        ylim([-23 80])
+        xlabel('time (sec)','FontName','Times')
+%         if smoothQ ==  1
+%             title({sprintf('terminal #%d data',terminals(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
+%         elseif smoothQ == 0 
+%             title(sprintf('terminal #%d raw data',terminals(ccell)))
+%         end    
+           %}
     end 
-elseif tTypeQ == 1
+end 
+if tTypeQ == 1
     %tTypeSigLocs{1} = blue light
     %tTypeSigLocs{2} = red light
     %tTypeSigLocs{3} = ISI
@@ -2967,11 +2967,12 @@ if CaFrameQ == 1
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[-3,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',-3:1.5:3)%this makes the max point 1% and the min point -1% 
 %                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,3]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:3)%this makes the max point 1% and the min point -1% 
 %                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,2]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:2)%this makes the max point 1% and the min point -1% 
-                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
+%                  imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:1:5)%this makes the max point 1% and the min point -1% 
 %                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,1]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:1)%this makes the max point 1% and the min point -1% 
     %             imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.75]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.75)%this makes the max point 1% and the min point -1% 
 %                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
 %                 imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,0.25]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.05:0.25)%this makes the max point 1% and the min point -1% 
+                imagesc(RightChan{terminals(ccell)}(:,:,frame),[0,2.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.5:2.5)%this makes the max point 1% and the min point -1% 
 
                 % get the x-y coordinates of the vessel outline
                 [y, x] = find(BW_perim{terminals(ccell)}(:,:,frame));  % x and y are column vectors.     
@@ -3463,10 +3464,10 @@ end
 
 % scatter plots. each mouse a different color. each mouse gets regression
 % line. 
-
+%
 %@@@@@@@@@@@@@@@@  ONE  @@@@@@@@@@@@@@@@@@@
 figure;
-color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
 for mouse = 1:mouseNum
     scatter(minDistsMicrons{mouse},maxBBBvalTimePoints{mouse},'filled','MarkerFaceColor',color(mouse,:))
     hold on;
@@ -3700,9 +3701,12 @@ clear data
 if lightQ == 0 
     % 2D scatter plot. each mouse a different color. 
     figure;
-    color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+    color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
+%     color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
 %     color = [1 0 0; 0.3 1 0.3; 0.2 0.6 .7];
+%     mouseTerms = cell(1,length(minDistsMicrons));
     for mouse = 1:length(minDistsMicrons)
+%         mouseTerms{mouse} = input(sprintf('What Ca ROIs do you care about for mouse #%d? ',mouse)); 
         for point = 1:length(minDistsMicrons{mouse})
             scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}(point),maxBBBvals{mouse}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
             hold on;
@@ -3759,12 +3763,15 @@ elseif lightQ == 1
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
     % 2D scatter plot. each mouse a different color. 
     figure;
-    color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+    color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
+%     color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
+%     mouseTerms = cell(1,length(minDistsMicrons));
     for mouse = 1:length(minDistsMicrons)
+%         mouseTerms{mouse} = input(sprintf('What Ca ROIs do you care about for mouse #%d? ',mouse)); 
         for point = 1:length(minDistsMicrons{mouse})
             scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}{per}(point),maxBBBvals{mouse}{per}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
             hold on;
-            text(minDistsMicrons{mouse}(point)+0.5,maxBBBvalTimePoints{mouse}{per}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
+            text(minDistsMicrons{mouse}(point)+0.2,maxBBBvalTimePoints{mouse}{per}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
         end  
     end 
     ax = gca;
