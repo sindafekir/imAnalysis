@@ -1783,7 +1783,6 @@ end
 %}
 %% find calcium peaks per terminal across entire experiment 
 %{
-
 % find peaks and then plot where they are in the entire TS 
 stdTrace = cell(1,length(vidList));
 sigPeaks = cell(1,length(vidList));
@@ -3446,7 +3445,7 @@ elseif lightQ == 1
 end 
 
 %}
-%% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks (across mice)
+%% get distance, BBB peak, and Ca peak data (across mice)
 %{
 mouseNum = input('How many mice do you want to use to create scatter plots of vessel-Ca ROI distance and BBB perm metrics? ');
 minDistsMicrons = cell(1,mouseNum);
@@ -3461,7 +3460,9 @@ for mouse = 1:mouseNum
     maxBBBvalTimePoints{mouse} = dataMat.maxBBBvalTimePoints; 
     maxBBBvals{mouse} = dataMat.maxBBBvals; 
 end 
-
+%}
+%% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks (across mice)
+%{
 % scatter plots. each mouse a different color. each mouse gets regression
 % line. 
 %
@@ -3536,7 +3537,10 @@ xlim([0 1.6])
 %@@@@@@@@@@@@@@@@  ONE  @@@@@@@@@@@@@@@@@@@
 figure;
 for mouse = 2:mouseNum
-    if mouse == 2
+    if mouse == 2 && mouseNum == 2 
+       minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+       maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+    elseif mouse == 2 && mouseNum > 2 
        miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
        miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
     elseif mouse > 2
@@ -3564,10 +3568,13 @@ xlim([0 48])
 %@@@@@@@@@@@@@@@@  TWO  @@@@@@@@@@@@@@@@@@@
 figure;
 for mouse = 2:mouseNum
-    if mouse == 2
+    if mouse == 2 && mouseNum == 2 
+       minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+       maxBBBvalsAllMice = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+    elseif mouse == 2
        miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
        miceData2 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-    elseif mouse > 2
+    elseif mouse > 2 && mouseNum > 2 
        minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
        maxBBBvalsAllMice = horzcat(miceData2,maxBBBvals{mouse});
     end 
@@ -3696,12 +3703,13 @@ zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 % xlim([0 48])
 clear data
 %}
-%% plot data 2D distance x time lag. make the size of the dot related to BBB peak amplitude 
-%{
-if lightQ == 0 
+%% plot data 2D distance x time lag. make the size of the dot related to BBB peak amplitude (across mice)
+%{ 
+if lightQ == 0
     % 2D scatter plot. each mouse a different color. 
     figure;
-    color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
+%     color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
+    color = [1 0.2 1; 1 .6 0];
 %     color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
 %     color = [1 0 0; 0.3 1 0.3; 0.2 0.6 .7];
 %     mouseTerms = cell(1,length(minDistsMicrons));
@@ -3710,15 +3718,15 @@ if lightQ == 0
         for point = 1:length(minDistsMicrons{mouse})
             scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}(point),maxBBBvals{mouse}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
             hold on;
-            text(minDistsMicrons{mouse}(point)+0.5,maxBBBvalTimePoints{mouse}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
+%             text(minDistsMicrons{mouse}(point)+0.5,maxBBBvalTimePoints{mouse}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
         end  
         
     end 
     ax = gca;
     ax.FontSize = 25;
     ax.FontName = 'Times';
-    xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-%     xlabel('Distance From  Vessel (microns)','FontName','Times')
+%     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
+    xlabel('Distance From  Vessel (microns)','FontName','Times')
     ylabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
     zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     
@@ -3763,7 +3771,8 @@ elseif lightQ == 1
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
     % 2D scatter plot. each mouse a different color. 
     figure;
-    color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
+    color = [1 0.2 1; 1 .6 0];
+%     color = [1 0 0; .1 0 .1; 0.2 0.6 .7; 1 0.2 1; 1 .6 0];
 %     color = [1 0 0; .1 0 .1; 0.2 0.6 .7];
 %     mouseTerms = cell(1,length(minDistsMicrons));
     for mouse = 1:length(minDistsMicrons)
@@ -3771,7 +3780,7 @@ elseif lightQ == 1
         for point = 1:length(minDistsMicrons{mouse})
             scatter(minDistsMicrons{mouse}(point),maxBBBvalTimePoints{mouse}{per}(point),maxBBBvals{mouse}{per}(point)*100,'filled','MarkerFaceColor',color(mouse,:)) 
             hold on;
-            text(minDistsMicrons{mouse}(point)+0.2,maxBBBvalTimePoints{mouse}{per}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
+%             text(minDistsMicrons{mouse}(point)+0.2,maxBBBvalTimePoints{mouse}{per}(point),num2str(mouseTerms{mouse}(point)),'FontSize',20)
         end  
     end 
     ax = gca;
@@ -3823,6 +3832,9 @@ end
 %{
 if lightQ == 0 
     figure;
+%      [~,edges] = histcounts(log10(minDistMicronsAllMice),20);
+%      h = histogram(minDistMicronsAllMice,10.^edges);
+%      set(gca, 'xscale','log')   
     h = histogram(minDistMicronsAllMice,20);
     ax = gca;
     ax.FontSize = 25;
@@ -3835,26 +3847,34 @@ if lightQ == 0
     figure;
     h = histogram(maxBBBvalTimePointsAllMice,20);
     ax = gca;
-    ax.FontSize = 25;
+    ax.FontSize =25;
     ax.FontName = 'Times';
     xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
     h.FaceColor = [0 0.3 0.3];
     
     figure;
-    h = histogram(maxBBBvalsAllMice,20);
+%     h = histogram(maxBBBvalsAllMice,20);
+     [~,edges] = histcounts(log10(maxBBBvalsAllMice),20);
+     h = histogram(maxBBBvalsAllMice,10.^edges);
+     set(gca, 'xscale','log')   
     ax = gca;
-    ax.FontSize = 25;
+    ax.FontSize = 50;
     ax.FontName = 'Times';
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
     h.FaceColor = [0 0.3 0.3];
+    
 elseif lightQ == 1 
     maxBBBvalTimePointsAllMice = cell(1,3);
     maxBBBvalsAllMice = cell(1,3);
     for per = 1:3 
         for mouse = 2:mouseNum
-            if mouse == 2
+            if mouse == 2 && mouseNum == 2 
+               minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
+               maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
+            elseif mouse == 2 && mouseNum > 2 
                miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
                miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
                miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
@@ -3869,9 +3889,12 @@ elseif lightQ == 1
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
     
     figure;
-    h = histogram(minDistMicronsAllMice,20);
+     [~,edges] = histcounts(log10(minDistMicronsAllMice),20);
+     h = histogram(minDistMicronsAllMice,10.^edges);
+     set(gca, 'xscale','log')    
+%     h = histogram(minDistMicronsAllMice,20);
     ax = gca;
-    ax.FontSize = 25;
+    ax.FontSize = 50;
     ax.FontName = 'Times';
 %     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
     xlabel('Distance From  Vessel (microns)','FontName','Times')
@@ -3888,9 +3911,12 @@ elseif lightQ == 1
     h.FaceColor = [0 0.3 0.3];
     
     figure;
-    h = histogram(maxBBBvalsAllMice{per},20);
+%     h = histogram(maxBBBvalsAllMice{per},20);
+    [~,edges] = histcounts(log10(maxBBBvalsAllMice{per}),20);
+    h = histogram(maxBBBvalsAllMice{per},10.^edges);
+    set(gca, 'xscale','log')  
     ax = gca;
-    ax.FontSize = 25;
+    ax.FontSize = 50;
     ax.FontName = 'Times';
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')

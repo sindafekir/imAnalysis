@@ -23,7 +23,8 @@ end
 % BW = X > 0.17; %for new and old BG subtraction SF-57
 % BW = X > 0.16; %for new and old BG subtraction SF-58
 % BW = X > 0.35; %for new and old BG subtraction SF-63 ROI1
-BW = X > 0.25; %for new and old BG subtraction SF-63 ROI2
+% BW = X > 0.25; %for new and old BG subtraction SF-63 ROI2
+BW = X > 0.2; %for new and old BG subtraction SF-64
   
 % Open mask with disk
 radius = 1;
