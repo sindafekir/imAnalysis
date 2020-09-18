@@ -4017,8 +4017,12 @@ if lightQ == 0
     [h2,edges2] = histcounts(log10(maxBBBvals_HighGroup),length(binRange));
     b = bar(10.^edges1(1:length(edges1)-1)',[h1;h2]',1);  
     b(1).FaceColor = [0 0.3 0.3];
-    b(2).FaceColor = [0 0.9 0.9];    
-    set(gca, 'xscale','log') 
+    b(2).FaceColor = [0 0.9 0.9];
+    
+    
+    
+%     set(gca, 'xscale','log') 
+%     xlim([0 max(maxBBBvalsAllMice)])
 
     ax = gca;
     ax.FontSize = 50;
