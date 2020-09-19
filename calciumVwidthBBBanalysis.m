@@ -3829,7 +3829,7 @@ elseif lightQ == 1
 end 
 %}
 %% make nice histograms of Ca ROI to vessel distance and BBB data 
-%
+%{
 if lightQ == 0 
     
     for mouse = 2:mouseNum
@@ -3941,35 +3941,10 @@ elseif lightQ == 1
 end 
 %}
 %% make multi-color histograms of Ca ROI to vessel distance and BBB data
-
-%create groups 
-%starting off simple - just do two colors/groups 
-%Ca ROIs are broken down into two groups based on their distance 
-distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
-minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-counter1 = 1;
-counter2 = 1;
-for term = 1:length(minDistMicronsAllMice)
-    if minDistMicronsAllMice(term) < distCutOff
-        minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
-        maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
-        maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
-        counter1 = counter1 + 1;
-    elseif minDistMicronsAllMice(term) > distCutOff
-        minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
-        maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
-        maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
-        counter2 = counter2 + 1;
-    end 
-end 
-
-% plot 
+%{
 if lightQ == 0 
+   %{
+    %make sure data is sorted 
     for mouse = 2:mouseNum
         if mouse == 2 && mouseNum == 2 
            minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
@@ -3986,7 +3961,33 @@ if lightQ == 0
         end 
     end 
     
-    
+    %create groups 
+    %starting off simple - just do two colors/groups 
+    %Ca ROIs are broken down into two groups based on their distance 
+    distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
+    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    counter1 = 1;
+    counter2 = 1;
+    for term = 1:length(minDistMicronsAllMice)
+        if minDistMicronsAllMice(term) < distCutOff
+            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
+            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
+            counter1 = counter1 + 1;
+        elseif minDistMicronsAllMice(term) > distCutOff
+            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
+            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
+            counter2 = counter2 + 1;
+        end 
+    end 
+
+    % plot    
     figure;
     binRange = linspace(-2.5,2.5,22);
     h1 = histcounts(maxBBBvalTimePoints_LowGroup,[binRange Inf]);
@@ -4026,9 +4027,10 @@ if lightQ == 0
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
     legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
-    
+    %}
 elseif lightQ == 1 
-    %{
+%{
+    %make sure data is sorted 
     maxBBBvalTimePointsAllMice = cell(1,3);
     maxBBBvalsAllMice = cell(1,3);
     for per = 1:3 
@@ -4049,41 +4051,76 @@ elseif lightQ == 1
         end 
     end 
     
-    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
-    
+    %create groups 
+    %starting off simple - just do two colors/groups 
+    %Ca ROIs are broken down into two groups based on their distance 
+    distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
+    logQ = input('Input 1 to apply log scale when applicable. O otherwise. ');
+    per = input('Input 3 for light off period. Input 2 for red light. Input 1 for blue light. ');
+    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    counter1 = 1;
+    counter2 = 1;
+    for term = 1:length(minDistMicronsAllMice)
+        if minDistMicronsAllMice(term) < distCutOff
+            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
+            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
+            counter1 = counter1 + 1;
+        elseif minDistMicronsAllMice(term) > distCutOff
+            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
+            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
+            counter2 = counter2 + 1;
+        end 
+    end 
+
+    % plot    
     figure;
-     [~,edges] = histcounts(log10(minDistMicronsAllMice),20);
-     h = histogram(minDistMicronsAllMice,10.^edges);
-     set(gca, 'xscale','log')    
-%     h = histogram(minDistMicronsAllMice,20);
+    binRange = linspace(-2.5,2.5,22);
+    h1 = histcounts(maxBBBvalTimePoints_LowGroup,[binRange Inf]);
+    h2 = histcounts(maxBBBvalTimePoints_HighGroup,[binRange Inf]);   
+    b = bar(binRange,[h1;h2]',1);  
+    b(1).FaceColor = [0 0.3 0.3];
+    b(2).FaceColor = [0 0.9 0.9];
     ax = gca;
-    ax.FontSize = 50;
-    ax.FontName = 'Times';
-%     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-    xlabel('Distance From  Vessel (microns)','FontName','Times')
-    ylabel('Number of Terminals','FontName','Times')
-    h.FaceColor = [0 0.3 0.3];
-    
-    figure;
-    h = histogram(maxBBBvalTimePointsAllMice{per},20);
-    ax = gca;
-    ax.FontSize = 25;
+    ax.FontSize =25;
     ax.FontName = 'Times';
     xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
-    h.FaceColor = [0 0.3 0.3];
-    
+    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+ 
+ 
     figure;
-%     h = histogram(maxBBBvalsAllMice{per},20);
-    [~,edges] = histcounts(log10(maxBBBvalsAllMice{per}),20);
-    h = histogram(maxBBBvalsAllMice{per},10.^edges);
-    set(gca, 'xscale','log')  
+    binRange = linspace(0,max(maxBBBvalsAllMice{per}),22);
+    
+    if logQ == 0
+        % linear
+        h1 = histcounts(maxBBBvals_LowGroup,[binRange Inf]);
+        h2 = histcounts(maxBBBvals_HighGroup,[binRange Inf]);   
+        b = bar(binRange,[h1;h2]',1);  
+        b(1).FaceColor = [0 0.3 0.3];
+        b(2).FaceColor = [0 0.9 0.9];
+    elseif logQ == 1 
+        % log scale 
+        [h1,edges1] = histcounts(log10(maxBBBvals_LowGroup),length(binRange));
+        [h2,edges2] = histcounts(log10(maxBBBvals_HighGroup),length(binRange));
+        b = bar(10.^edges1(1:length(edges1)-1)',[h1;h2]');  
+        b(1).FaceColor = [0 0.3 0.3];
+        b(2).FaceColor = [0 0.9 0.9];    
+        set(gca, 'xscale','log') 
+    end 
+
     ax = gca;
     ax.FontSize = 50;
     ax.FontName = 'Times';
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
-    h.FaceColor = [0 0.3 0.3];
+    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
     %}
 end 
 %}
