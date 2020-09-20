@@ -4124,3 +4124,133 @@ elseif lightQ == 1
     %}
 end 
 %}
+%% fit the distributions and overlay the fits 
+distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
+if lightQ == 0 
+    %make sure data is sorted 
+    for mouse = 2:mouseNum
+        if mouse == 2 && mouseNum == 2 
+           minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+           maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+           maxBBBvalsAllMice = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+        elseif mouse == 2 && mouseNum > 2 
+           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+           miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+           miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+        elseif mouse > 2
+           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+           maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
+           maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
+        end 
+    end 
+    
+    %create groups 
+    %starting off simple - just do two colors/groups 
+    %Ca ROIs are broken down into two groups based on their distance 
+    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    counter1 = 1;
+    counter2 = 1;
+    for term = 1:length(minDistMicronsAllMice)
+        if minDistMicronsAllMice(term) < distCutOff
+            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
+            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
+            counter1 = counter1 + 1;
+        elseif minDistMicronsAllMice(term) > distCutOff
+            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
+            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
+            counter2 = counter2 + 1;
+        end 
+    end 
+elseif lightQ == 1 
+
+    %make sure data is sorted 
+    maxBBBvalTimePointsAllMice = cell(1,3);
+    maxBBBvalsAllMice = cell(1,3);
+    for per = 1:3 
+        for mouse = 2:mouseNum
+            if mouse == 2 && mouseNum == 2 
+               minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
+               maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
+            elseif mouse == 2 && mouseNum > 2 
+               miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+               miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
+               miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
+            elseif mouse > 2
+               minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
+               maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
+               maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
+            end 
+        end 
+    end 
+    
+    %create groups 
+    %starting off simple - just do two colors/groups 
+    %Ca ROIs are broken down into two groups based on their distance 
+    per = input('Input 3 for light off period. Input 2 for red light. Input 1 for blue light. ');
+    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+    counter1 = 1;
+    counter2 = 1;
+    for term = 1:length(minDistMicronsAllMice)
+        if minDistMicronsAllMice(term) < distCutOff
+            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
+            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
+            counter1 = counter1 + 1;
+        elseif minDistMicronsAllMice(term) > distCutOff
+            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
+            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
+            counter2 = counter2 + 1;
+        end 
+    end 
+end 
+
+logQ = input('Input 1 to apply log scale when applicable. O otherwise. ');
+
+pd1 = fitdist(maxBBBvalTimePoints_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvalTimePoints_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
+xVals = linspace(-2.5,2.5,22);
+yVals1 = pdf(pd1,xVals);
+yVals2 = pdf(pd2,xVals);
+figure;
+plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
+plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
+ax = gca;
+ax.FontSize =25;
+ax.FontName = 'Times';
+xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+ylabel('Number of Terminals','FontName','Times')
+legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.1); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.1); %kernel good for nonparametric data 
+xVals = linspace(0,5,22);
+yVals1 = pdf(pd1,xVals);
+yVals2 = pdf(pd2,xVals);
+figure;
+plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
+plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
+ax = gca;
+ax.FontSize =25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel('Number of Terminals','FontName','Times')
+legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+if logQ == 1 
+    set(gca, 'xscale','log')   
+end 
+
+%}
