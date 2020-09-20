@@ -4125,9 +4125,8 @@ elseif lightQ == 1
 end 
 %}
 %% fit the distributions and overlay the fits 
-
+distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
 if lightQ == 0 
-   
     %make sure data is sorted 
     for mouse = 2:mouseNum
         if mouse == 2 && mouseNum == 2 
@@ -4148,7 +4147,6 @@ if lightQ == 0
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
-    distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
@@ -4170,38 +4168,6 @@ if lightQ == 0
             counter2 = counter2 + 1;
         end 
     end 
-
-    pd1 = fitdist(maxBBBvalTimePoints_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
-    pd2 = fitdist(maxBBBvalTimePoints_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
-    xVals = linspace(-2.5,2.5,22);
-    yVals1 = pdf(pd1,xVals);
-    yVals2 = pdf(pd2,xVals);
-    figure;
-    plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
-    plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
-    ax = gca;
-    ax.FontSize =25;
-    ax.FontName = 'Times';
-    xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
-    ylabel('Number of Terminals','FontName','Times')
-    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
-    
-    pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.1); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
-    pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.1); %kernel good for nonparametric data 
-    xVals = linspace(0,5,22);
-    yVals1 = pdf(pd1,xVals);
-    yVals2 = pdf(pd2,xVals);
-    figure;
-    plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
-    plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
-    ax = gca;
-    ax.FontSize =25;
-    ax.FontName = 'Times';
-    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
-    ylabel('Number of Terminals','FontName','Times')
-    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
-    set(gca, 'xscale','log')   
-    %}
 elseif lightQ == 1 
 
     %make sure data is sorted 
@@ -4228,8 +4194,6 @@ elseif lightQ == 1
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
-    distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
-    logQ = input('Input 1 to apply log scale when applicable. O otherwise. ');
     per = input('Input 3 for light off period. Input 2 for red light. Input 1 for blue light. ');
     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
@@ -4252,49 +4216,54 @@ elseif lightQ == 1
             counter2 = counter2 + 1;
         end 
     end 
-
-    % plot    
-    figure;
-    binRange = linspace(-2.5,2.5,22);
-    h1 = histcounts(maxBBBvalTimePoints_LowGroup,[binRange Inf]);
-    h2 = histcounts(maxBBBvalTimePoints_HighGroup,[binRange Inf]);   
-    b = bar(binRange,[h1;h2]',1);  
-    b(1).FaceColor = [0 0.3 0.3];
-    b(2).FaceColor = [0 0.9 0.9];
-    ax = gca;
-    ax.FontSize =25;
-    ax.FontName = 'Times';
-    xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
-    ylabel('Number of Terminals','FontName','Times')
-    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
- 
- 
-    figure;
-    binRange = linspace(0,max(maxBBBvalsAllMice{per}),22);
-    
-    if logQ == 0
-        % linear
-        h1 = histcounts(maxBBBvals_LowGroup,[binRange Inf]);
-        h2 = histcounts(maxBBBvals_HighGroup,[binRange Inf]);   
-        b = bar(binRange,[h1;h2]',1);  
-        b(1).FaceColor = [0 0.3 0.3];
-        b(2).FaceColor = [0 0.9 0.9];
-    elseif logQ == 1 
-        % log scale 
-        [h1,edges1] = histcounts(log10(maxBBBvals_LowGroup),length(binRange));
-        [h2,edges2] = histcounts(log10(maxBBBvals_HighGroup),length(binRange));
-        b = bar(10.^edges1(1:length(edges1)-1)',[h1;h2]');  
-        b(1).FaceColor = [0 0.3 0.3];
-        b(2).FaceColor = [0 0.9 0.9];    
-        set(gca, 'xscale','log') 
-    end 
-
-    ax = gca;
-    ax.FontSize = 50;
-    ax.FontName = 'Times';
-    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
-    ylabel('Number of Terminals','FontName','Times')
-    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
-    %}
 end 
+
+
+pd1 = fitdist(maxBBBvalTimePoints_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvalTimePoints_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
+xVals = linspace(-2.5,2.5,22);
+yVals1 = pdf(pd1,xVals);
+yVals2 = pdf(pd2,xVals);
+figure;
+plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
+plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
+ax = gca;
+ax.FontSize =25;
+ax.FontName = 'Times';
+xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
+ylabel('Number of Terminals','FontName','Times')
+legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.2); %kernel good for nonparametric data 
+xVals = linspace(0,5,22);
+yVals1 = pdf(pd1,xVals);
+yVals2 = pdf(pd2,xVals);
+figure;
+plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
+plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
+ax = gca;
+ax.FontSize =25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel('Number of Terminals','FontName','Times')
+legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
+xVals = linspace(0,5,22);
+yVals1 = pdf(pd1,xVals);
+yVals2 = pdf(pd2,xVals);
+figure;
+plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
+plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
+ax = gca;
+ax.FontSize =25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel('Number of Terminals','FontName','Times')
+legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+set(gca, 'xscale','log')   
+
+
 %}

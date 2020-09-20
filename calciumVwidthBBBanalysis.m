@@ -4125,6 +4125,7 @@ elseif lightQ == 1
 end 
 %}
 %% fit the distributions and overlay the fits 
+%{
 distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
 if lightQ == 0 
     %make sure data is sorted 
@@ -4218,7 +4219,6 @@ elseif lightQ == 1
     end 
 end 
 
-logQ = input('Input 1 to apply log scale when applicable. O otherwise. ');
 
 pd1 = fitdist(maxBBBvalTimePoints_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
 pd2 = fitdist(maxBBBvalTimePoints_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
@@ -4235,9 +4235,9 @@ xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 ylabel('Number of Terminals','FontName','Times')
 legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
 
-pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.1); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
-pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.1); %kernel good for nonparametric data 
-xVals = linspace(0,5,22);
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',5); %kernel good for nonparametric data 
+xVals = linspace(0,50,22);
 yVals1 = pdf(pd1,xVals);
 yVals2 = pdf(pd2,xVals);
 figure;
@@ -4249,8 +4249,23 @@ ax.FontName = 'Times';
 xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 ylabel('Number of Terminals','FontName','Times')
 legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
-if logQ == 1 
-    set(gca, 'xscale','log')   
-end 
+xlim([0 50])
+
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',5); %kernel good for nonparametric data 
+xVals = linspace(0,50,22);
+yVals1 = pdf(pd1,xVals);
+yVals2 = pdf(pd2,xVals);
+figure;
+plot(xVals,yVals1,'Color',[0 0.3 0.3],'LineWidth',3); hold on;
+plot(xVals,yVals2,'Color',[0 0.9 0.9],'LineWidth',3)
+ax = gca;
+ax.FontSize =25;
+ax.FontName = 'Times';
+xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+ylabel('Number of Terminals','FontName','Times')
+legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+set(gca, 'xscale','log')   
+xlim([0 50])
 
 %}
