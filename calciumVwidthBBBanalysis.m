@@ -3445,8 +3445,8 @@ elseif lightQ == 1
 end 
 
 %}
-%% get distance, BBB peak, and Ca peak data (across mice)
-%{
+%% get distance, BBB peak, and Ca peak data (across mice) and sort the data 
+
 mouseNum = input('How many mice do you want to use to create scatter plots of vessel-Ca ROI distance and BBB perm metrics? ');
 minDistsMicrons = cell(1,mouseNum);
 maxBBBvalTimePoints = cell(1,mouseNum);
@@ -3459,6 +3459,36 @@ for mouse = 1:mouseNum
     minDistsMicrons{mouse} = dataMat.minDistsMicrons; 
     maxBBBvalTimePoints{mouse} = dataMat.maxBBBvalTimePoints; 
     maxBBBvals{mouse} = dataMat.maxBBBvals; 
+end 
+
+if lightQ == 0 
+    for mouse = 2:mouseNum
+        if mouse == 2  
+           minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+           maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
+           maxBBBvalsAllMice = horzcat(maxBBBvals{1},maxBBBvals{mouse});
+        elseif mouse > 2 
+           minDistMicronsAllMice = horzcat(minDistMicronsAllMice,minDistsMicrons{mouse});
+           maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePointsAllMice,maxBBBvalTimePoints{mouse});
+           maxBBBvalsAllMice = horzcat(maxBBBvalsAllMice,maxBBBvals{mouse});
+        end 
+    end 
+elseif lightQ == 1
+    maxBBBvalTimePointsAllMice = cell(1,3);
+    maxBBBvalsAllMice = cell(1,3);
+    for per = 1:3 
+        for mouse = 2:mouseNum
+            if mouse == 2  
+               minDistMicronsAllMice{per} = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
+               maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
+            elseif mouse > 2 
+               minDistMicronsAllMice{per} = horzcat(minDistMicronsAllMice{per},minDistsMicrons{mouse});
+               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePointsAllMice{per},maxBBBvalTimePoints{mouse}{per});
+               maxBBBvalsAllMice{per} = horzcat(maxBBBvalsAllMice{per},maxBBBvals{mouse}{per});
+            end 
+        end 
+    end 
 end 
 %}
 %% compare min distance each Ca ROI is from the vessel with when the BBB signal peaks (across mice)
@@ -3704,7 +3734,7 @@ zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 clear data
 %}
 %% plot data 2D distance x time lag. make the size of the dot related to BBB peak amplitude (across mice)
-%{ 
+%{
 if lightQ == 0
     % 2D scatter plot. each mouse a different color. 
     figure;
@@ -3731,19 +3761,8 @@ if lightQ == 0
     zlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     
 
-    % 2D scatter plot. All mice same color 
+    % 2D scatter plot. All mice same color      
     figure;
-    for mouse = 2:mouseNum
-        if mouse == 2
-           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse > 2
-           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
-        end 
-    end 
     for point = 1:length(minDistMicronsAllMice)
         scatter(minDistMicronsAllMice(point),maxBBBvalTimePointsAllMice(point),maxBBBvalsAllMice(point)*100,'filled','k') 
         hold on;
@@ -3793,17 +3812,6 @@ elseif lightQ == 1
 
     % 2D scatter plot. All mice same color 
     figure;
-    for mouse = 2:mouseNum
-        if mouse == 2
-           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-           miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-        elseif mouse > 2
-           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
-           maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
-        end 
-    end 
     for point = 1:length(minDistMicronsAllMice)
         scatter(minDistMicronsAllMice(point),maxBBBvalTimePointsAllMice{per}(point),maxBBBvalsAllMice{per}(point)*100,'filled','k') 
         hold on;
@@ -3831,22 +3839,6 @@ end
 %% make nice histograms of Ca ROI to vessel distance and BBB data 
 %{
 if lightQ == 0 
-    
-    for mouse = 2:mouseNum
-        if mouse == 2 && mouseNum == 2 
-           minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse == 2 && mouseNum > 2 
-           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse > 2
-           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
-        end 
-    end 
     
     figure;
 %      [~,edges] = histcounts(log10(minDistMicronsAllMice),20);
@@ -3883,25 +3875,6 @@ if lightQ == 0
     h.FaceColor = [0 0.3 0.3];
     
 elseif lightQ == 1 
-    maxBBBvalTimePointsAllMice = cell(1,3);
-    maxBBBvalsAllMice = cell(1,3);
-    for per = 1:3 
-        for mouse = 2:mouseNum
-            if mouse == 2 && mouseNum == 2 
-               minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-               maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-            elseif mouse == 2 && mouseNum > 2 
-               miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-               miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-               miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-            elseif mouse > 2
-               minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-               maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
-               maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
-            end 
-        end 
-    end 
     
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
     
@@ -3944,23 +3917,6 @@ end
 %{
 if lightQ == 0 
    %{
-    %make sure data is sorted 
-    for mouse = 2:mouseNum
-        if mouse == 2 && mouseNum == 2 
-           minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse == 2 && mouseNum > 2 
-           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse > 2
-           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
-        end 
-    end 
-    
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
@@ -4029,28 +3985,7 @@ if lightQ == 0
     legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
     %}
 elseif lightQ == 1 
-%{
-    %make sure data is sorted 
-    maxBBBvalTimePointsAllMice = cell(1,3);
-    maxBBBvalsAllMice = cell(1,3);
-    for per = 1:3 
-        for mouse = 2:mouseNum
-            if mouse == 2 && mouseNum == 2 
-               minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-               maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-            elseif mouse == 2 && mouseNum > 2 
-               miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-               miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-               miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-            elseif mouse > 2
-               minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-               maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
-               maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
-            end 
-        end 
-    end 
-    
+    %{
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
@@ -4128,22 +4063,6 @@ end
 %{
 distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
 if lightQ == 0 
-    %make sure data is sorted 
-    for mouse = 2:mouseNum
-        if mouse == 2 && mouseNum == 2 
-           minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse == 2 && mouseNum > 2 
-           miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-           miceData2 = horzcat(maxBBBvalTimePoints{1},maxBBBvalTimePoints{mouse});
-           miceData3 = horzcat(maxBBBvals{1},maxBBBvals{mouse});
-        elseif mouse > 2
-           minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-           maxBBBvalTimePointsAllMice = horzcat(miceData2,maxBBBvalTimePoints{mouse});
-           maxBBBvalsAllMice = horzcat(miceData3,maxBBBvals{mouse});
-        end 
-    end 
     
     %create groups 
     %starting off simple - just do two colors/groups 
@@ -4170,27 +4089,6 @@ if lightQ == 0
         end 
     end 
 elseif lightQ == 1 
-
-    %make sure data is sorted 
-    maxBBBvalTimePointsAllMice = cell(1,3);
-    maxBBBvalsAllMice = cell(1,3);
-    for per = 1:3 
-        for mouse = 2:mouseNum
-            if mouse == 2 && mouseNum == 2 
-               minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-               maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-               maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-            elseif mouse == 2 && mouseNum > 2 
-               miceData1 = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
-               miceData2 = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
-               miceData3 = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
-            elseif mouse > 2
-               minDistMicronsAllMice = horzcat(miceData1,minDistsMicrons{mouse});
-               maxBBBvalTimePointsAllMice{per} = horzcat(miceData2,maxBBBvalTimePoints{mouse}{per});
-               maxBBBvalsAllMice{per} = horzcat(miceData3,maxBBBvals{mouse}{per});
-            end 
-        end 
-    end 
     
     %create groups 
     %starting off simple - just do two colors/groups 
@@ -4268,4 +4166,15 @@ legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
 set(gca, 'xscale','log')   
 xlim([0 50])
 
+%}
+%% figure out what Ca ROIs fall into distance (from vessel) categories 
+%{
+distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
+closeTerms = cell(1,mouseNum);
+closeTermDists = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    closeTerms{mouse} = mouseTerms{mouse}((minDistsMicrons{mouse} < distCutOff));
+    closeTermDists{mouse} = minDistsMicrons{mouse}((minDistsMicrons{mouse} < distCutOff));
+    closeTermCaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} < distCutOff));
+end 
 %}
