@@ -3446,7 +3446,7 @@ end
 
 %}
 %% get distance, BBB peak, and Ca peak data (across mice) and sort the data 
-
+%{
 mouseNum = input('How many mice do you want to use to create scatter plots of vessel-Ca ROI distance and BBB perm metrics? ');
 minDistsMicrons = cell(1,mouseNum);
 maxBBBvalTimePoints = cell(1,mouseNum);
@@ -3479,11 +3479,11 @@ elseif lightQ == 1
     for per = 1:3 
         for mouse = 2:mouseNum
             if mouse == 2  
-               minDistMicronsAllMice{per} = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
+               minDistMicronsAllMice = horzcat(minDistsMicrons{1},minDistsMicrons{mouse});
                maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
                maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
             elseif mouse > 2 
-               minDistMicronsAllMice{per} = horzcat(minDistMicronsAllMice{per},minDistsMicrons{mouse});
+               minDistMicronsAllMice = horzcat(minDistMicronsAllMice,minDistsMicrons{mouse});
                maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePointsAllMice{per},maxBBBvalTimePoints{mouse}{per});
                maxBBBvalsAllMice{per} = horzcat(maxBBBvalsAllMice{per},maxBBBvals{mouse}{per});
             end 
@@ -4061,32 +4061,35 @@ end
 %}
 %% fit the distributions and overlay the fits 
 %{
+clear maxBBBvals_HighGroup maxBBBvals_LowGroup maxBBBvalTimePoints_HighGroup maxBBBvalTimePoints_LowGroup minDistMicrons_HighGroup minDistMicrons_LowGroup
+
 distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
 if lightQ == 0 
-    
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
-    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
     counter1 = 1;
     counter2 = 1;
     for term = 1:length(minDistMicronsAllMice)
-        if minDistMicronsAllMice(term) < distCutOff
-            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
-            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
-            counter1 = counter1 + 1;
-        elseif minDistMicronsAllMice(term) > distCutOff
-            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
-            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
-            counter2 = counter2 + 1;
-        end 
+%         if maxBBBvalsAllMice(term) > 10
+            if minDistMicronsAllMice(term) < distCutOff
+                minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
+                maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
+                counter1 = counter1 + 1;
+            elseif minDistMicronsAllMice(term) > distCutOff
+                minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
+                maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
+                counter2 = counter2 + 1;
+            end 
+%         end 
     end 
 elseif lightQ == 1 
     
@@ -4094,25 +4097,27 @@ elseif lightQ == 1
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
     per = input('Input 3 for light off period. Input 2 for red light. Input 1 for blue light. ');
-    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
     counter1 = 1;
     counter2 = 1;
     for term = 1:length(minDistMicronsAllMice)
-        if minDistMicronsAllMice(term) < distCutOff
-            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
-            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
-            counter1 = counter1 + 1;
-        elseif minDistMicronsAllMice(term) > distCutOff
-            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
-            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
-            counter2 = counter2 + 1;
+        if maxBBBvalsAllMice{per}(term) > 10
+            if minDistMicronsAllMice(term) < distCutOff
+                minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
+                maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
+                counter1 = counter1 + 1;
+            elseif minDistMicronsAllMice(term) > distCutOff
+                minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
+                maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
+                counter2 = counter2 + 1;
+            end 
         end 
     end 
 end 
