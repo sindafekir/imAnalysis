@@ -2597,6 +2597,415 @@ end
     %}
 % end 
 %}
+%% plot calcium spike triggered average (average across mice. compare close and far terminals.) 
+
+%get the data you need 
+regImDir = uigetdir('*.*','WHERE ARE THE CLOSE CALCIUM ROI VALUES?');
+cd(regImDir);
+MatFileName = uigetfile('*.*','GET THE CLOSE CALCIUM ROI VALUES');
+Mat = matfile(MatFileName);
+closeCaROIs = Mat.closeCaROIs;
+allCTraces = cell(1,length(closeCaROIs));
+allBTraces = cell(1,length(closeCaROIs));
+allVTraces = cell(1,length(closeCaROIs));
+CaROIs = cell(1,length(closeCaROIs));
+FPSstack = cell(1,length(closeCaROIs));
+for mouse = 1:length(closeCaROIs)
+    regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+    cd(regImDir);
+    MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+    Mat = matfile(MatFileName);
+    BBBQ = Mat.BBBQ;
+    VWQ = Mat.VWQ;
+    FPSstack{mouse} = Mat.FPSstack;
+    allCTraces{mouse} = Mat.allCTraces;
+    if BBBQ == 1 
+        allBTraces{mouse} = Mat.allBTraces;
+    end 
+    if VWQ == 1 
+        allVTraces{mouse} = Mat.allVTraces;
+    end 
+    CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
+end 
+tTypeQ = Mat.tTypeQ;
+
+%set plotting paramaters 
+BBBQ = input('Input 1 if you want to plot BBB data. ');
+if BBBQ == 1
+    BBBroi = input('What BBB ROI do you want to plot? ');
+end 
+VWQ = input('Input 1 if you want to plot vessel width data. ');
+if VWQ == 1
+    VWroi = input('What vessel width ROI do you want to plot? ');
+end 
+saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
+if saveQ == 1                
+    dir1 = input('What folder are you saving these images in? ');
+end 
+%%
+if tTypeQ == 0 
+    
+    %average the close and far terminals within each animal and plot 
+    closeCTraces = cell(1,length(closeCaROIs));
+    farCaROIs = cell(1,length(closeCaROIs));
+    farCTraces = cell(1,length(closeCaROIs));
+    closeCTraceArray = cell(1,length(closeCaROIs));
+    farCTraceArray = cell(1,length(closeCaROIs));
+    closeBTraces = cell(1,length(closeCaROIs));
+    farBTraces = cell(1,length(closeCaROIs));
+    closeBTraceArray = cell(1,length(closeCaROIs));
+    farBTraceArray = cell(1,length(closeCaROIs));
+    closeVTraces = cell(1,length(closeCaROIs));
+    farVTraces = cell(1,length(closeCaROIs));
+    closeVTraceArray = cell(1,length(closeCaROIs));
+    farVTraceArray = cell(1,length(closeCaROIs));
+    far_AVSNBdataPeaks = cell(1,length(closeCaROIs));
+    far_AVSNCdataPeaks = cell(1,length(closeCaROIs));
+    far_AVSNVdataPeaks = cell(1,length(closeCaROIs));
+    close_AVSNBdataPeaks = cell(1,length(closeCaROIs));
+    close_AVSNCdataPeaks = cell(1,length(closeCaROIs));
+    close_AVSNVdataPeaks = cell(1,length(closeCaROIs));
+    for mouse = 1:length(closeCaROIs)
+        %figure out what the far Ca ROIs are 
+        farCaROIs{mouse} = CaROIs{mouse}(~(ismember(CaROIs{mouse},closeCaROIs{mouse})));
+        %put all similar trials together 
+        closeCTraces{mouse} = allCTraces{mouse}(closeCaROIs{mouse});
+        farCTraces{mouse} = allCTraces{mouse}(farCaROIs{mouse});
+        if BBBQ == 1
+            closeBTraces{mouse} = allBTraces{mouse}{BBBroi}(closeCaROIs{mouse});
+            farBTraces{mouse} = allBTraces{mouse}{BBBroi}(farCaROIs{mouse});
+        end 
+        if VWQ == 1
+            closeVTraces{mouse} = allVTraces{mouse}(closeCaROIs{mouse});
+            farVTraces{mouse} = allVTraces{mouse}(farCaROIs{mouse});
+        end 
+        for closeTrace = 2:length(closeCaROIs{mouse})
+            if closeTrace == 2
+                closeCTraceArray{mouse} = vertcat(closeCTraces{mouse}{1},closeCTraces{mouse}{closeTrace});
+                if BBBQ == 1
+                    closeBTraceArray{mouse} = vertcat(closeBTraces{mouse}{1},closeBTraces{mouse}{closeTrace});
+                end 
+                if VWQ == 1
+                    closeVTraceArray{mouse} = vertcat(closeVTraces{mouse}{1},closeVTraces{mouse}{closeTrace});
+                end 
+            elseif closeTrace > 2 
+                closeCTraceArray{mouse} = vertcat(closeCTraceArray{mouse},closeCTraces{mouse}{closeTrace});
+                if BBBQ == 1
+                    closeBTraceArray{mouse} = vertcat(closeBTraceArray{mouse},closeBTraces{mouse}{closeTrace});
+                end 
+                if VWQ == 1
+                    closeVTraceArray{mouse} = vertcat(closeVTraceArray{mouse},closeVTraces{mouse}{closeTrace});
+                end 
+            end 
+        end 
+        
+        
+        for farTrace = 2:length(farCaROIs{mouse})
+            if farTrace == 2
+                farCTraceArray{mouse} = vertcat(farCTraces{mouse}{1},farCTraces{mouse}{farTrace});
+                if BBBQ == 1
+                    farBTraceArray{mouse} = vertcat(farBTraces{mouse}{1},farBTraces{mouse}{farTrace});
+                end 
+                if VWQ == 1
+                    farVTraceArray{mouse} = vertcat(farVTraces{mouse}{1},farVTraces{mouse}{farTrace});
+                end 
+            elseif farTrace > 2 
+                farCTraceArray{mouse} = vertcat(farCTraceArray{mouse},farCTraces{mouse}{farTrace});
+                if BBBQ == 1
+                    farBTraceArray{mouse} = vertcat(farBTraceArray{mouse},farBTraces{mouse}{farTrace});
+                end 
+                if VWQ == 1
+                    farVTraceArray{mouse} = vertcat(farVTraceArray{mouse},farVTraces{mouse}{farTrace});
+                end 
+            end 
+        end 
+            
+
+
+        % plot 
+        fig = figure;
+        Frames = size(closeTraceArray{mouse},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack(mouse):Frames_post_stim_start)/FPSstack(mouse)))+1;
+        FrameVals = round((1:FPSstack(mouse):Frames))+5; 
+        ax=gca;
+        hold all
+
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+        %@@@@@@@@@@@@@@@@ EDIT BELOW CODE @@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+        %DETERMINE 95% CI
+        if BBBQ == 1 
+            close_SEMb = (nanstd(closeBTraceArray{mouse}))/(sqrt(size(closeBTraceArray{mouse},1))); % Standard Error            
+            close_ts_bLow = tinv(0.025,size(closeBTraceArray{mouse},1)-1);% T-Score for 95% CI
+            close_ts_bHigh = tinv(0.975,size(closeBTraceArray{mouse},1)-1);% T-Score for 95% CI
+            close_CI_bLow = (nanmean(closeBTraceArray{mouse},1)) + (close_ts_bLow*close_SEMb);  % Confidence Intervals
+            close_CI_bHigh = (nanmean(closeBTraceArray{mouse},1)) + (close_ts_bHigh*close_SEMb);  % Confidence Intervals
+            
+            far_SEMb = (nanstd(farBTraceArray{mouse}))/(sqrt(size(farBTraceArray{mouse},1))); % Standard Error            
+            far_ts_bLow = tinv(0.025,size(farBTraceArray{mouse},1)-1);% T-Score for 95% CI
+            far_ts_bHigh = tinv(0.975,size(farBTraceArray{mouse},1)-1);% T-Score for 95% CI
+            far_CI_bLow = (nanmean(farBTraceArray{mouse},1)) + (far_ts_bLow*far_SEMb);  % Confidence Intervals
+            far_CI_bHigh = (nanmean(farBTraceArray{mouse},1)) + (far_ts_bHigh*far_SEMb);  % Confidence Intervals
+        end 
+
+        close_SEMc = (nanstd(closeCTraceArray{mouse}))/(sqrt(size(closeCTraceArray{mouse},1))); % Standard Error            
+        close_ts_cLow = tinv(0.025,size(closeCTraceArray{mouse},1)-1);% T-Score for 95% CI
+        close_ts_cHigh = tinv(0.975,size(closeCTraceArray{mouse},1)-1);% T-Score for 95% CI
+        close_CI_cLow = (nanmean(closeCTraceArray{mouse},1)) + (close_ts_cLow*close_SEMc);  % Confidence Intervals
+        close_CI_cHigh = (nanmean(closeCTraceArray{mouse},1)) + (close_ts_cHigh*close_SEMc);  % Confidence Intervals
+        
+        far_SEMc = (nanstd(farCTraceArray{mouse}))/(sqrt(size(farCTraceArray{mouse},1))); % Standard Error            
+        far_ts_cLow = tinv(0.025,size(farCTraceArray{mouse},1)-1);% T-Score for 95% CI
+        far_ts_cHigh = tinv(0.975,size(farCTraceArray{mouse},1)-1);% T-Score for 95% CI
+        far_CI_cLow = (nanmean(farCTraceArray{mouse},1)) + (far_ts_cLow*far_SEMc);  % Confidence Intervals
+        far_CI_cHigh = (nanmean(farCTraceArray{mouse},1)) + (far_ts_cHigh*far_SEMc);  % Confidence Intervals
+
+        if VWQ == 1
+            close_SEMv = (nanstd(closeVTraceArray{mouse}))/(sqrt(size(closeVTraceArray{mouse},1))); % Standard Error            
+            close_ts_vLow = tinv(0.025,size(closeVTraceArray{mouse},1)-1);% T-Score for 95% CI
+            close_ts_vHigh = tinv(0.975,size(closeVTraceArray{mouse},1)-1);% T-Score for 95% CI
+            close_CI_vLow = (nanmean(closeVTraceArray{mouse},1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
+            close_CI_vHigh = (nanmean(closeVTraceArray{mouse},1)) + (close_ts_vHigh*close_SEMbv);  % Confidence Intervals
+            
+            far_SEMv = (nanstd(farVTraceArray{mouse}))/(sqrt(size(farVTraceArray{mouse},1))); % Standard Error            
+            far_ts_vLow = tinv(0.025,size(farVTraceArray{mouse},1)-1);% T-Score for 95% CI
+            far_ts_vHigh = tinv(0.975,size(farVTraceArray{mouse},1)-1);% T-Score for 95% CI
+            far_CI_vLow = (nanmean(farVTraceArray{mouse},1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
+            far_CI_vHigh = (nanmean(farVTraceArray{mouse},1)) + (far_ts_vHigh*far_SEMbv);  % Confidence Intervals
+        end 
+
+        x = 1:length(close_CI_cLow);
+
+        %get averages
+        if BBBQ == 1
+            close_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(closeBTraceArray{mouse},1);
+            far_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(farBTraceArray{mouse},1);
+        end 
+        close_AVSNCdataPeaks{mouse} = nanmean(closeCTraceArray{mouse},1);
+        far_AVSNCdataPeaks{mouse} = nanmean(farCTraceArray{mouse},1);
+        if VWQ == 1
+            close_AVSNVdataPeaks{mouse}{VWroi} = nanmean(closeVTraceArray{mouse},1);
+            far_AVSNVdataPeaks{mouse}{VWroi} = nanmean(farVTraceArray{mouse},1);
+        end 
+
+        plot(close_AVSNCdataPeaks{mouse},'b','LineWidth',4)
+        plot([FPSstack(mouse)*(Frames*FPSstack changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('calcium signal percent change','FontName','Times')
+        xLimStart = floor(10*FPSstack);
+        xLimEnd = floor(24*FPSstack); 
+        xlim([1 size(AVSNBdataPeaks{BBBroi}{terminals(ccell)},2)])
+        ylim([-60 100])
+% 
+%         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+%         set(fig,'position', [500 100 900 800])
+%         alpha(0.3)
+% 
+%         %add right y axis tick marks for a specific DOD figure. 
+%         yyaxis right 
+%         if BBBQ == 1
+%             plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)},'r','LineWidth',4)
+%             patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+%             ylabel('BBB permeability percent change','FontName','Times')
+%             tlabel = sprintf('Terminal%d_BBBroi%d.',terminals(ccell),BBBroi);
+%             title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
+% %             title('BBB permeability Spike Triggered Average')
+%         end 
+%         if VWQ == 1
+%             plot(AVSNVdataPeaks{VWroi}{terminals(ccell)},'k','LineWidth',4)
+%             patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
+%             ylabel('Vessel width percent change','FontName','Times')
+%             tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
+% %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
+%             title('Vessel Width Spike Triggered Average')
+%         end 
+%         alpha(0.3)
+%         set(gca,'YColor',[0 0 0]);
+%         %make the directory and save the images   
+%         if saveQ == 1  
+%             dir2 = strrep(dir1,'\','/');
+%             dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+%             export_fig(dir3)
+%         end            
+
+      
+            
+
+         
+        
+
+    end 
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+    %@@@@@@@@@@@@@@@@ EDIT BELOW CODE @@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+
+    %}
+elseif tTypeQ == 1
+    %{
+    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
+    allCTraces = cell(1,length(SNCdataPeaks{1}));
+    allBTraces = cell(1,length(SNCdataPeaks{1}));
+    allVTraces = cell(1,length(SNCdataPeaks{1}));
+    for ccell = 1:length(terminals)
+        % plot    
+        fig = figure; 
+        Frames = size(SNBdataPeaks{1}{BBBroi}{terminals(ccell)}{3},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+        FrameVals = round((1:FPSstack:Frames)+5); 
+        ax=gca;
+        hold all
+        count = 1;
+        for vid = 1:length(vidList)
+               if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
+                    if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
+                        for peak = 1:size(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per},1)
+                            allBTraces{BBBroi}{terminals(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(peak,:)-100);
+                            allCTraces{terminals(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:)-100);
+                            if VWQ == 1
+                                allVTraces{VWroi}{terminals(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(peak,:)-100);  
+                            end 
+                            count = count + 1;
+                        end 
+                    end
+               end               
+        end 
+
+
+        %remove traces that are outliers 
+        %{
+        %statistically
+        count2 = 1; 
+        count3 = 1;
+        count4 = 1;
+        for peak = 1:size(allBTraces{terminals(ccell)}{per},1)
+%                 if allBTraces{terminals(ccell)}(peak,:) < nanstd(allBTraces{terminals(ccell)},1)*3                  
+                Btraces{terminals(ccell)}{per}(count2,:) = (allBTraces{terminals(ccell)}{per}(peak,:))-100;
+                count2 = count2 + 1;
+%                 end 
+%                 if allCTraces{terminals(ccell)}(peak,:) < nanstd(allCTraces{terminals(ccell)},1)*3                    
+                Ctraces{terminals(ccell)}{per}(count3,:) = (allCTraces{terminals(ccell)}{per}(peak,:))-100;
+                count3 = count3 + 1;
+%                 end 
+%                 if allVTraces{terminals(ccell)}(peak,:) < nanstd(allVTraces{terminals(ccell)},1)*3%*0.000000000003                    
+                Vtraces{terminals(ccell)}{per}(count4,:) = (allVTraces{terminals(ccell)}{per}(peak,:))-100;
+                count4 = count4 + 1;
+%                 end 
+        end 
+
+        %remove traces that are outliers by removing the trace with the lowest value
+
+%             [BminVal,BminInd] = max(Btraces{terminals(ccell)}(:));
+%             [Brow,~] = find(Btraces{terminals(ccell)} == BminVal);
+%             Btraces{terminals(ccell)}(Brow,:) = [];
+% 
+%             [CminVal,CminInd] = min(Ctraces{terminals(ccell)}(:));
+%             [Crow,~] = find(Ctraces{terminals(ccell)} == CminVal);
+%             Ctraces{terminals(ccell)}(Crow,:) = [];
+%             
+%             [VminVal,VminInd] = min(Vtraces{terminals(ccell)}(:));
+%             [Vrow,~] = find(Vtraces{terminals(ccell)} == VminVal);
+%             Vtraces{terminals(ccell)}(Vrow,:) = [];
+
+
+
+        %remove specific trace
+%             Btraces{terminals(ccell)}(123,:) = [];
+%}
+
+        %calculate the 95% confidence interval
+        SEMb = (nanstd(allBTraces{BBBroi}{terminals(ccell)}{per}))/(sqrt(size(allBTraces{BBBroi}{terminals(ccell)}{per},1))); % Standard Error            
+        ts_bLow = tinv(0.025,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        ts_bHigh = tinv(0.975,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        CI_bLow = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+        CI_bHigh = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+        
+        SEMc = (nanstd(allCTraces{terminals(ccell)}{per}))/(sqrt(size(allCTraces{terminals(ccell)}{per},1))); % Standard Error            
+        ts_cLow = tinv(0.025,size(allCTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        ts_cHigh = tinv(0.975,size(allCTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+        CI_cLow = (nanmean(allCTraces{terminals(ccell)}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+        CI_cHigh = (nanmean(allCTraces{terminals(ccell)}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+        
+        if VWQ == 1
+            SEMv = (nanstd(allVTraces{VWroi}{terminals(ccell)}{per}))/(sqrt(size(allVTraces{VWroi}{terminals(ccell)}{per},1))); % Standard Error            
+            ts_vLow = tinv(0.025,size(allVTraces{VWroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+            ts_vHigh = tinv(0.975,size(allVTraces{VWroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+            CI_vLow = (nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+            CI_vHigh = (nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals        
+        end 
+        x = 1:length(CI_cLow);
+
+        %get averages
+        AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per} = nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1);
+        AVSNCdataPeaks{terminals(ccell)}{per} = nanmean(allCTraces{terminals(ccell)}{per},1);
+        if VWQ == 1
+            AVSNVdataPeaks{VWroi}{terminals(ccell)}{per} = nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1);
+        end 
+  
+        plot(AVSNCdataPeaks{terminals(ccell)}{per},'b','LineWidth',4)
+        plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('calcium signal percent change','FontName','Times')
+        xLimStart = floor(10*FPSstack);
+        xLimEnd = floor(24*FPSstack); 
+        xlim([1 size(AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per},2)])
+        ylim([-60 100])
+           
+        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+        set(fig,'position', [500 100 900 800])
+        alpha(0.3)
+
+        %add right y axis tick marks for a specific DOD figure. 
+        yyaxis right 
+        if BBBQ == 1
+            plot(AVSNBdataPeaks{BBBroi}{terminals(ccell)}{per},'r','LineWidth',4)
+            patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+            ylabel('BBB permeability percent change','FontName','Times')
+            tlabel = sprintf('Terminal%d_BBBroi%d.',terminals(ccell),BBBroi);
+            title(sprintf('Terminal %d. BBB ROI %d.',terminals(ccell),BBBroi))
+%             title('BBB permeability Spike Triggered Average')
+        end 
+        if VWQ == 1
+            plot(AVSNVdataPeaks{VWroi}{terminals(ccell)}{per},'k','LineWidth',4)
+            patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
+            ylabel('Vessel width percent change','FontName','Times')
+            tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
+%             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
+            title('Vessel Width Spike Triggered Average')
+        end 
+        alpha(0.3)
+        set(gca,'YColor',[0 0 0]);
+        %make the directory and save the images   
+        if saveQ == 1  
+            dir2 = strrep(dir1,'\','/');
+            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+            export_fig(dir3)
+        end        
+    end 
+    %}    
+end 
+
+
+
+
+
+
+
 %% sort red and green channel stacks based on ca peak location 
 %{
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
@@ -3915,32 +4324,36 @@ end
 %}
 %% make multi-color histograms of Ca ROI to vessel distance and BBB data
 %{
+clear minDistMicrons_LowGroup maxBBBvalTimePoints_LowGroup maxBBBvals_LowGroup minDistMicrons_HighGroup maxBBBvalTimePoints_HighGroup maxBBBvals_HighGroup
+
 if lightQ == 0 
    %{
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
     distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
-    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
     counter1 = 1;
     counter2 = 1;
     for term = 1:length(minDistMicronsAllMice)
-        if minDistMicronsAllMice(term) < distCutOff
-            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
-            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
-            counter1 = counter1 + 1;
-        elseif minDistMicronsAllMice(term) > distCutOff
-            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
-            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
-            counter2 = counter2 + 1;
-        end 
+        if maxBBBvalsAllMice(term) > 10
+            if minDistMicronsAllMice(term) < distCutOff
+                minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
+                maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
+                counter1 = counter1 + 1;
+            elseif minDistMicronsAllMice(term) > distCutOff
+                minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
+                maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
+                counter2 = counter2 + 1;
+            end 
+        end
     end 
 
     % plot    
@@ -3961,14 +4374,22 @@ if lightQ == 0
  
     figure;
     binRange = linspace(0,max(maxBBBvalsAllMice),22);
-    
     % linear
-%     h1 = histcounts(maxBBBvals_LowGroup,[binRange Inf]);
-%     h2 = histcounts(maxBBBvals_HighGroup,[binRange Inf]);   
-%     b = bar(binRange,[h1;h2]',1);  
-%     b(1).FaceColor = [0 0.3 0.3];
-%     b(2).FaceColor = [0 0.9 0.9];
+    h1 = histcounts(maxBBBvals_LowGroup,[binRange Inf]);
+    h2 = histcounts(maxBBBvals_HighGroup,[binRange Inf]);   
+    b = bar(binRange,[h1;h2]',1);  
+    b(1).FaceColor = [0 0.3 0.3];
+    b(2).FaceColor = [0 0.9 0.9];
+    ax = gca;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+ 
     
+    figure;
+    binRange = linspace(0,max(maxBBBvalsAllMice),22);
     % log scale 
     [h1,edges1] = histcounts(log10(maxBBBvals_LowGroup),length(binRange));
     [h2,edges2] = histcounts(log10(maxBBBvals_HighGroup),length(binRange));
@@ -3976,9 +4397,8 @@ if lightQ == 0
     b(1).FaceColor = [0 0.3 0.3];
     b(2).FaceColor = [0 0.9 0.9];    
     set(gca, 'xscale','log') 
-
     ax = gca;
-    ax.FontSize = 50;
+    ax.FontSize = 25;
     ax.FontName = 'Times';
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
@@ -3990,27 +4410,28 @@ elseif lightQ == 1
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
     distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
-    logQ = input('Input 1 to apply log scale when applicable. O otherwise. ');
     per = input('Input 3 for light off period. Input 2 for red light. Input 1 for blue light. ');
-    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
     counter1 = 1;
     counter2 = 1;
     for term = 1:length(minDistMicronsAllMice)
-        if minDistMicronsAllMice(term) < distCutOff
-            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
-            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
-            counter1 = counter1 + 1;
-        elseif minDistMicronsAllMice(term) > distCutOff
-            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
-            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
-            counter2 = counter2 + 1;
+        if maxBBBvalsAllMice{per}(term) > 10
+            if minDistMicronsAllMice(term) < distCutOff
+                minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
+                maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
+                counter1 = counter1 + 1;
+            elseif minDistMicronsAllMice(term) > distCutOff
+                minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
+                maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
+                counter2 = counter2 + 1;
+            end
         end 
     end 
 
@@ -4032,26 +4453,30 @@ elseif lightQ == 1
  
     figure;
     binRange = linspace(0,max(maxBBBvalsAllMice{per}),22);
-    
-    if logQ == 0
-        % linear
-        h1 = histcounts(maxBBBvals_LowGroup,[binRange Inf]);
-        h2 = histcounts(maxBBBvals_HighGroup,[binRange Inf]);   
-        b = bar(binRange,[h1;h2]',1);  
-        b(1).FaceColor = [0 0.3 0.3];
-        b(2).FaceColor = [0 0.9 0.9];
-    elseif logQ == 1 
-        % log scale 
-        [h1,edges1] = histcounts(log10(maxBBBvals_LowGroup),length(binRange));
-        [h2,edges2] = histcounts(log10(maxBBBvals_HighGroup),length(binRange));
-        b = bar(10.^edges1(1:length(edges1)-1)',[h1;h2]');  
-        b(1).FaceColor = [0 0.3 0.3];
-        b(2).FaceColor = [0 0.9 0.9];    
-        set(gca, 'xscale','log') 
-    end 
-
+    % linear
+    h1 = histcounts(maxBBBvals_LowGroup,[binRange Inf]);
+    h2 = histcounts(maxBBBvals_HighGroup,[binRange Inf]);   
+    b = bar(binRange,[h1;h2]',1);  
+    b(1).FaceColor = [0 0.3 0.3];
+    b(2).FaceColor = [0 0.9 0.9];
     ax = gca;
-    ax.FontSize = 50;
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
+    ylabel('Number of Terminals','FontName','Times')
+    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+    
+    figure;
+    binRange = linspace(0,max(maxBBBvalsAllMice{per}),22);
+    % log scale 
+    [h1,edges1] = histcounts(log10(maxBBBvals_LowGroup),length(binRange));
+    [h2,edges2] = histcounts(log10(maxBBBvals_HighGroup),length(binRange));
+    b = bar(10.^edges1(1:length(edges1)-1)',[h1;h2]');  
+    b(1).FaceColor = [0 0.3 0.3];
+    b(2).FaceColor = [0 0.9 0.9];    
+    set(gca, 'xscale','log') 
+    ax = gca;
+    ax.FontSize = 25;
     ax.FontName = 'Times';
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
@@ -4060,22 +4485,24 @@ elseif lightQ == 1
 end 
 %}
 %% fit the distributions and overlay the fits 
+%{
+clear maxBBBvals_HighGroup maxBBBvals_LowGroup maxBBBvalTimePoints_HighGroup maxBBBvalTimePoints_LowGroup minDistMicrons_HighGroup minDistMicrons_LowGroup
 
 distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
 if lightQ == 0 
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
-    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
     counter1 = 1;
     counter2 = 1;
     for term = 1:length(minDistMicronsAllMice)
-        if maxBBBvalsAllMice(term) > 1
+        if maxBBBvalsAllMice(term) > 10
             if minDistMicronsAllMice(term) < distCutOff
                 minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
                 maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
@@ -4090,30 +4517,31 @@ if lightQ == 0
         end 
     end 
 elseif lightQ == 1 
-    
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
     per = input('Input 3 for light off period. Input 2 for red light. Input 1 for blue light. ');
-    minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
-    minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
-    maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     minDistMicrons_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvalTimePoints_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     maxBBBvals_LowGroup = zeros(1,sum(minDistMicronsAllMice(:) < distCutOff));
+%     minDistMicrons_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvalTimePoints_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
+%     maxBBBvals_HighGroup = zeros(1,sum(minDistMicronsAllMice(:) > distCutOff));
     counter1 = 1;
     counter2 = 1;
     for term = 1:length(minDistMicronsAllMice)
-        if minDistMicronsAllMice(term) < distCutOff
-            minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
-            maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
-            counter1 = counter1 + 1;
-        elseif minDistMicronsAllMice(term) > distCutOff
-            minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
-            maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
-            maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
-            counter2 = counter2 + 1;
+        if maxBBBvalsAllMice{per}(term) > 10
+            if minDistMicronsAllMice(term) < distCutOff
+                minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice{per}(term); 
+                maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice{per}(term); 
+                counter1 = counter1 + 1;
+            elseif minDistMicronsAllMice(term) > distCutOff
+                minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+                maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice{per}(term); 
+                maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice{per}(term);
+                counter2 = counter2 + 1;
+            end 
         end 
     end 
 end 
@@ -4134,9 +4562,9 @@ xlabel({'Time Lag Between Ca';'and BBB Perm Peaks (s)'},'FontName','Times')
 ylabel('Number of Terminals','FontName','Times')
 legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
 
-pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
-pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
-xVals = linspace(0,5,22);
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',5); %kernel good for nonparametric data 
+xVals = linspace(0,50,22);
 yVals1 = pdf(pd1,xVals);
 yVals2 = pdf(pd2,xVals);
 figure;
@@ -4148,11 +4576,11 @@ ax.FontName = 'Times';
 xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 ylabel('Number of Terminals','FontName','Times')
 legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
-xlim([0 5])
+xlim([0 50])
 
-pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',0.5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
-pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',0.5); %kernel good for nonparametric data 
-xVals = linspace(0,5,22);
+pd1 = fitdist(maxBBBvals_LowGroup','Kernel','BandWidth',5); %kernel distribution builds the pdf by creating an individual probability density curve for each data value, then summing the smooth curves. This approach creates one smooth, continuous probability density function for the data set.
+pd2 = fitdist(maxBBBvals_HighGroup','Kernel','BandWidth',5); %kernel good for nonparametric data 
+xVals = linspace(0,50,22);
 yVals1 = pdf(pd1,xVals);
 yVals2 = pdf(pd2,xVals);
 figure;
@@ -4165,17 +4593,18 @@ xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
 ylabel('Number of Terminals','FontName','Times')
 legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
 set(gca, 'xscale','log')   
-xlim([0 5])
+xlim([0 50])
 
 %}
 %% figure out what Ca ROIs fall into distance (from vessel) categories 
 %{
 distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
-closeTerms = cell(1,mouseNum);
-closeTermDists = cell(1,mouseNum);
+closeCaROIs = cell(1,mouseNum);
+closeCaROIDists = cell(1,mouseNum);
+closeCaROI_CaBBBtimeLags = cell(1,mouseNum);
 for mouse = 1:mouseNum
-    closeTerms{mouse} = mouseTerms{mouse}((minDistsMicrons{mouse} < distCutOff));
-    closeTermDists{mouse} = minDistsMicrons{mouse}((minDistsMicrons{mouse} < distCutOff));
-    closeTermCaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} < distCutOff));
+    closeCaROIs{mouse} = mouseTerms{mouse}((minDistsMicrons{mouse} < distCutOff));
+    closeCaROIDists{mouse} = minDistsMicrons{mouse}((minDistsMicrons{mouse} < distCutOff));
+    closeCaROI_CaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} < distCutOff));
 end 
 %}
