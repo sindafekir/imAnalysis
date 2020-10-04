@@ -397,9 +397,8 @@ for tType = 1:numTtypes
     end 
 end 
 %}
-%% baseline, smooth trial, and plot trial data 
-% ADD IN LOGIC TO PLOT WHEEL VELOCITY DATA 
-
+%% baseline, smooth trial, and plot event triggered averages 
+%{
 %baseline data to average value between 0 sec and -2 sec (0 sec being stim
 %onset) 
 if CAQ == 1
@@ -986,7 +985,6 @@ elseif AVQ == 1
 end 
 %}
 %}
-
 %% compare terminal calcium activity - create correlograms
 %{
 AVdata = cell(1,length(nsCeta));
