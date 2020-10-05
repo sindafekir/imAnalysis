@@ -2364,7 +2364,8 @@ elseif tTypeQ == 1
                 AVSNVdataPeaks2{VWroi}{terminals(ccell)}{per} = nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1);
             end 
             
-            %remove traces that are outliers 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%remove traces that are outliers 
             %statistically (greater than 2 standard deviations from the
             %mean 
             count2 = 1; 
@@ -2372,35 +2373,31 @@ elseif tTypeQ == 1
             count4 = 1;
             for peak = 1:size(allCTraces{terminals(ccell)},1)
                     if BBBQ == 1
-                        if allBTraces{BBBroi}{terminals(ccell)}{per}(peak,:) < AVSNBdataPeaks2{BBBroi}{terminals(ccell)}{per} + nanstd(allBTraces{BBBroi}{terminals(ccell)}{per},1)*2  & allBTraces{BBBroi}{terminals(ccell)}{per}(peak,:) > AVSNBdataPeaks2{BBBroi}{terminals(ccell)}{per} - nanstd(allBTraces{BBBroi}{terminals(ccell)}{per},1)*2               
-                            BTraces{BBBroi}{terminals(ccell)}{per}(count2,:) = (allBTraces{BBBroi}{terminals(ccell)}{per}(peak,:));
+                        if allBTraces{BBBroi}{terminals(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terminals(ccell)} + nanstd(allBTraces{BBBroi}{terminals(ccell)},1)*2  & allBTraces{BBBroi}{terminals(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terminals(ccell)} - nanstd(allBTraces{BBBroi}{terminals(ccell)},1)*2               
+                            BTraces{BBBroi}{terminals(ccell)}(count2,:) = (allBTraces{BBBroi}{terminals(ccell)}(peak,:));
                             count2 = count2 + 1;
                         end 
                     end 
-                    if allCTraces{terminals(ccell)}{per}(peak,:) < AVSNCdataPeaks2{terminals(ccell)}{per} + nanstd(allCTraces{terminals(ccell)}{per},1)*2 & allCTraces{terminals(ccell)}{per}(peak,:) > AVSNCdataPeaks2{terminals(ccell)}{per} - nanstd(allCTraces{terminals(ccell)}{per},1)*2                     
-                        CTraces{terminals(ccell)}{per}(count3,:) = (allCTraces{terminals(ccell)}{per}(peak,:));
+                    if allCTraces{terminals(ccell)}(peak,:) < AVSNCdataPeaks2{terminals(ccell)} + nanstd(allCTraces{terminals(ccell)},1)*2 & allCTraces{terminals(ccell)}(peak,:) > AVSNCdataPeaks2{terminals(ccell)} - nanstd(allCTraces{terminals(ccell)},1)*2                     
+                        CTraces{terminals(ccell)}(count3,:) = (allCTraces{terminals(ccell)}(peak,:));
                         count3 = count3 + 1;
                     end 
                     if VWQ == 1
-                        if allVTraces{VWroi}{terminals(ccell)}{per}(peak,:) < AVSNVdataPeaks2{VWroi}{terminals(ccell)}{per} + nanstd(allVTraces{VWroi}{terminals(ccell)}{per},1)*2 & allVTraces{VWroi}{terminals(ccell)}{per}(peak,:) > AVSNVdataPeaks2{VWroi}{terminals(ccell)}{per} - nanstd(allVTraces{VWroi}{terminals(ccell)}{per},1)*2              
-                            VTraces{VWroi}{terminals(ccell)}{per}(count4,:) = (allVTraces{VWroi}{terminals(ccell)}{per}(peak,:));
+                        if allVTraces{VWroi}{terminals(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terminals(ccell)} + nanstd(allVTraces{VWroi}{terminals(ccell)},1)*2 & allVTraces{VWroi}{terminals(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terminals(ccell)} - nanstd(allVTraces{VWroi}{terminals(ccell)},1)*2              
+                            VTraces{VWroi}{terminals(ccell)}(count4,:) = (allVTraces{VWroi}{terminals(ccell)}(peak,:));
                             count4 = count4 + 1;
                         end 
                     end 
             end 
 
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %PICK UP HERE- CHANGE ALLBTRACES TO BTRACES ETC IN THIS ENTIRE
-            %SECTION 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             %calculate the 95% confidence interval
-            if BBBQ == 1
-                SEMb = (nanstd(allBTraces{BBBroi}{terminals(ccell)}{per}))/(sqrt(size(allBTraces{BBBroi}{terminals(ccell)}{per},1))); % Standard Error            
-                ts_bLow = tinv(0.025,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
-                ts_bHigh = tinv(0.975,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
-                CI_bLow = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                CI_bHigh = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
-            end 
-            
+            SEMb = (nanstd(allBTraces{BBBroi}{terminals(ccell)}{per}))/(sqrt(size(allBTraces{BBBroi}{terminals(ccell)}{per},1))); % Standard Error            
+            ts_bLow = tinv(0.025,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+            ts_bHigh = tinv(0.975,size(allBTraces{BBBroi}{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
+            CI_bLow = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+            CI_bHigh = (nanmean(allBTraces{BBBroi}{terminals(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+
             SEMc = (nanstd(allCTraces{terminals(ccell)}{per}))/(sqrt(size(allCTraces{terminals(ccell)}{per},1))); % Standard Error            
             ts_cLow = tinv(0.025,size(allCTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
             ts_cHigh = tinv(0.975,size(allCTraces{terminals(ccell)}{per},1)-1);% T-Score for 95% CI
@@ -2422,8 +2419,6 @@ elseif tTypeQ == 1
             if VWQ == 1
                 AVSNVdataPeaks{VWroi}{terminals(ccell)}{per} = nanmean(allVTraces{VWroi}{terminals(ccell)}{per},1);
             end 
-            
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
             plot(AVSNCdataPeaks{terminals(ccell)}{per},'b','LineWidth',4)
             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
