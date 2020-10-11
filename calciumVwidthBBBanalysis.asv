@@ -2771,7 +2771,7 @@ end
 % end 
 %}
 %% plot calcium spike triggered average (average across mice. compare close and far terminals.) 
-%{
+
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE ARE THE CLOSE CALCIUM ROI VALUES?');
 cd(regImDir);
@@ -2825,7 +2825,7 @@ if saveQ == 1
     dir1 = input('What folder are you saving these images in? ');
 end 
 
-%
+%%
 if tTypeQ == 1
     clear allBTraces allCTraces allVTraces
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
@@ -2893,6 +2893,7 @@ if traceRemovalQ == 1
         end
     end 
 end 
+%%
 
 %average the close and far terminals within each animal and plot 
 closeCTraces = cell(1,length(closeCaROIs));
@@ -3148,8 +3149,10 @@ for mouse = 1:length(closeCaROIs)
     end 
 end 
 
-% AVERAGE ACROSS MICE 
+%% AVERAGE ACROSS MICE 
+
 clear close_Btraces_allMice far_Btraces_allMice close_Ctraces_allMice far_Ctraces_allMice close_Vtraces_allMice far_Vtraces_allMice   
+
 
 % resample data (closeBTraceArray)
 FPSstack2 = zeros(1,length(FPSstack));
@@ -3213,20 +3216,20 @@ for mouse = 1:length(mouseNums)
         end 
     end 
     for trace2 = 1:size(closeCTraceArray{mouseNums(mouse)},1)
-        close_Ctraces_allMice(counter3,:) = (resample(closeCTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(closeCTraceArray{mouseNums(mouse)},2)));% * (size(closeCTraceArray{mouseNums(mouse)},1)/totalNum_closeCtraces);           
+        close_Ctraces_allMice(counter3,:) = (resample(closeCTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(closeCTraceArray{mouseNums(mouse)},2))) * (size(closeCTraceArray{mouseNums(mouse)},1)/totalNum_closeCtraces);           
         counter3 = counter3 + 1;
     end 
     for trace2 = 1:size(farCTraceArray{mouseNums(mouse)},1)
-        far_Ctraces_allMice(counter4,:) = resample(farCTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(farCTraceArray{mouseNums(mouse)},2));% * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
+        far_Ctraces_allMice(counter4,:) = resample(farCTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(farCTraceArray{mouseNums(mouse)},2)) * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
         counter4 = counter4 + 1;
     end         
     if VWQ == 1
         for trace3 = 1:size(closeVTraceArray{mouseNums(mouse)},1)
-            close_Vtraces_allMice(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)},2)));% * (size(closeVTraceArray{mouseNums(mouse)},1)/totalNum_closeVtraces);           
+            close_Vtraces_allMice(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)},2))) * (size(closeVTraceArray{mouseNums(mouse)},1)/totalNum_closeVtraces);           
             counter5 = counter5 + 1;
         end 
         for trace3 = 1:size(farVTraceArray{mouseNums(mouse)},1)
-            far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)},2));% * (size(farVTraceArray{mouseNums(mouse)},1)/totalNum_farVtraces);  
+            far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)},2)) * (size(farVTraceArray{mouseNums(mouse)},1)/totalNum_farVtraces);  
             counter6 = counter6 + 1;
         end 
     end 
@@ -3237,8 +3240,8 @@ if BBBQ == 1
     close_avBdata = nanmean(close_Btraces_allMice,1);
     far_avBdata = nanmean(far_Btraces_allMice,1);
 end 
-close_avCdata = nanmean(close_Ctraces_allMice,1);
-far_avCdata = nanmean(far_Ctraces_allMice,1);
+close_avCdata = nansum(close_Ctraces_allMice,1);
+far_avCdata = nansum(far_Ctraces_allMice,1);
 if VWQ == 1
     close_avVdata = nanmean(close_Vtraces_allMice,1);
     far_avVdata = nanmean(far_Vtraces_allMice,1);
