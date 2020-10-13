@@ -51,9 +51,11 @@ end
 %% do background subtraction 
 %select rows that do not have vessels or GCaMP in them 
 if vidNumQ == 0 
-    [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
+%     [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
+    [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
 elseif vidNumQ == 1   
-    [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
+%     [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
+    [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
 end 
 
 %% average registered imaging data across planes in Z 

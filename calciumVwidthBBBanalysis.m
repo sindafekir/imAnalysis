@@ -1748,7 +1748,7 @@ end
 %% normalize to baseline period and plot calcium peak aligned data
 %{
 %find where calcium peak onset is 
-%changePt = floor(Frames/2)-floor(0.25*FPSstack);    
+% changePt = floor(size(sortedCdata{1}{terminals(1)}{1},2)/2)-floor(0.25*FPSstack);    
 
 if tTypeQ == 0 
     %{
@@ -1982,9 +1982,7 @@ elseif tTypeQ == 1
     %}
 end 
 %}                     
-%% plot calcium spike triggered averages 
-%MAKE SURE THIS OUTPUTS ALLB/C/VTRACES EVERY ITERATION 
-%MAKE IT OPTIONAL TO STATITICALLY REMOVE TRACES 
+%% plot calcium spike triggered averages (this only plots traces within 2 std from the mean, but all data gets stored)
 %{
 %  clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3 AVSNBdataPeaks AVSNBdataPeaks2 AVSNBdataPeaks3 AVSNVdataPeaks AVSNVdataPeaks2 AVSNVdataPeaks3 BTraces VTraces CTraces
 
@@ -2481,7 +2479,7 @@ elseif tTypeQ == 1
             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                 plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
             end 
-            plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+%             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
@@ -2789,27 +2787,23 @@ FPSstack = cell(1,length(closeCaROIs));
 SNCdataPeaks = cell(1,length(closeCaROIs));
 SNBdataPeaks = cell(1,length(closeCaROIs));
 SNVdataPeaks = cell(1,length(closeCaROIs));
-for mouse = 4%1:length(closeCaROIs)
+for mouse = 1:length(closeCaROIs)
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
     MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
     Mat = matfile(MatFileName);
-    BBBQ = Mat.BBBQ;
-    VWQ = Mat.VWQ;
-    FPSstack{mouse} = Mat.FPSstack;
-    allCTraces{mouse} = Mat.allCTraces;
-    SNCdataPeaks{mouse} = Mat.SNCdataPeaks;
-    if BBBQ == 1 
-        allBTraces{mouse} = Mat.allBTraces;
-        SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
-    end 
-    if VWQ == 1 
-        allVTraces{mouse} = Mat.allVTraces;
-        SNVdataPeaks{mouse} = Mat.SNVdataPeaks;
-    end 
-    CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
+%     FPSstack{mouse} = Mat.FPSstack;
+%     allCTraces{mouse} = Mat.allCTraces;
+%     SNCdataPeaks{mouse} = Mat.SNCdataPeaks;    
+%     allBTraces{mouse} = Mat.allBTraces;
+%     SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
+    allVTraces{mouse} = Mat.allVTraces;
+    SNVdataPeaks{mouse} = Mat.SNVdataPeaks;    
+%     CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
 end 
 tTypeQ = Mat.tTypeQ;
+
+%%
 
 %set plotting paramaters 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
@@ -2938,8 +2932,8 @@ for mouse = 1:length(closeCaROIs)
         farBTraces{mouse} = allBTraces{mouse}{BBBroi}(farCaROIs{mouse});
     end 
     if VWQ == 1
-        closeVTraces{mouse} = allVTraces{mouse}(closeCaROIs{mouse});
-        farVTraces{mouse} = allVTraces{mouse}(farCaROIs{mouse});
+        closeVTraces{mouse} = allVTraces{mouse}{VWroi}(closeCaROIs{mouse});
+        farVTraces{mouse} = allVTraces{mouse}{VWroi}(farCaROIs{mouse});
     end 
     if length(closeCTraces{mouse}) == 1
         closeCTraceArray{mouse} = closeCTraces{mouse}{1};
@@ -3032,13 +3026,13 @@ for mouse = 1:length(closeCaROIs)
         close_ts_vLow = tinv(0.025,size(closeVTraceArray{mouse},1)-1);% T-Score for 95% CI
         close_ts_vHigh = tinv(0.975,size(closeVTraceArray{mouse},1)-1);% T-Score for 95% CI
         close_CI_vLow = (nanmean(closeVTraceArray{mouse},1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
-        close_CI_vHigh = (nanmean(closeVTraceArray{mouse},1)) + (close_ts_vHigh*close_SEMbv);  % Confidence Intervals
+        close_CI_vHigh = (nanmean(closeVTraceArray{mouse},1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals
 
         far_SEMv = (nanstd(farVTraceArray{mouse}))/(sqrt(size(farVTraceArray{mouse},1))); % Standard Error            
         far_ts_vLow = tinv(0.025,size(farVTraceArray{mouse},1)-1);% T-Score for 95% CI
         far_ts_vHigh = tinv(0.975,size(farVTraceArray{mouse},1)-1);% T-Score for 95% CI
         far_CI_vLow = (nanmean(farVTraceArray{mouse},1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
-        far_CI_vHigh = (nanmean(farVTraceArray{mouse},1)) + (far_ts_vHigh*far_SEMbv);  % Confidence Intervals
+        far_CI_vHigh = (nanmean(farVTraceArray{mouse},1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
     end 
 
     x = 1:length(close_CI_cLow);
@@ -3094,7 +3088,7 @@ for mouse = 1:length(closeCaROIs)
             plot(close_AVSNVdataPeaks{mouse}{VWroi},'k','LineWidth',4)
             patch([x fliplr(x)],[(close_CI_vLow) (fliplr(close_CI_vHigh))],'k','EdgeColor','none')
             ylabel('Vessel width percent change','FontName','Times')
-            tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
+            title(sprintf('Close Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
     %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
             title(sprintf('Close Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
         end 
@@ -3139,7 +3133,7 @@ for mouse = 1:length(closeCaROIs)
             plot(far_AVSNVdataPeaks{mouse}{VWroi},'k','LineWidth',4)
             patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],'k','EdgeColor','none')
             ylabel('Vessel width percent change','FontName','Times')
-            tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
+            title(sprintf('Far Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
     %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
             title(sprintf('Far Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
         end 
@@ -3148,7 +3142,7 @@ for mouse = 1:length(closeCaROIs)
     end 
 end 
 
-% AVERAGE ACROSS MICE 
+%% AVERAGE ACROSS MICE 
 clear close_Btraces_allMice far_Btraces_allMice close_Ctraces_allMice far_Ctraces_allMice close_Vtraces_allMice far_Vtraces_allMice   
 
 % resample data (closeBTraceArray)
@@ -3272,12 +3266,12 @@ if VWQ == 1
     close_ts_vLow = tinv(0.025,size(close_Vtraces_allMice,1)-1);% T-Score for 95% CI
     close_ts_vHigh = tinv(0.975,size(close_Vtraces_allMice,1)-1);% T-Score for 95% CI
     close_CI_vLow = (nanmean(close_Vtraces_allMice,1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
-    close_CI_vHigh = (nanmean(close_Vtraces_allMice,1)) + (close_ts_vHigh*close_SEMbv);  % Confidence Intervals      
+    close_CI_vHigh = (nanmean(close_Vtraces_allMice,1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals      
     far_SEMv = (nanstd(far_Vtraces_allMice))/(sqrt(size(far_Vtraces_allMice,1))); % Standard Error            
     far_ts_vLow = tinv(0.025,size(far_Vtraces_allMice,1)-1);% T-Score for 95% CI
     far_ts_vHigh = tinv(0.975,size(far_Vtraces_allMice,1)-1);% T-Score for 95% CI
     far_CI_vLow = (nanmean(far_Vtraces_allMice,1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
-    far_CI_vHigh = (nanmean(far_Vtraces_allMice,1)) + (far_ts_vHigh*far_SEMbv);  % Confidence Intervals
+    far_CI_vHigh = (nanmean(far_Vtraces_allMice,1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
 end 
 x = 1:length(close_CI_cLow);
 
@@ -3292,7 +3286,7 @@ ax=gca;
 hold all
 plot(close_avCdata,'b','LineWidth',4)
 changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
-plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+% plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
 ax.FontSize = 25;
@@ -3302,7 +3296,7 @@ ylabel('calcium signal percent change','FontName','Times')
 xLimStart = floor(10*min(FPSstack2));
 xLimEnd = floor(24*min(FPSstack2)); 
 xlim([1 minLen])
-ylim([-60 100])
+ylim([-10 50])
 patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
 set(fig,'position', [500 100 900 800])
 alpha(0.3)
@@ -3313,15 +3307,14 @@ if BBBQ == 1
     patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
     ylabel('BBB permeability percent change','FontName','Times')
     title(sprintf('Close Terminals. All mice Averaged. BBB ROI %d.',BBBroi))
-%             title('BBB permeability Spike Triggered Average')
+    ylim([-1 4])
 end 
 if VWQ == 1
     plot(close_avVdata,'k','LineWidth',4)
     patch([x fliplr(x)],[(close_CI_vLow) (fliplr(close_CI_vHigh))],'k','EdgeColor','none')
     ylabel('Vessel width percent change','FontName','Times')
-    tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
-%             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
     title(sprintf('Close Terminals. All mice Averaged. VW ROI %d.',VWroi))
+    ylim([-0.01 0.02])
 end 
 alpha(0.3)
 set(gca,'YColor',[0 0 0]);     
@@ -3337,7 +3330,7 @@ ax=gca;
 hold all
 plot(far_avCdata,'b','LineWidth',4)
 changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
-plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+% plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
 ax.FontSize = 25;
@@ -3347,7 +3340,7 @@ ylabel('calcium signal percent change','FontName','Times')
 xLimStart = floor(10*min(FPSstack2));
 xLimEnd = floor(24*min(FPSstack2)); 
 xlim([1 minLen])
-ylim([-60 100])
+ylim([-10 50])
 patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
 set(fig,'position', [500 100 900 800])
 alpha(0.3)
@@ -3359,14 +3352,14 @@ if BBBQ == 1
     ylabel('BBB permeability percent change','FontName','Times')
     title(sprintf('Far Terminals. All mice Averaged. BBB ROI %d.',BBBroi))
 %             title('BBB permeability Spike Triggered Average')
+    ylim([-1 4])
 end 
 if VWQ == 1
     plot(far_avVdata,'k','LineWidth',4)
     patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],'k','EdgeColor','none')
     ylabel('Vessel width percent change','FontName','Times')
-    tlabel = sprintf('Terminal%d_VwidthROI%d.',terminals(ccell),VWroi);
-%             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
     title(sprintf('Far Terminals. All mice Averaged. VW ROI %d.',VWroi))
+    ylim([-0.01 0.02])
 end 
 alpha(0.3)
 set(gca,'YColor',[0 0 0]);     
@@ -4257,7 +4250,7 @@ elseif lightQ == 1
                maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePoints{1}{per},maxBBBvalTimePoints{mouse}{per});
                maxBBBvalsAllMice{per} = horzcat(maxBBBvals{1}{per},maxBBBvals{mouse}{per});
             elseif mouse > 2 
-               minDistMicronsAllMice = horzcat(minDistMicronsAllMice,minDistsMicrons{mouse});
+%                minDistMicronsAllMice = horzcat(minDistMicronsAllMice,minDistsMicrons{mouse});
                maxBBBvalTimePointsAllMice{per} = horzcat(maxBBBvalTimePointsAllMice{per},maxBBBvalTimePoints{mouse}{per});
                maxBBBvalsAllMice{per} = horzcat(maxBBBvalsAllMice{per},maxBBBvals{mouse}{per});
             end 
