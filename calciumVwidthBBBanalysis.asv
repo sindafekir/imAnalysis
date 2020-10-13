@@ -4213,7 +4213,7 @@ end
 
 %}
 %% get distance, BBB peak, and Ca peak data (across mice) and sort the data 
-%{
+
 mouseNum = input('How many mice do you want to use to create scatter plots of vessel-Ca ROI distance and BBB perm metrics? ');
 minDistsMicrons = cell(1,mouseNum);
 maxBBBvalTimePoints = cell(1,mouseNum);
