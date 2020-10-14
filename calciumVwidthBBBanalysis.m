@@ -4244,7 +4244,7 @@ if lightQ == 0
 %     clear minDistMicronsAllMice2
 %     count = 1; 
 %     for term = 1:length(minDistMicronsAllMice)
-%         if maxBBBvalTimePointsAllMice(term) < -1 %&& maxBBBvalTimePointsAllMice(term) < 0 
+%         if maxBBBvalTimePointsAllMice(term) > -1 && maxBBBvalTimePointsAllMice(term) < 0
 %             minDistMicronsAllMice2(count) = minDistMicronsAllMice(term);
 %             count = count + 1;
 %         end 
@@ -4629,8 +4629,8 @@ if lightQ == 0
     xlabel('Distance From  Vessel (microns)','FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
     h.FaceColor = [0 0.3 0.3];
-%     title({'DA terminals with Ca-BBB time lags','less than -1 sec'});
-%     ylim([0 4])
+%     title({'DA terminals with Ca-BBB time lags','between -1 and 0 sec'});
+%     ylim([0 8])
 %     xlim([0 50])
    
     figure;
@@ -4694,11 +4694,11 @@ elseif lightQ == 1
 end 
 %}
 %% make multi-color histograms of Ca ROI to vessel distance and BBB data
-%{
+
 clear minDistMicrons_LowGroup maxBBBvalTimePoints_LowGroup maxBBBvals_LowGroup minDistMicrons_HighGroup maxBBBvalTimePoints_HighGroup maxBBBvals_HighGroup
 
 if lightQ == 0 
-   %{
+   
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
@@ -4727,6 +4727,41 @@ if lightQ == 0
         end
     end 
 
+    %@@@@@@@@@@@@@@
+%     counter1 = 1;
+%     counter2 = 1;
+%     for term = 1:length(minDistMicronsAllMice)       
+%         if  maxBBBvalTimePointsAllMice(term) < -1 
+%             minDistMicrons_LowGroup(counter1) = minDistMicronsAllMice(term); 
+%             maxBBBvalTimePoints_LowGroup(counter1) = maxBBBvalTimePointsAllMice(term); 
+%             maxBBBvals_LowGroup(counter1) = maxBBBvalsAllMice(term); 
+%             counter1 = counter1 + 1;
+%         elseif maxBBBvalTimePointsAllMice(term) > -1 && maxBBBvalTimePointsAllMice(term) < 0
+%             minDistMicrons_HighGroup(counter2) = minDistMicronsAllMice(term); 
+%             maxBBBvalTimePoints_HighGroup(counter2) = maxBBBvalTimePointsAllMice(term); 
+%             maxBBBvals_HighGroup(counter2) = maxBBBvalsAllMice(term);
+%             counter2 = counter2 + 1;
+%         end       
+%     end 
+%     
+%     figure;
+%     binRange = linspace(0,max(maxBBBvalsAllMice),22);
+%     % linear
+%     h1 = histcounts(minDistMicrons_LowGroup,[binRange Inf]);
+%     h2 = histcounts(minDistMicrons_HighGroup,[binRange Inf]);   
+%     b = bar(binRange,[h1;h2]',1);  
+%     b(1).FaceColor = [0 0.3 0.3];
+%     b(2).FaceColor = [0 0.9 0.9];
+%     ax = gca;
+%     ax.FontSize = 25;
+%     ax.FontName = 'Times';
+%     ylabel('Number of Terminals','FontName','Times')
+%     xlabel('Distance From Vessel (microns)','FontName','Times')
+%     xlim([-5 50])
+%     legend('<-1 sec CA-BBB time lag','-1-0 sec Ca-BBB time lag')
+
+    %@@@@@@@@@@@@@@
+    
     % plot    
     figure;
     binRange = linspace(-2.5,2.5,22);
@@ -4756,7 +4791,7 @@ if lightQ == 0
     ax.FontName = 'Times';
     xlabel({'Amplitude of';'BBB Perm Peak'},'FontName','Times')
     ylabel('Number of Terminals','FontName','Times')
-    legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
+%     legend(sprintf('< %d microns',distCutOff),sprintf('> %d microns',distCutOff))
  
     
     figure;
