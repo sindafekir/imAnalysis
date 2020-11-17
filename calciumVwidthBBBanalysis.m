@@ -2802,30 +2802,36 @@ if tTypeQ == 0
 elseif tTypeQ == 1 
     AVSNCdataPeaks{per} = [] ;
     AVSNCdataPeaks3{per} = [] ;
-    for ccell = 1:length(terms)
-         AVSNCdataPeaks2{terms(ccell)}{per} = [] ; 
+    for groupNum = 1:numGroups
+        for ccell = 1:length(terms{groupNum})
+             AVSNCdataPeaks2{terms{groupNum}(ccell)}{per} = [] ; 
+        end 
     end 
 end 
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
     if tTypeQ == 0 
-        for BBBroi = 1:length(AVSNBdataPeaks)
+        for BBBroi = 1:length(sortedBdata{1})
             AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
         end 
     elseif tTypeQ == 1
         if AVQ == 0 
-            for BBBroi = 1:length(AVSNBdataPeaks)
-                for ccell = 1:length(terms)
-                    AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
+            for BBBroi = 1:length(sortedBdata{1})
+                for groupNum = 1:numGroups
+                    for ccell = 1:length(terms{groupNum})
+                        AVSNBdataPeaks{BBBroi}{terms{groupNum}(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms{groupNum}(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
+                    end 
                 end 
             end 
         elseif AVQ == 1 % if AVQ == 1 AVSNBdataPeaks3{BBBroi}{per}(ccell,:)
-            for BBBroi = 1:length(AVSNBdataPeaks)
+            for BBBroi = 1:length(sortedBdata{1})
                 AVSNBdataPeaks{BBBroi}{per} = [] ; 
                 AVSNBdataPeaks3{BBBroi}{per} = [] ;
-                for ccell = 1:length(terms)
-                    AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; 
+                for groupNum = 1:numGroups
+                    for ccell = 1:length(terms{groupNum})
+                        AVSNBdataPeaks2{BBBroi}{terms{groupNum}(ccell)}{per} = [] ; 
+                    end 
                 end 
             end 
         end 
@@ -2835,22 +2841,26 @@ end
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
     if tTypeQ == 0 
-        for VWroi = 1:length(AVSNVdataPeaks)
+        for VWroi = 1:length(sortedVdata{1})
             AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
         end 
     elseif tTypeQ == 1
         if AVQ == 0 
-            for VWroi = 1:length(AVSNVdataPeaks)
-                for ccell = 1:length(terms)
-                    AVSNVdataPeaks{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks3{VWroi}{terms(ccell)}{per} = [] ;
+            for VWroi = 1:length(sortedVdata{1})
+                for groupNum = 1:numGroups
+                    for ccell = 1:length(terms{groupNum})
+                        AVSNVdataPeaks{VWroi}{terms{groupNum}(ccell)}{per} = [] ; AVSNVdataPeaks2{VWroi}{terms{groupNum}(ccell)}{per} = [] ; AVSNVdataPeaks3{VWroi}{terms(ccell)}{per} = [] ;
+                    end 
                 end 
             end 
         elseif AVQ == 1 
-            for VWroi = 1:length(AVSNVdataPeaks)
+            for VWroi = 1:length(sortedVdata{1})
                 AVSNVdataPeaks{VWroi}{per} = [] ; 
                 AVSNVdataPeaks3{VWroi}{per} = [] ;
-                for ccell = 1:length(terms)
-                    AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; 
+                for groupNum = 1:numGroups
+                    for ccell = 1:length(terms{groupNum})
+                        AVSNVdataPeaks2{VWroi}{terms{groupNum}(ccell)}{per} = [] ; 
+                    end 
                 end 
             end 
         end 
@@ -2862,7 +2872,9 @@ if saveQ == 1
     dir1 = input('What folder are you saving these images in? ');
 end 
 
+
 if tTypeQ == 0 
+    
     allCTraces = cell(1,length(SNCdataPeaks{1}));
     CTraces = cell(1,length(SNCdataPeaks{1}));
     if BBBQ == 1
@@ -2874,189 +2886,260 @@ if tTypeQ == 0
         VTraces = cell(1,length(SNCdataPeaks{1}));
     end 
 
-    for ccell = 1:length(terms)            
-        count = 1;
-        % sort C data
-        for vid = 1:length(vidList)      
-            if isempty(sortedCdata{vid}{terms(ccell)}) == 0
-                for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)},1) 
-                    allCTraces{terms(ccell)}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}(peak,:)-100);
-                    count = count + 1;
-                end 
-            end
-        end         
-        % sort B data
-        if BBBQ == 1
-            for vid = 1:length(vidList)    
-                for BBBroi = 1:length(AVSNBdataPeaks)
-                    if isempty(sortedBdata{vid}{BBBroi}{terms(ccell)}) == 0
-                        for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)},1) 
-                            allBTraces{BBBroi}{terms(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}(peak,:)-100); 
-                        end 
-                    end
-                end 
-            end 
-        end 
-        % sort V data 
-        if VWQ == 1
-            for vid = 1:length(vidList)  
-                for VWroi = 1:length(AVSNVdataPeaks)
-                    if isempty(sortedVdata{vid}{VWroi}{terms(ccell)}) == 0
-                        for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)},1) 
-                            allVTraces{VWroi}{terms(ccell)}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}(peak,:)-100); 
-                        end 
-                    end
+    for groupNum = 1:numGroups
+        for ccell = 1:length(terms{groupNum})            
+            count1 = 1;
+            count2 = 1;
+            count3 = 1;
+            % sort C data
+            for vid = 1:length(vidList)      
+                if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0
+                    for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
+                        allCTraces{terms{groupNum}(ccell)}(count1,:) = (SNCdataPeaks{vid}{terms{groupNum}(ccell)}(peak,:)-100);
+                        count1 = count1 + 1;
+                    end 
+                end
+            end         
+            % sort B data
+            if BBBQ == 1
+                for vid = 1:length(vidList)    
+                    for BBBroi = 1:length(sortedBdata{1})
+                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0
+                            for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
+                                allBTraces{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}(peak,:)-100); 
+                                count2 = count2 + 1;
+                            end 
+                        end
+                    end 
                 end 
             end 
-        end 
+            
+            %PICK UP HERE- THERE ARE A LOT OF ROWS OF ZEROES HERE IN
+            %ALLVTRACES THAT'S LEEDING TO DOWNSTREAM PROBLEMS. DOUBLE CHECK
+            %SNVDATAPEAKS 
+            % sort V data 
+            if VWQ == 1
+                for vid = 1:length(vidList)  
+                    for VWroi = 1:length(sortedVdata{1})
+                        if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
+                            for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
+                                allVTraces{VWroi}{terms{groupNum}(ccell)}(count3,:) = (SNVdataPeaks{vid}{VWroi}{terms{groupNum}(ccell)}(peak,:)-100); 
+                                count3 = count3 + 1;
+                            end 
+                        end
+                    end 
+                end 
+            end 
 
-        %get averages of all traces 
-        if BBBQ == 1
-            for BBBroi = 1:length(AVSNBdataPeaks)
-                AVSNBdataPeaks2{BBBroi}{terms(ccell)} = (nanmean(allBTraces{BBBroi}{terms(ccell)}));
+            %get averages of all traces 
+            if BBBQ == 1
+                for BBBroi = 1:length(sortedBdata{1})
+                    AVSNBdataPeaks2{BBBroi}{terms{groupNum}(ccell)} = (nanmean(allBTraces{BBBroi}{terms{groupNum}(ccell)}));
+                end 
             end 
-        end 
-        AVSNCdataPeaks2{terms(ccell)} = nanmean(allCTraces{terms(ccell)});
-        if VWQ == 1
-            for VWroi = 1:length(AVSNVdataPeaks)
-                AVSNVdataPeaks2{VWroi}{terms(ccell)} = (nanmean(allVTraces{VWroi}{terms(ccell)}));
+            AVSNCdataPeaks2{terms{groupNum}(ccell)} = nanmean(allCTraces{terms{groupNum}(ccell)});
+            if VWQ == 1
+                for VWroi = 1:length(sortedVdata{1})
+                    AVSNVdataPeaks2{VWroi}{terms{groupNum}(ccell)} = (nanmean(allVTraces{VWroi}{terms{groupNum}(ccell)}));
+                end 
             end 
-        end 
 
-        %remove traces that are outliers 
-        %statistically (greater than 2 standard deviations from the
-        %mean 
-        count2 = 1; 
-        count3 = 1;
-        count4 = 1;
-        for peak = 1:size(allCTraces{terms(ccell)},1)
+            %remove traces that are outliers 
+            %statistically (greater than 2 standard deviations from the
+            %mean 
+            count2 = 1; 
+            count3 = 1;
+            count4 = 1;
+            for peak = 1:size(allCTraces{terms{groupNum}(ccell)},1)
                 if BBBQ == 1
-                    for BBBroi = 1:length(AVSNBdataPeaks)
+                    for BBBroi = 1:length(sortedBdata{1})
     %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
-                            BTraces{BBBroi}{terms(ccell)}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}(peak,:));
+                            BTraces{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{BBBroi}{terms{groupNum}(ccell)}(peak,:));
                             count2 = count2 + 1;
     %                         end 
                     end 
                 end 
-%                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                      
-                    CTraces{terms(ccell)}(count3,:) = (allCTraces{terms(ccell)}(peak,:));
+    %                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                      
+                    CTraces{terms{groupNum}(ccell)}(count3,:) = (allCTraces{terms{groupNum}(ccell)}(peak,:));
                     count3 = count3 + 1;
-%                     end 
+    %                     end 
                 if VWQ == 1
-                    for VWroi = 1:length(AVSNVdataPeaks)
+                    for VWroi = 1:length(sortedVdata{1})
     %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
-                            VTraces{VWroi}{terms(ccell)}(count4,:) = (allVTraces{VWroi}{terms(ccell)}(peak,:));
+                            VTraces{VWroi}{terms{groupNum}(ccell)}(count4,:) = (allVTraces{VWroi}{terms{groupNum}(ccell)}(peak,:));
                             count4 = count4 + 1;
     %                         end 
                     end 
                 end 
-        end
-    
-        % get the average of all the traces excluding outliers 
-        if BBBQ == 1
-            for BBBroi = 1:length(AVSNBdataPeaks)
-                AVSNBdataPeaks3{BBBroi}(ccell,:) = (nanmean(BTraces{BBBroi}{terms(ccell)}));
+            end
+
+            % get the average of all the traces excluding outliers 
+            if BBBQ == 1
+                for BBBroi = 1:length(sortedBdata{1})
+                    AVSNBdataPeaks3{groupNum}{BBBroi}(ccell,:) = (nanmean(BTraces{BBBroi}{terms{groupNum}(ccell)}));
+                end 
             end 
+            AVSNCdataPeaks3{groupNum}(ccell,:) = nanmean(CTraces{terms{groupNum}(ccell)});
+            if VWQ == 1
+                for VWroi = 1:length(sortedVdata{1})
+                    AVSNVdataPeaks3{groupNum}{VWroi}(ccell,:) = (nanmean(VTraces{VWroi}{terms{groupNum}(ccell)}));
+                end 
+            end     
+        end    
+    end 
+
+    if BBBQ == 1
+        for BBBroi = 1:length(sortedBdata{1})
+            fig = figure;
+            Frames = size(AVSNCdataPeaks3,2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+            FrameVals = round((1:FPSstack:Frames))+5; 
+            ax=gca;
+            hold all
+            
+            CI_bLow = cell(1,numGroups);
+            CI_bHigh = cell(1,numGroups);
+            CI_cLow = cell(1,numGroups);
+            CI_cHigh = cell(1,numGroups);
+            for groupNum = 1:numGroups
+                %DETERMINE 95% CI            
+                SEMb = (nanstd(AVSNBdataPeaks3{groupNum}{BBBroi})/(sqrt(size(AVSNBdataPeaks3{groupNum}{BBBroi},1)))); % Standard Error            
+                ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{groupNum}{BBBroi},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{groupNum}{BBBroi},1)-1);% T-Score for 95% CI
+                CI_bLow{groupNum} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                CI_bHigh{groupNum} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                
+                SEMc = (nanstd(AVSNCdataPeaks3{groupNum}))/(sqrt(size(AVSNCdataPeaks3{groupNum},1))); % Standard Error            
+                ts_cLow = tinv(0.025,size(AVSNCdataPeaks3{groupNum},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(AVSNCdataPeaks3{groupNum},1)-1);% T-Score for 95% CI
+                CI_cLow{groupNum} = (nanmean(AVSNCdataPeaks3{groupNum},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+                CI_cHigh{groupNum} = (nanmean(AVSNCdataPeaks3{groupNum},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+
+                x = 1:length(CI_cLow{groupNum});
+
+                %average across terminals 
+                AVSNCdataPeaks{groupNum} = nanmean(AVSNCdataPeaks3{groupNum});
+                AVSNBdataPeaks{groupNum}{BBBroi} = nanmean(AVSNBdataPeaks3{groupNum}{BBBroi});
+            end 
+
+            % plot 
+            Ccolors = [0,0,1;0,0.5,1;0,1,1];
+            for groupNum = 1:numGroups
+                plot(AVSNCdataPeaks{groupNum},'Color',Ccolors(groupNum,:),'LineWidth',4)
+                patch([x fliplr(x)],[CI_cLow{groupNum} fliplr(CI_cHigh{groupNum})],Ccolors(groupNum,:),'EdgeColor','none')
+                alpha(0.3)
+            end 
+        %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;   
+            ax.FontSize = 25;
+            ax.FontName = 'Times';
+            xlabel('time (s)','FontName','Times')
+            ylabel('calcium signal percent change','FontName','Times')
+            xLimStart = floor(10*FPSstack);
+            xLimEnd = floor(24*FPSstack); 
+            xlim([1 size(AVSNCdataPeaks{1},2)])
+            ylim([-60 100])          
+            set(fig,'position', [500 100 900 800])
+            
+            yyaxis right   
+            Bcolors = [1,0,0;1,0.5,0;1,1,0];
+            for groupNum = 1:numGroups
+                plot(AVSNBdataPeaks{groupNum}{BBBroi},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-')
+                patch([x fliplr(x)],[CI_bLow{groupNum} (fliplr(CI_bHigh{groupNum}))],Bcolors(groupNum,:),'EdgeColor','none')
+                alpha(0.3)
+            end 
+            ylabel('BBB permeability percent change','FontName','Times')
+            title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi))
+            alpha(0.3)
+            set(gca,'YColor',[0 0 0]);
+            %make the directory and save the images   
+            if saveQ == 1  
+                dir2 = strrep(dir1,'\','/');
+                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                export_fig(dir3)
+            end        
         end 
-        AVSNCdataPeaks3(ccell,:) = nanmean(CTraces{terms(ccell)});
-        if VWQ == 1
-            for VWroi = 1:length(AVSNVdataPeaks)
-                AVSNVdataPeaks3{VWroi}(ccell,:) = (nanmean(VTraces{VWroi}{terms(ccell)}));
+    end 
+%%
+    if VWQ == 1
+        for VWroi = 1:length(sortedVdata{1})
+            fig = figure;
+            Frames = size(AVSNCdataPeaks3,2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+            FrameVals = round((1:FPSstack:Frames))+5; 
+            ax=gca;
+            hold all
+            
+            CI_cLow = cell(1,numGroups);
+            CI_cHigh = cell(1,numGroups);
+            CI_vLow = cell(1,numGroups);
+            CI_vHigh = cell(1,numGroups);
+            for groupNum = 1:numGroups
+                %DETERMINE 95% CI            
+                SEMc = (nanstd(AVSNCdataPeaks3{groupNum}))/(sqrt(size(AVSNCdataPeaks3{groupNum},1))); % Standard Error            
+                ts_cLow = tinv(0.025,size(AVSNCdataPeaks3{groupNum},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(AVSNCdataPeaks3{groupNum},1)-1);% T-Score for 95% CI
+                CI_cLow{groupNum} = (nanmean(AVSNCdataPeaks3{groupNum},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+                CI_cHigh{groupNum} = (nanmean(AVSNCdataPeaks3{groupNum},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+
+                SEMv = (nanstd(AVSNVdataPeaks3{groupNum}{VWroi}))/(sqrt(size(AVSNVdataPeaks3{groupNum}{VWroi},1))); % Standard Error            
+                ts_vLow = tinv(0.025,size(AVSNVdataPeaks3{groupNum}{VWroi},1)-1);% T-Score for 95% CI
+                ts_vHigh = tinv(0.975,size(AVSNVdataPeaks3{groupNum}{VWroi},1)-1);% T-Score for 95% CI
+                CI_vLow{groupNum} = (nanmean(AVSNVdataPeaks3{groupNum}{VWroi},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+                CI_vHigh{groupNum} = (nanmean(AVSNVdataPeaks3{groupNum}{VWroi},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+              
+                x = 1:length(CI_cLow{groupNum});
+
+                %average across terminals 
+                AVSNCdataPeaks{groupNum} = nanmean(AVSNCdataPeaks3{groupNum});
+                AVSNVdataPeaks{groupNum}{VWroi} = nanmean(AVSNVdataPeaks3{groupNum}{VWroi});
             end 
-        end     
-    end       
 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            % plot 
+            Ccolors = [0,0,1;0,0.5,1;0,1,1];
+            for groupNum = 1:numGroups
+                plot(AVSNCdataPeaks{groupNum},'Color',Ccolors(groupNum,:),'LineWidth',4)
+                patch([x fliplr(x)],[CI_cLow{groupNum} fliplr(CI_cHigh{groupNum})],Ccolors(groupNum,:),'EdgeColor','none')
+                alpha(0.3)
+            end 
+        %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;   
+            ax.FontSize = 25;
+            ax.FontName = 'Times';
+            xlabel('time (s)','FontName','Times')
+            ylabel('calcium signal percent change','FontName','Times')
+            xLimStart = floor(10*FPSstack);
+            xLimEnd = floor(24*FPSstack); 
+            xlim([1 size(AVSNCdataPeaks{1},2)])
+            ylim([-60 100])          
+            set(fig,'position', [500 100 900 800])
+            
+            yyaxis right   
+            Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
+            for groupNum = 1:numGroups
+                plot(AVSNVdataPeaks{groupNum}{VWroi},'Color',Vcolors(groupNum,:),'LineWidth',4,'LineStyle','-')
+                patch([x fliplr(x)],[CI_vLow{groupNum} (fliplr(CI_vHigh{groupNum}))],Vcolors(groupNum,:),'EdgeColor','none')
+                alpha(0.3)
+            end 
+            ylabel('BBB permeability percent change','FontName','Times')
+            title(sprintf('All Terminals Averaged. VW ROI %d.',VWroi))      
+            alpha(0.3)
+            set(gca,'YColor',[0 0 0]);
+            %make the directory and save the images   
+            if saveQ == 1  
+                dir2 = strrep(dir1,'\','/');
+                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                export_fig(dir3)
+            end        
+        end 
+    end
     
-    
-    fig = figure;
-    Frames = size(AVSNCdataPeaks3,2);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-    FrameVals = round((1:FPSstack:Frames))+5; 
-    ax=gca;
-    hold all
-
-    %DETERMINE 95% CI
-    if BBBQ == 1
-        SEMb = (nanstd(AVSNBdataPeaks3{BBBroi})/(sqrt(size(AVSNBdataPeaks3{BBBroi},1)))); % Standard Error            
-        ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{BBBroi},1)-1);% T-Score for 95% CI
-        ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{BBBroi},1)-1);% T-Score for 95% CI
-        CI_bLow = (nanmean(AVSNBdataPeaks3{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-        CI_bHigh = (nanmean(AVSNBdataPeaks3{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
-    end 
-
-    SEMc = (nanstd(AVSNCdataPeaks3))/(sqrt(size(AVSNCdataPeaks3,1))); % Standard Error            
-    ts_cLow = tinv(0.025,size(AVSNCdataPeaks3,1)-1);% T-Score for 95% CI
-    ts_cHigh = tinv(0.975,size(AVSNCdataPeaks3,1)-1);% T-Score for 95% CI
-    CI_cLow = (nanmean(AVSNCdataPeaks3,1)) + (ts_cLow*SEMc);  % Confidence Intervals
-    CI_cHigh = (nanmean(AVSNCdataPeaks3,1)) + (ts_cHigh*SEMc);  % Confidence Intervals
-
-    if VWQ == 1
-        SEMv = (nanstd(AVSNVdataPeaks3{VWroi}))/(sqrt(size(AVSNVdataPeaks3{VWroi},1))); % Standard Error            
-        ts_vLow = tinv(0.025,size(AVSNVdataPeaks3{VWroi},1)-1);% T-Score for 95% CI
-        ts_vHigh = tinv(0.975,size(AVSNVdataPeaks3{VWroi},1)-1);% T-Score for 95% CI
-        CI_vLow = (nanmean(AVSNVdataPeaks3{VWroi},1)) + (ts_vLow*SEMv);  % Confidence Intervals
-        CI_vHigh = (nanmean(AVSNVdataPeaks3{VWroi},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
-    end 
-
-    x = 1:length(CI_cLow);
-
-    %average across terminals 
-    AVSNCdataPeaks = nanmean(AVSNCdataPeaks3);
-    if BBBQ == 1
-        AVSNBdataPeaks{BBBroi} = nanmean(AVSNBdataPeaks3{BBBroi});
-    end 
-    if VWQ == 1
-        AVSNVdataPeaks{VWroi} = nanmean(AVSNVdataPeaks3{VWroi});
-    end 
-
-    % plot 
-    plot(AVSNCdataPeaks,'b','LineWidth',4)
-%         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
-    xLimStart = floor(10*FPSstack);
-    xLimEnd = floor(24*FPSstack); 
-    xlim([1 size(AVSNCdataPeaks,2)])
-    ylim([-60 100])
-
-    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-
-    %add right y axis tick marks for a specific DOD figure. 
-    yyaxis right 
-    if BBBQ == 1
-        plot(AVSNBdataPeaks{BBBroi},'r','LineWidth',4)
-        patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
-        ylabel('BBB permeability percent change','FontName','Times')
-        title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi))
-%             title('BBB permeability Spike Triggered Average')
-    end 
-    if VWQ == 1
-        plot(AVSNVdataPeaks{VWroi},'k','LineWidth',4)
-        patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
-        ylabel('Vessel width percent change','FontName','Times')
-%             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
-        title(sprintf('All Terminals Averaged. VW ROI %d.',VWroi))
-    end 
-    alpha(0.3)
-    set(gca,'YColor',[0 0 0]);
-    %make the directory and save the images   
-    if saveQ == 1  
-        dir2 = strrep(dir1,'\','/');
-        dir3 = sprintf('%s/%s.tif',dir2,tlabel);
-        export_fig(dir3)
-    end                  
     %}
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
