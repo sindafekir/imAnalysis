@@ -2787,17 +2787,14 @@ if tTypeQ == 1
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
 end 
 
-AVQ = input('Input 1 to average across Ca ROIs. Input 0 otherwise. ');
-if AVQ == 1
-    AVQ2 = input('Input 1 to specify what Ca ROIs to average. Input 0 to average all Ca ROIs. ');
-    if AVQ2 == 0 % average all Ca ROIs 
-        terms = terminals;
-    elseif AVQ2 == 1 % specify what Ca ROIs to average 
-        terms = input('Input the Ca ROIs you want to average. ');
-    end 
-elseif AVQ == 0 
-    terms = terminals; 
+numGroups = input('How many groups do you want to average? ');
+terms = cell(1,length(numGroups)); 
+for groupNum = 1:numGroups
+    terms{groupNum} = input(sprintf('Input the Ca ROIs you want to average for group #%d. ',groupNum));
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 
 if tTypeQ == 0
     clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3
@@ -5411,11 +5408,11 @@ elseif lightQ == 1
 end 
 %}
 %% make multi-color histograms of Ca ROI to vessel distance and BBB data
-
+%{
 clear minDistMicrons_LowGroup maxBBBvalTimePoints_LowGroup maxBBBvals_LowGroup minDistMicrons_HighGroup maxBBBvalTimePoints_HighGroup maxBBBvals_HighGroup
 
 if lightQ == 0 
-   
+   %{
     %create groups 
     %starting off simple - just do two colors/groups 
     %Ca ROIs are broken down into two groups based on their distance 
@@ -5477,8 +5474,6 @@ if lightQ == 0
     xlim([-5 50])
 %     legend('<-1 sec CA-BBB time lag','-1-0 sec Ca-BBB time lag')
     legend('-1-0 sec Ca-BBB time lag')
-
-    %@@@@@@@@@@@@@@
     
     % plot    
     figure;
