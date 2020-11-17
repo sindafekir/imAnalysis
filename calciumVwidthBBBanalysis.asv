@@ -2787,56 +2787,46 @@ if tTypeQ == 1
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-numGroups = input('How many groups do y');
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-AVQ = input('Input 1 to average across Ca ROIs. Input 0 otherwise. ');
-if AVQ == 1
-    AVQ2 = input('Input 1 to specify what Ca ROIs to average. Input 0 to average all Ca ROIs. ');
-    if AVQ2 == 0 % average all Ca ROIs 
-        terms = terminals;
-    elseif AVQ2 == 1 % specify what Ca ROIs to average 
-        terms = input('Input the Ca ROIs you want to average. ');
-    end 
-elseif AVQ == 0 
-    terms = terminals; 
+%define how many groups you want to create average traces for and what Ca
+%ROIs fall into these groups 
+numGroups = input('How many groups do you want to average? ');
+terms = cell(1,length(numGroups)); 
+for groupNum = 1:numGroups
+    terms{groupNum} = input(sprintf('Input the Ca ROIs you want to average for group #%d. ',groupNum));
 end 
 
+%this clears the arrays so you don't get residue traces from previously
+%made plots 
 if tTypeQ == 0
     clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3
 elseif tTypeQ == 1 
-    if AVQ == 0 
-        for ccell = 1:length(terms)
-            AVSNCdataPeaks{terms(ccell)}{per} = [] ; AVSNCdataPeaks2{terms(ccell)}{per} = [] ; AVSNCdataPeaks3{terms(ccell)}{per} = [] ;
-        end 
-    elseif AVQ == 1
-        AVSNCdataPeaks{per} = [] ;
-        AVSNCdataPeaks3{per} = [] ;
-        for ccell = 1:length(terms)
-             AVSNCdataPeaks2{terms(ccell)}{per} = [] ; 
-        end 
+    AVSNCdataPeaks{per} = [] ;
+    AVSNCdataPeaks3{per} = [] ;
+    for ccell = 1:length(terms)
+         AVSNCdataPeaks2{terms(ccell)}{per} = [] ; 
     end 
 end 
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
-    BBBroi = input('What BBB ROI do you want to plot? ');
     if tTypeQ == 0 
-        AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
+        for BBBroi = 1:length(AVSNBdataPeaks)
+            AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
+        end 
     elseif tTypeQ == 1
         if AVQ == 0 
-            for ccell = 1:length(terms)
-                AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
+            for BBBroi = 1:length(AVSNBdataPeaks)
+                for ccell = 1:length(terms)
+                    AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
+                end 
             end 
         elseif AVQ == 1 % if AVQ == 1 AVSNBdataPeaks3{BBBroi}{per}(ccell,:)
-            AVSNBdataPeaks{BBBroi}{per} = [] ; 
-            AVSNBdataPeaks3{BBBroi}{per} = [] ;
-            for ccell = 1:length(terms)
-                AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; 
+            for BBBroi = 1:length(AVSNBdataPeaks)
+                AVSNBdataPeaks{BBBroi}{per} = [] ; 
+                AVSNBdataPeaks3{BBBroi}{per} = [] ;
+                for ccell = 1:length(terms)
+                    AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; 
+                end 
             end 
         end 
     end 
@@ -2844,9 +2834,11 @@ end
 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
-    VWroi = input('What vessel width ROI do you want to plot? ');
     if tTypeQ == 0 
-        AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        for VWroi = 1:length(AVSNVdataPeaks)
+            AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
+        end 
     elseif tTypeQ == 1
         if AVQ == 0 
             for ccell = 1:length(terms)
@@ -2861,6 +2853,8 @@ if VWQ == 1
         end 
     end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
 if saveQ == 1                

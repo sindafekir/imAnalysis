@@ -2787,46 +2787,46 @@ if tTypeQ == 1
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
 end 
 
+%define how many groups you want to create average traces for and what Ca
+%ROIs fall into these groups 
 numGroups = input('How many groups do you want to average? ');
 terms = cell(1,length(numGroups)); 
 for groupNum = 1:numGroups
     terms{groupNum} = input(sprintf('Input the Ca ROIs you want to average for group #%d. ',groupNum));
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
+%this clears the arrays so you don't get residue traces from previously
+%made plots 
 if tTypeQ == 0
     clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3
 elseif tTypeQ == 1 
-    if AVQ == 0 
-        for ccell = 1:length(terms)
-            AVSNCdataPeaks{terms(ccell)}{per} = [] ; AVSNCdataPeaks2{terms(ccell)}{per} = [] ; AVSNCdataPeaks3{terms(ccell)}{per} = [] ;
-        end 
-    elseif AVQ == 1
-        AVSNCdataPeaks{per} = [] ;
-        AVSNCdataPeaks3{per} = [] ;
-        for ccell = 1:length(terms)
-             AVSNCdataPeaks2{terms(ccell)}{per} = [] ; 
-        end 
+    AVSNCdataPeaks{per} = [] ;
+    AVSNCdataPeaks3{per} = [] ;
+    for ccell = 1:length(terms)
+         AVSNCdataPeaks2{terms(ccell)}{per} = [] ; 
     end 
 end 
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
-    BBBroi = input('What BBB ROI do you want to plot? ');
     if tTypeQ == 0 
-        AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
+        for BBBroi = 1:length(AVSNBdataPeaks)
+            AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
+        end 
     elseif tTypeQ == 1
         if AVQ == 0 
-            for ccell = 1:length(terms)
-                AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
+            for BBBroi = 1:length(AVSNBdataPeaks)
+                for ccell = 1:length(terms)
+                    AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
+                end 
             end 
         elseif AVQ == 1 % if AVQ == 1 AVSNBdataPeaks3{BBBroi}{per}(ccell,:)
-            AVSNBdataPeaks{BBBroi}{per} = [] ; 
-            AVSNBdataPeaks3{BBBroi}{per} = [] ;
-            for ccell = 1:length(terms)
-                AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; 
+            for BBBroi = 1:length(AVSNBdataPeaks)
+                AVSNBdataPeaks{BBBroi}{per} = [] ; 
+                AVSNBdataPeaks3{BBBroi}{per} = [] ;
+                for ccell = 1:length(terms)
+                    AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; 
+                end 
             end 
         end 
     end 
@@ -2834,19 +2834,24 @@ end
 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
-    VWroi = input('What vessel width ROI do you want to plot? ');
     if tTypeQ == 0 
-        AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
+        for VWroi = 1:length(AVSNVdataPeaks)
+            AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
+        end 
     elseif tTypeQ == 1
         if AVQ == 0 
-            for ccell = 1:length(terms)
-                AVSNVdataPeaks{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks3{VWroi}{terms(ccell)}{per} = [] ;
+            for VWroi = 1:length(AVSNVdataPeaks)
+                for ccell = 1:length(terms)
+                    AVSNVdataPeaks{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks3{VWroi}{terms(ccell)}{per} = [] ;
+                end 
             end 
         elseif AVQ == 1 
-            AVSNVdataPeaks{VWroi}{per} = [] ; 
-            AVSNVdataPeaks3{VWroi}{per} = [] ;
-            for ccell = 1:length(terms)
-                AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; 
+            for VWroi = 1:length(AVSNVdataPeaks)
+                AVSNVdataPeaks{VWroi}{per} = [] ; 
+                AVSNVdataPeaks3{VWroi}{per} = [] ;
+                for ccell = 1:length(terms)
+                    AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; 
+                end 
             end 
         end 
     end 
@@ -2857,6 +2862,7 @@ if saveQ == 1
     dir1 = input('What folder are you saving these images in? ');
 end 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if tTypeQ == 0 
     %{
     if AVQ == 0 
