@@ -2808,7 +2808,7 @@ elseif tTypeQ == 1
         end 
     end 
 end 
-
+%%
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
     if tTypeQ == 0 
@@ -2988,11 +2988,11 @@ if tTypeQ == 0
     if BBBQ == 1
         for BBBroi = 1:length(sortedBdata{1})
             fig = figure;
-            Frames = size(AVSNCdataPeaks3,2);
+            Frames = size(AVSNCdataPeaks3{groupNum},2);
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+5; 
+            FrameVals = round((1:FPSstack:Frames))+11; 
             ax=gca;
             hold all
             
@@ -3043,11 +3043,13 @@ if tTypeQ == 0
             
             yyaxis right   
             Bcolors = [1,0,0;1,0.5,0;1,1,0];
+            p = zeros(1,numGroups);
             for groupNum = 1:numGroups
-                plot(AVSNBdataPeaks{groupNum}{BBBroi},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-')
+                p(groupNum) = plot(AVSNBdataPeaks{groupNum}{BBBroi},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
                 patch([x fliplr(x)],[CI_bLow{groupNum} (fliplr(CI_bHigh{groupNum}))],Bcolors(groupNum,:),'EdgeColor','none')
                 alpha(0.3)
             end 
+            legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel('BBB permeability percent change','FontName','Times')
             title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi))
             alpha(0.3)
@@ -3060,15 +3062,15 @@ if tTypeQ == 0
             end        
         end 
     end 
-%%
+
     if VWQ == 1
         for VWroi = 1:length(sortedVdata{1})
             fig = figure;
-            Frames = size(AVSNCdataPeaks3,2);
+            Frames = size(AVSNCdataPeaks3{groupNum},2);
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+5; 
+            FrameVals = round((1:FPSstack:Frames))+11; 
             ax=gca;
             hold all
             
@@ -3096,7 +3098,6 @@ if tTypeQ == 0
                 AVSNCdataPeaks{groupNum} = nanmean(AVSNCdataPeaks3{groupNum});
                 AVSNVdataPeaks{groupNum}{VWroi} = nanmean(AVSNVdataPeaks3{groupNum}{VWroi});
             end 
-
             % plot 
             Ccolors = [0,0,1;0,0.5,1;0,1,1];
             for groupNum = 1:numGroups
@@ -3119,11 +3120,13 @@ if tTypeQ == 0
             
             yyaxis right   
             Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
+            p = zeros(1,numGroups);
             for groupNum = 1:numGroups
-                plot(AVSNVdataPeaks{groupNum}{VWroi},'Color',Vcolors(groupNum,:),'LineWidth',4,'LineStyle','-')
+                p(groupNum) = plot(AVSNVdataPeaks{groupNum}{VWroi},'Color',Vcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
                 patch([x fliplr(x)],[CI_vLow{groupNum} (fliplr(CI_vHigh{groupNum}))],Vcolors(groupNum,:),'EdgeColor','none')
                 alpha(0.3)
             end 
+            legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel('BBB permeability percent change','FontName','Times')
             title(sprintf('All Terminals Averaged. VW ROI %d.',VWroi))      
             alpha(0.3)
