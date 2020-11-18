@@ -1820,8 +1820,8 @@ if tTypeQ == 0
         SVdataPeaks = cell(1,length(vidList));
         for vid = 1:length(vidList)
             for ccell = 1:length(terminals)
-%                 [sC_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)},filtTime,FPSstack);
-%                 SNCdataPeaks{vid}{terminals(ccell)} = sC_Data; 
+%                 [sC_Data] = MovMeanSmoothData(sortedCdata{vid}{terminals(ccell)},filtTime,FPSstack);
+%                 SCdataPeaks{vid}{terminals(ccell)} = sC_Data; 
                 for BBBroi = 1:length(bDataFullTrace{1})
                     [sB_Data] = MovMeanSmoothData(sortedBdata{vid}{BBBroi}{terminals(ccell)},filtTime,FPSstack);
                     SBdataPeaks{vid}{BBBroi}{terminals(ccell)} = sB_Data;
@@ -1860,7 +1860,7 @@ if tTypeQ == 0
                     end 
                 end 
                 
-                %normalize to 0.5 sec before changePt (calcium peak
+                %normalize to 5 sec before changePt (calcium peak
                 %onset) BLstart 
                 changePt = floor(size(sortedCdata{1}{terminals(1)},2)/2)-4;
 %                 BLstart = changePt - floor(0.5*FPSstack);
@@ -1897,11 +1897,50 @@ if tTypeQ == 0
 elseif tTypeQ == 1 
     %NEED TO EDIT THE BELOW CODE SO THAT SMOOTHING IS DONE BEFORE THE
     %NORMALIZING 
-    %{
+    
+    smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
+    if smoothQ == 0 
+        SBdataPeaks = sortedBdata;
+        SCdataPeaks = sortedCdata;
+        SVdataPeaks = sortedVdata;
+    elseif smoothQ == 1
+        filtTime = input('How many seconds do you want to smooth your data by? ');
+        SBdataPeaks = cell(1,length(vidList));
+%         SCdataPeaks = cell(1,length(vidList));
+        SVdataPeaks = cell(1,length(vidList));
+        SCdataPeaks = sortedCdata;
+         for vid = 1:length(vidList)
+            for ccell = 1:length(terminals)
+                for per = 1:3   
+                    if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
+                        if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
+                            for peak = 1:size(sortedBdata{vid}{1}{terminals(ccell)}{per},1)
+                                for BBBroi = 1:length(bDataFullTrace{1})
+                                    [SBPeak_Data] = MovMeanSmoothData(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
+                                    SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(peak,:) = SBPeak_Data; 
+                                end 
+    %                             [SCPeak_Data] = MovMeanSmoothData(sortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
+    %                             SCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;     
+                                if VWQ == 1
+                                    for VWroi = 1:length(vDataFullTrace{1})
+                                        [SVPeak_Data] = MovMeanSmoothData(sortedVdata{vid}{VWroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
+                                        SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(peak,:) = SVPeak_Data;     
+                                    end 
+                                end 
+                            end 
+                        end 
+                    end 
+                end 
+            end 
+         end        
+    end  
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
     %normalize
-    NsortedBdata = cell(1,length(vidList));
-    NsortedCdata = cell(1,length(vidList));
-    NsortedVdata = cell(1,length(vidList));
+    SNBdataPeaks = cell(1,length(vidList));
+    SNCdataPeaks = cell(1,length(vidList));
+    SNVdataPeaks = cell(1,length(vidList));
     sortedBdata2 = cell(1,length(vidList));
     sortedCdata2 = cell(1,length(vidList));
     sortedVdata2 = cell(1,length(vidList));
@@ -1914,34 +1953,36 @@ elseif tTypeQ == 1
                             %the data needs to be added to because there are some
                             %negative gonig points which mess up the normalizing 
                             for BBBroi = 1:length(bDataFullTrace{1})                        
-                                sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = sortedBdata{vid}{BBBroi}{terminals(ccell)}{per} + 100;                       
+                                sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} + 100;                       
                             end                 
-                            sortedCdata2{vid}{terminals(ccell)}{per} = sortedCdata{vid}{terminals(ccell)}{per} + 100;     
+                            sortedCdata2{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per} + 100;     
                             if VWQ == 1 
                                 for VWroi = 1:length(vDataFullTrace{1})                   
-                                    sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = sortedVdata{vid}{VWroi}{terminals(ccell)}{per} + 100;                 
+                                    sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} + 100;                 
                                 end 
                             end 
 
                               %this normalizes to the first 1/3 section of the trace
                               %(18 frames) 
             %{
-            %                     NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedBdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-            %                     NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-            %                     NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
+                                NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedBdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
+                                NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
+                                NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
             %}                     
-                            %normalize to 0.5 sec before changePt (calcium peak
+                              
+                            %normalize to 5 sec before changePt (calcium peak
                             %onset) BLstart 
-                            BLstart = changePt - floor(0.5*FPSstack);
+                            changePt = floor(size(sortedCdata{1}{terminals(1)}{1},2)/2)-4;
+                            BLstart = changePt - floor(5*FPSstack);
                             for BBBroi = 1:length(bDataFullTrace{1})
                                 if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
-                                    NsortedBdata{vid}{BBBroi}{terminals(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                
+                                    SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                
                                 end 
                             end 
-                            NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;               
+                            SNCdataPeaks{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;               
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})                    
-                                    NsortedVdata{vid}{VWroi}{terminals(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                    
+                                    SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                    
                                 end 
                             end 
                         end 
@@ -1951,42 +1992,7 @@ elseif tTypeQ == 1
         end 
      end 
     
-    smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data.');
-    if smoothQ == 0 
-        SNBdataPeaks = NsortedBdata;
-        SNCdataPeaks = NsortedCdata;
-        SNVdataPeaks = NsortedVdata;
-    elseif smoothQ == 1
-        filtTime = input('How many seconds do you want to smooth your data by? ');
-        SNBdataPeaks = cell(1,length(vidList));
-%         SNCdataPeaks = cell(1,length(vidList));
-        SNVdataPeaks = cell(1,length(vidList));
-        SNCdataPeaks = NsortedCdata;
-         for vid = 1:length(vidList)
-            for ccell = 1:length(terminals)
-                for per = 1:3   
-                    if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
-                        if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
-                            for peak = 1:size(sortedBdata{vid}{1}{terminals(ccell)}{per},1)
-                                for BBBroi = 1:length(bDataFullTrace{1})
-                                    [SBPeak_Data] = MovMeanSmoothData(NsortedBdata{vid}{BBBroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                                    SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(peak,:) = SBPeak_Data; 
-                                end 
-    %                             [SCPeak_Data] = MovMeanSmoothData(NsortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-    %                             SNCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;     
-                                if VWQ == 1
-                                    for VWroi = 1:length(vDataFullTrace{1})
-                                        [SVPeak_Data] = MovMeanSmoothData(NsortedVdata{vid}{VWroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                                        SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(peak,:) = SVPeak_Data;     
-                                    end 
-                                end 
-                            end 
-                        end 
-                    end 
-                end 
-            end 
-         end        
-    end  
+
     %}
 end 
 %}                     
@@ -2808,7 +2814,7 @@ elseif tTypeQ == 1
         end 
     end 
 end 
-%%
+
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
     if tTypeQ == 0 
@@ -3043,12 +3049,13 @@ if tTypeQ == 0
             
             yyaxis right   
             Bcolors = [1,0,0;1,0.5,0;1,1,0];
+            p = zeros(1,numGroups);
             for groupNum = 1:numGroups
                 p(groupNum) = plot(AVSNBdataPeaks{groupNum}{BBBroi},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
                 patch([x fliplr(x)],[CI_bLow{groupNum} (fliplr(CI_bHigh{groupNum}))],Bcolors(groupNum,:),'EdgeColor','none')
                 alpha(0.3)
             end 
-            legend([p(6) p(8)],'Close Terminals','Far Terminals')
+            legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel('BBB permeability percent change','FontName','Times')
             title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi))
             alpha(0.3)
@@ -3097,7 +3104,6 @@ if tTypeQ == 0
                 AVSNCdataPeaks{groupNum} = nanmean(AVSNCdataPeaks3{groupNum});
                 AVSNVdataPeaks{groupNum}{VWroi} = nanmean(AVSNVdataPeaks3{groupNum}{VWroi});
             end 
-
             % plot 
             Ccolors = [0,0,1;0,0.5,1;0,1,1];
             for groupNum = 1:numGroups
@@ -3120,11 +3126,13 @@ if tTypeQ == 0
             
             yyaxis right   
             Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
+            p = zeros(1,numGroups);
             for groupNum = 1:numGroups
-                plot(AVSNVdataPeaks{groupNum}{VWroi},'Color',Vcolors(groupNum,:),'LineWidth',4,'LineStyle','-')
+                p(groupNum) = plot(AVSNVdataPeaks{groupNum}{VWroi},'Color',Vcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
                 patch([x fliplr(x)],[CI_vLow{groupNum} (fliplr(CI_vHigh{groupNum}))],Vcolors(groupNum,:),'EdgeColor','none')
                 alpha(0.3)
             end 
+            legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel('BBB permeability percent change','FontName','Times')
             title(sprintf('All Terminals Averaged. VW ROI %d.',VWroi))      
             alpha(0.3)
