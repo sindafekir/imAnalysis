@@ -1513,7 +1513,7 @@ end
 %}
 
 %}
-%% find calcium peaks per terminal across entire experiment 
+%% STA: find calcium peaks per terminal across entire experiment 
 %{
 % find peaks and then plot where they are in the entire TS 
 stdTrace = cell(1,length(vidList));
@@ -1663,7 +1663,7 @@ if tTypeQ == 1
     end 
 end 
 %}
-%% sort data based on ca peak location 
+%% STA: sort data based on ca peak location 
 %{
 windSize = input('How big should the window be around Ca peak in seconds? ');
 % windSize = 24; 
@@ -1745,14 +1745,8 @@ elseif tTypeQ == 1
     end  
 end 
 %}
-%% normalize to baseline period and plot calcium peak aligned data
-%PICK UP HERE- THE SMOOTHING OPTION ISN'T SMOOTHING - WELL ATLEAST, WHEN I
-%GO TO PLOT, I DON'T SEE SMOOTHED DATA 
-
-
-%find where calcium peak onset is 
-% changePt = floor(size(sortedCdata{1}{terminals(1)}{1},2)/2)-floor(0.25*FPSstack);    
-
+%% STA: smooth and normalize to baseline period
+ 
 if tTypeQ == 0 
     %{
     %find the BBB traces that increase after calcium peak onset (changePt) 
@@ -2015,8 +2009,6 @@ elseif tTypeQ == 1
             end 
         end 
      end 
-    
-
     %}
 end 
 %}                     
