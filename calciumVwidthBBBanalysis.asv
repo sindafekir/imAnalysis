@@ -2889,24 +2889,23 @@ if tTypeQ == 0
     for groupNum = 1:numGroups
         for ccell = 1:length(terms{groupNum})            
             count1 = 1;
-            count2 = 1;
-            count3 = 1;
             % sort C data
             for vid = 1:length(vidList)      
                 if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0
                     for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
-                        allCTraces{terms{groupNum}(ccell)}(count1,:) = (SNCdataPeaks{vid}{terms{groupNum}(ccell)}(peak,:)-100);
+                        allCTraces{groupNum}{terms{groupNum}(ccell)}(count1,:) = (SNCdataPeaks{vid}{terms{groupNum}(ccell)}(peak,:)-100);
                         count1 = count1 + 1;
                     end 
                 end
             end         
             % sort B data
             if BBBQ == 1
-                for vid = 1:length(vidList)    
-                    for BBBroi = 1:length(sortedBdata{1})
+                for BBBroi = 1:length(sortedBdata{1})
+                    count2 = 1;
+                    for vid = 1:length(vidList)    
                         if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0
                             for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
-                                allBTraces{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}(peak,:)-100); 
+                                allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}(peak,:)-100); 
                                 count2 = count2 + 1;
                             end 
                         end
@@ -2914,14 +2913,14 @@ if tTypeQ == 0
                 end 
             end 
             
-            %PICK UP HERE- THERE ARE A LOT OF ROWS OF ZEROES 
-            % sort V data 
+            % sort V data
             if VWQ == 1
-                for vid = 1:length(vidList)  
-                    for VWroi = 1:length(sortedVdata{1})
+                for VWroi = 1:length(sortedVdata{1})
+                    count3 = 1;
+                    for vid = 1:length(vidList)                        
                         if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
                             for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
-                                allVTraces{VWroi}{terms{groupNum}(ccell)}(count3,:) = (SNVdataPeaks{vid}{VWroi}{terms{groupNum}(ccell)}(peak,:)-100); 
+                                allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(count3,:) = (SNVdataPeaks{vid}{VWroi}{terms{groupNum}(ccell)}(peak,:)-100); 
                                 count3 = count3 + 1;
                             end 
                         end
@@ -2932,13 +2931,13 @@ if tTypeQ == 0
             %get averages of all traces 
             if BBBQ == 1
                 for BBBroi = 1:length(sortedBdata{1})
-                    AVSNBdataPeaks2{BBBroi}{terms{groupNum}(ccell)} = (nanmean(allBTraces{BBBroi}{terms{groupNum}(ccell)}));
+                    AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} = (nanmean(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}));
                 end 
             end 
-            AVSNCdataPeaks2{terms{groupNum}(ccell)} = nanmean(allCTraces{terms{groupNum}(ccell)});
+            AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} = nanmean(allCTraces{groupNum}{terms{groupNum}(ccell)});
             if VWQ == 1
                 for VWroi = 1:length(sortedVdata{1})
-                    AVSNVdataPeaks2{VWroi}{terms{groupNum}(ccell)} = (nanmean(allVTraces{VWroi}{terms{groupNum}(ccell)}));
+                    AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} = (nanmean(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}));
                 end 
             end 
 
@@ -2952,19 +2951,19 @@ if tTypeQ == 0
                 if BBBQ == 1
                     for BBBroi = 1:length(sortedBdata{1})
     %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
-                            BTraces{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{BBBroi}{terms{groupNum}(ccell)}(peak,:));
+                            BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:));
                             count2 = count2 + 1;
     %                         end 
                     end 
                 end 
     %                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                      
-                    CTraces{terms{groupNum}(ccell)}(count3,:) = (allCTraces{terms{groupNum}(ccell)}(peak,:));
+                    CTraces{groupNum}{terms{groupNum}(ccell)}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:));
                     count3 = count3 + 1;
     %                     end 
                 if VWQ == 1
                     for VWroi = 1:length(sortedVdata{1})
     %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
-                            VTraces{VWroi}{terms{groupNum}(ccell)}(count4,:) = (allVTraces{VWroi}{terms{groupNum}(ccell)}(peak,:));
+                            VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:));
                             count4 = count4 + 1;
     %                         end 
                     end 
@@ -2974,13 +2973,13 @@ if tTypeQ == 0
             % get the average of all the traces excluding outliers 
             if BBBQ == 1
                 for BBBroi = 1:length(sortedBdata{1})
-                    AVSNBdataPeaks3{groupNum}{BBBroi}(ccell,:) = (nanmean(BTraces{BBBroi}{terms{groupNum}(ccell)}));
+                    AVSNBdataPeaks3{groupNum}{BBBroi}(ccell,:) = (nanmean(BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}));
                 end 
             end 
-            AVSNCdataPeaks3{groupNum}(ccell,:) = nanmean(CTraces{terms{groupNum}(ccell)});
+            AVSNCdataPeaks3{groupNum}(ccell,:) = nanmean(CTraces{groupNum}{terms{groupNum}(ccell)});
             if VWQ == 1
                 for VWroi = 1:length(sortedVdata{1})
-                    AVSNVdataPeaks3{groupNum}{VWroi}(ccell,:) = (nanmean(VTraces{VWroi}{terms{groupNum}(ccell)}));
+                    AVSNVdataPeaks3{groupNum}{VWroi}(ccell,:) = (nanmean(VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}));
                 end 
             end     
         end    
