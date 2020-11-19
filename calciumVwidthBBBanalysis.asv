@@ -2818,54 +2818,22 @@ for groupNum = 1:numGroups
 end 
 
 %initialize arrays 
-if tTypeQ == 0
-    clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3
-elseif tTypeQ == 1 
-    AVSNCdataPeaks{per} = [] ;
-    AVSNCdataPeaks3{per} = [] ;
-    for groupNum = 1:numGroups
-        for ccell = 1:length(terms{groupNum})
-             AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)}{per} = [] ; 
-        end 
-    end 
-end 
+AVSNCdataPeaks = cell(1,numGroups);
+AVSNCdataPeaks2 = cell(1,numGroups);
+AVSNCdataPeaks3 = cell(1,numGroups); 
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
-    if tTypeQ == 0 
-        for BBBroi = 1:length(sortedBdata{1})
-            AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
-        end 
-    elseif tTypeQ == 1       
-        for BBBroi = 1:length(sortedBdata{1})
-            AVSNBdataPeaks{BBBroi}{per} = [] ; 
-            AVSNBdataPeaks3{BBBroi}{per} = [] ;
-            for groupNum = 1:numGroups
-                for ccell = 1:length(terms{groupNum})
-                    AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} = [] ; 
-                end 
-            end 
-        end         
-    end 
+    AVSNBdataPeaks = cell(1,numGroups);
+    AVSNBdataPeaks2 = cell(1,numGroups);
+    AVSNBdataPeaks3 = cell(1,numGroups); 
 end 
 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
-    if tTypeQ == 0 
-        for VWroi = 1:length(sortedVdata{1})
-            AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
-        end 
-    elseif tTypeQ == 1 
-        for VWroi = 1:length(sortedVdata{1})
-            AVSNVdataPeaks{VWroi}{per} = [] ; 
-            AVSNVdataPeaks3{VWroi}{per} = [] ;
-            for groupNum = 1:numGroups
-                for ccell = 1:length(terms{groupNum})
-                    AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} = [] ; 
-                end 
-            end 
-        end        
-    end 
+    AVSNVdataPeaks = cell(1,numGroups);
+    AVSNVdataPeaks2 = cell(1,numGroups);
+    AVSNVdataPeaks3 = cell(1,numGroups); 
 end 
 
 saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
@@ -3218,7 +3186,7 @@ elseif tTypeQ == 1
             count2 = 1; 
             count3 = 1;
             count4 = 1;
-            for peak = 1:size(allCTraces{groupNum}{terms{groupNum}{per}(ccell)},1)
+            for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)
                 if BBBQ == 1
                     for BBBroi = 1:length(sortedBdata{1})
     %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
@@ -3241,8 +3209,6 @@ elseif tTypeQ == 1
                 end 
             end
             
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
             % get the average of all the traces excluding outliers 
             if BBBQ == 1
                 for BBBroi = 1:length(sortedBdata{1})
@@ -3254,16 +3220,16 @@ elseif tTypeQ == 1
                 for VWroi = 1:length(sortedVdata{1})
                     AVSNVdataPeaks3{groupNum}{VWroi}{per}(ccell,:) = nanmean(VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per});
                 end 
-            end   
-            
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            end               
         end    
     end 
 
+    %% ADD {PER} WHERE NEEDED BELOW 
+    
     if BBBQ == 1
         for BBBroi = 1:length(sortedBdata{1})
             fig = figure;
-            Frames = size(AVSNCdataPeaks3{groupNum},2);
+            Frames = size(AVSNCdataPeaks3{groupNum}{per},2);
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
