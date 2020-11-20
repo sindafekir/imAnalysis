@@ -2012,7 +2012,7 @@ elseif tTypeQ == 1
     %}
 end 
 %}                     
-%% plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
+%% STA: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
 % if you are averaging, this plots one trace at a time. if not averaging,
 % this plots all traces. this also only plots one BBB or VW ROI at once. 
 %{
@@ -2800,8 +2800,7 @@ end
     %}
 % end 
 %}
-
-%% plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
+%% STA: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
 % this assumes you are averaging, asks how many different groups you want
 % to average, and then plots multiple averages overlaid on the same figure. This generates figures for all BBB and VW ROIs at once  
 %{
@@ -2914,22 +2913,22 @@ if tTypeQ == 0
             for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)},1)
                 if BBBQ == 1
                     for BBBroi = 1:length(sortedBdata{1})
-    %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
+%                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2               
                             BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:));
                             count2 = count2 + 1;
-    %                         end 
+%                         end 
                     end 
                 end 
-    %                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                      
-                    CTraces{groupNum}{terms{groupNum}(ccell)}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:));
-                    count3 = count3 + 1;
-    %                     end 
+%                     if allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) < AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} + nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2 & allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) > AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} - nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2                      
+                        CTraces{groupNum}{terms{groupNum}(ccell)}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:));
+                        count3 = count3 + 1;
+%                     end 
                 if VWQ == 1
                     for VWroi = 1:length(sortedVdata{1})
-    %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
+%                         if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2              
                             VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:));
                             count4 = count4 + 1;
-    %                         end 
+%                         end 
                     end 
                 end 
             end
@@ -3124,12 +3123,14 @@ elseif tTypeQ == 1
             count1 = 1;
             % sort C data
             for vid = 1:length(vidList)      
-                if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}{per}) == 0 %sortedCdata{vid}{terminals(ccell)}{per}(peak,:)
-                    for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) %SNCdataPeaks{vid}{terminals(ccell)}{per}
-                        allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(count1,:) = (SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
-                        count1 = count1 + 1;
-                    end 
-                end
+                if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0
+                    if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}{per}) == 0 %sortedCdata{vid}{terminals(ccell)}{per}(peak,:)
+                        for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) %SNCdataPeaks{vid}{terminals(ccell)}{per}
+                            allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(count1,:) = (SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
+                            count1 = count1 + 1;
+                        end 
+                    end
+                end 
             end         
             
             % sort B data
@@ -3137,12 +3138,14 @@ elseif tTypeQ == 1
                 for BBBroi = 1:length(sortedBdata{1})
                     count2 = 1;
                     for vid = 1:length(vidList)    
-                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}{per}) == 0
-                            for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
-                                allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
-                                count2 = count2 + 1;
-                            end 
-                        end
+                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0
+                            if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}{per}) == 0
+                                for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
+                                    allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
+                                    count2 = count2 + 1;
+                                end 
+                            end
+                        end 
                     end 
                 end 
             end 
@@ -3151,13 +3154,15 @@ elseif tTypeQ == 1
             if VWQ == 1
                 for VWroi = 1:length(sortedVdata{1})
                     count3 = 1;
-                    for vid = 1:length(vidList)                        
-                        if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}{per}) == 0
-                            for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
-                                allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(count3,:) = (SNVdataPeaks{vid}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
-                                count3 = count3 + 1;
-                            end 
-                        end
+                    for vid = 1:length(vidList) 
+                        if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
+                            if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}{per}) == 0
+                                for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
+                                    allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(count3,:) = (SNVdataPeaks{vid}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
+                                    count3 = count3 + 1;
+                                end 
+                            end
+                        end 
                     end 
                 end 
             end             
@@ -3184,22 +3189,22 @@ elseif tTypeQ == 1
             for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)
                 if BBBQ == 1
                     for BBBroi = 1:length(sortedBdata{1})
-    %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
+%                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2               
                             BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:));
                             count2 = count2 + 1;
-    %                         end 
+%                         end 
                     end 
                 end 
-    %                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                      
-                    CTraces{groupNum}{terms{groupNum}(ccell)}{per}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:));
-                    count3 = count3 + 1;
-    %                     end 
+%                     if allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)}{per} + nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)*2 & allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)}{per} - nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)*2                      
+                        CTraces{groupNum}{terms{groupNum}(ccell)}{per}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:));
+                        count3 = count3 + 1;
+%                     end 
                 if VWQ == 1
                     for VWroi = 1:length(sortedVdata{1})
-    %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
+%                         if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},1)*2              
                             VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:));
                             count4 = count4 + 1;
-    %                         end 
+%                         end 
                     end 
                 end 
             end
