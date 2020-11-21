@@ -2015,7 +2015,7 @@ end
 %% STA 1: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
 % if you are averaging, this plots one trace at a time. if not averaging,
 % this plots all traces. this also only plots one BBB or VW ROI at once. 
-%{
+
 %  clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3 AVSNBdataPeaks AVSNBdataPeaks2 AVSNBdataPeaks3 AVSNVdataPeaks AVSNVdataPeaks2 AVSNVdataPeaks3 BTraces VTraces CTraces
 
 if tTypeQ == 1 
@@ -2034,60 +2034,28 @@ elseif AVQ == 0
     terms = terminals; 
 end 
 
-if tTypeQ == 0
-    clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3
+
+%initialize arrays 
+AVSNCdataPeaks = cell(1,length(sortedCdata{1}));
+AVSNCdataPeaks2 = cell(1,length(sortedCdata{1}));
+if tTypeQ == 0 
+    AVSNCdataPeaks3 = zeros(length(terms),1); 
 elseif tTypeQ == 1 
-    if AVQ == 0 
-        for ccell = 1:length(terms)
-            AVSNCdataPeaks{terms(ccell)}{per} = [] ; AVSNCdataPeaks2{terms(ccell)}{per} = [] ; AVSNCdataPeaks3{terms(ccell)}{per} = [] ;
-        end 
-    elseif AVQ == 1
-        AVSNCdataPeaks{per} = [] ;
-        AVSNCdataPeaks3{per} = [] ;
-        for ccell = 1:length(terms)
-             AVSNCdataPeaks2{terms(ccell)}{per} = [] ; 
-        end 
-    end 
+    AVSNCdataPeaks3 = cell(1,3); 
 end 
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
-    BBBroi = input('What BBB ROI do you want to plot? ');
-    if tTypeQ == 0 
-        AVSNBdataPeaks{BBBroi} = [] ; AVSNBdataPeaks2{BBBroi} = [] ; AVSNBdataPeaks3{BBBroi} = [] ;
-    elseif tTypeQ == 1
-        if AVQ == 0 
-            for ccell = 1:length(terms)
-                AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; AVSNBdataPeaks3{BBBroi}{terms(ccell)}{per} = [] ;
-            end 
-        elseif AVQ == 1 % if AVQ == 1 AVSNBdataPeaks3{BBBroi}{per}(ccell,:)
-            AVSNBdataPeaks{BBBroi}{per} = [] ; 
-            AVSNBdataPeaks3{BBBroi}{per} = [] ;
-            for ccell = 1:length(terms)
-                AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = [] ; 
-            end 
-        end 
-    end 
+    AVSNBdataPeaks = cell(1,length(sortedBdata{1}));
+    AVSNBdataPeaks2 = cell(1,length(sortedBdata{1}));
+    AVSNBdataPeaks3 = cell(1,length(sortedBdata{1}));
 end 
 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
-    VWroi = input('What vessel width ROI do you want to plot? ');
-    if tTypeQ == 0 
-        AVSNVdataPeaks{VWroi} = [] ; AVSNVdataPeaks2{VWroi} = [] ; AVSNVdataPeaks3{VWroi} = [] ;
-    elseif tTypeQ == 1
-        if AVQ == 0 
-            for ccell = 1:length(terms)
-                AVSNVdataPeaks{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; AVSNVdataPeaks3{VWroi}{terms(ccell)}{per} = [] ;
-            end 
-        elseif AVQ == 1 
-            AVSNVdataPeaks{VWroi}{per} = [] ; 
-            AVSNVdataPeaks3{VWroi}{per} = [] ;
-            for ccell = 1:length(terms)
-                AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = [] ; 
-            end 
-        end 
-    end 
+    AVSNVdataPeaks = cell(1,length(sortedVdata{1}));
+    AVSNVdataPeaks2 = cell(1,length(sortedVdata{1}));
+    AVSNVdataPeaks3 = cell(1,length(sortedVdata{1}));
 end 
 
 saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
@@ -2098,9 +2066,9 @@ end
 if tTypeQ == 0 
     %{
     if AVQ == 0 
-        allCTraces = cell(1,length(SNCdataPeaks{1}));
-        allBTraces = cell(1,length(SNCdataPeaks{1}));
-        allVTraces = cell(1,length(SNCdataPeaks{1}));
+%         allCTraces = cell(1,length(SNCdataPeaks{1}));
+%         allBTraces = cell(1,length(SNCdataPeaks{1}));
+%         allVTraces = cell(1,length(SNCdataPeaks{1}));
         CTraces = cell(1,length(SNCdataPeaks{1}));
         BTraces = cell(1,length(SNCdataPeaks{1}));
         VTraces = cell(1,length(SNCdataPeaks{1}));
@@ -2412,9 +2380,9 @@ if tTypeQ == 0
 elseif tTypeQ == 1
    %{
     if AVQ == 0 
-        allCTraces = cell(1,length(SNCdataPeaks{1}));
-        allBTraces = cell(1,length(SNCdataPeaks{1}));
-        allVTraces = cell(1,length(SNCdataPeaks{1}));
+%         allCTraces = cell(1,length(SNCdataPeaks{1}));
+%         allBTraces = cell(1,length(SNCdataPeaks{1}));
+%         allVTraces = cell(1,length(SNCdataPeaks{1}));
         for ccell = 1:length(terms)
             % plot    
             fig = figure; 
@@ -2602,20 +2570,20 @@ elseif tTypeQ == 1
             count4 = 1;
             for peak = 1:size(allCTraces{terms(ccell)}{per},1)
                     if BBBQ == 1
-                        if allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} + nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2  & allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} - nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2               
+%                         if allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} + nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2  & allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} - nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2               
                             BTraces{BBBroi}{terms(ccell)}{per}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}{per}(peak,:));
                             count2 = count2 + 1;
-                        end 
+%                         end 
                     end 
-                    if allCTraces{terms(ccell)}{per}(peak,:) < AVSNCdataPeaks2{terms(ccell)}{per} + nanstd(allCTraces{terms(ccell)}{per},1)*2 & allCTraces{terms(ccell)}{per}(peak,:) > AVSNCdataPeaks2{terms(ccell)}{per} - nanstd(allCTraces{terms(ccell)}{per},1)*2                      
+%                     if allCTraces{terms(ccell)}{per}(peak,:) < AVSNCdataPeaks2{terms(ccell)}{per} + nanstd(allCTraces{terms(ccell)}{per},1)*2 & allCTraces{terms(ccell)}{per}(peak,:) > AVSNCdataPeaks2{terms(ccell)}{per} - nanstd(allCTraces{terms(ccell)}{per},1)*2                      
                         CTraces{terms(ccell)}(count3,:) = (allCTraces{terms(ccell)}{per}(peak,:));
                         count3 = count3 + 1;
-                    end 
+%                     end 
                     if VWQ == 1
-                        if allVTraces{VWroi}{terms(ccell)}{per}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} + nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2 & allVTraces{VWroi}{terms(ccell)}{per}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} - nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2              
+%                         if allVTraces{VWroi}{terms(ccell)}{per}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} + nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2 & allVTraces{VWroi}{terms(ccell)}{per}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} - nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2              
                             VTraces{VWroi}{terms(ccell)}{per}(count4,:) = (allVTraces{VWroi}{terms(ccell)}{per}(peak,:));
                             count4 = count4 + 1;
-                        end 
+%                         end 
                     end 
             end 
             
@@ -3431,7 +3399,7 @@ saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
 if saveQ == 1                
     dir1 = input('What folder are you saving these images in? ');
 end 
-
+%%
 if tTypeQ == 0 
     %{
     allCTraces = cell(1,numGroups);
@@ -3551,7 +3519,7 @@ if tTypeQ == 0
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+10; 
+            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
@@ -3629,7 +3597,7 @@ if tTypeQ == 0
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+10; 
+            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
@@ -3827,7 +3795,7 @@ elseif tTypeQ == 1
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+10; 
+            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
@@ -3905,7 +3873,7 @@ elseif tTypeQ == 1
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+10; 
+            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
