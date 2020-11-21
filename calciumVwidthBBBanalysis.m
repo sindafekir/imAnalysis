@@ -2046,6 +2046,7 @@ end
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
+    BBBroi = input('What BBB ROI do you want to plot? ');
     AVSNBdataPeaks = cell(1,length(sortedBdata{1}));
     AVSNBdataPeaks2 = cell(1,length(sortedBdata{1}));
     AVSNBdataPeaks3 = cell(1,length(sortedBdata{1}));
@@ -2053,6 +2054,7 @@ end
 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1
+    VWroi = input('What VW ROI do you want to plot? ');
     AVSNVdataPeaks = cell(1,length(sortedVdata{1}));
     AVSNVdataPeaks2 = cell(1,length(sortedVdata{1}));
     AVSNVdataPeaks3 = cell(1,length(sortedVdata{1}));
@@ -2066,15 +2068,19 @@ end
 if tTypeQ == 0 
     %{
     if AVQ == 0 
-%         allCTraces = cell(1,length(SNCdataPeaks{1}));
-%         allBTraces = cell(1,length(SNCdataPeaks{1}));
-%         allVTraces = cell(1,length(SNCdataPeaks{1}));
+        allCTraces = cell(1,length(SNCdataPeaks{1}));
         CTraces = cell(1,length(SNCdataPeaks{1}));
-        BTraces = cell(1,length(SNCdataPeaks{1}));
-        VTraces = cell(1,length(SNCdataPeaks{1}));
+        if BBBQ == 1 
+            allBTraces = cell(1,length(sortedBdata{1}));
+            BTraces = cell(1,length(sortedBdata{1}));
+        end 
+        if VWQ == 1 
+            allVTraces = cell(1,length(sortedVdata{1}));
+            VTraces = cell(1,length(sortedVdata{1}));
+        end 
         for ccell = 1:length(terms)
             fig = figure;
-            Frames = size(SNBdataPeaks{1}{BBBroi}{terms(ccell)},2);
+            Frames = size(SNBdataPeaks{1}{1}{terms(ccell)},2);
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
@@ -2087,10 +2093,14 @@ if tTypeQ == 0
                 if isempty(sortedBdata{vid}{BBBroi}{terms(ccell)}) == 0
                     for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)},1) 
                         if BBBQ == 1
-                            allBTraces{BBBroi}{terms(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}(peak,:)-100); 
+                            for BBBROI = 1:length(sortedBdata{1})
+                                allBTraces{BBBROI}{terms(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBROI}{terms(ccell)}(peak,:)-100); 
+                            end 
                         end 
                         if VWQ == 1
-                            allVTraces{VWroi}{terms(ccell)}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}(peak,:)-100); 
+                            for VWROI = 1:length(sortedVdata{1})
+                                allVTraces{VWROI}{terms(ccell)}(count,:) = (SNVdataPeaks{vid}{VWROI}{terms(ccell)}(peak,:)-100); 
+                            end 
                         end 
                         allCTraces{terms(ccell)}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}(peak,:)-100);
                         count = count + 1;
@@ -2380,9 +2390,16 @@ if tTypeQ == 0
 elseif tTypeQ == 1
    %{
     if AVQ == 0 
-%         allCTraces = cell(1,length(SNCdataPeaks{1}));
-%         allBTraces = cell(1,length(SNCdataPeaks{1}));
-%         allVTraces = cell(1,length(SNCdataPeaks{1}));
+        allCTraces = cell(1,length(SNCdataPeaks{1}));
+        CTraces = cell(1,length(SNCdataPeaks{1}));
+        if BBBQ == 1 
+            allBTraces = cell(1,length(sortedBdata{1}));
+            BTraces = cell(1,length(sortedBdata{1}));
+        end 
+        if VWQ == 1 
+            allVTraces = cell(1,length(sortedVdata{1}));
+            VTraces = cell(1,length(sortedVdata{1}));
+        end 
         for ccell = 1:length(terms)
             % plot    
             fig = figure; 
@@ -2398,10 +2415,16 @@ elseif tTypeQ == 1
                    if length(sortedBdata{vid}{BBBroi}{terms(ccell)}) >= per  
                         if isempty(sortedBdata{vid}{BBBroi}{terms(ccell)}{per}) == 0 
                             for peak = 1:size(sortedBdata{vid}{BBBroi}{terms(ccell)}{per},1)
-                                allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100);
+                                if BBBQ == 1
+                                    for BBBROI = 1:length(sortedBdata{1})
+                                        allBTraces{BBBROI}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBROI}{terms(ccell)}{per}(peak,:)-100);
+                                    end 
+                                end 
                                 allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
                                 if VWQ == 1
-                                    allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100);  
+                                    for VWROI = 1:length(sortedVdata{1})
+                                        allVTraces{VWROI}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWROI}{terms(ccell)}{per}(peak,:)-100);  
+                                    end 
                                 end 
                                 count = count + 1;
                             end 
