@@ -2016,7 +2016,51 @@ end
 % if you are averaging, this plots one trace at a time. if not averaging,
 % this plots all traces. this also only plots one BBB or VW ROI at once. 
 %{
-%  clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3 AVSNBdataPeaks AVSNBdataPeaks2 AVSNBdataPeaks3 AVSNVdataPeaks AVSNVdataPeaks2 AVSNVdataPeaks3 BTraces VTraces CTraces
+%initialize arrays 
+CAQinit = input('Input 1 if you want to initialize Ca data arrays. ');
+if CAQinit == 1 
+    AVSNCdataPeaks = cell(1,length(sortedCdata{1}));
+    AVSNCdataPeaks2 = cell(1,length(sortedCdata{1}));
+    if tTypeQ == 0 
+        AVSNCdataPeaks3 = zeros(length(terms),1); 
+    elseif tTypeQ == 1 
+        AVSNCdataPeaks3 = cell(1,3); 
+    end 
+    allCTraces = cell(1,length(SNCdataPeaks{1}));
+    CTraces = cell(1,length(SNCdataPeaks{1}));
+end 
+
+BBBQinit = input('Input 1 if you want to initialize BBB data arrays. ');
+if BBBQinit == 1
+    AVSNBdataPeaks = cell(1,length(sortedBdata{1}));
+    AVSNBdataPeaks2 = cell(1,length(sortedBdata{1}));
+    AVSNBdataPeaks3 = cell(1,length(sortedBdata{1}));
+    allBTraces = cell(1,length(sortedBdata{1}));
+    BTraces = cell(1,length(sortedBdata{1}));
+end 
+
+VWQinit = input('Input 1 if you want to initialize vessel width data arrays . ');
+if VWQinit == 1
+    AVSNVdataPeaks = cell(1,length(sortedVdata{1}));
+    AVSNVdataPeaks2 = cell(1,length(sortedVdata{1}));
+    AVSNVdataPeaks3 = cell(1,length(sortedVdata{1}));
+    allVTraces = cell(1,length(sortedVdata{1}));
+    VTraces = cell(1,length(sortedVdata{1}));
+end 
+
+saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
+if saveQ == 1                
+    dir1 = input('What folder are you saving these images in? ');
+end 
+        
+VWQ = input('Input 1 if you want to plot vessel width data. ');
+if VWQ == 1
+    VWroi = input('What VW ROI do you want to plot? ');
+end 
+BBBQ = input('Input 1 if you want to plot BBB data. ');
+if BBBQ == 1
+    BBBroi = input('What BBB ROI do you want to plot? ');
+end 
 
 if tTypeQ == 1 
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
@@ -2035,49 +2079,9 @@ elseif AVQ == 0
 end 
 
 
-%initialize arrays 
-AVSNCdataPeaks = cell(1,length(sortedCdata{1}));
-AVSNCdataPeaks2 = cell(1,length(sortedCdata{1}));
-if tTypeQ == 0 
-    AVSNCdataPeaks3 = zeros(length(terms),1); 
-elseif tTypeQ == 1 
-    AVSNCdataPeaks3 = cell(1,3); 
-end 
-
-BBBQ = input('Input 1 if you want to plot BBB data. ');
-if BBBQ == 1
-    BBBroi = input('What BBB ROI do you want to plot? ');
-    AVSNBdataPeaks = cell(1,length(sortedBdata{1}));
-    AVSNBdataPeaks2 = cell(1,length(sortedBdata{1}));
-    AVSNBdataPeaks3 = cell(1,length(sortedBdata{1}));
-end 
-
-VWQ = input('Input 1 if you want to plot vessel width data. ');
-if VWQ == 1
-    VWroi = input('What VW ROI do you want to plot? ');
-    AVSNVdataPeaks = cell(1,length(sortedVdata{1}));
-    AVSNVdataPeaks2 = cell(1,length(sortedVdata{1}));
-    AVSNVdataPeaks3 = cell(1,length(sortedVdata{1}));
-end 
-
-saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
-if saveQ == 1                
-    dir1 = input('What folder are you saving these images in? ');
-end 
-
 if tTypeQ == 0 
     %{
     if AVQ == 0 
-        allCTraces = cell(1,length(SNCdataPeaks{1}));
-        CTraces = cell(1,length(SNCdataPeaks{1}));
-        if BBBQ == 1 
-            allBTraces = cell(1,length(sortedBdata{1}));
-            BTraces = cell(1,length(sortedBdata{1}));
-        end 
-        if VWQ == 1 
-            allVTraces = cell(1,length(sortedVdata{1}));
-            VTraces = cell(1,length(sortedVdata{1}));
-        end 
         for ccell = 1:length(terms)
             fig = figure;
             Frames = size(SNBdataPeaks{1}{1}{terms(ccell)},2);
@@ -2232,12 +2236,6 @@ if tTypeQ == 0
         end
         
     elseif AVQ == 1 % average across calcium ROIs 
-        allCTraces = cell(1,length(SNCdataPeaks{1}));
-        allBTraces = cell(1,length(SNCdataPeaks{1}));
-        allVTraces = cell(1,length(SNCdataPeaks{1}));
-        CTraces = cell(1,length(SNCdataPeaks{1}));
-        BTraces = cell(1,length(SNCdataPeaks{1}));
-        VTraces = cell(1,length(SNCdataPeaks{1}));
         for ccell = 1:length(terms)            
             count = 1;
             % sort data 
@@ -2390,16 +2388,6 @@ if tTypeQ == 0
 elseif tTypeQ == 1
    %{
     if AVQ == 0 
-        allCTraces = cell(1,length(SNCdataPeaks{1}));
-        CTraces = cell(1,length(SNCdataPeaks{1}));
-        if BBBQ == 1 
-            allBTraces = cell(1,length(sortedBdata{1}));
-            BTraces = cell(1,length(sortedBdata{1}));
-        end 
-        if VWQ == 1 
-            allVTraces = cell(1,length(sortedVdata{1}));
-            VTraces = cell(1,length(sortedVdata{1}));
-        end 
         for ccell = 1:length(terms)
             % plot    
             fig = figure; 
@@ -2552,12 +2540,6 @@ elseif tTypeQ == 1
             end        
         end 
     elseif AVQ == 1 
-        allCTraces = cell(1,length(SNCdataPeaks{1}));
-        allBTraces = cell(1,length(SNCdataPeaks{1}));
-        allVTraces = cell(1,length(SNCdataPeaks{1}));
-        CTraces = cell(1,length(SNCdataPeaks{1}));
-        BTraces = cell(1,length(SNCdataPeaks{1}));
-        VTraces = cell(1,length(SNCdataPeaks{1}));
         % sort data
         for ccell = 1:length(terms)
             count = 1;
