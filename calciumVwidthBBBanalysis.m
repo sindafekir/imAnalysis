@@ -2015,7 +2015,7 @@ end
 %% STA 1: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
 % if you are averaging, this plots one trace at a time. if not averaging,
 % this plots all traces. this also only plots one BBB or VW ROI at once. 
-
+%{
 %  clear AVSNCdataPeaks AVSNCdataPeaks2 AVSNCdataPeaks3 AVSNBdataPeaks AVSNBdataPeaks2 AVSNBdataPeaks3 AVSNVdataPeaks AVSNVdataPeaks2 AVSNVdataPeaks3 BTraces VTraces CTraces
 
 if tTypeQ == 1 
