@@ -2806,25 +2806,27 @@ SNBdataPeaks = cell(1,length(closeCaROIs));
 SNVdataPeaks = cell(1,length(closeCaROIs));
 mouseNum = input('How many mice are there? ');
 for mouse = 1:mouseNum
-%     regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
-%     cd(regImDir);
-%     MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
-%     Mat = matfile(MatFileName);
-%     FPSstack{mouse} = Mat.FPSstack;
-%     allCTraces{mouse} = Mat.allCTraces;
-%     SNCdataPeaks{mouse} = Mat.SNCdataPeaks;    
-%     allBTraces{mouse} = Mat.allBTraces;
-%     SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
-%     allVTraces{mouse} = Mat.allVTraces;
-%     SNVdataPeaks{mouse} = Mat.SNVdataPeaks;    
-%     CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
+    regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+    cd(regImDir);
+    MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+    Mat = matfile(MatFileName);
+    FPSstack{mouse} = Mat.FPSstack;
+    allCTraces{mouse} = Mat.allCTraces;
+    SNCdataPeaks{mouse} = Mat.SNCdataPeaks;    
+    allBTraces{mouse} = Mat.allBTraces;
+    SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
+    allVTraces{mouse} = Mat.allVTraces;
+    SNVdataPeaks{mouse} = Mat.SNVdataPeaks;    
+    CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
     for CAROI = 1:size(CaROIs{mouse},2)
-        %remove rows full of 0s if there are any b = a(any(a,2),:)
+        %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
         allCTraces{mouse}{CaROIs{mouse}(CAROI)} = allCTraces{mouse}{CaROIs{mouse}(CAROI)}(any(allCTraces{mouse}{CaROIs{mouse}(CAROI)},2),:);
         for BBBroi = 1:size(allBTraces{mouse},2)
-            %PICK UP HERE
+            allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)} = allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}(any(allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)},2),:);
         end 
-    
+        for VWroi = 1:size(allVTraces{mouse},2)
+            allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)} = allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)}(any(allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)},2),:);
+        end 
     end 
 end 
 tTypeQ = Mat.tTypeQ;
@@ -2832,16 +2834,22 @@ tTypeQ = Mat.tTypeQ;
 
 
 
-%%
+%% PICK UP HERE- ALL THE PLOTS LOOK THE SAME 
 
 %set plotting paramaters 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
-    BBBroi = input('What BBB ROI do you want to plot? ');
+    BBBroiNum = zeros(1,mouseNum);
+    for mouse = 1:mouseNum
+        BBBroiNum(mouse) = size(allBTraces{mouse},2); 
+    end 
 end 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
-if VWQ == 1
-    VWroi = input('What vessel width ROI do you want to plot? ');
+if VWQ == 1 
+    VWroiNum = zeros(1,mouseNum);
+    for mouse = 1:mouseNum
+        VWroiNum(mouse) = size(allVTraces{mouse},2); 
+    end 
 end 
 saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
 if saveQ == 1                
@@ -2852,16 +2860,22 @@ end
 if tTypeQ == 1
     clear allBTraces allCTraces allVTraces
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
-    for mouse = 1:length(closeCaROIs)
+    for mouse = 1:mouseNum
         count = 1;
         for vid = 1:length(SNBdataPeaks{mouse})
             for term = 1:length(CaROIs{mouse})
                 if size(SNBdataPeaks{mouse}{vid}{BBBroi}{CaROIs{mouse}(term)},2) >= per
                     for peak = 1:size(SNBdataPeaks{mouse}{vid}{BBBroi}{CaROIs{mouse}(term)}{per},1)
-                        allBTraces{mouse}{BBBroi}{CaROIs{mouse}(term)}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{CaROIs{mouse}(term)}{per}(peak,:)-100);
+                        if BBBQ == 1
+                            for BBBroi = 1:BBBroiNum(mouse)
+                                allBTraces{mouse}{BBBroi}{CaROIs{mouse}(term)}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{CaROIs{mouse}(term)}{per}(peak,:)-100);
+                            end 
+                        end 
                         allCTraces{mouse}{CaROIs{mouse}(term)}(count,:) = (SNCdataPeaks{mouse}{vid}{CaROIs{mouse}(term)}{per}(peak,:)-100);
                         if VWQ == 1
-                            allVTraces{mouse}{VWroi}{CaROIs{mouse}(term)}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{CaROIs{mouse}(term)}{per}(peak,:)-100);  
+                            for VWroi = 1:VWroiNum(mouse)
+                                allVTraces{mouse}{VWroi}{CaROIs{mouse}(term)}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{CaROIs{mouse}(term)}{per}(peak,:)-100);  
+                            end
                         end 
                         count = count + 1;
                     end 
@@ -2875,14 +2889,18 @@ end
 traceRemovalQ = input('Input 1 to statistically remove traces. Input 0 otherwise. '); 
 if traceRemovalQ == 1 
     traceRemovalMice = input('Input the mice you want to statistically remove traces from? ');
-    for mouse = 1:length(traceRemovalMice)
+    for mouse = 1:mouseNum
         for term = 1:length(CaROIs{traceRemovalMice(mouse)})
             if BBBQ == 1
-                AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)});
+                for BBBroi = 1:BBBroiNum(mouse)
+                    AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)});            
+                end 
             end 
             AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)});
             if VWQ == 1
-                AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)});
+                for VWroi = 1:VWroiNum(mouse)
+                    AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)});
+                end 
             end 
             
             count2 = 1; 
@@ -2890,9 +2908,11 @@ if traceRemovalQ == 1
             count4 = 1;
             for peak = 1:size(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)},1)
                     if BBBQ == 1
-                        if allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2  & allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2               
-                            BTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(count2,:) = (allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
-                            count2 = count2 + 1;
+                        for BBBroi = 1:BBBroiNum(mouse)
+                            if allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2  & allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2               
+                                BTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(count2,:) = (allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
+                                count2 = count2 + 1;
+                            end 
                         end 
                     end 
                     if allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2 & allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2                     
@@ -2900,9 +2920,11 @@ if traceRemovalQ == 1
                         count3 = count3 + 1;
                     end 
                     if VWQ == 1
-                        if allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2 & allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2              
-                            VTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(count4,:) = (allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
-                            count4 = count4 + 1;
+                        for VWroi = 1:VWroiNum(mouse)
+                            if allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2 & allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2              
+                                VTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(count4,:) = (allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
+                                count4 = count4 + 1;
+                            end 
                         end 
                     end 
             end 
@@ -2940,7 +2962,7 @@ TimingQ = input('Input 1 if you care about timing. Input 0 otherwise. ');
 if TimingQ == 1
     TimingQ2 = input('Input 1 to plot positive BBB-Ca timing. Input 0 for negative. ');
 end 
-for mouse = 1:length(closeCaROIs)
+for mouse = 1:mouseNum
     
     %put all similar trials together 
     if TimingQ == 0 
@@ -2957,12 +2979,16 @@ for mouse = 1:length(closeCaROIs)
     end 
 
     if BBBQ == 1
-        closeBTraces{mouse} = allBTraces{mouse}{BBBroi}(closeCaROIs{mouse});
-        farBTraces{mouse} = allBTraces{mouse}{BBBroi}(farCaROIs{mouse});
+        for BBBroi = 1:BBBroiNum(mouse)
+            closeBTraces{mouse} = allBTraces{mouse}{BBBroi}(closeCaROIs{mouse});
+            farBTraces{mouse} = allBTraces{mouse}{BBBroi}(farCaROIs{mouse});
+        end
     end 
     if VWQ == 1
-        closeVTraces{mouse} = allVTraces{mouse}{VWroi}(closeCaROIs{mouse});
-        farVTraces{mouse} = allVTraces{mouse}{VWroi}(farCaROIs{mouse});
+        for VWroi = 1:VWroiNum(mouse)
+            closeVTraces{mouse} = allVTraces{mouse}{VWroi}(closeCaROIs{mouse});
+            farVTraces{mouse} = allVTraces{mouse}{VWroi}(farCaROIs{mouse});
+        end 
     end 
     if length(closeCTraces{mouse}) == 1
         closeCTraceArray{mouse} = closeCTraces{mouse}{1};
@@ -3068,106 +3094,172 @@ for mouse = 1:length(closeCaROIs)
 
     %get averages
     if BBBQ == 1
-        close_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(closeBTraceArray{mouse},1);
-        far_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(farBTraceArray{mouse},1);
+        for BBBroi = 1:BBBroiNum(mouse)
+            close_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(closeBTraceArray{mouse},1);
+            far_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(farBTraceArray{mouse},1);
+        end 
     end 
     close_AVSNCdataPeaks{mouse} = nanmean(closeCTraceArray{mouse},1);
     far_AVSNCdataPeaks{mouse} = nanmean(farCTraceArray{mouse},1);
     if VWQ == 1
-        close_AVSNVdataPeaks{mouse}{VWroi} = nanmean(closeVTraceArray{mouse},1);
-        far_AVSNVdataPeaks{mouse}{VWroi} = nanmean(farVTraceArray{mouse},1);
+        for VWroi = 1:VWroiNum(mouse)
+            close_AVSNVdataPeaks{mouse}{VWroi} = nanmean(closeVTraceArray{mouse},1);
+            far_AVSNVdataPeaks{mouse}{VWroi} = nanmean(farVTraceArray{mouse},1);
+        end 
     end 
 
     if isempty(close_AVSNCdataPeaks{mouse}) == 0
         % plot close Ca ROI data 
-        fig = figure;
-        Frames = size(closeCTraceArray{mouse},2);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-        FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-        ax=gca;
-        hold all
-        plot(close_AVSNCdataPeaks{mouse},'b','LineWidth',4)
-        changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
-        plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-        ax.XTick = FrameVals;
-        ax.XTickLabel = sec_TimeVals;   
-        ax.FontSize = 25;
-        ax.FontName = 'Times';
-        xlabel('time (s)','FontName','Times')
-        ylabel('calcium signal percent change','FontName','Times')
-        xLimStart = floor(10*FPSstack{mouse});
-        xLimEnd = floor(24*FPSstack{mouse}); 
-        xlim([1 size(close_AVSNCdataPeaks{mouse},2)])
-        ylim([-60 100])
-        patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-        set(fig,'position', [500 100 900 800])
-        alpha(0.3)
-        %add right y axis tick marks for a specific DOD figure. 
-        yyaxis right 
         if BBBQ == 1
-            plot(close_AVSNBdataPeaks{mouse}{BBBroi},'r','LineWidth',4)
-            patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
-            ylabel('BBB permeability percent change','FontName','Times')
-            title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
-    %             title('BBB permeability Spike Triggered Average')
+            for BBBroi = 1:BBBroiNum(mouse)
+                fig = figure;
+                Frames = size(closeCTraceArray{mouse},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                ax=gca;
+                hold all
+                plot(close_AVSNCdataPeaks{mouse},'b','LineWidth',4)
+                changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+                plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;   
+                ax.FontSize = 25;
+                ax.FontName = 'Times';
+                xlabel('time (s)','FontName','Times')
+                ylabel('calcium signal percent change','FontName','Times')
+                xLimStart = floor(10*FPSstack{mouse});
+                xLimEnd = floor(24*FPSstack{mouse}); 
+                xlim([1 size(close_AVSNCdataPeaks{mouse},2)])
+                ylim([-60 100])
+                patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                set(fig,'position', [500 100 900 800])
+                alpha(0.3)
+                %add right y axis tick marks for a specific DOD figure. 
+                yyaxis right 
+                plot(close_AVSNBdataPeaks{mouse}{BBBroi},'r','LineWidth',4)
+                patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+                ylabel('BBB permeability percent change','FontName','Times')
+                title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+                alpha(0.3)
+                set(gca,'YColor',[0 0 0]);     
+            end 
         end 
+        
         if VWQ == 1
-            plot(close_AVSNVdataPeaks{mouse}{VWroi},'k','LineWidth',4)
-            patch([x fliplr(x)],[(close_CI_vLow) (fliplr(close_CI_vHigh))],'k','EdgeColor','none')
-            ylabel('Vessel width percent change','FontName','Times')
-            title(sprintf('Close Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
-    %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
-            title(sprintf('Close Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
+            for VWroi = 1:VWroiNum(mouse)           
+                fig = figure;
+                Frames = size(closeCTraceArray{mouse},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                ax=gca;
+                hold all
+                plot(close_AVSNCdataPeaks{mouse},'b','LineWidth',4)
+                changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+                plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;   
+                ax.FontSize = 25;
+                ax.FontName = 'Times';
+                xlabel('time (s)','FontName','Times')
+                ylabel('calcium signal percent change','FontName','Times')
+                xLimStart = floor(10*FPSstack{mouse});
+                xLimEnd = floor(24*FPSstack{mouse}); 
+                xlim([1 size(close_AVSNCdataPeaks{mouse},2)])
+                ylim([-60 100])
+                patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                set(fig,'position', [500 100 900 800])
+                alpha(0.3)
+                %add right y axis tick marks for a specific DOD figure. 
+                yyaxis right 
+                plot(close_AVSNVdataPeaks{mouse}{VWroi},'k','LineWidth',4)
+                patch([x fliplr(x)],[(close_CI_vLow) (fliplr(close_CI_vHigh))],'k','EdgeColor','none')
+                ylabel('Vessel width percent change','FontName','Times')
+                title(sprintf('Close Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
+                title(sprintf('Close Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
+                alpha(0.3)
+                set(gca,'YColor',[0 0 0]);  
+            end 
         end 
-        alpha(0.3)
-        set(gca,'YColor',[0 0 0]);       
-
+        
         % plot far Ca ROI data 
-        fig = figure;
-        Frames = size(closeCTraceArray{mouse},2);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-        FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-        ax=gca;
-        hold all
-        plot(far_AVSNCdataPeaks{mouse},'b','LineWidth',4)
-        changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
-        plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-        ax.XTick = FrameVals;
-        ax.XTickLabel = sec_TimeVals;   
-        ax.FontSize = 25;
-        ax.FontName = 'Times';
-        xlabel('time (s)','FontName','Times')
-        ylabel('calcium signal percent change','FontName','Times')
-        xLimStart = floor(10*FPSstack{mouse});
-        xLimEnd = floor(24*FPSstack{mouse});     
-        xlim([1 size(close_AVSNCdataPeaks{mouse},2)])   
-        ylim([-60 100])
-        patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-        set(fig,'position', [500 100 900 800])
-        alpha(0.3)
-        %add right y axis tick marks for a specific DOD figure. 
-        yyaxis right 
         if BBBQ == 1
-            plot(far_AVSNBdataPeaks{mouse}{BBBroi},'r','LineWidth',4)
-            patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
-            ylabel('BBB permeability percent change','FontName','Times')
-            title(sprintf('Far Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
-    %             title('BBB permeability Spike Triggered Average')
+            for BBBroi = 1:BBBroiNum(mouse)               
+                fig = figure;
+                Frames = size(closeCTraceArray{mouse},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                ax=gca;
+                hold all
+                plot(far_AVSNCdataPeaks{mouse},'b','LineWidth',4)
+                changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+                plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;   
+                ax.FontSize = 25;
+                ax.FontName = 'Times';
+                xlabel('time (s)','FontName','Times')
+                ylabel('calcium signal percent change','FontName','Times')
+                xLimStart = floor(10*FPSstack{mouse});
+                xLimEnd = floor(24*FPSstack{mouse});     
+                xlim([1 size(close_AVSNCdataPeaks{mouse},2)])   
+                ylim([-60 100])
+                patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                set(fig,'position', [500 100 900 800])
+                alpha(0.3)
+                %add right y axis tick marks for a specific DOD figure. 
+                yyaxis right            
+                plot(far_AVSNBdataPeaks{mouse}{BBBroi},'r','LineWidth',4)
+                patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+                ylabel('BBB permeability percent change','FontName','Times')
+                title(sprintf('Far Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+                alpha(0.3)
+                set(gca,'YColor',[0 0 0]);      
+            end 
         end 
+        
         if VWQ == 1
-            plot(far_AVSNVdataPeaks{mouse}{VWroi},'k','LineWidth',4)
-            patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],'k','EdgeColor','none')
-            ylabel('Vessel width percent change','FontName','Times')
-            title(sprintf('Far Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
-    %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
-            title(sprintf('Far Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
+            for VWroi = 1:VWroiNum(mouse)
+                fig = figure;
+                Frames = size(closeCTraceArray{mouse},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                ax=gca;
+                hold all
+                plot(far_AVSNCdataPeaks{mouse},'b','LineWidth',4)
+                changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+                plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;   
+                ax.FontSize = 25;
+                ax.FontName = 'Times';
+                xlabel('time (s)','FontName','Times')
+                ylabel('calcium signal percent change','FontName','Times')
+                xLimStart = floor(10*FPSstack{mouse});
+                xLimEnd = floor(24*FPSstack{mouse});     
+                xlim([1 size(close_AVSNCdataPeaks{mouse},2)])   
+                ylim([-60 100])
+                patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                set(fig,'position', [500 100 900 800])
+                alpha(0.3)
+                %add right y axis tick marks for a specific DOD figure. 
+                yyaxis right 
+                plot(far_AVSNVdataPeaks{mouse}{VWroi},'k','LineWidth',4)
+                patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],'k','EdgeColor','none')
+                ylabel('Vessel width percent change','FontName','Times')
+                title(sprintf('Far Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
+                title(sprintf('Far Terminals. Mouse %d. VW ROI %d.',mouse,VWroi))
+                alpha(0.3)
+                set(gca,'YColor',[0 0 0]);   
+            end 
         end 
-        alpha(0.3)
-        set(gca,'YColor',[0 0 0]);               
     end 
 end 
 
