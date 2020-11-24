@@ -2099,14 +2099,20 @@ if tTypeQ == 0
                         if BBBQ == 1
                             for BBBROI = 1:length(sortedBdata{1})
                                 allBTraces{BBBROI}{terms(ccell)}(count,:) = (SNBdataPeaks{vid}{BBBROI}{terms(ccell)}(peak,:)-100); 
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                allBTraces{BBBROI}{terms(ccell)} = allBTraces{BBBROI}{terms(ccell)}(any(allBTraces{BBBROI}{terms(ccell)},2),:);
                             end 
                         end 
                         if VWQ == 1
                             for VWROI = 1:length(sortedVdata{1})
                                 allVTraces{VWROI}{terms(ccell)}(count,:) = (SNVdataPeaks{vid}{VWROI}{terms(ccell)}(peak,:)-100); 
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                allVTraces{VWROI}{terms(ccell)} = allVTraces{VWROI}{terms(ccell)}(any(allVTraces{VWROI}{terms(ccell)},2),:);
                             end 
                         end 
                         allCTraces{terms(ccell)}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}(peak,:)-100);
+                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                        allCTraces{terms(ccell)} = allCTraces{terms(ccell)}(any(allCTraces{terms(ccell)},2),:);
                         count = count + 1;
                     end 
                 end
@@ -2406,12 +2412,18 @@ elseif tTypeQ == 1
                                 if BBBQ == 1
                                     for BBBROI = 1:length(sortedBdata{1})
                                         allBTraces{BBBROI}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBROI}{terms(ccell)}{per}(peak,:)-100);
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allBTraces{BBBROI}{terms(ccell)}{per} = allBTraces{BBBROI}{terms(ccell)}{per}(any(allBTraces{BBBROI}{terms(ccell)}{per},2),:);
                                     end 
                                 end 
                                 allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
                                 if VWQ == 1
                                     for VWROI = 1:length(sortedVdata{1})
-                                        allVTraces{VWROI}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWROI}{terms(ccell)}{per}(peak,:)-100);  
+                                        allVTraces{VWROI}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWROI}{terms(ccell)}{per}(peak,:)-100); 
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allVTraces{VWROI}{terms(ccell)}{per} = allVTraces{VWROI}{terms(ccell)}{per}(any(allVTraces{VWROI}{terms(ccell)}{per},2),:);
                                     end 
                                 end 
                                 count = count + 1;
@@ -2774,11 +2786,11 @@ end
 % end 
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
-%{
+
 %get the data you need 
-regImDir = uigetdir('*.*','WHERE ARE THE CLOSE CALCIUM ROI VALUES?');
+regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 cd(regImDir);
-MatFileName = uigetfile('*.*','GET THE CLOSE/FAR CALCIUM ROI VALUES');
+MatFileName = uigetfile('*.*','SELECT THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 Mat = matfile(MatFileName);
 closeCaROIs = Mat.closeCaROIs;
 farCaROIs = Mat.farCaROIs;
@@ -2792,21 +2804,33 @@ FPSstack = cell(1,length(closeCaROIs));
 SNCdataPeaks = cell(1,length(closeCaROIs));
 SNBdataPeaks = cell(1,length(closeCaROIs));
 SNVdataPeaks = cell(1,length(closeCaROIs));
-for mouse = 1:length(closeCaROIs)
-    regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
-    cd(regImDir);
-    MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
-    Mat = matfile(MatFileName);
+mouseNum = input('How many mice are there? ');
+for mouse = 1:mouseNum
+%     regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+%     cd(regImDir);
+%     MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+%     Mat = matfile(MatFileName);
 %     FPSstack{mouse} = Mat.FPSstack;
 %     allCTraces{mouse} = Mat.allCTraces;
 %     SNCdataPeaks{mouse} = Mat.SNCdataPeaks;    
 %     allBTraces{mouse} = Mat.allBTraces;
 %     SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
-    allVTraces{mouse} = Mat.allVTraces;
-    SNVdataPeaks{mouse} = Mat.SNVdataPeaks;    
+%     allVTraces{mouse} = Mat.allVTraces;
+%     SNVdataPeaks{mouse} = Mat.SNVdataPeaks;    
 %     CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
+    for CAROI = 1:size(CaROIs{mouse},2)
+        %remove rows full of 0s if there are any b = a(any(a,2),:)
+        allCTraces{mouse}{CaROIs{mouse}(CAROI)} = allCTraces{mouse}{CaROIs{mouse}(CAROI)}(any(allCTraces{mouse}{CaROIs{mouse}(CAROI)},2),:);
+        for BBBroi = 1:size(allBTraces{mouse},2)
+            %PICK UP HERE
+        end 
+    
+    end 
 end 
 tTypeQ = Mat.tTypeQ;
+
+
+
 
 %%
 
@@ -3429,7 +3453,9 @@ if tTypeQ == 0
                         count1 = count1 + 1;
                     end 
                 end
-            end         
+            end     
+            %remove rows full of 0s if there are any b = a(any(a,2),:)
+            allCTraces{groupNum}{terms{groupNum}(ccell)} = allCTraces{groupNum}{terms{groupNum}(ccell)}(any(allCTraces{groupNum}{terms{groupNum}(ccell)},2),:);
             % sort B data
             if BBBQ == 1
                 for BBBroi = 1:length(sortedBdata{1})
@@ -3442,6 +3468,8 @@ if tTypeQ == 0
                             end 
                         end
                     end 
+                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                    allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)} = allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(any(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},2),:);
                 end 
             end 
             
@@ -3457,6 +3485,8 @@ if tTypeQ == 0
                             end 
                         end
                     end 
+                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                    allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)} = allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(any(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},2),:);
                 end 
             end 
 
@@ -3692,7 +3722,7 @@ elseif tTypeQ == 1
             count1 = 1;
             % sort C data
             for vid = 1:length(vidList)      
-                if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0
+                if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0 && per <= size(sortedCdata{vid}{terms{groupNum}(ccell)},2)
                     if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}{per}) == 0 %sortedCdata{vid}{terminals(ccell)}{per}(peak,:)
                         for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) %SNCdataPeaks{vid}{terminals(ccell)}{per}
                             allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(count1,:) = (SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
@@ -3701,13 +3731,14 @@ elseif tTypeQ == 1
                     end
                 end 
             end         
-            
+            %remove rows full of 0s if there are any b = a(any(a,2),:)
+            allCTraces{groupNum}{terms{groupNum}(ccell)}{per} = allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(any(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},2),:);
             % sort B data
             if BBBQ == 1
                 for BBBroi = 1:length(sortedBdata{1})
                     count2 = 1;
                     for vid = 1:length(vidList)    
-                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0
+                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0 && per <= size(sortedCdata{vid}{terms{groupNum}(ccell)},2)
                             if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}{per}) == 0
                                 for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
                                     allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
@@ -3715,7 +3746,9 @@ elseif tTypeQ == 1
                                 end 
                             end
                         end 
-                    end 
+                    end
+                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                    allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} = allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(any(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},2),:);
                 end 
             end 
             
@@ -3724,7 +3757,7 @@ elseif tTypeQ == 1
                 for VWroi = 1:length(sortedVdata{1})
                     count3 = 1;
                     for vid = 1:length(vidList) 
-                        if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
+                        if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0 && per <= size(sortedCdata{vid}{terms{groupNum}(ccell)},2)
                             if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}{per}) == 0
                                 for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
                                     allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(count3,:) = (SNVdataPeaks{vid}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
@@ -3733,6 +3766,8 @@ elseif tTypeQ == 1
                             end
                         end 
                     end 
+                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                    allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} = allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(any(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},2),:);
                 end 
             end             
         
