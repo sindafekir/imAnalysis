@@ -397,151 +397,153 @@ for tType = 1:numTtypes
     end 
 end 
 %}
-%% baseline, smooth trial, and plot event triggered averages                                                                                                                                       
+%% smooth trial, normalize, and plot event triggered averages 
 %{
-%baseline data to average value between 0 sec and -2 sec (0 sec being stim
+%BBBQ = 1; VWQ = 1; CAQ = 1; 
+ 
+smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
+if smoothQ ==  1
+    filtTime = input('How many seconds do you want to smooth your data by? ');
+    if CAQ == 1
+        sCeta = cell(1,length(cDataFullTrace{1}));
+    end 
+    if BBBQ == 1 
+        sBeta = cell(1,length(bDataFullTrace{1}));
+    end 
+    if VWQ == 1
+        sVeta = cell(1,length(vDataFullTrace{1}));
+    end
+    if velWheelQ == 1 
+        sWeta = cell(1,numTtypes);
+    end 
+    for tType = 1:numTtypes
+        if CAQ == 1
+            for ccell = 1:length(terminals)
+                for cTrial = 1:size(Ceta{terminals(ccell)}{tType},1)
+                    [sC_Data] = MovMeanSmoothData(Ceta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
+                    sCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data;
+                end 
+            end 
+        end        
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{1})
+                for bTrial = 1:size(Beta{BBBroi}{tType},1)
+                    [sB_Data] = MovMeanSmoothData(Beta{BBBroi}{tType}(bTrial,:),filtTime,FPSstack);
+                    sBeta{BBBroi}{tType}(bTrial,:) = sB_Data;
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:length(vDataFullTrace{1})
+                for vTrial = 1:size(Veta{VWroi}{tType},1)
+                    [sV_Data] = MovMeanSmoothData(Veta{VWroi}{tType}(vTrial,:),filtTime,FPSstack);
+                    sVeta{VWroi}{tType}(vTrial,:) = sV_Data;   
+                end 
+            end 
+        end 
+        if velWheelQ == 1 
+            for wTrial = 1:size(Weta{tType},1)
+                [sW_Data] = MovMeanSmoothData(Weta{tType}(wTrial,:),filtTime,FPSstack);
+                sWeta{tType}(wTrial,:) = sW_Data;   
+            end 
+        end 
+    end 
+elseif smoothQ == 0
+    if CAQ == 1
+        sCeta = cell(1,length(cDataFullTrace{1}));
+    end 
+    if BBBQ == 1 
+        sBeta = cell(1,length(bDataFullTrace{1}));
+    end 
+    if VWQ == 1
+        sVeta = cell(1,length(vDataFullTrace{1}));
+    end
+    if velWheelQ == 1 
+        sWeta = cell(1,numTtypes);
+    end 
+    for tType = 1:numTtypes
+        if CAQ == 1
+            for ccell = 1:length(terminals)
+                for cTrial = 1:size(Ceta{terminals(ccell)}{tType},1)
+                    sCeta{terminals(ccell)}{tType}(cTrial,:) = Ceta{terminals(ccell)}{tType}(cTrial,:)-100;
+                end 
+            end 
+        end        
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{1})
+                for bTrial = 1:size(Beta{BBBroi}{tType},1)
+                    sBeta{BBBroi}{tType}(bTrial,:) = Beta{BBBroi}{tType}(bTrial,:)-100;
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:length(vDataFullTrace{1})
+                for vTrial = 1:size(Veta{VWroi}{tType},1)
+                    sVeta{VWroi}{tType}(vTrial,:) = Veta{VWroi}{tType}(vTrial,:)-100;   
+                end 
+            end 
+        end 
+        if velWheelQ == 1 
+            for wTrial = 1:size(Weta{tType},1)
+                sWeta{tType}(wTrial,:) = Weta{tType}(wTrial,:)-100;   
+            end 
+        end 
+    end 
+end 
+
+%baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
 %onset) 
+baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
 if CAQ == 1
-    nCeta = cell(1,length(cDataFullTrace{1}));
+    nsCeta = cell(1,length(cDataFullTrace{1}));
 end 
 if BBBQ == 1 
-    nBeta = cell(1,length(bDataFullTrace{1}));
+    nsBeta = cell(1,length(bDataFullTrace{1}));
 end 
 if VWQ == 1
-    nVeta = cell(1,length(vDataFullTrace{1}));
+    nsVeta = cell(1,length(vDataFullTrace{1}));
 end 
 if velWheelQ == 1 
-    nWeta = cell(1,numTtypes);
+    nsWeta = cell(1,numTtypes);
 end 
 if dataParseType == 0 %peristimulus data to plot 
     %sec_before_stim_start
     for tType = 1:numTtypes
         if CAQ == 1
             for ccell = 1:length(terminals)
-                nCeta{terminals(ccell)}{tType} = (Ceta{terminals(ccell)}{tType} ./ mean(Ceta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+                nsCeta{terminals(ccell)}{tType} = (sCeta{terminals(ccell)}{tType} ./ nanmean(sCeta{terminals(ccell)}{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
             end 
         end 
         if BBBQ == 1 
             for BBBroi = 1:length(bDataFullTrace{1})
-                nBeta{BBBroi}{tType} = (Beta{BBBroi}{tType} ./ nanmean(Beta{BBBroi}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+                nsBeta{BBBroi}{tType} = (sBeta{BBBroi}{tType} ./ nanmean(sBeta{BBBroi}{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
             end 
         end 
         if VWQ == 1
             for VWroi = 1:length(vDataFullTrace{1})
-                nVeta{VWroi}{tType} = (Veta{VWroi}{tType} ./ nanmean(Veta{VWroi}{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100;        
+                nsVeta{VWroi}{tType} = (sVeta{VWroi}{tType} ./ nanmean(sVeta{VWroi}{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100;        
             end 
         end 
         if velWheelQ == 1 
-             nWeta{tType} = (Weta{tType} ./ nanmean(Weta{tType}(:,floor((sec_before_stim_start-2)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
+             nsWeta{tType} = (sWeta{tType} ./ nanmean(sWeta{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack):floor(sec_before_stim_start*FPSstack)),2))*100; 
         end 
     end    
 elseif dataParseType == 1 %only stimulus data to plot 
     if CAQ == 1
-        nCeta = Ceta;
+        nsCeta = sCeta;
     end 
     if BBBQ == 1 
-        nBeta = Beta;
+        nsBeta = sBeta;
     end 
     if VWQ == 1
-        nVeta = Veta;
+        nsVeta = sVeta;
     end 
     if velWheelQ == 1 
-        nWeta = Weta; 
-    end 
-end 
-
-smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
-if smoothQ ==  1
-    filtTime = input('How many seconds do you want to smooth your data by? ');
-    if CAQ == 1
-        nsCeta = cell(1,length(cDataFullTrace{1}));
-    end 
-    if BBBQ == 1 
-        nsBeta = cell(1,length(bDataFullTrace{1}));
-    end 
-    if VWQ == 1
-        nsVeta = cell(1,length(vDataFullTrace{1}));
-    end
-    if velWheelQ == 1 
-        nsWeta = cell(1,numTtypes);
-    end 
-    for tType = 1:numTtypes
-        if CAQ == 1
-            for ccell = 1:length(terminals)
-                for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
-                    [sC_Data] = MovMeanSmoothData(nCeta{terminals(ccell)}{tType}(cTrial,:),filtTime,FPSstack);
-                    nsCeta{terminals(ccell)}{tType}(cTrial,:) = sC_Data-100;
-                end 
-            end 
-        end        
-        if BBBQ == 1 
-            for BBBroi = 1:length(bDataFullTrace{1})
-                for bTrial = 1:size(nBeta{BBBroi}{tType},1)
-                    [sB_Data] = MovMeanSmoothData(nBeta{BBBroi}{tType}(bTrial,:),filtTime,FPSstack);
-                    nsBeta{BBBroi}{tType}(bTrial,:) = sB_Data-100;
-                end 
-            end 
-        end 
-        if VWQ == 1
-            for VWroi = 1:length(vDataFullTrace{1})
-                for vTrial = 1:size(nVeta{VWroi}{tType},1)
-                    [sV_Data] = MovMeanSmoothData(nVeta{VWroi}{tType}(vTrial,:),filtTime,FPSstack);
-                    nsVeta{VWroi}{tType}(vTrial,:) = sV_Data-100;   
-                end 
-            end 
-        end 
-        if velWheelQ == 1 
-            for wTrial = 1:size(nWeta{tType},1)
-                [sW_Data] = MovMeanSmoothData(nWeta{tType}(wTrial,:),filtTime,FPSstack);
-                nsWeta{tType}(wTrial,:) = sW_Data-100;   
-            end 
-        end 
-    end 
-elseif smoothQ == 0
-    if CAQ == 1
-        nsCeta = cell(1,length(cDataFullTrace{1}));
-    end 
-    if BBBQ == 1 
-        nsBeta = cell(1,length(bDataFullTrace{1}));
-    end 
-    if VWQ == 1
-        nsVeta = cell(1,length(vDataFullTrace{1}));
-    end
-    if velWheelQ == 1 
-        nsWeta = cell(1,numTtypes);
-    end 
-    for tType = 1:numTtypes
-        if CAQ == 1
-            for ccell = 1:length(terminals)
-                for cTrial = 1:size(nCeta{terminals(ccell)}{tType},1)
-                    nsCeta{terminals(ccell)}{tType}(cTrial,:) = nCeta{terminals(ccell)}{tType}(cTrial,:)-100;
-                end 
-            end 
-        end        
-        if BBBQ == 1 
-            for BBBroi = 1:length(bDataFullTrace{1})
-                for bTrial = 1:size(nBeta{BBBroi}{tType},1)
-                    nsBeta{BBBroi}{tType}(bTrial,:) = nBeta{BBBroi}{tType}(bTrial,:)-100;
-                end 
-            end 
-        end 
-        if VWQ == 1
-            for VWroi = 1:length(vDataFullTrace{1})
-                for vTrial = 1:size(nVeta{VWroi}{tType},1)
-                    nsVeta{VWroi}{tType}(vTrial,:) = nVeta{VWroi}{tType}(vTrial,:)-100;   
-                end 
-            end 
-        end 
-        if velWheelQ == 1 
-            for wTrial = 1:size(nWeta{tType},1)
-                nsWeta{tType}(wTrial,:) = nWeta{tType}(wTrial,:)-100;   
-            end 
-        end 
+        nsWeta = sWeta; 
     end 
 end 
 
 % set paramaters for plotting 
-
 AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
 if AVQ == 1 
     if CAQ == 1 
@@ -759,32 +761,32 @@ if AVQ == 0
                 FrameVals = floor((1:FPSstack*5:Frames)-1); 
             end 
             if BBBQ == 1 
-                plot(AVbData{BBBroi}{tType},'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType} fliplr(CI_bHigh{BBBroi}{tType})],[0.5 0 0],'EdgeColor','none')
+                plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
-                plot(AVcData{terminals(ccell)}{tType},'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType} fliplr(CI_cHigh{terminals(ccell)}{tType})],[0 0 0.5],'EdgeColor','none')
+                plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
-                plot(AVvData{VWroi}{tType},'k','LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{VWroi}{tType} fliplr(CI_vHigh{VWroi}{tType})],'k','EdgeColor','none')            
+                plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3)
+                patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')            
             end 
             if tType == 1 
-                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2) 
             elseif tType == 3 
 %                 plot(AVbData{tType},'k','LineWidth',3)
-                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'r','LineWidth',2)
+                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'r','LineWidth',2)
 %                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'r','LineWidth',2)                      
             elseif tType == 2 
-                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000000 5000000], 'b','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2)   
             elseif tType == 4 
 %                 plot(AVbData{tType},'r','LineWidth',3)
-                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'r','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000000 5000000], 'r','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'r','LineWidth',2) 
             end
 %             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
 %             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
@@ -799,7 +801,7 @@ if AVQ == 0
             ax.FontName = 'Times';
 %                 xLimStart = 17.8*FPSstack;
 %                 xLimEnd = 22*FPSstack;
-            xlim([1 length(AVbData{BBBroi}{tType})])
+            xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
 %                 xlim([xLimStart xLimEnd])
             ylim([-100 100])
             xlabel('time (s)')
@@ -907,16 +909,16 @@ elseif AVQ == 1
                 FrameVals = floor((1:FPSstack*5:Frames)-1); 
             end 
             if BBBQ == 1 
-                plot(AVbData{1}{tType},'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{1}{tType} fliplr(CI_bHigh{1}{tType})],[0.5 0 0],'EdgeColor','none')
+                plot(AVbData{1}{tType}-100,'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
-                plot(AVcData{1}{tType},'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{1}{tType} fliplr(CI_cHigh{1}{tType})],[0 0 0.5],'EdgeColor','none')
+                plot(AVcData{1}{tType}-100,'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
-                plot(AVvData{1}{tType},'k','LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{1}{tType} fliplr(CI_vHigh{1}{tType})],'k','EdgeColor','none')            
+                plot(AVvData{1}{tType}-100,'k','LineWidth',3)
+                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
             end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
@@ -1903,7 +1905,7 @@ if tTypeQ == 0
 
     %} 
 elseif tTypeQ == 1 
-%{
+    %{
     smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
     if smoothQ == 0 
         if BBBQ == 1
@@ -2144,23 +2146,28 @@ if tTypeQ == 0
             count3 = 1;
             count4 = 1;
             for peak = 1:size(allCTraces{terms(ccell)},1)
-                    if BBBQ == 1
-%                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
-                            BTraces{BBBroi}{terms(ccell)}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}(peak,:));
-                            count2 = count2 + 1;
-%                         end 
-                    end 
 %                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                     
-                        CTraces{terms(ccell)}(count3,:) = (allCTraces{terms(ccell)}(peak,:));
-                        count3 = count3 + 1;
-%                     end 
-                    if VWQ == 1
-%                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
-                            VTraces{VWroi}{terms(ccell)}(count4,:) = (allVTraces{VWroi}{terms(ccell)}(peak,:));
-                            count4 = count4 + 1;
-%                         end 
-                    end 
+                CTraces{terms(ccell)}(count3,:) = (allCTraces{terms(ccell)}(peak,:));
+                count3 = count3 + 1;
+%                     end               
             end 
+            if BBBQ == 1
+                for peak = 1:size(allBTraces{BBBroi}{terms(ccell)},1)
+%                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
+                    BTraces{BBBroi}{terms(ccell)}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}(peak,:));
+                    count2 = count2 + 1;
+%                         end 
+                end 
+            end 
+            if VWQ == 1
+                for peak = 1:size(allVTraces{VWroi}{terms(ccell)},1)
+%                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
+                    VTraces{VWroi}{terms(ccell)}(count4,:) = (allVTraces{VWroi}{terms(ccell)}(peak,:));
+                    count4 = count4 + 1;
+%                         end 
+                end 
+            end 
+            
 
             %DETERMINE 95% CI
             if BBBQ == 1
