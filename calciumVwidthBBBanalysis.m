@@ -217,7 +217,7 @@ if distQ == 1
     clearvars -except redZstack distQ CaROImasks 
 end 
 %}
-%% organize trial data 
+%% ETA: organize trial data 
 %{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
@@ -397,7 +397,7 @@ for tType = 1:numTtypes
     end 
 end 
 %}
-%% smooth trial, normalize, and plot event triggered averages 
+%% ETA: smooth trial, normalize, and plot event triggered averages 
 %{
 %BBBQ = 1; VWQ = 1; CAQ = 1; 
  
@@ -985,6 +985,418 @@ elseif AVQ == 1
             end                 
         end 
 end 
+%}
+%% ETA: average across mice 
+% does not take already smooothed/normalized data. Will ask you about
+% smoothing/normalizing below 
+
+%get the data you need 
+mouseNum = input('How many mice are there? ');
+CAQ = input('Input 1 if there is Ca data to plot. ');
+BBBQ = input('Input 1 if there is BBB data to plot. ');
+VWQ = input('Input 1 if there is VW data to plot. ');
+FPSstack = cell(1,mouseNum); 
+Ceta = cell(1,mouseNum); 
+Beta = cell(1,mouseNum); 
+Veta = cell(1,mouseNum); 
+CaROIs = cell(1,mouseNum); 
+for mouse = 1:mouseNum
+    regImDir = uigetdir('*.*',sprintf('WHERE IS THE ETA DATA FOR MOUSE #%d?',mouse));
+    cd(regImDir);
+    MatFileName = uigetfile('*.*',sprintf('SELECT THE ETA DATA FOR MOUSE #%d',mouse));
+    Mat = matfile(MatFileName);
+    FPSstack{mouse} = Mat.FPSstack;
+    if CAQ == 1 
+        Ceta{mouse} = Mat.Ceta;
+        CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
+    end 
+    if BBBQ == 1
+        Beta{mouse} = Mat.Beta;
+    end 
+    if VWQ == 1 
+        Veta{mouse} = Mat.Veta;
+    end 
+end 
+
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% figure out the size you should resample your data to 
+%the min length names (dependent on length(tTypes))are hard coded in 
+FPSstack2 = zeros(1,mouseNum);
+for mouse = 1:mouseNum
+    FPSstack2(mouse) = FPSstack{mouse};
+end 
+minFPSstack = FPSstack2 == min(FPSstack2);
+idx = find(minFPSstack ~= 0, 1, 'first');
+if CAQ == 1
+    minLen13 = size(Ceta{idx}{CaROIs{idx}(1)}{1},2);
+    minLen24 = size(Ceta{idx}{CaROIs{idx}(1)}{2},2);
+elseif CAQ ~= 1 && BBBQ == 1
+    minLen13 = size(Beta{idx}{1}{1},2);
+    minLen24 = size(Beta{idx}{1}{2},2);
+elseif CAQ ~= 1 && VWQ == 1 
+    minLen13 = size(Veta{idx}{1}{1},2);
+    minLen24 = size(Veta{idx}{1}{2},2);
+end 
+
+%resample and sort data
+if CAQ == 1 && BBBQ ~= 1 && VWQ ~= 1 
+    tTypeNum = input('How many different kinds of trials (trialTypes) are there? '); 
+elseif CAQ ~= 1 && BBBQ == 1
+    tTypeNum = size(Beta{1}{1},2); 
+elseif CAQ ~= 1 && VWQ == 1 
+    tTypeNum = size(Veta{1}{1},2); 
+end 
+
+% put all ROI traces together in same array etaArray1{mouse}{tType} and
+% resample across mice 
+CetaArray1 = cell(1,mouseNum);
+BetaArray1 = cell(1,mouseNum);
+VetaArray1 = cell(1,mouseNum);
+CetaArray = cell(1,tTypeNum);
+BetaArray = cell(1,tTypeNum);
+VetaArray = cell(1,tTypeNum);
+CetaAvs = cell(1,tTypeNum);
+BetaAvs = cell(1,tTypeNum);
+VetaAvs = cell(1,tTypeNum);
+sCetaAvs = cell(1,tTypeNum);
+sBetaAvs = cell(1,tTypeNum);
+sVetaAvs = cell(1,tTypeNum);
+snCetaAvs = cell(1,tTypeNum);
+snBetaAvs = cell(1,tTypeNum);
+snVetaAvs = cell(1,tTypeNum);
+SEMc = cell(1,tTypeNum);
+STDc = cell(1,tTypeNum);
+CI_cLow = cell(1,tTypeNum);
+CI_cHigh = cell(1,tTypeNum);
+AVcData = cell(1,tTypeNum);
+SEMb = cell(1,tTypeNum);
+STDb = cell(1,tTypeNum);
+CI_bLow = cell(1,tTypeNum);
+CI_bHigh = cell(1,tTypeNum);
+AVbData = cell(1,tTypeNum);
+SEMv = cell(1,tTypeNum);
+STDv = cell(1,tTypeNum);
+CI_vLow = cell(1,tTypeNum);
+CI_vHigh = cell(1,tTypeNum);
+AVvData = cell(1,tTypeNum);
+smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
+if smoothQ == 1 
+    filtTime = input('How many seconds do you want to smooth your data by? ');
+end
+dataParseType = input("What data do you have? Peristimulus = 0. Stimulus on = 1. ");
+if dataParseType == 0 %peristimulus data to plot 
+    baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
+    sec_before_stim_start = input("How many seconds are there before the stimulus starts? ");
+    sec_after_stim_end = input("How many seconds are there after the stimulus ends? ");
+    baselineEndFrame = floor(sec_before_stim_start*(FPSstack{idx}));
+end 
+for tType = 1:tTypeNum
+    Ccounter2 = 1;
+    Bcounter2 = 1;
+    Vcounter2 = 1;
+    for mouse = 1:mouseNum   
+        if tType == 1 || tType == 3  
+            if CAQ == 1
+                Ccounter = 1; 
+                for CaROI = 1:size(CaROIs{mouse},2)
+                    for trace = 1:size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType},1)
+                        CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),minLen13,size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),2)); 
+                        Ccounter = Ccounter + 1; 
+                    end 
+                end 
+            end 
+            if BBBQ == 1 
+                Bcounter = 1; 
+                for BBBroi = 1:size(Beta{mouse},2)  
+                    for trace = 1:size(Beta{mouse}{BBBroi}{tType},1)
+                        BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta{mouse}{BBBroi}{tType}(trace,:),minLen13,size(Beta{mouse}{BBBroi}{tType}(trace,:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
+                        Bcounter = Bcounter + 1; 
+                    end 
+                end 
+            end 
+            if VWQ == 1 
+                Vcounter = 1; 
+                for VWroi = 1:size(Veta{mouse},2)
+                    for trace = 1:size(Veta{mouse}{VWroi}{tType},1)
+                        VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta{mouse}{VWroi}{tType}(trace,:),minLen13,size(Veta{mouse}{VWroi}{tType}(trace,:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
+                        Vcounter = Vcounter + 1; 
+                    end 
+                end 
+            end 
+        elseif tType == 2 || tType == 4
+            if CAQ == 1
+                Ccounter = 1; 
+                for CaROI = 1:size(CaROIs{mouse},2)
+                    for trace = 1:size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType},1)
+                        CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),minLen24,size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),2)); 
+                        Ccounter = Ccounter + 1; 
+                    end 
+                end 
+            end 
+            if BBBQ == 1 
+                Bcounter = 1; 
+                for BBBroi = 1:size(Beta{mouse},2)  
+                    for trace = 1:size(Beta{mouse}{BBBroi}{tType},1)
+                        BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta{mouse}{BBBroi}{tType}(trace,:),minLen24,size(Beta{mouse}{BBBroi}{tType}(trace,:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
+                        Bcounter = Bcounter + 1; 
+                    end 
+                end 
+            end 
+            if VWQ == 1 
+                Vcounter = 1; 
+                for VWroi = 1:size(Veta{mouse},2)
+                    for trace = 1:size(Veta{mouse}{VWroi}{tType},1)
+                        VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta{mouse}{VWroi}{tType}(trace,:),minLen24,size(Veta{mouse}{VWroi}{tType}(trace,:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
+                        Vcounter = Vcounter + 1; 
+                    end 
+                end 
+            end 
+        end 
+        % put all mouse traces together into same array CetaArray{tType}          
+        if CAQ == 1
+            for trace = 1:size(CetaArray1{mouse}{tType},1)
+                CetaArray{tType}(Ccounter2,:) = CetaArray1{mouse}{tType}(trace,:);
+                Ccounter2 = Ccounter2 + 1 ; 
+            end 
+        end    
+        if BBBQ == 1
+            for trace = 1:size(BetaArray1{mouse}{tType},1)
+                BetaArray{tType}(Bcounter2,:) = BetaArray1{mouse}{tType}(trace,:);
+                Bcounter2 = Bcounter2 + 1 ; 
+            end 
+        end  
+        if VWQ == 1
+            for trace = 1:size(VetaArray1{mouse}{tType},1)
+                VetaArray{tType}(Vcounter2,:) = VetaArray1{mouse}{tType}(trace,:);
+                Vcounter2 = Vcounter2 + 1 ; 
+            end 
+        end 
+    end 
+    %smooth tType data 
+    if smoothQ == 0 
+        if CAQ == 1
+            sCetaAvs{tType} = CetaArray{tType};
+        end 
+        if BBBQ == 1
+            sBetaAvs{tType} = BetaArray{tType};
+        end
+        if VWQ == 1
+            sVetaAvs{tType} = VetaArray{tType};
+        end
+    elseif smoothQ == 1 
+        if CAQ == 1
+            sCetaAv =  MovMeanSmoothData(CetaArray{tType},filtTime,FPSstack{idx}); %CetaAvs{tType};
+            sCetaAvs{tType} = sCetaAv; 
+        end 
+        if BBBQ == 1
+            sBetaAv =  MovMeanSmoothData(BetaArray{tType},filtTime,FPSstack{idx}); %CetaAvs{tType};
+            sBetaAvs{tType} = sBetaAv; 
+        end 
+        if VWQ == 1
+            sVetaAv =  MovMeanSmoothData(VetaArray{tType},filtTime,FPSstack{idx}); %CetaAvs{tType};
+            sVetaAvs{tType} = sVetaAv; 
+        end
+    end 
+    % baseline tType data to average value between 0 sec and -baselineInput sec (0 sec being stim
+    %onset) 
+    if dataParseType == 0 %peristimulus data to plot 
+        %sec_before_stim_start       
+        if CAQ == 1
+            snCetaArray{tType} = ((sCetaAvs{tType} ./ nanmean(sCetaAvs{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{idx}):floor(sec_before_stim_start*FPSstack{idx})),2))*100);              
+        end 
+        if BBBQ == 1 
+            snBetaArray{tType} = ((sBetaAvs{tType} ./ nanmean(sBetaAvs{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{idx}):floor(sec_before_stim_start*FPSstack{idx})),2))*100);              
+        end 
+        if VWQ == 1
+            snVetaArray{tType} = ((sVetaAvs{tType} ./ nanmean(sVetaAvs{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{idx}):floor(sec_before_stim_start*FPSstack{idx})),2))*100);              
+        end 
+    elseif dataParseType == 1 %only stimulus data to plot 
+        if CAQ == 1
+            snCetaArray = sCetaAvs; 
+        end 
+        if BBBQ == 1 
+            snBetaArray = sBetaAvs;
+        end 
+        if VWQ == 1
+            snVetaArray = sVetaAvs;
+        end 
+    end 
+    
+    % determine 95% CI and av data 
+    if CAQ == 1
+        SEMc{tType} = (nanstd(snCetaArray{tType}))/(sqrt(size(snCetaArray{tType},1))); % Standard Error            
+        STDc{tType} = nanstd(snCetaArray{tType});
+        ts_cLow = tinv(0.025,size(snCetaArray{tType},1)-1);% T-Score for 95% CI
+        ts_cHigh = tinv(0.975,size(snCetaArray{tType},1)-1);% T-Score for 95% CI
+        CI_cLow{tType} = (nanmean(snCetaArray{tType},1)) + (ts_cLow*SEMc{tType});  % Confidence Intervals
+        CI_cHigh{tType} = (nanmean(snCetaArray{tType},1)) + (ts_cHigh*SEMc{tType});  % Confidence Intervals
+        x = 1:length(CI_cLow{tType});
+        AVcData{tType} = nanmean(snCetaArray{tType},1);
+    end 
+    if BBBQ == 1
+        SEMb{tType} = (nanstd(snBetaArray{tType}))/(sqrt(size(snBetaArray{tType},1))); % Standard Error            
+        STDb{tType} = nanstd(snBetaArray{tType});
+        ts_bLow = tinv(0.025,size(snBetaArray{tType},1)-1);% T-Score for 95% CI
+        ts_bHigh = tinv(0.975,size(snBetaArray{tType},1)-1);% T-Score for 95% CI
+        CI_bLow{tType} = (nanmean(snBetaArray{tType},1)) + (ts_bLow*SEMb{tType});  % Confidence Intervals
+        CI_bHigh{tType} = (nanmean(snBetaArray{tType},1)) + (ts_bHigh*SEMb{tType});  % Confidence Intervals
+        x = 1:length(CI_bLow{tType});
+        AVbData{tType} = nanmean(snBetaArray{tType},1);
+    end 
+    if VWQ == 1
+        SEMv{tType} = (nanstd(snVetaArray{tType}))/(sqrt(size(snVetaArray{tType},1))); % Standard Error            
+        STDv{tType} = nanstd(snVetaArray{tType});
+        ts_vLow = tinv(0.025,size(snVetaArray{tType},1)-1);% T-Score for 95% CI
+        ts_vHigh = tinv(0.975,size(snVetaArray{tType},1)-1);% T-Score for 95% CI
+        CI_vLow{tType} = (nanmean(snVetaArray{tType},1)) + (ts_vLow*SEMv{tType});  % Confidence Intervals
+        CI_vHigh{tType} = (nanmean(snVetaArray{tType},1)) + (ts_vHigh*SEMv{tType});  % Confidence Intervals
+        x = 1:length(CI_vLow{tType});
+        AVvData{tType} = nanmean(snVetaArray{tType},1);
+    end 
+    %plot Ca data 
+    if CAQ == 1 
+        fig = figure;             
+        hold all;
+        Frames = size(AVbData{tType},2);        
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        plot(AVcData{tType}-100,'b','LineWidth',3)
+        patch([x fliplr(x)],[CI_cLow{tType}-100 fliplr(CI_cHigh{tType}-100)],[0 0 0.5],'EdgeColor','none')
+        if tType == 1 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 3 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 2 
+            plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 4 
+            plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        end
+        ax=gca;
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 30;
+        ax.FontName = 'Times';
+        xlim([1 length(AVbData{tType})])
+        ylim([-5 5])
+        xlabel('time (s)')
+        ylabel('percent change')
+        % initialize empty string array 
+        label = strings;
+        label = append(label,'  Ca ROIs averaged');
+        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        set(fig,'position', [100 100 900 900])
+        alpha(0.5)        
+    end 
+    %plot BBB data 
+    if BBBQ == 1 
+        fig = figure;             
+        hold all;
+        Frames = size(AVbData{tType},2);        
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        plot(AVbData{tType}-100,'r','LineWidth',3)
+        patch([x fliplr(x)],[CI_bLow{tType}-100 fliplr(CI_bHigh{tType}-100)],[0.5 0 0],'EdgeColor','none')
+        if tType == 1 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 3 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)    
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 2 
+            plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)  
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 4 
+            plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        end
+        ax=gca;
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 30;
+        ax.FontName = 'Times';
+        xlim([1 length(AVbData{tType})])
+        ylim([-2.5 2.5])
+        xlabel('time (s)')
+        ylabel('percent change')
+        % initialize empty string array 
+        label = strings;
+        label = append(label,'BBB ROIs averaged'); 
+        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        set(fig,'position', [100 100 900 900])
+        alpha(0.5)      
+    end 
+    %plot VW data 
+    if VWQ == 1
+        fig = figure;             
+        hold all;
+        Frames = size(AVbData{tType},2);        
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2;   
+        plot(AVvData{tType}-100,'k','LineWidth',3)
+        patch([x fliplr(x)],[CI_vLow{tType}-100 fliplr(CI_vHigh{tType}-100)],'k','EdgeColor','none')            
+        if tType == 1 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 3 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)    
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 2 
+            plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        elseif tType == 4 
+            plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+        end
+        ax=gca;
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 30;
+        ax.FontName = 'Times';
+        xlim([1 length(AVbData{tType})])
+        ylim([-0.1 0.25])
+        xlabel('time (s)')
+        ylabel('percent change')
+        % initialize empty string array 
+        label = strings;
+        label = append(label,'Vessel width ROIs averaged ');
+        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        set(fig,'position', [100 100 900 900])
+        alpha(0.5)     
+    end 
+end 
+
+
+
+
+
 %}
 %% compare terminal calcium activity - create correlograms
 %{
@@ -2797,6 +3209,7 @@ end
 % end 
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
+% takes already smooothed/normalized data 
 %{
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
@@ -3327,7 +3740,7 @@ end
 %% AVERAGE ACROSS MICE 
 clear close_Btraces_allMice far_Btraces_allMice close_Ctraces_allMice far_Ctraces_allMice close_Vtraces_allMice far_Vtraces_allMice   
 
-% resample data (closeBTraceArray)
+% figure out the size you should resample your data to 
 FPSstack2 = zeros(1,mouseNum);
 for mouse = 1:mouseNum
     FPSstack2(mouse) = FPSstack{mouse};
@@ -3381,7 +3794,7 @@ if VWQ == 1
     totalNum_farVtraces = sum(sum(farVtrace_nums));
 end 
 for mouse = 1:length(mouseNums)   
-    %resample, scale by number of traces, and sort data
+    %resample and sort data
     if BBBQ == 1
         for BBBroi = 1:BBBroiNum(mouse)
             for trace1 = 1:size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)
@@ -3600,6 +4013,7 @@ if VWQ == 1
 end 
 %}
 %% STA 2: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
+% takes already smooothed/normalized data 
 % this assumes you are averaging, asks how many different groups you want
 % to average, and then plots multiple averages overlaid on the same figure. This generates figures for all BBB and VW ROIs at once  
 %{
