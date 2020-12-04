@@ -989,7 +989,7 @@ end
 %% ETA: average across mice 
 % does not take already smooothed/normalized data. Will ask you about
 % smoothing/normalizing below 
-
+%{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -1018,7 +1018,7 @@ for mouse = 1:mouseNum
     end 
 end 
 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%%
 % figure out the size you should resample your data to 
 %the min length names (dependent on length(tTypes))are hard coded in 
 FPSstack2 = zeros(1,mouseNum);
