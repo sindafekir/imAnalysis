@@ -1540,8 +1540,6 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - 
 % 1) CHANGE SPIKE FINDING CODE: NEED TO SORT PEAKS INTO TRIALS BY TYPE 
 % 2) NEED TO FIGURE OUT BUG IN TIMING CODE RELATED TO WINDOW AVERAGING 
 
@@ -1559,8 +1557,8 @@ Len2_4 = length(sCeta{terminals(1)}{2});
 
 % find peaks that are significant relative to the entire data set
 stdTrace = cell(1,length(vidList)); 
-sigPeaks = cell(1,length(vidList)); 
-sigLocs = cell(1,length(vidList)); 
+sigPeaks2 = cell(1,length(vidList)); 
+sigLocs2 = cell(1,length(vidList)); 
 for vid = 1:length(vidList)
     for ccell = 1:length(terminals)
         %find the peaks 
@@ -1570,8 +1568,8 @@ for vid = 1:length(vidList)
         count = 1 ; 
         for loc = 1:length(locs)
             if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
-                    sigPeaks{vid}{terminals(ccell)}(count) = peaks(loc);
-                    sigLocs{vid}{terminals(ccell)}(count) = locs(loc);
+                    sigPeaks2{vid}{terminals(ccell)}(count) = peaks(loc);
+                    sigLocs2{vid}{terminals(ccell)}(count) = locs(loc);
                     count = count + 1;  
             end 
         end 
@@ -1583,54 +1581,45 @@ end
 % PICK UP HERE: SORT THE ABOVE PEAKS (USING THEIR LOCS PER VID) INTO ETA
 % TRIALS BY TYPE 
 
+% NEED TO TURN THIS: 
+%     sigPeaks2{vid}{terminals(ccell)}(count/peak) 
+%     sigLocs2{vid}{terminals(ccell)}(count/peak)   
+% INTO THIS: 
+%     sigPeaks{term}{tType}{trial}(count/peak)
+%     sigPeaks{term}{tType}{trial}(count/peak) 
+
+% plotStart{vid}(trial)
+% plotEnd{vid}(trial)
+
 for ccell = 1:ccellLen
-    count1 = 1;
-    count2 = 1;
-    count3 = 1;
-    count4 = 1;
     for vid = 1:length(bDataFullTrace)    
         for trial = 1:length(plotStart{vid}) 
-            if trialLengths{vid}(trial) ~= 0 
-                 if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
-                    %if the blue light is on
-                    if TrialTypes{vid}(trial,2) == 1
-                        %if it is a 2 sec trial 
-                        if trialLengths{vid}(trial) == floor(2*FPSstack)
-                            % NEED TO TURN THIS: 
-%                             sigPeaks{vid}{terminals(ccell)}(count) 
-%                             sigLocs{vid}{terminals(ccell)}(count)   
-                            
-%                             sigPeakLocs{term}{tType}{trial}(count)
-%                             sigPeaks{term}{tType}{trial}(count) 
-                            
-                            
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                            end 
-                            count1 = count1 + 1;                    
-                        %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                            end 
-                            count2 = count2 + 1;
-                        end 
-                    %if the red light is on 
-                    elseif TrialTypes{vid}(trial,2) == 2
-                        %if it is a 2 sec trial 
-                        if trialLengths{vid}(trial) == floor(2*FPSstack)
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                            end 
-                            count3 = count3 + 1;                    
-                        %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
-                            end 
-                            count4 = count4 + 1;
-                        end             
+            for peak = 1:length(sigPeaks2{vid}{terminals(ccell)})
+                %if the blue light is on
+                if TrialTypes{vid}(trial,2) == 1
+                    %if it is a 2 sec trial 
+                    if trialLengths{vid}(trial) == floor(2*FPSstack)
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        % NEED TO INTIALIZE COUNT1 SOMEWHERE 
+                        % NEED TO ADD IN ANOTHER LOOP TO ITERATE THROUGH PEAKS 
+                        sigPeaks{ccell}{1}{trial}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+
+                    %if it is a 20 sec trial
+                    elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+
                     end 
+                %if the red light is on 
+                elseif TrialTypes{vid}(trial,2) == 2
+                    %if it is a 2 sec trial 
+                    if trialLengths{vid}(trial) == floor(2*FPSstack)
+
+                    %if it is a 20 sec trial
+                    elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+
+                    end             
                 end 
             end 
         end         

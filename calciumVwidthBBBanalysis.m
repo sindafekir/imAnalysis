@@ -1594,31 +1594,35 @@ end
 for ccell = 1:ccellLen
     for vid = 1:length(bDataFullTrace)    
         for trial = 1:length(plotStart{vid}) 
-            %if the blue light is on
-            if TrialTypes{vid}(trial,2) == 1
-                %if it is a 2 sec trial 
-                if trialLengths{vid}(trial) == floor(2*FPSstack)
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    % NEED TO INTIALIZE COUNT1 SOMEWHERE 
-                    % NEED TO ADD IN ANOTHER LOOP TO ITERATE THROUGH PEAKS 
-                    sigPeaks{ccell}{1}{trial}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+            for peak = 1:length(sigPeaks2{vid}{terminals(ccell)})
+                %if the blue light is on
+                if TrialTypes{vid}(trial,2) == 1
+                    %if it is a 2 sec trial 
+                    if trialLengths{vid}(trial) == floor(2*FPSstack)
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        % NEED TO INTIALIZE COUNT1 SOMEWHERE 
+                        % NEED TO ADD IN LOGIC TO SEPARATE PEAKS INTO
+                        % DIFFERENT TRIALS DEPENDING ON PEAK LOC AND PLOT
+                        % START AND END FRAMES 
+                        sigPeaks{ccell}{1}{trial}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
 
-                %if it is a 20 sec trial
-                elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                    %if it is a 20 sec trial
+                    elseif trialLengths{vid}(trial) == floor(20*FPSstack)
 
+                    end 
+                %if the red light is on 
+                elseif TrialTypes{vid}(trial,2) == 2
+                    %if it is a 2 sec trial 
+                    if trialLengths{vid}(trial) == floor(2*FPSstack)
+
+                    %if it is a 20 sec trial
+                    elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+
+                    end             
                 end 
-            %if the red light is on 
-            elseif TrialTypes{vid}(trial,2) == 2
-                %if it is a 2 sec trial 
-                if trialLengths{vid}(trial) == floor(2*FPSstack)
-              
-                %if it is a 20 sec trial
-                elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-
-                end             
             end 
         end         
     end
