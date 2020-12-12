@@ -1576,125 +1576,81 @@ for vid = 1:length(vidList)
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE: SORT THE ABOVE PEAKS (USING THEIR LOCS PER VID) INTO ETA
-% TRIALS BY TYPE 
-
-% NEED TO TURN THIS: 
-%     sigPeaks2{vid}{terminals(ccell)}(count/peak) 
-%     sigLocs2{vid}{terminals(ccell)}(count/peak)   
-% INTO THIS: 
-%     sigPeaks{term}{tType}{trial}(count/peak)
-%     sigPeaks{term}{tType}{trial}(count/peak) 
-
-% plotStart{vid}(trial)
-% plotEnd{vid}(trial)
-
+sigPeaks = cell(1,ccellLen);
+sigLocs = cell(1,ccellLen);
 for ccell = 1:ccellLen
-    for vid = 1:length(bDataFullTrace)    
+    count1 = 1; 
+    count2 = 1; 
+    count3 = 1; 
+    count4 = 1; 
+    for vid = 1:length(bDataFullTrace) 
         for trial = 1:length(plotStart{vid}) 
             for peak = 1:length(sigPeaks2{vid}{terminals(ccell)})
-                %if the blue light is on
-                if TrialTypes{vid}(trial,2) == 1
-                    %if it is a 2 sec trial 
-                    if trialLengths{vid}(trial) == floor(2*FPSstack)
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        % NEED TO INTIALIZE COUNT1 SOMEWHERE 
-                        % NEED TO ADD IN LOGIC TO SEPARATE PEAKS INTO
-                        % DIFFERENT TRIALS DEPENDING ON PEAK LOC AND PLOT
-                        % START AND END FRAMES 
-                        sigPeaks{ccell}{1}{trial}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
-
-                    %if it is a 20 sec trial
-                    elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-
+                if sigLocs2{vid}{terminals(ccell)}(peak) > plotStart{vid}(trial) && sigLocs2{vid}{terminals(ccell)}(peak) < plotEnd{vid}(trial)
+                    %if the blue light is on
+                    if TrialTypes{vid}(trial,2) == 1
+                        %if it is a 2 sec trial 
+                        if trialLengths{vid}(trial) == floor(2*FPSstack)
+                            sigPeaks{ccell}{1}{trial}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+                            sigLocs{ccell}{1}{trial}(count1) = sigLocs2{vid}{terminals(ccell)}(peak); 
+                            count1 = count1 + 1;
+                        %if it is a 20 sec trial
+                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                            sigPeaks{ccell}{2}{trial}(count2) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+                            sigLocs{ccell}{2}{trial}(count2) = sigLocs2{vid}{terminals(ccell)}(peak); 
+                            count2 = count2 + 1;
+                        end 
+                    %if the red light is on 
+                    elseif TrialTypes{vid}(trial,2) == 2
+                        %if it is a 2 sec trial 
+                        if trialLengths{vid}(trial) == floor(2*FPSstack)
+                            sigPeaks{ccell}{3}{trial}(count3) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+                            sigLocs{ccell}{3}{trial}(count3) = sigLocs2{vid}{terminals(ccell)}(peak); 
+                            count3 = count3 + 1;
+                        %if it is a 20 sec trial
+                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                            sigPeaks{ccell}{4}{trial}(count4) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+                            sigLocs{ccell}{4}{trial}(count4) = sigLocs2{vid}{terminals(ccell)}(peak); 
+                            count4 = count4 + 1;
+                        end             
                     end 
-                %if the red light is on 
-                elseif TrialTypes{vid}(trial,2) == 2
-                    %if it is a 2 sec trial 
-                    if trialLengths{vid}(trial) == floor(2*FPSstack)
-
-                    %if it is a 20 sec trial
-                    elseif trialLengths{vid}(trial) == floor(20*FPSstack)
-
-                    end             
                 end 
             end 
         end         
     end
 end 
 
-
-%%  remove rows that are all 0 and then add 100 to each trace to avoid
-%negative going values 
-for tType = 1:numTtypes
-    if CAQ == 1
-        for ccell = 1:length(terminals)    
-            nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
-            Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
-            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + 100;
-        end 
-    end 
-    if BBBQ == 1 
-        for BBBroi = 1:length(bDataFullTrace{1})
-            nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
-            Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
-            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + 100;
-        end 
-    end 
-    if VWQ == 1
-        for VWroi = 1:length(vDataFullTrace{1})
-            nonZeroRowsV = all(Veta{VWroi}{tType} == 0,2);
-            Veta{VWroi}{tType}(nonZeroRowsV,:) = NaN;
-            Veta{VWroi}{tType} = Veta{VWroi}{tType} + 100;
-        end 
-    end 
-    if velWheelQ == 1 
-        nonZeroRowsW = all(Weta{tType} == 0,2);
-        Weta{tType}(nonZeroRowsW,:) = NaN;
-        Weta{tType} = Weta{tType} + 100;
-    end 
-end 
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% THE BELOW CODE FINDS PEAKS THAT ARE SIG FOR EACH ETA TRIAL 
-peaks = cell(1,length(terminals));
-locs = cell(1,length(terminals));
-stdTrace = cell(1,length(terminals));
-sigPeaks = cell(1,length(terminals));
-sigPeakLocs = cell(1,length(terminals));
-clear raster raster2 raster3 
-for term = 1:length(terminals)
-    for tType = 1:numTtypes  
-        for trial = 1:size(Ceta{terminals(1)}{tType},1)
-            %identify where the peaks are 
-            [peak, loc] = findpeaks(Ceta{terminals(term)}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1
-            peaks{term}{tType}{trial} = peak;
-            locs{term}{tType}{trial} = loc;
-            %find the sig peaks (peaks above 2 standard deviations from mean) 
-            stdTrace{term}(trial,tType) = std(Ceta{terminals(term)}{tType}(trial,:));
-            count = 1;
-            if isempty(peaks{term}{tType}{trial}) == 0 
-                for ind = 1:length(peaks{term}{tType}{trial})
-                    if peaks{term}{tType}{trial}(ind) > stdTrace{term}(trial,tType)*2
-                        sigPeakLocs{term}{tType}{trial}(count) = locs{term}{tType}{trial}(ind);
-                        sigPeaks{term}{tType}{trial}(count) = peaks{term}{tType}{trial}(ind);                   
-                        %create raster plot by binarizing data                      
-                        raster2{term}{tType}(trial,sigPeakLocs{term}{tType}{trial}(count)) = 1;
-                       count = count + 1;
-                    end                
-                end 
+%  remove empty cells at trial level and 0s at peak level
+sigLocs3 = cell(1,ccellLen);
+sigPeaks3 = cell(1,ccellLen);
+sigLocs4 = cell(1,ccellLen);
+sigPeaks4 = cell(1,ccellLen);
+for ccell = 1:ccellLen
+    for tType = 1:length(sigLocs{1})
+        count = 1; 
+        for trial = 1:length(sigLocs{ccell}{tType})
+            if isempty(sigLocs{ccell}{tType}{trial}) == 0 
+                sigLocs3{ccell}{tType}{count} = sigLocs{ccell}{tType}{trial};
+                sigPeaks3{ccell}{tType}{count} = sigPeaks{ccell}{tType}{trial};
+                sigLocs4{ccell}{tType}{count} = sigLocs3{ccell}{tType}{count}(sigLocs3{ccell}{tType}{count}~=0);
+                sigPeaks4{ccell}{tType}{count} = sigPeaks3{ccell}{tType}{count}(sigPeaks3{ccell}{tType}{count}~=0);
+                count = count + 1;
             end 
         end 
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+clear sigLocs sigPeaks sigLocs2 sigPeaks2 sigLocs3 sigPeaks3  
+sigLocs = sigLocs4; sigPeaks = sigPeaks4;
+clear sigLocs4 sigPeaks4
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE THE ABOVE WORKS SIG PEAKS AND LOCS ARE SORTED CORRECTLY NEED
+% TO TROUBLE SHOOT BELOW CODE 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 allTermAvPeakNums = cell(1,numTtypes);
 for term = 1:length(peaks)
     if indCaROIplotQ == 1
