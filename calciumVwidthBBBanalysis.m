@@ -1540,7 +1540,7 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs
-%{
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
@@ -1664,6 +1664,7 @@ for ccell = 1:ccellLen
     end 
 end 
 
+% plot 
 allTermAvPeakNums = cell(1,numTtypes);
 raster2 = cell(1,length(sigPeaks));
 raster3 = cell(1,length(sigPeaks));
@@ -1759,15 +1760,15 @@ for term = 1:length(sigPeaks)
             hold all 
             stimStartF = floor((FPSstack*20)/winFrames);
             if tType == 1 || tType == 3
-                stimStopF = stimStartF + ceil((FPSstack*2)/winFrames);           
+                stimStopF = stimStartF + (FPSstack*2)/winFrames;           
                 Frames = size(avTermNumPeaks{term}{tType},2);        
                 sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
-                FrameVals = (0:4:Frames);            
+                FrameVals = (0:4:Frames)+1;            
             elseif tType == 2 || tType == 4       
-                stimStopF = stimStartF + ceil((FPSstack*20)/winFrames);            
+                stimStopF = stimStartF + (FPSstack*20)/winFrames;            
                 Frames = size(avTermNumPeaks{term}{tType},2);        
                 sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
-                FrameVals = (0:4:Frames);
+                FrameVals = (0:4:Frames)+1;
             end 
             bar(allTermAvPeakNums{tType}(term,:),'k')
             if tType == 1 || tType == 2
@@ -1786,7 +1787,7 @@ for term = 1:length(sigPeaks)
                 ylabel('number of Ca peaks')
             end 
             xlim([1 length(avTermNumPeaks{term}{tType})])
-            ylim([0 2.5])
+            ylim([0 1])
             mtitle = sprintf('Terminal %d Ca Peaks',terminals(term));
             sgtitle(mtitle,'Fontsize',25);
             hold on
@@ -1862,12 +1863,12 @@ if allCaROIplotQ == 1
         stimStartF = floor((FPSstack*20)/winFrames);
         hold all 
         if tType == 1 || tType == 3
-            stimStopF = stimStartF + ceil((FPSstack*2)/winFrames);           
+            stimStopF = stimStartF + (FPSstack*2)/winFrames;           
             Frames = size(avTermNumPeaks{term}{tType},2);        
             sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
             FrameVals = (0:4:Frames);            
         elseif tType == 2 || tType == 4       
-            stimStopF = stimStartF + ceil((FPSstack*20)/winFrames);            
+            stimStopF = stimStartF + (FPSstack*20)/winFrames;            
             Frames = size(avTermNumPeaks{term}{tType},2);        
             sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
             FrameVals = (0:4:Frames);
@@ -1879,7 +1880,7 @@ if allCaROIplotQ == 1
             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
         end 
-        ylim([0 12])
+        ylim([0 4])
         ax=gca;
         axis on 
         xticks(FrameVals)
