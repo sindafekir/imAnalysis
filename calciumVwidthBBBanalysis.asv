@@ -1664,7 +1664,7 @@ for ccell = 1:ccellLen
     end 
 end 
 
-%% plot 
+%% create raster and PSTH for all terminals individually 
 allTermAvPeakNums = cell(1,numTtypes);
 raster2 = cell(1,length(sigPeaks));
 raster3 = cell(1,length(sigPeaks));
@@ -1760,12 +1760,12 @@ for term = 1%:length(sigPeaks)
             hold all 
             stimStartF = floor((FPSstack*20)/winFrames);
             if tType == 1 || tType == 3
-                stimStopF = stimStartF + ceil((FPSstack*2)/winFrames);           
+                stimStopF = stimStartF + (FPSstack*2)/winFrames;           
                 Frames = size(avTermNumPeaks{term}{tType},2);        
                 sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
                 FrameVals = (0:4:Frames)+1;            
             elseif tType == 2 || tType == 4       
-                stimStopF = stimStartF + ceil((FPSstack*20)/winFrames);            
+                stimStopF = stimStartF + (FPSstack*20)/winFrames;            
                 Frames = size(avTermNumPeaks{term}{tType},2);        
                 sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
                 FrameVals = (0:4:Frames)+1;
@@ -1863,12 +1863,12 @@ if allCaROIplotQ == 1
         stimStartF = floor((FPSstack*20)/winFrames);
         hold all 
         if tType == 1 || tType == 3
-            stimStopF = stimStartF + ceil((FPSstack*2)/winFrames);           
+            stimStopF = stimStartF + (FPSstack*2)/winFrames;           
             Frames = size(avTermNumPeaks{term}{tType},2);        
             sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
             FrameVals = (0:4:Frames);            
         elseif tType == 2 || tType == 4       
-            stimStopF = stimStartF + ceil((FPSstack*20)/winFrames);            
+            stimStopF = stimStartF + (FPSstack*20)/winFrames;            
             Frames = size(avTermNumPeaks{term}{tType},2);        
             sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
             FrameVals = (0:4:Frames);

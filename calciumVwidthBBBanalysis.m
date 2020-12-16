@@ -1545,7 +1545,7 @@ end
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
-winFrames = floor(winSec*FPSstack);
+winFrames = ceil(winSec*FPSstack);
 numPeaks = cell(1,length(terminals));
 avTermNumPeaks = cell(1,length(terminals));
 
@@ -1664,7 +1664,7 @@ for ccell = 1:ccellLen
     end 
 end 
 
-% plot 
+% create raster and PSTH for all terminals individually 
 allTermAvPeakNums = cell(1,numTtypes);
 raster2 = cell(1,length(sigPeaks));
 raster3 = cell(1,length(sigPeaks));
@@ -1758,25 +1758,25 @@ for term = 1:length(sigPeaks)
             %plot PSTHs
             nexttile
             hold all 
-            stimStartF = floor((FPSstack*20)/winFrames);
+            stimStartF = ceil((FPSstack*20)/winFrames);
             if tType == 1 || tType == 3
                 stimStopF = stimStartF + (FPSstack*2)/winFrames;           
                 Frames = size(avTermNumPeaks{term}{tType},2);        
                 sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
-                FrameVals = (0:4:Frames)+1;            
+                FrameVals = (0:4:Frames);            
             elseif tType == 2 || tType == 4       
                 stimStopF = stimStartF + (FPSstack*20)/winFrames;            
                 Frames = size(avTermNumPeaks{term}{tType},2);        
                 sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
-                FrameVals = (0:4:Frames)+1;
+                FrameVals = (0:4:Frames);
             end 
             bar(allTermAvPeakNums{tType}(term,:),'k')
             if tType == 1 || tType == 2
             plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-            plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+            plot([ceil(stimStopF) ceil(stimStopF)], [-20 20], 'b','LineWidth',2)
             elseif tType == 3 || tType == 4
             plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-            plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+            plot([ceil(stimStopF) ceil(stimStopF)], [-20 20], 'r','LineWidth',2)
             end 
             ax=gca;
             axis on 
@@ -1787,7 +1787,7 @@ for term = 1:length(sigPeaks)
                 ylabel('number of Ca peaks')
             end 
             xlim([1 length(avTermNumPeaks{term}{tType})])
-            ylim([0 1])
+            ylim([0 1.2])
             mtitle = sprintf('Terminal %d Ca Peaks',terminals(term));
             sgtitle(mtitle,'Fontsize',25);
             hold on
@@ -1796,7 +1796,7 @@ for term = 1:length(sigPeaks)
     end 
 end 
 
-%% create raster and PSTH for all terminals stacked 
+% create raster and PSTH for all terminals stacked 
 for term = 1:length(terminals)
     for tType = 1:length(raster2{term})  
         curRowSize = size(raster{term}{tType},1);
@@ -1860,7 +1860,7 @@ if allCaROIplotQ == 1
         totalPeakNums{tType} = nansum(allTermAvPeakNums{tType});
         figure
         bar(totalPeakNums{tType},'k')
-        stimStartF = floor((FPSstack*20)/winFrames);
+        stimStartF = ceil((FPSstack*20)/winFrames);
         hold all 
         if tType == 1 || tType == 3
             stimStopF = stimStartF + (FPSstack*2)/winFrames;           
@@ -1875,10 +1875,10 @@ if allCaROIplotQ == 1
         end 
         if tType == 1 || tType == 2
             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-            plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+            plot([ceil(stimStopF) ceil(stimStopF)], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
         elseif tType == 3 || tType == 4
             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
-            plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+            plot([ceil(stimStopF) ceil(stimStopF)], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
         end 
         ylim([0 4])
         ax=gca;
