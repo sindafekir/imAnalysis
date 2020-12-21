@@ -1894,7 +1894,7 @@ if allCaROIplotQ == 1
 end 
 %}
 %% calcium peak raster plots and PSTHs (multiple mice) 
-
+%{
 % get the data you need 
 mouseNum = input('How many mice are there? ');
 FPSstack = cell(1,mouseNum);
