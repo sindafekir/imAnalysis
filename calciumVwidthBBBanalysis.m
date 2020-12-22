@@ -762,15 +762,15 @@ if AVQ == 0
             end 
             if BBBQ == 1 
                 plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+%                 patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
                 plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+%                 patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
                 plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')            
+%                 patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')            
             end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
@@ -899,26 +899,26 @@ elseif AVQ == 1
                 Frames = size(nsBeta{1}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*5:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*5:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(nsBeta{1}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*5:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*5:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack*2:Frames)-1); 
             end 
             if BBBQ == 1 
                 plot(AVbData{1}{tType}-100,'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+%                 patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
                 plot(AVcData{1}{tType}-100,'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+%                 patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
                 plot(AVvData{1}{tType}-100,'k','LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
+%                 patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
             end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
@@ -1039,13 +1039,8 @@ elseif CAQ ~= 1 && VWQ == 1
 end 
 
 %resample and sort data
-if CAQ == 1 && BBBQ ~= 1 && VWQ ~= 1 
-    tTypeNum = input('How many different kinds of trials (trialTypes) are there? '); 
-elseif CAQ ~= 1 && BBBQ == 1
-    tTypeNum = size(Beta{1}{1},2); 
-elseif CAQ ~= 1 && VWQ == 1 
-    tTypeNum = size(Veta{1}{1},2); 
-end 
+tTypeNum = input('How many different kinds of trials (trialTypes) are there? '); 
+
 
 % put all ROI traces together in same array etaArray1{mouse}{tType} and
 % resample across mice 
@@ -1393,10 +1388,138 @@ for tType = 1:tTypeNum
     end 
 end 
 
+%% overlay traces 
 
+pCAQ = input('Input 1 to plot calcium data. ');
+pBBBQ = input('Input 1 to plot BBB data. ');
+pVWQ = input('Input 1 to plot vessel width data. ');
+for tType = 1:tTypeNum
+    fig = figure;             
+    hold all;
+    Frames = size(AVbData{tType},2);        
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    if pCAQ == 1 
+        plot(AVcData{tType}-100,'b','LineWidth',3)
+    end 
+    if pBBBQ == 1
+        plot(AVbData{tType}-100,'r','LineWidth',3)
+    end 
+    if pVWQ == 1 
+        plot(AVvData{tType}-100,'k','LineWidth',3)
+    end 
+    
+    if tType == 1 
+        plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+    elseif tType == 3 
+        plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+    elseif tType == 2 
+        plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
+        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+    elseif tType == 4 
+        plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
+        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+    end
+    ax=gca;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;
+    ax.FontSize = 30;
+    ax.FontName = 'Times';
+    xlim([1 length(AVbData{tType})])
+    ylim([-5 5])
+    xlabel('time (s)')
+    ylabel('percent change')
+    % initialize empty string array 
+    label = strings;
+    label = append(label,'  Ca ROIs averaged');
+    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+    set(fig,'position', [100 100 900 900])
+    alpha(0.5)   
+end 
 
+%% combine red light trials and overlay traces 
 
+%sort all red trials together %AVcData{tType}
+pCAQ = input('Input 1 to plot calcium data. ');
+pBBBQ = input('Input 1 to plot BBB data. ');
+pVWQ = input('Input 1 to plot vessel width data. ');
+redTrialTtypeInds = [3,4]; %THIS IS CURRENTLY HARD CODED IN, BUT DOESN'T HAVE TO BE. REPLACE EVENTUALLY.
+if pCAQ == 1 
+    allRedAVcData = zeros(1,size(AVcData{1},2));
+    allRedAVcDataArray = zeros(1,size(AVcData{1},2));
+end 
+if pBBBQ == 1 
+    allRedAVbData = zeros(1,size(AVcData{1},2));
+    allRedAVbDataArray = zeros(1,size(AVcData{1},2));
+end 
+if VWQ == 1 
+    allRedAVvData = zeros(1,size(AVcData{1},2));
+    allRedAVvDataArray = zeros(1,size(AVcData{1},2));
+end 
+for tType = 1:length(redTrialTtypeInds)
+    if pCAQ == 1 
+        allRedAVcDataArray(tType,:) = AVcData{tType}(1:size(AVcData{1},2)); 
+    end 
+    if pBBBQ == 1 
+        allRedAVbDataArray(tType,:) = AVbData{tType}(1:size(AVcData{1},2)); 
+    end 
+    if pVWQ == 1 
+        allRedAVvDataArray(tType,:) = AVvData{tType}(1:size(AVcData{1},2)); 
+    end 
+end 
+if pCAQ == 1 
+    allRedAVcData = nanmean(allRedAVcDataArray,1); 
+end 
+if pBBBQ == 1 
+    allRedAVbData = nanmean(allRedAVbDataArray,1); 
+end 
+if pVWQ == 1 
+    allRedAVvData = nanmean(allRedAVvDataArray,1); 
+end 
 
+fig = figure;             
+hold all;
+Frames = size(AVbData{1},2);        
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+if pCAQ == 1 
+    plot(allRedAVcData-100,'b','LineWidth',3)
+end 
+if pBBBQ == 1
+    plot(allRedAVbData-100,'r','LineWidth',3)
+end 
+if pVWQ == 1 
+    plot(allRedAVvData-100,'k','LineWidth',3)
+end 
+plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
+plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+ax=gca;
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;
+ax.FontSize = 30;
+ax.FontName = 'Times';
+xlim([1 length(AVbData{1})])
+ylim([-5 5])
+xlabel('time (s)')
+ylabel('percent change')
+% initialize empty string array 
+label = strings;
+label = append(label,'  Ca ROIs averaged');
+title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+set(fig,'position', [100 100 900 900])
+alpha(0.5)   
 %}
 %% compare terminal calcium activity - create correlograms
 %{
