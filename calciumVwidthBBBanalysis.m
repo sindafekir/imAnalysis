@@ -1468,13 +1468,13 @@ if VWQ == 1
 end 
 for tType = 1:length(redTrialTtypeInds)
     if pCAQ == 1 
-        allRedAVcDataArray(tType,:) = AVcData{tType}(1:size(AVcData{1},2)); 
+        allRedAVcDataArray(tType,:) = AVcData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
     end 
     if pBBBQ == 1 
-        allRedAVbDataArray(tType,:) = AVbData{tType}(1:size(AVcData{1},2)); 
+        allRedAVbDataArray(tType,:) = AVbData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
     end 
     if pVWQ == 1 
-        allRedAVvDataArray(tType,:) = AVvData{tType}(1:size(AVcData{1},2)); 
+        allRedAVvDataArray(tType,:) = AVvData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
     end 
 end 
 if pCAQ == 1 
