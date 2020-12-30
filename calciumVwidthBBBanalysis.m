@@ -2043,6 +2043,7 @@ minLen = zeros(1,size(fullRaster2{1},2));
 for tType = 1:size(fullRaster2{1},2)
     minLen(tType) = size(fullRaster2{idx}{tType},2);
 end 
+minFPS = FPSstack2(minFPSstack); 
 
 % resample, sort, and binarize data 
 fullRaster = cell(1,size(fullRaster2{1},2));
@@ -2082,7 +2083,6 @@ end
 
 
 minFPS = FPSstack2(minFPSstack);
-totalPeakNums = cell(1,size(fullRaster2{1},2));
 for tType = 1:size(fullRaster2{1},2)
     %plot PSTH for all mice stacked 
     figure
@@ -2118,6 +2118,64 @@ for tType = 1:size(fullRaster2{1},2)
     label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
     sgtitle(label,'FontSize',25);
 end
+
+%% overlay the red PSTHs 
+
+% put red trials together 
+%sort all red trials together %AVcData{tType}
+redTrialTtypeInds = [3,4]; %THIS IS CURRENTLY HARD CODED IN, BUT DOESN'T HAVE TO BE. REPLACE EVENTUALLY.
+numTrials = (size(fullRaster{3},1)+size(fullRaster{4},1));
+redRaster = zeros(numTrials,size(fullRaster{3},2));
+count = 1;
+for tType = 1:length(redTrialTtypeInds)
+    for trial = 1:size(fullRaster{redTrialTtypeInds(tType)},1)
+        redRaster(count,:) = fullRaster{redTrialTtypeInds(tType)}(trial,1:size(fullRaster{3},2));
+        count = count + 1;
+    end 
+end 
+
+% create PSTHs 
+winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+winFrames = (winSec*minFPS);
+windows = ceil(size(redRaster,2)/winFrames);
+numPeaks = zeros(numTrials,windows);
+avTermNumPeaks = zeros(1,windows);
+for win = 1:windows
+    if win == 1 
+        numPeaks(:,win) = sum(~redRaster(:,1:winFrames),2);
+    elseif win > 1 
+        if ((win-1)*winFrames)+1 < size(redRaster,2) && winFrames*win < size(redRaster,2)
+            numPeaks(:,win) = nansum(~redRaster(:,((win-1)*winFrames)+1:winFrames*win),2);
+        end 
+    end 
+    avTermNumPeaks = nanmean(numPeaks,1);
+end
+colNum = ceil(size(redRaster,2)/winFrames); 
+if size(avTermNumPeaks,2) < colNum
+    avTermNumPeaks(size(avTermNumPeaks,2)+1:colNum) = 0;
+end 
+
+%plot PSTH for all mice stacked 
+figure
+bar(avTermNumPeaks,'k')
+stimStartF = floor((minFPS*20)/winFrames);
+hold all 
+stimStopF = (stimStartF + (minFPS*2)/winFrames);           
+Frames = size(avTermNumPeaks,2);        
+sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
+FrameVals = (0:4:Frames);   
+plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+ylim([0 0.3])
+ax=gca;
+axis on 
+xticks(FrameVals)
+ax.XTickLabel = sec_TimeVals;
+ax.FontSize = 15;
+xlabel('time (s)')
+ylabel('number of Ca peaks')
+label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
+sgtitle(label,'FontSize',25);
 
 %}
 %% STA: find calcium peaks per terminal across entire experiment 
@@ -2272,7 +2330,7 @@ end
 %}
 %% STA: sort data based on ca peak location 
 %{
-windSize = input('How big should the window be around Ca peak in seconds? ');
+windSize = input('How big should the window be around Ca peak in seconds? 24 or 5 sec? ');
 % windSize = 24; 
 % windSize = 5;
 if tTypeQ == 0 
@@ -2353,7 +2411,13 @@ elseif tTypeQ == 1
 end 
 %}
 %% STA: smooth and normalize to baseline period
- %{
+%{
+if windSize == 24 
+    baselineTime = 5;
+elseif windSize == 5
+    baselineTime = 0.5;
+end 
+
 if tTypeQ == 0 
     %{
     %find the BBB traces that increase after calcium peak onset (changePt) 
@@ -2473,11 +2537,11 @@ if tTypeQ == 0
                     end 
                 end 
                 
-                %normalize to 5 sec before changePt (calcium peak
+                %normalize to baselineTime sec before changePt (calcium peak
                 %onset) BLstart 
                 changePt = floor(size(sortedCdata{1}{terminals(1)},2)/2)-4;
 %                 BLstart = changePt - floor(0.5*FPSstack);
-                BLstart = changePt - floor(5*FPSstack);
+                BLstart = changePt - floor(baselineTime*FPSstack);
                 if BBBQ == 1
                     for BBBroi = 1:length(bDataFullTrace{1})
                         SNBdataPeaks{vid}{BBBroi}{terminals(ccell)} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}(:,BLstart:changePt),2)))*100;
@@ -2593,10 +2657,10 @@ elseif tTypeQ == 1
                                 NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
             %}                     
                               
-                            %normalize to 5 sec before changePt (calcium peak
+                            %normalize to baselineTime sec before changePt (calcium peak
                             %onset) BLstart 
                             changePt = floor(size(sortedCdata{1}{terminals(1)}{1},2)/2)-4;
-                            BLstart = changePt - floor(5*FPSstack);
+                            BLstart = changePt - floor(baselineTime*FPSstack);
                             if BBBQ == 1
                                 for BBBroi = 1:length(bDataFullTrace{1})
                                     if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
