@@ -2733,10 +2733,6 @@ if BBBQ == 1
     BBBroi = input('What BBB ROI do you want to plot? ');
 end 
 
-if tTypeQ == 1 
-    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
-end 
-
 AVQ = input('Input 1 to average across Ca ROIs. Input 0 otherwise. ');
 if AVQ == 1
     AVQ2 = input('Input 1 to specify what Ca ROIs to average. Input 0 to average all Ca ROIs. ');
@@ -2823,16 +2819,16 @@ if tTypeQ == 0
             if BBBQ == 1
                 for peak = 1:size(allBTraces{BBBroi}{terms(ccell)},1)
 %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
-                    BTraces{BBBroi}{terms(ccell)}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}(peak,:));
-                    count2 = count2 + 1;
+                            BTraces{BBBroi}{terms(ccell)}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}(peak,:));
+                            count2 = count2 + 1;
 %                         end 
                 end 
             end 
             if VWQ == 1
                 for peak = 1:size(allVTraces{VWroi}{terms(ccell)},1)
 %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
-                    VTraces{VWroi}{terms(ccell)}(count4,:) = (allVTraces{VWroi}{terms(ccell)}(peak,:));
-                    count4 = count4 + 1;
+                            VTraces{VWroi}{terms(ccell)}(count4,:) = (allVTraces{VWroi}{terms(ccell)}(peak,:));
+                            count4 = count4 + 1;
 %                         end 
                 end 
             end 
@@ -3068,7 +3064,8 @@ if tTypeQ == 0
     end 
     %}
 elseif tTypeQ == 1
-   %{
+    %{
+    per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. '); 
     if AVQ == 0 
         for ccell = 1:length(terms)
             % plot    
@@ -3131,18 +3128,18 @@ elseif tTypeQ == 1
             end 
             if BBBQ == 1
                 for peak = 1:size(allBTraces{BBBroi}{terms(ccell)}{per},1)
-%                         if allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} + nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2  & allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} - nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2               
-                    BTraces{BBBroi}{terms(ccell)}{per}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}{per}(peak,:));
-                    count2 = count2 + 1;
-%                         end 
+%                     if allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} + nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2  & allBTraces{BBBroi}{terms(ccell)}{per}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} - nanstd(allBTraces{BBBroi}{terms(ccell)}{per},1)*2               
+                        BTraces{BBBroi}{terms(ccell)}{per}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}{per}(peak,:));
+                        count2 = count2 + 1;
+%                     end 
                 end 
             end 
             if VWQ == 1
                 for peak = 1:size(allVTraces{VWroi}{terms(ccell)}{per},1)
-%                         if allVTraces{VWroi}{terms(ccell)}{per}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} + nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2 & allVTraces{VWroi}{terms(ccell)}{per}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} - nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2              
-                    VTraces{VWroi}{terms(ccell)}{per}(count4,:) = (allVTraces{VWroi}{terms(ccell)}{per}(peak,:));
-                    count4 = count4 + 1;
-%                         end 
+%                     if allVTraces{VWroi}{terms(ccell)}{per}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} + nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2 & allVTraces{VWroi}{terms(ccell)}{per}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} - nanstd(allVTraces{VWroi}{terms(ccell)}{per},1)*2              
+                        VTraces{VWroi}{terms(ccell)}{per}(count4,:) = (allVTraces{VWroi}{terms(ccell)}{per}(peak,:));
+                        count4 = count4 + 1;
+%                     end 
                 end 
             end 
             
