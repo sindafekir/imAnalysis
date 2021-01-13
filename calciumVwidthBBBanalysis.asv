@@ -4688,6 +4688,10 @@ elseif tTypeQ == 1
             end
         end 
     end 
+    %PICK UP HERE - NEED TO FIGURE OUT WHAT TERMS ARE STILL THERE AFTER
+    %OUTLIER REMOVAL (ABOVE) AND THEN UPDATE HOW I'M INDEXING THROUGH CCELL
+    %BELOW - THEN MAKE THE SAME CHANGES FOR TTYPEQ = 0 (STARTING WITH
+    %ITERATING THROUGH GROUPNUM AND CCELL SEPERATELY FOR THIS STEP) 
     % get the average of all the traces excluding outliers 
     for groupNum = 1:numGroups
         if BBBQ == 1
@@ -4709,9 +4713,9 @@ elseif tTypeQ == 1
         CcaROIs = find(~cellfun(@isempty,CTraces{groupNum}));
         for ccell = 1:length(CcaROIs) 
             if size(CTraces{groupNum}{CcaROIs(ccell)}{per},1) > 1 
-                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = nanmean(CTraces{groupNum}{CcaROIs(ccell)}{per});
+                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = nanmean(CTraces{groupNum}{terms{groupNum}(ccell)}{per});
             elseif size(CTraces{groupNum}{CcaROIs(ccell)}{per},1) == 1 
-                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = CTraces{groupNum}{CcaROIs(ccell)}{per};
+                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = CTraces{groupNum}{terms{groupNum}(ccell)}{per};
             end 
         end 
         if VWQ == 1
