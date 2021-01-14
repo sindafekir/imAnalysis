@@ -3464,7 +3464,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-%{
+
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 cd(regImDir);
@@ -4132,18 +4132,25 @@ if VWQ == 1
 end 
 x = 1:length(close_CI_cLow);
 
-% plot close Ca ROI and BBB data (all mice averaged)
 Frames = minLen;
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
 sec_TimeVals = floor(((Frames_pre_stim_start:min(FPSstack2):Frames_post_stim_start)/min(FPSstack2)))+1; %min(FPSstack)
 FrameVals = round((1:min(FPSstack2):Frames))+10; 
-    
+Bcolors = [1,0,0;1,0.5,0;1,1,0];
+Ccolors = [0,0,1;0,0.5,1;0,1,1];
+
+% plot close and far Ca ROI and BBB data (all mice averaged) overlaid 
 if BBBQ == 1
     fig = figure;
     ax=gca;
     hold all
-    plot(close_avCdata,'b','LineWidth',4)
+    plot(close_avCdata,'Color',Ccolors(1,:),'LineWidth',4)
+    patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
+    alpha(0.3)
+    plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
+    patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+    alpha(0.3)
     changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
     % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
     ax.XTick = FrameVals;
@@ -4156,19 +4163,67 @@ if BBBQ == 1
     xLimEnd = floor(24*min(FPSstack2)); 
     xlim([1 minLen])
     ylim([-10 150])
-    patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
     set(fig,'position', [500 100 900 800])
     alpha(0.3)
     %add right y axis tick marks for a specific DOD figure. 
     yyaxis right 
-    plot(close_avBdata,'r','LineWidth',4)
-    patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+    p(1) = plot(close_avBdata,'Color',Bcolors(1,:),'LineWidth',4);
+    patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],Bcolors(1,:),'EdgeColor','none')
+    alpha(0.3)
+    p(2) = plot(far_avBdata,'-','Color',Bcolors(2,:),'LineWidth',4);
+    patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
+    alpha(0.3)
+    legend([p(1) p(2)],'Close Terminals','Far Terminals')
     ylabel('BBB permeability percent change','FontName','Times')
     title('Close Terminals. All mice Averaged.')
     ylim([-0.3 0.5])
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);   
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% plot close and far Ca ROI and VW data (all mice averaged) overlaid 
+if BBBQ == 1
+    fig = figure;
+    ax=gca;
+    hold all
+    plot(close_avCdata,'Color',Ccolors(1,:),'LineWidth',4)
+    patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
+    alpha(0.3)
+    plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
+    patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+    alpha(0.3)
+    changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
+    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;   
+    ax.FontSize = 25;
+    ax.FontName = 'Times';
+    xlabel('time (s)','FontName','Times')
+    ylabel('calcium signal percent change','FontName','Times')
+    xLimStart = floor(10*min(FPSstack2));
+    xLimEnd = floor(24*min(FPSstack2)); 
+    xlim([1 minLen])
+    ylim([-10 150])
+    set(fig,'position', [500 100 900 800])
+    alpha(0.3)
+    %add right y axis tick marks for a specific DOD figure. 
+    yyaxis right 
+    p(1) = plot(close_avVdata,'Color',Bcolors(1,:),'LineWidth',4);
+    patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],Bcolors(1,:),'EdgeColor','none')
+    alpha(0.3)
+    p(2) = plot(far_avBdata,'-','Color',Bcolors(2,:),'LineWidth',4);
+    patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
+    alpha(0.3)
+    legend([p(1) p(2)],'Close Terminals','Far Terminals')
+    ylabel('BBB permeability percent change','FontName','Times')
+    title('Close Terminals. All mice Averaged.')
+    ylim([-0.3 0.5])
+    alpha(0.3)
+    set(gca,'YColor',[0 0 0]);   
+end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % plot close Ca ROI and VW data (all mice averaged) 
 if VWQ == 1
@@ -4200,38 +4255,6 @@ if VWQ == 1
     ylim([-0.3 0.5])
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);   
-end 
-
-% plot far Ca ROI and BBB data (all mice averaged) 
-if BBBQ == 1
-    fig = figure;
-    ax=gca;
-    hold all
-    plot(far_avCdata,'b','LineWidth',4)
-    changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
-    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
-    xLimStart = floor(10*min(FPSstack2));
-    xLimEnd = floor(24*min(FPSstack2)); 
-    xlim([1 minLen])
-    ylim([-10 150])
-    patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-    %add right y axis tick marks for a specific DOD figure. 
-    yyaxis right 
-    plot(far_avBdata,'r','LineWidth',4)
-    patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],[0.5 0 0],'EdgeColor','none')
-    ylabel('BBB permeability percent change','FontName','Times')
-    title('Far Terminals. All mice Averaged.')
-    ylim([-0.3 0.5])
-    alpha(0.3)
-    set(gca,'YColor',[0 0 0]);     
 end 
 
 % plot far Ca ROI and VW data (all mice averaged) 
@@ -4270,7 +4293,7 @@ end
 % takes already smooothed/normalized data 
 % this assumes you are averaging, asks how many different groups you want
 % to average, and then plots multiple averages overlaid on the same figure. This generates figures for all BBB and VW ROIs at once  
-
+%{
 %define how many groups you want to create average traces for and what Ca
 %ROIs fall into these groups 
 numGroups = input('How many groups do you want to average? ');
@@ -4578,7 +4601,7 @@ if tTypeQ == 0
     
     %}
 elseif tTypeQ == 1
-    
+    %{
     per = input('Input 3 to plot light off data. Input 2 for red light data. Input 1 for blue light data. '); 
     allCTraces = cell(1,numGroups);
     CTraces = cell(1,numGroups);
@@ -4667,10 +4690,10 @@ elseif tTypeQ == 1
             for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)
                 if BBBQ == 1
                     for BBBroi = 1:length(sortedBdata{1})
-                        if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2               
+%                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2               
                             BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:));
                             count2 = count2 + 1;
-                        end 
+%                         end 
                     end 
                 end 
 %                     if allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)}{per} + nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)*2 & allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)}{per} - nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)*2                      
@@ -4679,19 +4702,15 @@ elseif tTypeQ == 1
 %                     end 
                 if VWQ == 1
                     for VWroi = 1:length(sortedVdata{1})
-                        if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},1)*2              
+%                         if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},1)*2              
                             VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:));
                             count4 = count4 + 1;
-                        end 
+%                         end 
                     end 
                 end 
             end
         end 
     end 
-    %PICK UP HERE - NEED TO FIGURE OUT WHAT TERMS ARE STILL THERE AFTER
-    %OUTLIER REMOVAL (ABOVE) AND THEN UPDATE HOW I'M INDEXING THROUGH CCELL
-    %BELOW - THEN MAKE THE SAME CHANGES FOR TTYPEQ = 0 (STARTING WITH
-    %ITERATING THROUGH GROUPNUM AND CCELL SEPERATELY FOR THIS STEP) 
     % get the average of all the traces excluding outliers 
     for groupNum = 1:numGroups
         if BBBQ == 1
@@ -4713,9 +4732,9 @@ elseif tTypeQ == 1
         CcaROIs = find(~cellfun(@isempty,CTraces{groupNum}));
         for ccell = 1:length(CcaROIs) 
             if size(CTraces{groupNum}{CcaROIs(ccell)}{per},1) > 1 
-                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = nanmean(CTraces{groupNum}{terms{groupNum}(ccell)}{per});
+                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = nanmean(CTraces{groupNum}{CcaROIs(ccell)}{per});
             elseif size(CTraces{groupNum}{CcaROIs(ccell)}{per},1) == 1 
-                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = CTraces{groupNum}{terms{groupNum}(ccell)}{per};
+                AVSNCdataPeaks3{groupNum}{per}(ccell,:) = CTraces{groupNum}{CcaROIs(ccell)}{per};
             end 
         end 
         if VWQ == 1
