@@ -3464,7 +3464,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-
+%{
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 cd(regImDir);
@@ -4176,7 +4176,7 @@ if BBBQ == 1
     alpha(0.3)
     legend([p(1) p(2)],'Close Terminals','Far Terminals')
     ylabel('BBB permeability percent change','FontName','Times')
-    title('Close Terminals. All mice Averaged.')
+%     title('Close Terminals. All mice Averaged.')
     ylim([-0.3 0.5])
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);   
