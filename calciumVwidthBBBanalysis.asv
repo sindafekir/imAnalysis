@@ -4307,12 +4307,14 @@ if BBBQ == 1
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);   
     
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     fig = figure;
     ax=gca;
     hold all
     plot(avCdata,'b','LineWidth',4)
-    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],Ccolors(1,:),'b')
     alpha(0.3)
+    changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
     % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;   
@@ -4320,16 +4322,21 @@ if BBBQ == 1
     ax.FontName = 'Times';
     xlabel('time (s)','FontName','Times')
     ylabel('calcium signal percent change','FontName','Times')
+    xLimStart = floor(10*min(FPSstack2));
+    xLimEnd = floor(24*min(FPSstack2)); 
     xlim([1 minLen])
     ylim([-10 150])
     set(fig,'position', [500 100 900 800])
     alpha(0.3)
     %add right y axis tick marks for a specific DOD figure. 
     yyaxis right 
-    p(1) = plot(avBdata,'r','LineWidth',4);
-    patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
+    p(1) = plot(close_avBdata,'Color',Bcolors(1,:),'LineWidth',4);
+    patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],Bcolors(1,:),'EdgeColor','none')
     alpha(0.3)
-%     legend([p(1) p(2)],'Close Terminals','Far Terminals')
+    p(2) = plot(far_avBdata,'-','Color',Bcolors(2,:),'LineWidth',4);
+    patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
+    alpha(0.3)
+    legend([p(1) p(2)],'Close Terminals','Far Terminals')
     ylabel('BBB permeability percent change','FontName','Times')
 %     title('Close Terminals. All mice Averaged.')
     ylim([-0.3 0.5])
@@ -4371,35 +4378,6 @@ if VWQ == 1
     patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],Vcolors(2,:),'EdgeColor','none')
     alpha(0.3)
     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('BBB permeability percent change','FontName','Times')
-%     title('Close Terminals. All mice Averaged.')
-    ylim([-0.02 0.02])
-    alpha(0.3)
-    set(gca,'YColor',[0 0 0]);   
-    
-    fig = figure;
-    ax=gca;
-    hold all
-    plot(avCdata,'b','LineWidth',4)
-    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
-    alpha(0.3)
-    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
-    xlim([1 minLen])
-    ylim([-10 150])
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-    %add right y axis tick marks for a specific DOD figure. 
-    yyaxis right 
-    p(1) = plot(avVdata,'k','LineWidth',4);
-    patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
-    alpha(0.3)
-%     legend([p(1) p(2)],'Close Terminals','Far Terminals')
     ylabel('BBB permeability percent change','FontName','Times')
 %     title('Close Terminals. All mice Averaged.')
     ylim([-0.02 0.02])
