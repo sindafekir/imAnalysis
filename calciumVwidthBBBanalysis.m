@@ -3529,6 +3529,13 @@ end
 
 
 %% this plots individual STAs for every BBB and VW ROI per mouse
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%FIX THIS BUG: THE TRACE THAT SHOWS YOU THE AVERAGE OF ALL TERMINALS
+%(REGARDLESS OF DISTANCE) WHEN FIRSTTIMEq == 0 IS MESSED UP. IT'S PROBABLY
+%AN EASY FIX- PROBABLY NEED TO RE-INITIALIZE AN ARRAY WHEN FIRSTTIMEQ == 0 
+% THE CURRENT DATA IN THE WORKSPACE IS 0.7 SEC SMOOTHING EXTENDED TIME DATA
+
 
 %set plotting paramaters 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
@@ -3919,6 +3926,8 @@ for mouse = 1:mouseNum
         end 
     end 
 
+    % plot individual Ca ROI traces for all mice at once 
+    %{
     if isempty(close_AVSNCdataPeaks{mouse}) == 0
         % plot close Ca ROI data 
         if BBBQ == 1
@@ -4071,10 +4080,11 @@ for mouse = 1:mouseNum
                 set(gca,'YColor',[0 0 0]);   
             end 
         end 
-    end 
+    end
+    %}
 end 
 
-%% AVERAGE ACROSS MICE 
+% AVERAGE ACROSS MICE 
 clear close_Btraces_allMice far_Btraces_allMice close_Ctraces_allMice far_Ctraces_allMice close_Vtraces_allMice far_Vtraces_allMice   
 
 % figure out the size you should resample your data to 
@@ -4262,12 +4272,16 @@ Frames = minLen;
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
 sec_TimeVals = floor(((Frames_pre_stim_start:min(FPSstack2):Frames_post_stim_start)/min(FPSstack2)))+1; %min(FPSstack)
-FrameVals = round((1:min(FPSstack2):Frames))+10; 
+if Frames > 100
+    FrameVals = round((1:min(FPSstack2):Frames))+10;
+elseif Frames < 100
+    FrameVals = round((1:min(FPSstack2):Frames))+5; 
+end 
 Bcolors = [1,0,0;1,0.5,0;1,1,0];
 Ccolors = [0,0,1;0,0.5,1;0,1,1];
 Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
 
-%% plot close and far Ca ROI and BBB data (all mice averaged) overlaid 
+% plot close and far Ca ROI and BBB data (all mice averaged) overlaid 
 if BBBQ == 1
     fig = figure;
     ax=gca;
