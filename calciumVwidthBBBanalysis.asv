@@ -3474,9 +3474,9 @@ closeCaROIs = Mat.closeCaROIs;
 farCaROIs = Mat.farCaROIs;
 closeCaROI_CaBBBtimeLags = Mat.closeCaROI_CaBBBtimeLags;
 farCaROI_CaBBBtimeLags = Mat.farCaROI_CaBBBtimeLags;
-allCTraces3 = cell(1,length(closeCaROIs));
-allBTraces3 = cell(1,length(closeCaROIs));
-allVTraces3 = cell(1,length(closeCaROIs));
+allCTraces = cell(1,length(closeCaROIs));
+allBTraces = cell(1,length(closeCaROIs));
+allVTraces = cell(1,length(closeCaROIs));
 CaROIs = cell(1,length(closeCaROIs));
 FPSstack = cell(1,length(closeCaROIs));
 SNCdataPeaks = cell(1,length(closeCaROIs));
@@ -3489,11 +3489,11 @@ for mouse = 1:mouseNum
     MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
     Mat = matfile(MatFileName);
     FPSstack{mouse} = Mat.FPSstack;
-    allCTraces3{mouse} = Mat.allCTraces;
+    allCTraces{mouse} = Mat.allCTraces;
     SNCdataPeaks{mouse} = Mat.SNCdataPeaks;    
-    allBTraces3{mouse} = Mat.allBTraces;
+    allBTraces{mouse} = Mat.allBTraces;
     SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
-    allVTraces3{mouse} = Mat.allVTraces;
+    allVTraces{mouse} = Mat.allVTraces;
     SNVdataPeaks{mouse} = Mat.SNVdataPeaks;    
     CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
 end 
@@ -3503,24 +3503,24 @@ for mouse = 1:mouseNum
     if tTypeQ == 0 
         for CAROI = 1:size(CaROIs{mouse},2)
             %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
-            allCTraces3{mouse}{CaROIs{mouse}(CAROI)} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)},2),:);
-            for BBBroi = 1:size(allBTraces3{mouse},2)
-                allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)},2),:);
+            allCTraces{mouse}{CaROIs{mouse}(CAROI)} = allCTraces{mouse}{CaROIs{mouse}(CAROI)}(any(allCTraces{mouse}{CaROIs{mouse}(CAROI)},2),:);
+            for BBBroi = 1:size(allBTraces{mouse},2)
+                allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)} = allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}(any(allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)},2),:);
             end 
-            for VWroi = 1:size(allVTraces3{mouse},2)
-                allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)},2),:);
+            for VWroi = 1:size(allVTraces{mouse},2)
+                allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)} = allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)}(any(allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)},2),:);
             end 
         end 
     elseif tTypeQ == 1
-        for per = 1:size(allCTraces3{1}{CaROIs{1}(1)},2)
+        for per = 1:size(allCTraces{1}{CaROIs{1}(1)},2)
             for CAROI = 1:size(CaROIs{mouse},2)
                 %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
-                allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
-                for BBBroi = 1:size(allBTraces3{mouse},2)
-                    allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                allCTraces{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
+                for BBBroi = 1:size(allBTraces{mouse},2)
+                    allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
                 end 
-                for VWroi = 1:size(allVTraces3{mouse},2)
-                    allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                for VWroi = 1:size(allVTraces{mouse},2)
+                    allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
                 end 
             end 
         end 
@@ -3542,14 +3542,14 @@ BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
     BBBroiNum = zeros(1,mouseNum);
     for mouse = 1:mouseNum
-        BBBroiNum(mouse) = size(allBTraces3{mouse},2); 
+        BBBroiNum(mouse) = size(allBTraces{mouse},2); 
     end 
 end 
 VWQ = input('Input 1 if you want to plot vessel width data. ');
 if VWQ == 1 
     VWroiNum = zeros(1,mouseNum);
     for mouse = 1:mouseNum
-        VWroiNum(mouse) = size(allVTraces3{mouse},2); 
+        VWroiNum(mouse) = size(allVTraces{mouse},2); 
     end 
 end 
 saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
@@ -3560,39 +3560,23 @@ end
 if tTypeQ == 1
     firstTimeQ = input('Input 1 if this is the first time you are plotting this data. Input 0 otherwise. ');
     if firstTimeQ == 1
-        allBTraces2 = allBTraces3;
-        allCTraces2 = allCTraces3;
-        allVTraces2 = allVTraces3;
-    elseif firstTimeQ == 0 
-        clear avCdata close_avCdata far_avCdata
-        if BBBQ == 1
-            clear avBdata close_avBdata far_avBdata 
-        end 
-        if VWQ == 1 
-            clear avVdata close_avVdata far_avVdata
-        end 
+        allBTraces2 = allBTraces;
+        allCTraces2 = allCTraces;
+        allVTraces2 = allVTraces;
     end 
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
     allCTraces = cell(1,mouseNum);
-    if BBBQ == 1
-        allBTraces = cell(1,mouseNum);
-    end 
-    if VWQ == 1
-        allVTraces = cell(1,mouseNum);
-    end 
+    allBTraces = cell(1,mouseNum);
+    allVTraces = cell(1,mouseNum);
     for mouse = 1:mouseNum
         for CAROI = 1:size(CaROIs{mouse},2)
             %select just the data you want 
             allCTraces{mouse}{CaROIs{mouse}(CAROI)} = allCTraces2{mouse}{CaROIs{mouse}(CAROI)}{per};
-            if BBBQ == 1
-                for BBBroi = 1:size(allBTraces2{mouse},2)
-                    allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)} = allBTraces2{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per};
-                end 
+            for BBBroi = 1:size(allBTraces2{mouse},2)
+                allBTraces{mouse}{BBBroi}{CaROIs{mouse}(CAROI)} = allBTraces2{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per};
             end 
-            if VWQ == 1
-                for VWroi = 1:size(allVTraces2{mouse},2)
-                    allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)} = allVTraces2{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per};
-                end 
+            for VWroi = 1:size(allVTraces2{mouse},2)
+                allVTraces{mouse}{VWroi}{CaROIs{mouse}(CAROI)} = allVTraces2{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per};
             end 
         end 
     end
