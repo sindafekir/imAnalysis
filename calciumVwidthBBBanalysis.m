@@ -3464,7 +3464,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-
+%{
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 cd(regImDir);
@@ -3529,13 +3529,6 @@ end
 
 
 %% this plots individual STAs for every BBB and VW ROI per mouse
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%FIX THIS BUG: THE TRACE THAT SHOWS YOU THE AVERAGE OF ALL TERMINALS
-%(REGARDLESS OF DISTANCE) WHEN FIRSTTIMEq == 0 IS MESSED UP. IT'S PROBABLY
-%AN EASY FIX- PROBABLY NEED TO RE-INITIALIZE AN ARRAY WHEN FIRSTTIMEQ == 0 
-% THE CURRENT DATA IN THE WORKSPACE IS 0.7 SEC SMOOTHING EXTENDED TIME DATA
-
 
 %set plotting paramaters 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
@@ -3564,12 +3557,12 @@ if tTypeQ == 1
         allCTraces2 = allCTraces3;
         allVTraces2 = allVTraces3;
     elseif firstTimeQ == 0 
-        clear avCdata close_avCdata far_avCdata
+        clear avCdata close_avCdata far_avCdata close_Ctraces_allMice far_Ctraces_allMice  Ctraces_allMice
         if BBBQ == 1
-            clear avBdata close_avBdata far_avBdata 
+            clear avBdata close_avBdata far_avBdata close_Btraces_allMice far_Btraces_allMice  Btraces_allMice
         end 
         if VWQ == 1 
-            clear avVdata close_avVdata far_avVdata
+            clear avVdata close_avVdata far_avVdata close_Vtraces_allMice far_Vtraces_allMice  Vtraces_allMice
         end 
     end 
     per = input('Input 1 for blue light period. Input 2 for red light period. Input 3 for light off period. ');
