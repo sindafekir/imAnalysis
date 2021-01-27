@@ -5712,6 +5712,11 @@ end
 %% create stacks that are seperated by trial type 
 %}
 %% determine how far away each terminal is from the vessel of interest (the minimum distance) 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% EDIT BELOW CODE SO THAT IT CAN TAKE MULTIPLE VR SPACES INTO CONSIDERATION
+% (NECESSARY FOR MOUSE3) 
 %{
 if distQ == 1 
     terminals = input('What Ca ROIs do you care about? '); 
