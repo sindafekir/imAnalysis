@@ -4451,6 +4451,12 @@ AVSNCdataPeaks3 = cell(1,numGroups);
 
 BBBQ = input('Input 1 if you want to plot BBB data. ');
 if BBBQ == 1
+    BBBroiQ1 = input('Input 1 if you want to plot all BBB ROIs. Input 0 otherwise. '); 
+    if BBBroiQ1 == 1
+        BBBrois = 1:length(sortedBdata{1});
+    elseif BBBroiQ1 == 0 
+        BBBrois = input('Input the BBB ROIs you want to plot. ');
+    end 
     AVSNBdataPeaks = cell(1,numGroups);
     AVSNBdataPeaks2 = cell(1,numGroups);
     AVSNBdataPeaks3 = cell(1,numGroups); 
@@ -4497,18 +4503,18 @@ if tTypeQ == 0
             allCTraces{groupNum}{terms{groupNum}(ccell)} = allCTraces{groupNum}{terms{groupNum}(ccell)}(any(allCTraces{groupNum}{terms{groupNum}(ccell)},2),:);
             % sort B data
             if BBBQ == 1
-                for BBBroi = 1:length(sortedBdata{1})
+                for BBBroi = 1:length(BBBrois)
                     count2 = 1;
                     for vid = 1:length(vidList)    
-                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0
+                        if isempty(sortedBdata{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}) == 0
                             for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)},1) 
-                                allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}(peak,:)-100); 
+                                allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(count2,:) = (SNBdataPeaks{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(peak,:)-100); 
                                 count2 = count2 + 1;
                             end 
                         end
                     end 
                     %remove rows full of 0s if there are any b = a(any(a,2),:)
-                    allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)} = allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(any(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},2),:);
+                    allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)} = allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(any(allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)},2),:);
                 end 
             end 
             
@@ -4531,8 +4537,8 @@ if tTypeQ == 0
 
             %get averages of all traces 
             if BBBQ == 1
-                for BBBroi = 1:length(sortedBdata{1})
-                    AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} = (nanmean(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}));
+                for BBBroi = 1:length(BBBrois)
+                    AVSNBdataPeaks2{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)} = (nanmean(allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}));
                 end 
             end 
             AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} = nanmean(allCTraces{groupNum}{terms{groupNum}(ccell)});
@@ -4550,9 +4556,9 @@ if tTypeQ == 0
             count4 = 1;
             for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)},1)
                 if BBBQ == 1
-                    for BBBroi = 1:length(sortedBdata{1})
+                    for BBBroi = 1:length(BBBrois)
 %                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2               
-                            BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:));
+                            BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(peak,:));
                             count2 = count2 + 1;
 %                         end 
                     end 
@@ -4573,8 +4579,8 @@ if tTypeQ == 0
 
             % get the average of all the traces excluding outliers 
             if BBBQ == 1
-                for BBBroi = 1:length(sortedBdata{1})
-                    AVSNBdataPeaks3{groupNum}{BBBroi}(ccell,:) = (nanmean(BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}));
+                for BBBroi = 1:length(BBBrois)
+                    AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}(ccell,:) = (nanmean(BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}));
                 end 
             end 
             AVSNCdataPeaks3{groupNum}(ccell,:) = nanmean(CTraces{groupNum}{terms{groupNum}(ccell)});
@@ -4586,14 +4592,19 @@ if tTypeQ == 0
         end    
     end 
 
+    Frames = size(AVSNCdataPeaks3{groupNum},2);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+    if Frames > 100
+        FrameVals = round((1:FPSstack:Frames))+11;
+    elseif Frames < 100
+        FrameVals = round((1:FPSstack:Frames))+5; 
+    end 
+
     if BBBQ == 1
-        for BBBroi = 1:length(sortedBdata{1})
+        for BBBroi = 1:length(BBBrois)
             fig = figure;
-            Frames = size(AVSNCdataPeaks3{groupNum},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
@@ -4603,11 +4614,11 @@ if tTypeQ == 0
             CI_cHigh = cell(1,numGroups);
             for groupNum = 1:numGroups
                 %DETERMINE 95% CI            
-                SEMb = (nanstd(AVSNBdataPeaks3{groupNum}{BBBroi})/(sqrt(size(AVSNBdataPeaks3{groupNum}{BBBroi},1)))); % Standard Error            
-                ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{groupNum}{BBBroi},1)-1);% T-Score for 95% CI
-                ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{groupNum}{BBBroi},1)-1);% T-Score for 95% CI
-                CI_bLow{groupNum} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                CI_bHigh{groupNum} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                SEMb = (nanstd(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)})/(sqrt(size(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)},1)))); % Standard Error            
+                ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)},1)-1);% T-Score for 95% CI
+                CI_bLow{groupNum} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                CI_bHigh{groupNum} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
                 
                 SEMc = (nanstd(AVSNCdataPeaks3{groupNum}))/(sqrt(size(AVSNCdataPeaks3{groupNum},1))); % Standard Error            
                 ts_cLow = tinv(0.025,size(AVSNCdataPeaks3{groupNum},1)-1);% T-Score for 95% CI
@@ -4619,7 +4630,7 @@ if tTypeQ == 0
 
                 %average across terminals 
                 AVSNCdataPeaks{groupNum} = nanmean(AVSNCdataPeaks3{groupNum});
-                AVSNBdataPeaks{groupNum}{BBBroi} = nanmean(AVSNBdataPeaks3{groupNum}{BBBroi});
+                AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)} = nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)});
             end 
 
             % plot 
@@ -4646,13 +4657,13 @@ if tTypeQ == 0
             Bcolors = [1,0,0;1,0.5,0;1,1,0];
             p = zeros(1,numGroups);
             for groupNum = 1:numGroups
-                p(groupNum) = plot(AVSNBdataPeaks{groupNum}{BBBroi},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
+                p(groupNum) = plot(AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
                 patch([x fliplr(x)],[CI_bLow{groupNum} (fliplr(CI_bHigh{groupNum}))],Bcolors(groupNum,:),'EdgeColor','none')
                 alpha(0.3)
             end 
             legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel('BBB permeability percent change','FontName','Times')
-            title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi))
+            title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBrois(BBBroi)))
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);
             %make the directory and save the images   
@@ -4666,12 +4677,7 @@ if tTypeQ == 0
 
     if VWQ == 1
         for VWroi = 1:length(sortedVdata{1})
-            fig = figure;
-            Frames = size(AVSNCdataPeaks3{groupNum},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+5; 
+            fig = figure; 
             ax=gca;
             hold all
             
@@ -4774,20 +4780,20 @@ elseif tTypeQ == 1
             allCTraces{groupNum}{terms{groupNum}(ccell)}{per} = allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(any(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},2),:);
             % sort B data
             if BBBQ == 1
-                for BBBroi = 1:length(sortedBdata{1})
+                for BBBroi = 1:length(BBBrois)
                     count2 = 1;
                     for vid = 1:length(vidList)    
-                        if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}) == 0 && per <= size(sortedCdata{vid}{terms{groupNum}(ccell)},2)
-                            if isempty(sortedBdata{vid}{BBBroi}{terms{groupNum}(ccell)}{per}) == 0
+                        if isempty(sortedBdata{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}) == 0 && per <= size(sortedCdata{vid}{terms{groupNum}(ccell)},2)
+                            if isempty(sortedBdata{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}) == 0
                                 for peak = 1:size(SNCdataPeaks{vid}{terms{groupNum}(ccell)}{per},1) 
-                                    allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (SNBdataPeaks{vid}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
+                                    allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(count2,:) = (SNBdataPeaks{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(peak,:)-100); 
                                     count2 = count2 + 1;
                                 end 
                             end
                         end 
                     end
                     %remove rows full of 0s if there are any b = a(any(a,2),:)
-                    allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} = allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(any(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},2),:);
+                    allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per} = allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(any(allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per},2),:);
                 end 
             end 
             
@@ -4812,8 +4818,8 @@ elseif tTypeQ == 1
         
             %get averages of all traces 
             if BBBQ == 1
-                for BBBroi = 1:length(sortedBdata{1})
-                    AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} = (nanmean(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}));
+                for BBBroi = 1:length(BBBrois)
+                    AVSNBdataPeaks2{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per} = (nanmean(allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}));
                 end 
             end 
             AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)}{per} = nanmean(allCTraces{groupNum}{terms{groupNum}(ccell)}{per});
@@ -4831,9 +4837,9 @@ elseif tTypeQ == 1
             count4 = 1;
             for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)}{per},1)
                 if BBBQ == 1
-                    for BBBroi = 1:length(sortedBdata{1})
+                    for BBBroi = 1:length(BBBrois)
 %                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per},1)*2               
-                            BTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(count2,:) = (allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}{per}(peak,:));
+                            BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(count2,:) = (allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(peak,:));
                             count2 = count2 + 1;
 %                         end 
                     end 
@@ -4856,15 +4862,15 @@ elseif tTypeQ == 1
     % get the average of all the traces excluding outliers 
     for groupNum = 1:numGroups
         if BBBQ == 1
-            for BBBroi = 1:length(sortedBdata{1})
+            for BBBroi = 1:length(BBBrois)
                 %identify what Ca ROIs are left (this is important if
                 %traces where statistically removed 
-                BcaROIs = find(~cellfun(@isempty,BTraces{groupNum}{BBBroi}));
+                BcaROIs = find(~cellfun(@isempty,BTraces{groupNum}{BBBrois(BBBroi)}));
                 for ccell = 1:length(BcaROIs) 
-                    if size(BTraces{groupNum}{BBBroi}{BcaROIs(ccell)}{per},1) > 1 
-                        AVSNBdataPeaks3{groupNum}{BBBroi}{per}(ccell,:) = nanmean(BTraces{groupNum}{BBBroi}{BcaROIs(ccell)}{per});
-                    elseif size(BTraces{groupNum}{BBBroi}{BcaROIs(ccell)}{per},1) == 1 
-                        AVSNBdataPeaks3{groupNum}{BBBroi}{per}(ccell,:) = BTraces{groupNum}{BBBroi}{BcaROIs(ccell)}{per};
+                    if size(BTraces{groupNum}{BBBrois(BBBroi)}{BcaROIs(ccell)}{per},1) > 1 
+                        AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per}(ccell,:) = nanmean(BTraces{groupNum}{BBBrois(BBBroi)}{BcaROIs(ccell)}{per});
+                    elseif size(BTraces{groupNum}{BBBrois(BBBroi)}{BcaROIs(ccell)}{per},1) == 1 
+                        AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per}(ccell,:) = BTraces{groupNum}{BBBrois(BBBroi)}{BcaROIs(ccell)}{per};
                     end 
                 end 
             end 
@@ -4896,7 +4902,7 @@ elseif tTypeQ == 1
     end 
     
     if BBBQ == 1
-        for BBBroi = 1:length(sortedBdata{1})
+        for BBBroi = 1:length(BBBrois)
             fig = figure;
             Frames = size(AVSNCdataPeaks3{groupNum}{per},2);
             Frames_pre_stim_start = -((Frames-1)/2); 
@@ -4912,11 +4918,11 @@ elseif tTypeQ == 1
             CI_cHigh = cell(1,numGroups);
             for groupNum = 1:numGroups
                 %DETERMINE 95% CI            
-                SEMb = (nanstd(AVSNBdataPeaks3{groupNum}{BBBroi}{per})/(sqrt(size(AVSNBdataPeaks3{groupNum}{BBBroi}{per},1)))); % Standard Error            
-                ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{groupNum}{BBBroi}{per},1)-1);% T-Score for 95% CI
-                ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{groupNum}{BBBroi}{per},1)-1);% T-Score for 95% CI
-                CI_bLow{groupNum}{per} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBroi}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                CI_bHigh{groupNum}{per} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBroi}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                SEMb = (nanstd(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per})/(sqrt(size(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per},1)))); % Standard Error            
+                ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per},1)-1);% T-Score for 95% CI
+                CI_bLow{groupNum}{per} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                CI_bHigh{groupNum}{per} = (nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
                 
                 SEMc = (nanstd(AVSNCdataPeaks3{groupNum}{per}))/(sqrt(size(AVSNCdataPeaks3{groupNum}{per},1))); % Standard Error            
                 ts_cLow = tinv(0.025,size(AVSNCdataPeaks3{groupNum}{per},1)-1);% T-Score for 95% CI
@@ -4928,7 +4934,7 @@ elseif tTypeQ == 1
 
                 %average across terminals 
                 AVSNCdataPeaks{groupNum}{per} = nanmean(AVSNCdataPeaks3{groupNum}{per});
-                AVSNBdataPeaks{groupNum}{BBBroi}{per} = nanmean(AVSNBdataPeaks3{groupNum}{BBBroi}{per});
+                AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)}{per} = nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per});
             end 
 
             % plot 
@@ -4955,13 +4961,13 @@ elseif tTypeQ == 1
             Bcolors = [1,0,0;1,0.5,0;1,1,0];
             p = zeros(1,numGroups);
             for groupNum = 1:numGroups
-                p(groupNum) = plot(AVSNBdataPeaks{groupNum}{BBBroi}{per},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
+                p(groupNum) = plot(AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)}{per},'Color',Bcolors(groupNum,:),'LineWidth',4,'LineStyle','-');
                 patch([x fliplr(x)],[CI_bLow{groupNum}{per} (fliplr(CI_bHigh{groupNum}{per}))],Bcolors(groupNum,:),'EdgeColor','none')
                 alpha(0.3)
             end 
             legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel('BBB permeability percent change','FontName','Times')
-            title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi))
+            title(sprintf('All Terminals Averaged. BBB ROI %d.',BBBrois(BBBroi)))
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);
             %make the directory and save the images   
@@ -6695,17 +6701,20 @@ xlim([0 50])
 distCutOff = input('What Ca ROI to vessel distance (in microns) is your cut off point? ');
 closeCaROIs = cell(1,mouseNum);
 closeCaROIDists = cell(1,mouseNum);
-closeCaROI_CaBBBtimeLags = cell(1,mouseNum);
+% closeCaROI_CaBBBtimeLags = cell(1,mouseNum);
 farCaROIs = cell(1,mouseNum);
 farCaROIDists = cell(1,mouseNum);
-farCaROI_CaBBBtimeLags = cell(1,mouseNum);
+% farCaROI_CaBBBtimeLags = cell(1,mouseNum);
+% mouseTerms = cell(1,mouseNum);
 for mouse = 1:mouseNum
+%     mouseTerms{mouse} = input(sprintf('What Ca ROIs do you care about for mouse %d ', mouse));
+    
     closeCaROIs{mouse} = mouseTerms{mouse}((minDistsMicrons{mouse} < distCutOff));
     closeCaROIDists{mouse} = minDistsMicrons{mouse}((minDistsMicrons{mouse} < distCutOff));
-    closeCaROI_CaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} < distCutOff));
+%     closeCaROI_CaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} < distCutOff));
     farCaROIs{mouse} = mouseTerms{mouse}((minDistsMicrons{mouse} > distCutOff));
     farCaROIDists{mouse} = minDistsMicrons{mouse}((minDistsMicrons{mouse} > distCutOff));
-    farCaROI_CaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} > distCutOff));
+%     farCaROI_CaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} > distCutOff));
 end 
-clearvars -except closeCaROIs closeCaROIDists closeCaROI_CaBBBtimeLags farCaROIs farCaROIDists farCaROI_CaBBBtimeLags
+% clearvars -except closeCaROIs closeCaROIDists closeCaROI_CaBBBtimeLags farCaROIs farCaROIDists farCaROI_CaBBBtimeLags
 %}
