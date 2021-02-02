@@ -4901,14 +4901,19 @@ elseif tTypeQ == 1
         end   
     end 
     
+    Frames = size(AVSNCdataPeaks3{groupNum}{per},2);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
+    if Frames > 100
+        FrameVals = round((1:FPSstack:Frames))+11;
+    elseif Frames < 100
+        FrameVals = round((1:FPSstack:Frames))+5; 
+    end 
+    
     if BBBQ == 1
         for BBBroi = 1:length(BBBrois)
             fig = figure;
-            Frames = size(AVSNCdataPeaks3{groupNum}{per},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
@@ -4982,11 +4987,6 @@ elseif tTypeQ == 1
     if VWQ == 1
         for VWroi = 1:length(sortedVdata{1})
             fig = figure;
-            Frames = size(AVSNCdataPeaks3{groupNum}{per},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack))+1;
-            FrameVals = round((1:FPSstack:Frames))+5; 
             ax=gca;
             hold all
             
