@@ -1248,7 +1248,7 @@ for tType = 1:tTypeNum
         x = 1:length(CI_vLow{tType});
         AVvData{tType} = nanmean(snVetaArray{tType},1);
     end 
-    %plot Ca data 
+    % plot Ca data 
     if CAQ == 1 
         fig = figure;             
         hold all;
@@ -1260,23 +1260,23 @@ for tType = 1:tTypeNum
         if tType == 1 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         elseif tType == 3 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         elseif tType == 2 
             plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         elseif tType == 4 
             plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         end
         ax=gca;
         ax.XTick = FrameVals;
@@ -1306,23 +1306,23 @@ for tType = 1:tTypeNum
         if tType == 1 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         elseif tType == 3 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)    
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         elseif tType == 2 
             plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)  
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         elseif tType == 4 
             plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+10);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
+            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
         end
         ax=gca;
         ax.XTick = FrameVals;
@@ -1412,23 +1412,23 @@ for tType = 1:tTypeNum
     if tType == 1 
         plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
-        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+1);
+        FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
     elseif tType == 3 
         plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
-        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+1);
+        FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
     elseif tType == 2 
         plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'b','LineWidth',2)
         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
-        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+10);
+        FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
     elseif tType == 4 
         plot([round(baselineEndFrame+((FPSstack{idx})*20)) round(baselineEndFrame+((FPSstack{idx})*20))], [-5000 5000], 'r','LineWidth',2)
         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+10);
-        FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+10);
+        FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
     end
     ax=gca;
     ax.XTick = FrameVals;
@@ -1503,8 +1503,8 @@ if pVWQ == 1
 end 
 plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
 plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
-FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+1);
+FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
 ax=gca;
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;
