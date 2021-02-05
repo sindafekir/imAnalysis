@@ -3464,7 +3464,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-%{
+
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 cd(regImDir);
@@ -3756,7 +3756,11 @@ for mouse = 1:mouseNum
             closeCTraceArray{mouse} = vertcat(closeCTraces{mouse}{1},closeCTraces{mouse}{closeTrace});
             if BBBQ == 1
                 for BBBroi = 1:length(BBBrois{mouse})
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    
                     closeBTraceArray{mouse}{BBBroi} = vertcat(closeBTraces{mouse}{BBBroi}{1},closeBTraces{mouse}{BBBroi}{closeTrace});
+                    
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 end 
             end 
             if VWQ == 1
@@ -4148,7 +4152,7 @@ for mouse = 1:mouseNum
     %}
 end 
 
-% AVERAGE ACROSS MICE 
+% AVERAGE ACROSS MICE %PICK UP HERE %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 clear close_Btraces_allMice far_Btraces_allMice close_Ctraces_allMice far_Ctraces_allMice close_Vtraces_allMice far_Vtraces_allMice   
 
 % figure out the size you should resample your data to 
@@ -4265,11 +4269,7 @@ for mouse = 1:length(mouseNums)
                 counter5 = counter5 + 1;
             end 
             for trace3 = 1:size(farVTraceArray{mouseNums(mouse)}{VWroi},1)
-                if length(farCaROIs{mouse}) == 1
-                    far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}{1}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi}{1},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
-                elseif length(farCaROIs{mouse}) > 1
-                    far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
-                end 
+                far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
                 counter6 = counter6 + 1;
             end 
             for trace3 = 1:size(VTraceArray{mouseNums(mouse)}{VWroi},1)
