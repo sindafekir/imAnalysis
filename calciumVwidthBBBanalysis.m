@@ -1,5 +1,5 @@
 % get the data you need 
-%{
+
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -1289,8 +1289,8 @@ for tType = 1:tTypeNum
         ylabel('percent change')
         % initialize empty string array 
         label = strings;
-        label = append(label,'  Ca ROIs averaged');
-        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        label = append(label,'  Calcium Signal');
+        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Times');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)        
     end 
@@ -1335,8 +1335,8 @@ for tType = 1:tTypeNum
         ylabel('percent change')
         % initialize empty string array 
         label = strings;
-        label = append(label,'BBB ROIs averaged'); 
-        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        label = append(label,'BBB Permeabilty'); 
+        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Times');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)      
     end 
@@ -1466,12 +1466,17 @@ if VWQ == 1
     allRedAVvData = zeros(1,size(AVcData{1},2));
     allRedAVvDataArray = zeros(1,size(AVcData{1},2));
 end 
+count = 1;
 for tType = 1:length(redTrialTtypeInds)
     if pCAQ == 1 
         allRedAVcDataArray(tType,:) = AVcData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
     end 
     if pBBBQ == 1 
         allRedAVbDataArray(tType,:) = AVbData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
+%         for trial = 1:size(snBetaArray{redTrialTtypeInds(tType)},1)
+%             allRedAvbDataArray2(count,:) = snBetaArray{redTrialTtypeInds(tType)}(trial,1:429);
+%             count = count + 1; 
+%         end 
     end 
     if pVWQ == 1 
         allRedAVvDataArray(tType,:) = AVvData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
@@ -1487,24 +1492,36 @@ if pVWQ == 1
     allRedAVvData = nanmean(allRedAVvDataArray,1); 
 end 
 
+% determine 95% CI 
+% SEMb = (nanstd(allRedAvbDataArray2))/(sqrt(size(allRedAvbDataArray2,1))); % Standard Error            
+% STDb = nanstd(allRedAvbDataArray2);
+% ts_bLow = tinv(0.025,size(allRedAvbDataArray2,1)-1);% T-Score for 95% CI
+% ts_bHigh = tinv(0.975,size(allRedAvbDataArray2,1)-1);% T-Score for 95% CI
+% CI_bLow = (nanmean(allRedAvbDataArray2,1)) + (ts_bLow*SEMb);  % Confidence Intervals
+% CI_bHigh = (nanmean(allRedAvbDataArray2,1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+% x = 1:length(CI_bLow);
+% test = nanmean(allRedAvbDataArray2,1);
+
 fig = figure;             
 hold all;
 Frames = size(AVbData{1},2);        
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
 if pCAQ == 1 
-    plot(allRedAVcData-100,'b','LineWidth',3)
+    plot(allRedAVcData-100,'b','LineWidth',3)  
 end 
 if pBBBQ == 1
     plot(allRedAVbData-100,'r','LineWidth',3)
+%     patch([x fliplr(x)],[CI_bLow-100 fliplr(CI_bHigh-100)],'r','EdgeColor','none')   
+%     alpha(0.3)
 end 
 if pVWQ == 1 
     plot(allRedAVvData-100,'k','LineWidth',3)
 end 
-plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
-plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+1);
-FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
+% plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
+plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k:','LineWidth',2)   
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
+FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
 ax=gca;
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;
@@ -1513,13 +1530,14 @@ ax.FontName = 'Times';
 xlim([1 length(AVbData{1})])
 ylim([-5 5])
 xlabel('time (s)')
-ylabel('percent change')
+ylabel('BBB permeability percent change')
 % initialize empty string array 
 label = strings;
 label = append(label,'  Ca ROIs averaged');
-title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-set(fig,'position', [100 100 900 900])
-alpha(0.5)   
+% title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+% title({'Optogenetic Stimulation';'of DAT+ VTA Axons'},'FontName','Times');
+% legend('BBB Permeability')
+set(fig,'position', [100 100 900 900]) 
 %}
 %% compare terminal calcium activity - create correlograms
 %{
@@ -3604,56 +3622,67 @@ end
 
 %optional: remove traces that are greater than 2 standard deviations from the mean 
 %{
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%THE BELOW NEEDS TO BE EDITED SO THAT 
+%1) IT TAKES IN ALLBCVTRACES AND OUTPUTS ALLBCVTRACES
+%2) IT ONLY CHANGES THE MOUSE DATA THAT YOU WANT TO CHANGE 
+% MAKE SURE TO DOUBLE CHECK THE LOGIC BELOW WHILE IMPLEMENTING ABOVE
+% CHANGES 
 traceRemovalQ = input('Input 1 to statistically remove traces. Input 0 otherwise. '); 
 if traceRemovalQ == 1 
     traceRemovalMice = input('Input the mice you want to statistically remove traces from? ');
     for mouse = 1:mouseNum
-        for term = 1:length(CaROIs{traceRemovalMice(mouse)})
+        if ismember(mouse,traceRemovalMice) == 1 %is in traceRemoval mice, do the below code 
+            for CAROI = 1:length(CaROIs{traceRemovalMice(mouse)})
+                if BBBQ == 1
+                    for BBBroi = 1:size(allBTraces2{mouse},2)
+                        AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)} = nanmean(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)});            
+                    end 
+                end 
+                AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)} = nanmean(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)});
+                if VWQ == 1
+                    for VWroi = 1:size(allVTraces2{mouse},2)
+                        AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)} = nanmean(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)});
+                    end 
+                end 
+
+                count2 = 1; 
+                count3 = 1;
+                count4 = 1;
+                for peak = 1:size(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)
+                        if BBBQ == 1
+                            for BBBroi = 1:size(allBTraces2{mouse},2)
+                                if allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:) < AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)} + nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)*2  & allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:) > AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)} - nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)*2               
+                                    BTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(count2,:) = (allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:));
+                                    count2 = count2 + 1;
+                                end 
+                            end 
+                        end 
+                        if allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:) < AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)} + nanstd(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)*2 & allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:) > AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)} - nanstd(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)*2                     
+                            CTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(count3,:) = (allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:));
+                            count3 = count3 + 1;
+                        end 
+                        if VWQ == 1
+                            for VWroi = 1:size(allVTraces2{mouse},2)
+                                if allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:) < AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)} + nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)*2 & allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:) > AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)} - nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)},1)*2              
+                                    VTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(count4,:) = (allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(CAROI)}(peak,:));
+                                    count4 = count4 + 1;
+                                end 
+                            end 
+                        end 
+                end 
+            end 
             if BBBQ == 1
-                for BBBroi = 1:BBBroiNum(mouse)
-                    AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)});            
-                end 
+                allBTraces{traceRemovalMice(mouse)} = BTraces{traceRemovalMice(mouse)};
             end 
-            AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)});
+            allCTraces{traceRemovalMice(mouse)} = CTraces{traceRemovalMice(mouse)};
             if VWQ == 1
-                for VWroi = 1:VWroiNum(mouse)
-                    AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} = nanmean(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)});
-                end 
-            end 
-            
-            count2 = 1; 
-            count3 = 1;
-            count4 = 1;
-            for peak = 1:size(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)},1)
-                    if BBBQ == 1
-                        for BBBroi = 1:BBBroiNum(mouse)
-                            if allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2  & allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNBdataPeaks{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2               
-                                BTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(count2,:) = (allBTraces{traceRemovalMice(mouse)}{BBBroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
-                                count2 = count2 + 1;
-                            end 
-                        end 
-                    end 
-                    if allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2 & allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNCdataPeaks{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2                     
-                        CTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)}(count3,:) = (allCTraces{traceRemovalMice(mouse)}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
-                        count3 = count3 + 1;
-                    end 
-                    if VWQ == 1
-                        for VWroi = 1:VWroiNum(mouse)
-                            if allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) < AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} + nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2 & allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:) > AVSNVdataPeaks{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)} - nanstd(allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)},1)*2              
-                                VTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(count4,:) = (allVTraces{traceRemovalMice(mouse)}{VWroi}{CaROIs{traceRemovalMice(mouse)}(term)}(peak,:));
-                                count4 = count4 + 1;
-                            end 
-                        end 
-                    end 
-            end 
+                allVTraces{traceRemovalMice(mouse)} = VTraces{traceRemovalMice(mouse)};
+            end
+        elseif ismember(mouse,traceRemovalMice) == 0 % if the mouse is not on the list of mice to remove outliers from...THAN DON'T CHANGE ANYTHING 
         end 
-        if BBBQ == 1
-            allBTraces{traceRemovalMice(mouse)} = BTraces{traceRemovalMice(mouse)};
-        end 
-        allCTraces{traceRemovalMice(mouse)} = CTraces{traceRemovalMice(mouse)};
-        if VWQ == 1
-            allVTraces{traceRemovalMice(mouse)} = VTraces{traceRemovalMice(mouse)};
-        end
     end 
 end 
 %}
@@ -4348,6 +4377,8 @@ end
 
 x = 1:length(close_CI_cLow);
 
+% plotting code below 
+
 Frames = minLen;
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
@@ -4371,6 +4402,8 @@ if BBBQ == 1
     alpha(0.3)
     plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
     patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+%     plot(avCdata,'b','LineWidth',4)
+%     patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
     alpha(0.3)
     changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
     % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
@@ -4383,7 +4416,7 @@ if BBBQ == 1
     xLimStart = floor(10*min(FPSstack2));
     xLimEnd = floor(24*min(FPSstack2)); 
     xlim([1 minLen])
-    ylim([-10 150])
+    ylim([-45 130])
     set(fig,'position', [500 100 900 800])
     alpha(0.3)
     %add right y axis tick marks for a specific DOD figure. 
@@ -4394,10 +4427,10 @@ if BBBQ == 1
     p(2) = plot(far_avBdata,'-','Color',Bcolors(2,:),'LineWidth',4);
     patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
     alpha(0.3)
-    legend([p(1) p(2)],'Close Terminals','Far Terminals')
+%     legend([p(1) p(2)],'Close Terminals','Far Terminals')
     ylabel('BBB permeability percent change','FontName','Times')
 %     title('Close Terminals. All mice Averaged.')
-    ylim([-0.3 0.5])
+    ylim([-0.1 0.25])
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);   
     
@@ -4415,20 +4448,34 @@ if BBBQ == 1
     xlabel('time (s)','FontName','Times')
     ylabel('calcium signal percent change','FontName','Times')
     xlim([1 minLen])
-    ylim([-10 150])
+%     ylim([-45 130])
+    ylim([-1 3])
     set(fig,'position', [500 100 900 800])
     alpha(0.3)
     %add right y axis tick marks for a specific DOD figure. 
+%     plot(opto_allRedAVbData_3,'r:','LineWidth',4);
+%     patch([opto_x_2 fliplr(opto_x_2)],[(opto_CI_bLow_3) (fliplr(opto_CI_bHigh_3))],'r','EdgeColor','none')
+%     alpha(0.3)
+%     ylabel({'Optogenetically Triggered';'BBB Permeability Percent Change'},'FontName','Times')
+    
     yyaxis right 
     p(1) = plot(avBdata,'r','LineWidth',4);
     patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
     alpha(0.3)
+    
+
+%     plot(avBdata_redLight,'r','LineWidth',4)
+%     plot(avBdata_lightOff,'k','LineWidth',4)
+%     plot(test,'r:','LineWidth',4) % this is resampled opto data
+%     alpha(0.3)
+    plot([123 123], [-5000 5000], 'k:','LineWidth',2)  
 %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('BBB permeability percent change','FontName','Times')
-%     title('Close Terminals. All mice Averaged.')
-    ylim([-0.3 0.5])
-    alpha(0.3)
+    ylabel({'Spike Triggered';'BBB Permeability Percent Change'},'FontName','Times')
+%     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
+    ylim([-0.1 0.25])
+    
     set(gca,'YColor',[0 0 0]);  
+%     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
 end 
 
 % plot close and far Ca ROI and VW data (all mice averaged) overlaid 
@@ -4449,7 +4496,7 @@ if VWQ == 1
     ax.FontSize = 25;
     ax.FontName = 'Times';
     xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
+    ylabel('Calcium Signal Percent Change','FontName','Times')
     xLimStart = floor(10*min(FPSstack2));
     xLimEnd = floor(24*min(FPSstack2)); 
     xlim([1 minLen])
@@ -4465,7 +4512,7 @@ if VWQ == 1
     patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],Vcolors(2,:),'EdgeColor','none')
     alpha(0.3)
     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('BBB permeability percent change','FontName','Times')
+    ylabel('Vessel Width Percent Change','FontName','Times')
 %     title('Close Terminals. All mice Averaged.')
     ylim([-0.02 0.02])
     alpha(0.3)
@@ -4483,9 +4530,9 @@ if VWQ == 1
     ax.FontSize = 25;
     ax.FontName = 'Times';
     xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
+    ylabel('Calcium Signal Percent Change','FontName','Times')
     xlim([1 minLen])
-    ylim([-10 150])
+    ylim([-45 130])
     set(fig,'position', [500 100 900 800])
     alpha(0.3)
     %add right y axis tick marks for a specific DOD figure. 
@@ -4494,9 +4541,9 @@ if VWQ == 1
     patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
     alpha(0.3)
 %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('BBB permeability percent change','FontName','Times')
+    ylabel('Vessel Width Percent Change','FontName','Times')
 %     title('Close Terminals. All mice Averaged.')
-    ylim([-0.02 0.02])
+    ylim([-0.1 0.25])
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);   
 end 

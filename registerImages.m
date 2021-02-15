@@ -32,7 +32,7 @@ end
 %}
 
 %% separate volume imaging data into separate stacks per z plane and motion correction
-
+%{
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -95,9 +95,11 @@ elseif volIm == 0
     disp('2D Motion Correction')
     %2D register imaging data    
     gTemplate = mean(greenImageStack,3);
+%     gTemplate = mean(greenImageStack(:,:,1:42),3);
     [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
     ggRegZstacks{1} = ggRegStack;
     rTemplate = mean(redImageStack,3);
+%     rTemplate = mean(redImageStack(:,:,1:42),3);
     [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
     rrRegZstacks{1} = rrRegStack;
 
