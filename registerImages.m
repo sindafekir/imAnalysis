@@ -94,12 +94,12 @@ if volIm == 1
 elseif volIm == 0   
     disp('2D Motion Correction')
     %2D register imaging data    
-    gTemplate = mean(greenImageStack,3);
-%     gTemplate = mean(greenImageStack(:,:,1:42),3);
+%     gTemplate = mean(greenImageStack,3);
+    gTemplate = mean(greenImageStack(:,:,1:42),3);
     [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
     ggRegZstacks{1} = ggRegStack;
-    rTemplate = mean(redImageStack,3);
-%     rTemplate = mean(redImageStack(:,:,1:42),3);
+%     rTemplate = mean(redImageStack,3);
+    rTemplate = mean(redImageStack(:,:,1:42),3);
     [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
     rrRegZstacks{1} = rrRegStack;
 

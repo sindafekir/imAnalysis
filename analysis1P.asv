@@ -147,7 +147,7 @@ ylabel('BBB Permeability Percent Change','FontName','Times')
 
 %% compare stim and no stim imaging block time series (entire video)
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%{
+
 %% get the control registered images 
 
 regImDir = uigetdir('*.*','WHERE ARE THE CONTROL REGISTERED IMAGES?');
@@ -177,12 +177,11 @@ norm_meanPixInt = norm_meanPixInt(1:806);
 
 % plot 
 Frames = size(norm_meanPixInt,2);
-sec_TimeVals = floor(((1:realFPS*60:Frames)/realFPS));
-min_TimeVals = floor(sec_TimeVals/60);
+sec_TimeVals = floor(((1:realFPS*20:Frames)/realFPS));
 if Frames > 100
-    FrameVals = (1:realFPS*60:Frames)-1;
+    FrameVals = (1:realFPS*20:Frames)-12;
 elseif Frames < 100
-    FrameVals = (1:realFPS*60:Frames)-1; 
+    FrameVals = (1:realFPS*20:Frames)-1; 
 end 
 
 figure 
@@ -193,13 +192,13 @@ plot(norm_conMeanPixInt-100,'k','LineWidth',3)
 ylim([-0.3 1.5])
 xlim([1 806])
 ax.XTick = FrameVals;
-ax.XTickLabel = min_TimeVals;   
+ax.XTickLabel = sec_TimeVals;   
 ax.FontSize = 25;
 ax.FontName = 'Times';
-xlabel('time (min)','FontName','Times')
+xlabel('time (s)','FontName','Times')
 ylabel('BBB Permeability Percent Change','FontName','Times')
 
-%}
+
 
 
 

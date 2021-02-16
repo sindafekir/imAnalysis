@@ -1,5 +1,5 @@
 % get the data you need 
-
+%{
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -4553,7 +4553,7 @@ end
 % takes already smooothed/normalized data 
 % this assumes you are averaging, asks how many different groups you want
 % to average, and then plots multiple averages overlaid on the same figure. This generates figures for all BBB and VW ROIs at once  
-%{
+
 %define how many groups you want to create average traces for and what Ca
 %ROIs fall into these groups 
 numGroups = input('How many groups do you want to average? ');
@@ -4593,7 +4593,7 @@ if saveQ == 1
 end 
 %%
 if tTypeQ == 0 
-    %{
+    
     allCTraces = cell(1,numGroups);
     CTraces = cell(1,numGroups);
     if BBBQ == 1
