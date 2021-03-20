@@ -3482,7 +3482,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-%{
+
 %get the data you need 
 regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
 cd(regImDir);
@@ -4397,11 +4397,12 @@ if BBBQ == 1
     fig = figure;
     ax=gca;
     hold all
-    plot(close_avCdata,'Color',Ccolors(1,:),'LineWidth',4)
-    patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
-    alpha(0.3)
-    plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
-    patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+%     plot(close_avCdata,'Color',Ccolors(1,:),'LineWidth',4)
+%     patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
+%     alpha(0.3)
+%     plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
+%     patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+    
 %     plot(avCdata,'b','LineWidth',4)
 %     patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
     alpha(0.3)
