@@ -6437,10 +6437,10 @@ if lightQ == 0
     h = histogram(minDistMicronsAllMice,20);
     ax = gca;
     ax.FontSize = 25;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
 %     xlabel({'Distance From Where Vessel';'Branches (microns)'},'FontName','Times')
-    xlabel('Distance From  Vessel (microns)','FontName','Times')
-    ylabel('Number of Terminals','FontName','Times')
+    xlabel('Distance From  Vessel (microns)','FontName','Arial')
+    ylabel('Number of Terminals','FontName','Arial')
     h.FaceColor = [0 0.3 0.3];
 %     title({'DA terminals with Ca-BBB time lags','between -1 and 0 sec'});
 %     ylim([0 8])

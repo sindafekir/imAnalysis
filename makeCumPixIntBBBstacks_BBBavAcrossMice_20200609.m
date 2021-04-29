@@ -15,7 +15,7 @@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-%% make cumulative pizel intensity images 
+%% make cumulative pixel intensity images 
 
 % cumIms = cell(1,numROIs);
 cumFull = zeros(size(inputStacks,1),size(inputStacks,2),size(inputStacks,3));

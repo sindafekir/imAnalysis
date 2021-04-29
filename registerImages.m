@@ -8,6 +8,7 @@ elseif volIm == 0
     numZplanes = 1; 
 end 
 %}
+
 %% get the images 
 %{
 disp('Importing Images')
@@ -167,3 +168,4 @@ dir2 = strrep(dir1,'\','/');
 filename = sprintf('%s/regStacks_vid%d',dir2,vid);
 save(filename)
 %}
+ 
