@@ -394,6 +394,8 @@ if dataExtractionQ == 1
     save(filename,'meanPixInt_noStim','meanPixInt_redStim')
 end 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %% determine the correct frame rate THE FRAME RATE REPORTED IN THE METADATA FOR 1P IMAGING IS NOT CORRECT
 % find where the stim frames are 
@@ -427,14 +429,23 @@ for stimFrame = 1:length(stimFrames)
     end 
 end 
 
+% % get stim start times from HDF file 
+% HDFchartDir = uigetdir('*.*','WHERE IS THE FUNCTION NEEDED TO CREATE THE HDF CHART?');
+% cd(HDFchartDir);
+% state = 7;
+% [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+
 % determine the true frame rate 
 stimFrameDiff = (lastStimFrames - firstStimFrames);
 maxStimFrameNums = max(stimFrameDiff);
 firstMaxStim = find(stimFrameDiff == maxStimFrameNums,1,'first');
 stimTime = input('How long was the stimulus on for (sec)? ');
 stimStartAndEndFrames = [firstStimFrames(firstMaxStim), lastStimFrames(firstMaxStim)];
-MaxStimFrameDiff = diff(stimStartAndEndFrames);
-realFPS = (MaxStimFrameDiff+1)/stimTime;
+
+
+
+stimFrameDiff = diff(stimStartAndEndFrames);
+realFPS = (stimFrameDiff+1)/stimTime;
 lastStimTimes = lastStimFrames/realFPS;
 firstStimTimes = firstStimFrames/realFPS;
 StimTimes = stimFrames/realFPS;
@@ -504,13 +515,14 @@ ylabel('BBB Permeability Percent Change','FontName','Times')
 
 %% compare stim and no stim imaging block time series (entire video)
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%PICK UP HERE- REMOVE DATA POINTS WHERE THE STIM IS ON, THEN PLOT 
-
+%{
+%% get the mean change in pixel intensity over time for the control data 
 
 % normalize data to first 42 frames 
 norm_meanPixInt = (meanPixInt./mean(meanPixInt(1:42)))*100;
 norm_conMeanPixInt = (conMeanPixInt./mean(conMeanPixInt(1:42)))*100;
 norm_meanPixInt = norm_meanPixInt(1:806);
+
 % plot 
 Frames = size(norm_meanPixInt,2);
 sec_TimeVals = floor(((1:realFPS*60:Frames)/realFPS));
@@ -520,6 +532,7 @@ if Frames > 100
 elseif Frames < 100
     FrameVals = (1:realFPS*60:Frames)-1; 
 end 
+
 figure 
 hold all
 ax=gca;
