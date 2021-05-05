@@ -167,7 +167,7 @@ for noStimVid = 1:sum(noStimIdx)
     end     
 end 
 % import and register red stim vids 
-for redStimVid = 1:sum(redStimIdx)
+for redStimVid = 3:sum(redStimIdx)
     dir2 = fileList(redStimLoc(redStimVid)).name;
     dir3 = append(dir1,'\',dir2);
     cd(dir3)
@@ -323,7 +323,7 @@ if regQ == 1
 end 
 
 %% get registered images, create ROI, and extract florescence data 
-%{
+
 % set paramaters 
 chColor = input('Input 0 for green channel. Input 1 for red channel. '); 
 cd(dir1)
@@ -394,8 +394,6 @@ if dataExtractionQ == 1
     save(filename,'meanPixInt_noStim','meanPixInt_redStim')
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %% determine the correct frame rate THE FRAME RATE REPORTED IN THE METADATA FOR 1P IMAGING IS NOT CORRECT
 % find where the stim frames are 
@@ -429,32 +427,20 @@ for stimFrame = 1:length(stimFrames)
     end 
 end 
 
-% % get stim start times from HDF file 
-% HDFchartDir = uigetdir('*.*','WHERE IS THE FUNCTION NEEDED TO CREATE THE HDF CHART?');
-% cd(HDFchartDir);
-% state = 7;
-% [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
-
 % determine the true frame rate 
 stimFrameDiff = (lastStimFrames - firstStimFrames);
 maxStimFrameNums = max(stimFrameDiff);
 firstMaxStim = find(stimFrameDiff == maxStimFrameNums,1,'first');
 stimTime = input('How long was the stimulus on for (sec)? ');
 stimStartAndEndFrames = [firstStimFrames(firstMaxStim), lastStimFrames(firstMaxStim)];
-
-
-
-stimFrameDiff = diff(stimStartAndEndFrames);
-realFPS = (stimFrameDiff+1)/stimTime;
+MaxStimFrameDiff = diff(stimStartAndEndFrames);
+realFPS = (MaxStimFrameDiff+1)/stimTime;
 lastStimTimes = lastStimFrames/realFPS;
 firstStimTimes = firstStimFrames/realFPS;
 StimTimes = stimFrames/realFPS;
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %% create event triggered average
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ THIS NEEDS FUTURE WORK
 %{
 %% align data to lastStimFrame
 
@@ -514,17 +500,17 @@ ylabel('BBB Permeability Percent Change','FontName','Times')
 %}
 
 %% compare stim and no stim imaging block time series (entire video)
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ THIS HAS BEEN REFABBED 
 %{
-%% get the mean change in pixel intensity over time for the control data 
-
+% remove stim artifacts from F traces 
+noStim_Fdata = meanPixInt_noStim;
+redStim_Fdata = meanPixInt_redStim;
+redStim_Fdata(redStim_Fdata>115) = NaN;
 % normalize data to first 42 frames 
-norm_meanPixInt = (meanPixInt./mean(meanPixInt(1:42)))*100;
-norm_conMeanPixInt = (conMeanPixInt./mean(conMeanPixInt(1:42)))*100;
-norm_meanPixInt = norm_meanPixInt(1:806);
-
+norm_redStim_Fdata = (redStim_Fdata./nanmean(redStim_Fdata(:,1:40),2))*100;
+norm_noStim_Fdata = (noStim_Fdata./nanmean(noStim_Fdata(:,1:40),2))*100;
 % plot 
-Frames = size(norm_meanPixInt,2);
+Frames = size(norm_redStim_Fdata,2);
 sec_TimeVals = floor(((1:realFPS*60:Frames)/realFPS));
 min_TimeVals = floor(sec_TimeVals/60);
 if Frames > 100
@@ -532,12 +518,18 @@ if Frames > 100
 elseif Frames < 100
     FrameVals = (1:realFPS*60:Frames)-1; 
 end 
-
 figure 
 hold all
 ax=gca;
-plot(norm_meanPixInt-100,'r','LineWidth',3)
-plot(norm_conMeanPixInt-100,'k','LineWidth',3)
+count = 1;
+for redStimTrace = 1:size(redStim_Fdata,1)
+    h(count) = plot(norm_redStim_Fdata(redStimTrace,:)-100,'r','LineWidth',1);
+    count = count + 1;
+end 
+for noStimTrace = 1:size(noStim_Fdata,1)
+    h(count) = plot(norm_noStim_Fdata(noStimTrace,:)-100,'k','LineWidth',1);
+    count = count + 1;
+end 
 ylim([-0.3 1.5])
 xlim([1 806])
 ax.XTick = FrameVals;
@@ -546,6 +538,7 @@ ax.FontSize = 25;
 ax.FontName = 'Times';
 xlabel('time (min)','FontName','Times')
 ylabel('BBB Permeability Percent Change','FontName','Times')
+legend(h([1 size(redStim_Fdata,1)+size(noStim_Fdata,1)]),'stim block','no stim block')
 
 %}
 

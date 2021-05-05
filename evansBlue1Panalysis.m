@@ -167,7 +167,7 @@ for noStimVid = 1:sum(noStimIdx)
     end     
 end 
 % import and register red stim vids 
-for redStimVid = 1:sum(redStimIdx)
+for redStimVid = 3:sum(redStimIdx)
     dir2 = fileList(redStimLoc(redStimVid)).name;
     dir3 = append(dir1,'\',dir2);
     cd(dir3)
@@ -333,7 +333,7 @@ redStimIdx = contains({regMatFiles.name},'redStim');
 noStimLoc = find(noStimIdx == 1);
 redStimLoc = find(redStimIdx == 1);
 % no stim data 
-meanPixInt_noStim = zeros(length(noStimLoc),size(data,3));
+meanPixInt_noStim = zeros(length(noStimLoc),1);
 for noStimVid = 1:length(noStimLoc)
     regMatFileName = regMatFiles(noStimLoc(noStimVid)).name;
     regMat = matfile(regMatFileName);
@@ -362,7 +362,7 @@ for noStimVid = 1:length(noStimLoc)
     end 
 end 
 % red stim data 
-meanPixInt_redStim = zeros(length(redStimLoc),size(data,3));
+meanPixInt_redStim = zeros(length(redStimLoc),1);
 for redStimVid = 1:length(redStimLoc)
     regMatFileName = regMatFiles(redStimLoc(redStimVid)).name;
     regMat = matfile(regMatFileName);
@@ -439,11 +439,8 @@ lastStimTimes = lastStimFrames/realFPS;
 firstStimTimes = firstStimFrames/realFPS;
 StimTimes = stimFrames/realFPS;
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %% create event triggered average
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ THIS NEEDS FUTURE WORK
 %{
 %% align data to lastStimFrame
 
@@ -503,16 +500,17 @@ ylabel('BBB Permeability Percent Change','FontName','Times')
 %}
 
 %% compare stim and no stim imaging block time series (entire video)
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%PICK UP HERE- REMOVE DATA POINTS WHERE THE STIM IS ON, THEN PLOT 
-
-
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ THIS HAS BEEN REFABBED 
+%{
+% remove stim artifacts from F traces 
+noStim_Fdata = meanPixInt_noStim;
+redStim_Fdata = meanPixInt_redStim;
+redStim_Fdata(redStim_Fdata>115) = NaN;
 % normalize data to first 42 frames 
-norm_meanPixInt = (meanPixInt./mean(meanPixInt(1:42)))*100;
-norm_conMeanPixInt = (conMeanPixInt./mean(conMeanPixInt(1:42)))*100;
-norm_meanPixInt = norm_meanPixInt(1:806);
+norm_redStim_Fdata = (redStim_Fdata./nanmean(redStim_Fdata(:,1:40),2))*100;
+norm_noStim_Fdata = (noStim_Fdata./nanmean(noStim_Fdata(:,1:40),2))*100;
 % plot 
-Frames = size(norm_meanPixInt,2);
+Frames = size(norm_redStim_Fdata,2);
 sec_TimeVals = floor(((1:realFPS*60:Frames)/realFPS));
 min_TimeVals = floor(sec_TimeVals/60);
 if Frames > 100
@@ -523,8 +521,15 @@ end
 figure 
 hold all
 ax=gca;
-plot(norm_meanPixInt-100,'r','LineWidth',3)
-plot(norm_conMeanPixInt-100,'k','LineWidth',3)
+count = 1;
+for redStimTrace = 1:size(redStim_Fdata,1)
+    h(count) = plot(norm_redStim_Fdata(redStimTrace,:)-100,'r','LineWidth',1);
+    count = count + 1;
+end 
+for noStimTrace = 1:size(noStim_Fdata,1)
+    h(count) = plot(norm_noStim_Fdata(noStimTrace,:)-100,'k','LineWidth',1);
+    count = count + 1;
+end 
 ylim([-0.3 1.5])
 xlim([1 806])
 ax.XTick = FrameVals;
@@ -533,6 +538,7 @@ ax.FontSize = 25;
 ax.FontName = 'Times';
 xlabel('time (min)','FontName','Times')
 ylabel('BBB Permeability Percent Change','FontName','Times')
+legend(h([1 size(redStim_Fdata,1)+size(noStim_Fdata,1)]),'stim block','no stim block')
 
 %}
 
