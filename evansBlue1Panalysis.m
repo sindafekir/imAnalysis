@@ -3,7 +3,7 @@ cd(uigetdir('*.*','WHERE ARE THE PHOTOS? '));
 fileList = dir();
 dir1 = fileList(1).folder;
 %% register images 
-%{
+
 % set registration paramaters 
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
@@ -167,7 +167,7 @@ for noStimVid = 1:sum(noStimIdx)
     end     
 end 
 % import and register red stim vids 
-for redStimVid = 3:sum(redStimIdx)
+for redStimVid = 1:sum(redStimIdx)
     dir2 = fileList(redStimLoc(redStimVid)).name;
     dir3 = append(dir1,'\',dir2);
     cd(dir3)

@@ -13,7 +13,7 @@ function [J, registeredTransformations] = registerVesStack(regStack,regTemp)
 subpixelFactor=50;
 registeredTransformations = zeros(4,size(regStack,3));
 
-parfor n=1:size(regStack,3)
+for n=1:size(regStack,3)
             imReg = regStack(:,:,n);
             [out1,~] = dftregistration(fft2(regTemp),fft2(imReg),subpixelFactor);
             registeredTransformations(:,n) = out1;
@@ -24,7 +24,7 @@ parfor n=1:size(regStack,3)
 end
         %clear regTempC
 %Conventional transform
-parfor ind = 1:size(regStack,3);
+for ind = 1:size(regStack,3);
 dxdy = [registeredTransformations(4,:)',registeredTransformations(3,:)'];
  J(:,:,ind) = imtranslate(regStack(:,:,ind),dxdy(ind,:),'nearest','FillValues',0,'OutputView','same');
 end
