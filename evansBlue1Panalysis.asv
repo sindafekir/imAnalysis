@@ -396,7 +396,9 @@ end
 
 %% determine the correct frame rate THE FRAME RATE REPORTED IN THE METADATA FOR 1P IMAGING IS NOT CORRECT
 % find where the stim frames are 
-
+plot(meanPixInt_redStim(size(meanPixInt_redStim,1),:))
+disp('Figure out where the stimulus threshold is. ');
+stimThresh = input('What is the stimulus threshold? ');
 stimTime = input('How long was the stimulus on for (sec)? ');
 stimFrames = cell(1,size(meanPixInt_redStim,1));
 lastStimFrames = cell(1,size(meanPixInt_redStim,1));
@@ -411,9 +413,6 @@ lastStimTimes = cell(1,size(meanPixInt_redStim,1));
 count = 1;
 count2 = 1;
 for imBlock = 1:size(meanPixInt_redStim,1)
-    plot(meanPixInt_redStim(imBlock,:))
-    disp('Figure out where the stimulus threshold is. ');
-    stimThresh = input(sprintf('What is the stimulus threshold for imaging block #%d? ',imBlock));
     stimFrames{imBlock} = find(meanPixInt_redStim(imBlock,:) > stimThresh);
     for stimFrame = 1:length(stimFrames{imBlock})
         if stimFrame < length(stimFrames{imBlock}) && stimFrames{imBlock}(stimFrame+1)-stimFrames{imBlock}(stimFrame) > 1 
@@ -435,9 +434,6 @@ for imBlock = 1:size(meanPixInt_redStim,1)
         end 
     end 
     % determine the true frame rate 
-    if length(lastStimFrames{imBlock}) < length(firstStimFrames{imBlock})
-        firstStimFrames{imBlock} = firstStimFrames{imBlock}(1:length(lastStimFrames{imBlock}));
-    end 
     stimFrameDiff{imBlock} = (lastStimFrames{imBlock} - firstStimFrames{imBlock});
     maxStimFrameNums{imBlock} = max(stimFrameDiff{imBlock});
     firstMaxStim{imBlock} = find(stimFrameDiff{imBlock} == maxStimFrameNums{imBlock},1,'first');
@@ -451,9 +447,10 @@ realFPS = mode(realFPS);
 
 
 %% create event triggered average
-%{
-% align data to lastStimFrame
-% clear stimArray
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ THIS NEEDS FUTURE WORK
+
+%% align data to lastStimFrame
+clear stimArray
 windTimeLen = input('How long should the window be in sec? ');
 lengthImBlocks = sum(~isnan(meanPixInt_redStim),2);
 count = 1;
@@ -483,14 +480,18 @@ plot(avData)
 disp('Figure out where the stimulus threshold is. ');
 stimThresh = input('What is the stimulus threshold? ');
 stimFrames = find(avData > stimThresh);
+avData(stimFrames) = NaN;
 % normalize data 
 normWindowTimeSize = input('How many seconds before stim start do you want to normalize to? ');
 normWindowFrameNum = round(realFPS*normWindowTimeSize);
 norm_avData = ((avData./nanmean((avData(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
 norm_CI_Low = ((CI_Low./nanmean((CI_Low(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
 norm_CI_High = ((CI_High./nanmean((CI_High(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
+norm_CI_Low(stimFrames) = NaN;
+norm_CI_High(length(norm_CI_High)-stimFrames(1)-length(stimFrames):length(norm_CI_High)-stimFrames(1)-1) = Nan;
 % % normalise the first 5 trials 
 % norm_avDataFrist5stims = (avDataFrist5stims./mean(avDataFrist5stims(1:9)))*100;
+
 % plot 
 Frames = size(stimArray,2);
 Frames_pre_stim_start = -((Frames-1)/2); 
@@ -506,8 +507,8 @@ ax=gca;
 plot(norm_avData,'r','LineWidth',3)
 patch([x fliplr(x)],[norm_CI_Low fliplr(norm_CI_High)],'r','EdgeColor','none')            
 alpha(0.3)
-ylim([-0.1 0.3])
-xlim([1 length(avData)])
+ylim([-0.05 0.13])
+xlim([1 25])
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
 ax.FontSize = 25;
