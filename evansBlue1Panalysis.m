@@ -450,10 +450,10 @@ realFPS = mode(realFPS);
 
 
 
-%% create event triggered average
+%% create event triggered average (one mouse at a time)
 %{
 % align data to lastStimFrame
-% clear stimArray
+clear stimArray
 windTimeLen = input('How long should the window be in sec? ');
 lengthImBlocks = sum(~isnan(meanPixInt_redStim),2);
 count = 1;
@@ -484,42 +484,157 @@ disp('Figure out where the stimulus threshold is. ');
 stimThresh = input('What is the stimulus threshold? ');
 stimFrames = find(avData > stimThresh);
 % normalize data 
-normWindowTimeSize = input('How many seconds before stim start do you want to normalize to? ');
-normWindowFrameNum = round(realFPS*normWindowTimeSize);
-norm_avData = ((avData./nanmean((avData(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
-norm_CI_Low = ((CI_Low./nanmean((CI_Low(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
-norm_CI_High = ((CI_High./nanmean((CI_High(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
+% normWindowTimeSize = input('How many seconds before stim start do you want to normalize to? ');
+% normWindowFrameNum = round(realFPS*normWindowTimeSize);
+% norm_avData = ((avData./nanmean((avData(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
+% norm_CI_Low = ((CI_Low./nanmean((CI_Low(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
+% norm_CI_High = ((CI_High./nanmean((CI_High(stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1))))*100)-100;
+norm_avData = ((avData./nanmean((avData(1:realFPS*1))))*100)-100;
+norm_CI_Low = ((CI_Low./nanmean((CI_Low(1:realFPS*1))))*100)-100;
+norm_CI_High = ((CI_High./nanmean((CI_High(1:realFPS*1))))*100)-100;
 % % normalise the first 5 trials 
 % norm_avDataFrist5stims = (avDataFrist5stims./mean(avDataFrist5stims(1:9)))*100;
 % plot 
 Frames = size(stimArray,2);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:realFPS:Frames_post_stim_start)/realFPS))-1;
+sec_TimeVals = (((Frames_pre_stim_start:realFPS*2:Frames_post_stim_start)/realFPS));
 if Frames > 100
-    FrameVals = (1:realFPS:Frames)+11;
+    FrameVals = (1:realFPS*2:Frames)+11;
 elseif Frames < 100
-    FrameVals = (1:realFPS:Frames)-1; 
+    FrameVals = (1:realFPS*2:Frames)+1; 
 end 
 figure 
 ax=gca;
-plot(norm_avData,'r','LineWidth',3)
-patch([x fliplr(x)],[norm_CI_Low fliplr(norm_CI_High)],'r','EdgeColor','none')            
+plot(norm_avData,'b','LineWidth',3)
+patch([x fliplr(x)],[norm_CI_Low fliplr(norm_CI_High)],'b','EdgeColor','none')            
 alpha(0.3)
-ylim([-0.1 0.3])
+ylim([-0.005 0.03])
 xlim([1 length(avData)])
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
 ax.FontSize = 25;
-ax.FontName = 'Times';
-xlabel('time (s)','FontName','Times')
-ylabel('BBB Permeability Percent Change','FontName','Times')
+ax.FontName = 'Arial';
+xlabel('time (s)','FontName','Arial')
+ylabel('BBB Permeability Percent Change','FontName','Arial')
 
+% figure
+% ax=gca;
+% hold all
+% normStimArray = ((stimArray./nanmean((stimArray(:,stimFrames(1)-1-normWindowFrameNum:stimFrames(1)-1)),2))*100)-100;     
+% for trace = 1:size(normStimArray,1)
+%     plot(normStimArray(trace,:),'r','LineWidth',1)
+% end 
+% plot(norm_avData,'k','LineWidth',3)
+% ylim([-0.1 0.3])
+% xlim([1 length(avData)])
+% ax.XTick = FrameVals;
+% ax.XTickLabel = sec_TimeVals;   
+% ax.FontSize = 25;
+% ax.FontName = 'Times';
+% xlabel('time (s)','FontName','Arial')
+% ylabel('BBB Permeability Percent Change','FontName','Times')
+
+%% save the data 
+saveQ = input('Input 1 if you want to save the averaged data. ');
+if saveQ == 1 
+    cd(uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE AVERAGED DATA? '));  
+    animal = input('What animal is this? ');
+    filename = sprintf('%s_avFdata',animal);
+    save(filename,'avData')
+end 
+
+%% 
       
 %}
 
+%% create event triggred average (across mice) %THIS NEEDS WORK-NEED TO WRITE OWN UPSAMPLING CODE
+%{
+% get the data 
+mouseNum = input('How many mice do you want to average across? ');
+avData = cell(1,mouseNum);
+FPS = zeros(1,mouseNum);
+lenData = zeros(1,mouseNum); 
+for mouse = 1:mouseNum
+    text = sprintf('WHERE IS THE DATA FOR MOUSE %d? ',mouse);
+    cd(uigetdir('*.*',text));  
+    MatFile = dir('*_avFdata.mat*');    
+    MatFileName = MatFile.name;    
+    workspace = matfile(MatFileName);
+    avData{mouse} = workspace.avData;    
+    FPS(mouse) = workspace.realFPS;
+    lenData(mouse) = length(avData{mouse});
+end 
+
+% resample if you need to 
+lenDiff = diff(lenData);
+data = zeros(mouseNum,max(lenData));
+if any(lenDiff) == 0 % returns 0 if all elements are 0 (means data does not need to be resample)
+    for mouse = 1:mouseNum
+        data(mouse,:) = avData{mouse};
+    end 
+    FPS = FPS(1);
+elseif any(lenDiff) == 1 % returns 1 if any elements are not 0 (data needs to be resampled)
+    FPS = max(FPS);
+    maxLen = max(lenData);
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %THIS IS OUTPUTTING THE RIGHT LENGTH, BUT THE RESAMPLE FUNCTION IS
+    %ADDING ARTIFACTS 
+    %PICK UP HERE- NEED TO WRITE MY OWN RESAMPLING CODE ESSENTIALLY
+    n = 5;
+    beta = 40;
+    for mouse = 1:mouseNum
+        data(mouse,:) = resample(avData{mouse},maxLen,length(avData{mouse}),n,beta);
+    end 
+end 
+figure;hold all; plot(data(1,:));plot(data(2,:));plot(data(3,:));
+%% plot 
+% average and determine 95% CI for the first 5 trials 
+SEM = (nanstd(data))/(sqrt(size(data,1))); % Standard Error      
+ts_Low = tinv(0.025,size(data,1)-1);% T-Score for 95% CI
+ts_High = tinv(0.975,size(data,1)-1);% T-Score for 95% CI
+CI_Low = (nanmean(data,1)) + (ts_Low*SEM);  % Confidence Intervals
+CI_High = (nanmean(data,1)) + (ts_High*SEM);  % Confidence Intervals
+x = 1:size(data,2);
+% create averages for different number of trials 
+avData = nanmean(data,1);
+% plot averaged data and set threshold to identify light stim 
+plot(avData)
+disp('Figure out where the stimulus threshold is. ');
+stimThresh = input('What is the stimulus threshold? ');
+stimFrames = find(avData > stimThresh);
+% normalize data 
+norm_avData = ((avData./nanmean((avData(1:FPS*1))))*100)-100;
+norm_CI_Low = ((CI_Low./nanmean((CI_Low(1:FPS*1))))*100)-100;
+norm_CI_High = ((CI_High./nanmean((CI_High(1:FPS*1))))*100)-100;
+% % normalise the first 5 trials 
+% norm_avDataFrist5stims = (avDataFrist5stims./mean(avDataFrist5stims(1:9)))*100;
+% plot 
+Frames = size(data,2);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = (((Frames_pre_stim_start:FPS*2:Frames_post_stim_start)/FPS));
+if Frames > 100
+    FrameVals = (1:FPS*2:Frames)+11;
+elseif Frames < 100
+    FrameVals = (1:FPS*2:Frames)+1; 
+end 
+figure 
+ax=gca;
+plot(norm_avData,'k','LineWidth',3)
+patch([x fliplr(x)],[norm_CI_Low fliplr(norm_CI_High)],'k','EdgeColor','none')            
+alpha(0.3)
+ylim([-0.005 0.03])
+xlim([1 length(avData)])
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;   
+ax.FontSize = 25;
+ax.FontName = 'Arial';
+xlabel('time (s)','FontName','Arial')
+ylabel('BBB Permeability Percent Change','FontName','Arial')
+%}
+
 %% compare stim and no stim imaging block time series (entire video)
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ THIS HAS BEEN REFABBED 
 %{
 % remove stim artifacts from F traces 
 noStim_Fdata = meanPixInt_noStim;
