@@ -1,5 +1,5 @@
 %% set the paramaters 
-
+%{
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
     splitType = input('How must the data be split? Serial Split = 0. Alternating Split = 1. '); 
@@ -9,7 +9,7 @@ elseif volIm == 0
 end 
 %}
 %% get the images 
-
+%{
 disp('Importing Images')
 cd(uigetdir('*.*','WHERE ARE THE PHOTOS? '));    
 fileList = dir('*.tif*');
@@ -40,23 +40,25 @@ if frameAvQ == 0
 elseif frameAvQ == 1
     frameAvNum = input('How many frames do you want to average together? '); 
     xyDownQ = input('Input 1 if you need to downsample in the x and y dimensions. ');
+    downFactor = 1;
     if xyDownQ == 1
+        downFactor = input('How much do you want to downsample the x and y dimensions? ');
     end 
     if redChanQ == 1 
         redStackLength = ceil((size(fileList,1)/2)/frameAvNum);       
         image = imread(fileList(1).name); 
         avFrames = zeros(size(image,1),size(image,2),frameAvNum);
-        redImageStack = zeros(size(image,1),size(image,2),redStackLength);
+        redImageStack = zeros((size(image,1)/downFactor),(size(image,2)/downFactor),redStackLength);
         avFrame = 1;
         count = 1;
-        for frame = 1%:(size(fileList,1)/2)
+        for frame = 1:(size(fileList,1)/2)
             image = imread(fileList(frame).name); 
             avFrames(:,:,avFrame) = image;
             avFrame = avFrame + 1;
             if avFrame > frameAvNum       
                 avIm = mean(avFrames,3);
-                downAvIm1 = downsample(avIm,4);
-                downAvIm2 = downsample(downAvIm1',4);
+                downAvIm1 = downsample(avIm,downFactor);
+                downAvIm2 = downsample(downAvIm1',downFactor);
                 redImageStack(:,:,count) = downAvIm2;
                 count = count + 1;
                 avFrame = 1;
@@ -67,15 +69,18 @@ elseif frameAvQ == 1
         greenStackLength = ceil((size(fileList,1)/2)/frameAvNum);
         image = imread(fileList(1).name); 
         avFrames = zeros(size(image,1),size(image,2),frameAvNum);
-        greenImageStack = zeros(size(image,1),size(image,2),greenStackLength);
+        greenImageStack = zeros((size(image,1)/downFactor),(size(image,2)/downFactor),greenStackLength);
         avFrame = 1;
         count = 1; 
         for frame = (size(fileList,1)/2)+1:size(fileList,1) %CHECK THESE VALUES FOR BELOW TO BE CORRECT
             image = imread(fileList(frame).name); 
             avFrames(:,:,avFrame) = image;
             avFrame = avFrame + 1;
-            if avFrame > frameAvNum                
-                greenImageStack(:,:,count) = mean(avFrames,3);
+            if avFrame > frameAvNum      
+                avIm = mean(avFrames,3);
+                downAvIm1 = downsample(avIm,downFactor);
+                downAvIm2 = downsample(downAvIm1',downFactor);
+                greenImageStack(:,:,count) = downAvIm2;
                 count = count + 1;
                 avFrame = 1;
             end         
@@ -84,7 +89,7 @@ elseif frameAvQ == 1
 end 
 %}
 %% separate volume imaging data into separate stacks per z plane and motion correction
-
+%{
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -201,19 +206,32 @@ end
 %}
 
 %% check registration 
-%{
+
 if volIm == 1     
     %check relationship b/w template and 3D registered images
-    count = 1; 
-    ggTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
-    rrTemp2regCorr3D = zeros(size(rZstacks,2),size(rrVZstacks3{1},3));
-    for zPlane = 1:size(gZstacks,2)
-        for ind = 1:size(ggVZstacks3{1},3)
-            ggTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),ggVZstacks3{zPlane}(:,:,ind));
-            rrTemp2regCorr3D(zPlane,ind) = corr2(rTemplate(:,:,count),rrVZstacks3{zPlane}(:,:,ind));
+    if redChanQ == 1
+        count = 1; 
+        rrTemp2regCorr3D = zeros(size(rZstacks,2),size(rrVZstacks3{1},3));
+        for zPlane = 1:size(gZstacks,2)
+            for ind = 1:size(ggVZstacks3{1},3)
+                rrTemp2regCorr3D(zPlane,ind) = corr2(rTemplate(:,:,count),rrVZstacks3{zPlane}(:,:,ind));
+            end 
+            count = count+2;
         end 
-        count = count+2;
     end 
+    if greenChanQ == 1
+        count = 1; 
+        ggTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
+        rrTemp2regCorr3D = zeros(size(rZstacks,2),size(rrVZstacks3{1},3));
+        for zPlane = 1:size(gZstacks,2)
+            for ind = 1:size(ggVZstacks3{1},3)
+                ggTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),ggVZstacks3{zPlane}(:,:,ind));
+                rrTemp2regCorr3D(zPlane,ind) = corr2(rTemplate(:,:,count),rrVZstacks3{zPlane}(:,:,ind));
+            end 
+            count = count+2;
+        end 
+    end 
+    
     %plot 3D registration for comparison 
     figure;
     subplot(1,2,1);

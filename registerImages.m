@@ -89,7 +89,7 @@ elseif frameAvQ == 1
 end 
 %}
 %% separate volume imaging data into separate stacks per z plane and motion correction
-
+%{
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -209,46 +209,73 @@ end
 %{
 if volIm == 1     
     %check relationship b/w template and 3D registered images
-    count = 1; 
-    ggTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
-    rrTemp2regCorr3D = zeros(size(rZstacks,2),size(rrVZstacks3{1},3));
-    for zPlane = 1:size(gZstacks,2)
-        for ind = 1:size(ggVZstacks3{1},3)
-            ggTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),ggVZstacks3{zPlane}(:,:,ind));
-            rrTemp2regCorr3D(zPlane,ind) = corr2(rTemplate(:,:,count),rrVZstacks3{zPlane}(:,:,ind));
+    if redChanQ == 1
+        count = 1; 
+        rrTemp2regCorr3D = zeros(size(rZstacks,2),size(rrVZstacks3{1},3));
+        for zPlane = 1:size(rZstacks,2)
+            for ind = 1:size(rrVZstacks3{1},3)
+                rrTemp2regCorr3D(zPlane,ind) = corr2(rTemplate(:,:,count),rrVZstacks3{zPlane}(:,:,ind));
+            end 
+            count = count+2;
         end 
-        count = count+2;
     end 
+    if greenChanQ == 1
+        count = 1; 
+        ggTemp2regCorr3D = zeros(size(gZstacks,2),size(ggVZstacks3{1},3));
+        for zPlane = 1:size(gZstacks,2)
+            for ind = 1:size(ggVZstacks3{1},3)
+                ggTemp2regCorr3D(zPlane,ind) = corr2(gTemplate(:,:,count),ggVZstacks3{zPlane}(:,:,ind));
+            end 
+            count = count+2;
+        end 
+    end 
+    
     %plot 3D registration for comparison 
     figure;
     subplot(1,2,1);
     hold all; 
-    for zPlane = 1:size(gZstacks,2)
-        plot(ggTemp2regCorr3D(zPlane,:));
-        title({'Correlation Coefficient of 3D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
+    if greenChanQ == 1
+        for zPlane = 1:size(gZstacks,2)
+            plot(ggTemp2regCorr3D(zPlane,:));
+            title({'Correlation Coefficient of 3D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
+        end 
+        subplot(1,2,2);
     end 
-    subplot(1,2,2);
     hold all; 
-    for zPlane = 1:size(rZstacks,2)
-        plot(rrTemp2regCorr3D(zPlane,:));
-        title({'Correlation Coefficient of 3D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
-    end     
+    if redChanQ == 1
+        for zPlane = 1:size(rZstacks,2)
+            plot(rrTemp2regCorr3D(zPlane,:));
+            title({'Correlation Coefficient of 3D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
+        end
+    end
 elseif volIm == 0 
-    %check relationship b/w template and 2D registered images     
-    ggTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));
-    rrTemp2regCorr2D = zeros(1,size(rrRegZstacks{1},3));
-    for ind = 1:size(ggRegZstacks{1},3)
-        ggTemp2regCorr2D(ind) = corr2(gTemplate,ggRegZstacks{1}(:,:,ind));
-        rrTemp2regCorr2D(ind) = corr2(rTemplate,rrRegZstacks{1}(:,:,ind));
+    if redChanQ == 1
+        %check relationship b/w template and 2D registered images    
+        rrTemp2regCorr2D = zeros(1,size(rrRegZstacks{1},3));
+        for ind = 1:size(rrRegZstacks{1},3)
+            rrTemp2regCorr2D(ind) = corr2(rTemplate,rrRegZstacks{1}(:,:,ind));
+        end 
     end 
+    if greenChanQ == 1
+        %check relationship b/w template and 2D registered images     
+        ggTemp2regCorr2D = zeros(1,size(ggRegZstacks{1},3));
+        for ind = 1:size(ggRegZstacks{1},3)
+            ggTemp2regCorr2D(ind) = corr2(gTemplate,ggRegZstacks{1}(:,:,ind));
+        end 
+    end 
+    
     %plot 2D registrations for comparison 
     figure;
-    subplot(1,2,1);
-    plot(ggTemp2regCorr2D);
-    title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
-    subplot(1,2,2);
-    plot(rrTemp2regCorr2D);
-    title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
+    if greenChanQ == 1
+        subplot(1,2,1);
+        plot(ggTemp2regCorr2D);
+        title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Green Channel Registered with Green Channel Template'}); 
+    end 
+    if redChanQ == 1
+        subplot(1,2,2);
+        plot(rrTemp2regCorr2D);
+        title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
+    end 
 end 
 %}
 
