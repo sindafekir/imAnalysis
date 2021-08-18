@@ -8,9 +8,8 @@ elseif volIm == 0
     numZplanes = 1; 
 end 
 %}
-
 %% get the images 
-
+%{
 disp('Importing Images')
 cd(uigetdir('*.*','WHERE ARE THE PHOTOS? '));    
 fileList = dir('*.tif*');
@@ -39,21 +38,28 @@ if frameAvQ == 0
         end 
     end
 elseif frameAvQ == 1
-    frameAvNum = input('How many frames do you want to average together? ');
-    %NEED TO ADD IN FRAME AVERAGING FOR VERY LARGE STACKS 
+    frameAvNum = input('How many frames do you want to average together? '); 
+    xyDownQ = input('Input 1 if you need to downsample in the x and y dimensions. ');
+    downFactor = 1;
+    if xyDownQ == 1
+        downFactor = input('How much do you want to downsample the x and y dimensions? ');
+    end 
     if redChanQ == 1 
         redStackLength = ceil((size(fileList,1)/2)/frameAvNum);       
         image = imread(fileList(1).name); 
         avFrames = zeros(size(image,1),size(image,2),frameAvNum);
-        redImageStack = zeros(size(image,1),size(image,2),redStackLength);
+        redImageStack = zeros((size(image,1)/downFactor),(size(image,2)/downFactor),redStackLength);
         avFrame = 1;
         count = 1;
         for frame = 1:(size(fileList,1)/2)
             image = imread(fileList(frame).name); 
             avFrames(:,:,avFrame) = image;
             avFrame = avFrame + 1;
-            if avFrame > frameAvNum                
-                redImageStack(:,:,count) = mean(avFrames,3);
+            if avFrame > frameAvNum       
+                avIm = mean(avFrames,3);
+                downAvIm1 = downsample(avIm,downFactor);
+                downAvIm2 = downsample(downAvIm1',downFactor);
+                redImageStack(:,:,count) = downAvIm2;
                 count = count + 1;
                 avFrame = 1;
             end                   
@@ -63,15 +69,18 @@ elseif frameAvQ == 1
         greenStackLength = ceil((size(fileList,1)/2)/frameAvNum);
         image = imread(fileList(1).name); 
         avFrames = zeros(size(image,1),size(image,2),frameAvNum);
-        greenImageStack = zeros(size(image,1),size(image,2),greenStackLength);
+        greenImageStack = zeros((size(image,1)/downFactor),(size(image,2)/downFactor),greenStackLength);
         avFrame = 1;
         count = 1; 
         for frame = (size(fileList,1)/2)+1:size(fileList,1) %CHECK THESE VALUES FOR BELOW TO BE CORRECT
             image = imread(fileList(frame).name); 
             avFrames(:,:,avFrame) = image;
             avFrame = avFrame + 1;
-            if avFrame > frameAvNum                
-                greenImageStack(:,:,count) = mean(avFrames,3);
+            if avFrame > frameAvNum      
+                avIm = mean(avFrames,3);
+                downAvIm1 = downsample(avIm,downFactor);
+                downAvIm2 = downsample(downAvIm1',downFactor);
+                greenImageStack(:,:,count) = downAvIm2;
                 count = count + 1;
                 avFrame = 1;
             end         
@@ -80,37 +89,55 @@ elseif frameAvQ == 1
 end 
 %}
 %% separate volume imaging data into separate stacks per z plane and motion correction
-%{
+
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
-    [gZstacks] = splitStacks(greenImageStack,splitType,numZplanes);
-    [gVolStack] = reorgVolStack(greenImageStack,splitType,numZplanes);
-    [rZstacks] = splitStacks(redImageStack,splitType,numZplanes);
-    [rVolStack] = reorgVolStack(redImageStack,splitType,numZplanes);        
-
+    if redChanQ == 1
+        [rZstacks] = splitStacks(redImageStack,splitType,numZplanes);
+        [rVolStack] = reorgVolStack(redImageStack,splitType,numZplanes); 
+    end 
+    if greenChanQ == 1 
+        [gZstacks] = splitStacks(greenImageStack,splitType,numZplanes);
+        [gVolStack] = reorgVolStack(greenImageStack,splitType,numZplanes);
+    end 
+    
     %3D registration     
     disp('3D Motion Correction')
     %need minimum 4 planes in Z for 3D registration to work-time to interpolate
-    gVolStack5 = zeros(size(gVolStack,1),size(gVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
-    rVolStack5 = zeros(size(rVolStack,1),size(rVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
-    tic
+    if redChanQ == 1 
+        rVolStack5 = zeros(size(rVolStack,1),size(rVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
+    end 
+    if greenChanQ == 1 
+        gVolStack5 = zeros(size(gVolStack,1),size(gVolStack,2),size(gVolStack,3)+size(gVolStack,3)-1,size(gVolStack,4));
+    end 
     parfor ind = 1:size(gVolStack,4)
         count = 1;
         for zplane = 1:size(gVolStack,3)+size(gVolStack,3)-1
             if rem(zplane,2) == 0
-                gVolStack5(:,:,zplane,ind) = mean(gVolStack(:,:,count-1:count,ind),3);
-                rVolStack5(:,:,zplane,ind) = mean(rVolStack(:,:,count-1:count,ind),3);
+                if redChanQ == 1 
+                    rVolStack5(:,:,zplane,ind) = mean(rVolStack(:,:,count-1:count,ind),3);
+                end 
+                if greenChanQ == 1 
+                    gVolStack5(:,:,zplane,ind) = mean(gVolStack(:,:,count-1:count,ind),3);
+                end 
             elseif rem(zplane,2) == 1 
-                gVolStack5(:,:,zplane,ind) = gVolStack(:,:,count,ind);
-                rVolStack5(:,:,zplane,ind) = rVolStack(:,:,count,ind);
+                if redChanQ == 1 
+                    rVolStack5(:,:,zplane,ind) = rVolStack(:,:,count,ind);
+                end 
+                if greenChanQ == 1 
+                    gVolStack5(:,:,zplane,ind) = gVolStack(:,:,count,ind);
+                end 
                 count = count +1;
             end 
         end 
     end 
-    toc
-    gTemplate = mean(gVolStack5,4);
-    rTemplate = mean(rVolStack5,4);
+    if redChanQ == 1 
+        rTemplate = mean(rVolStack5,4);
+    end 
+    if greenChanQ == 1 
+        gTemplate = mean(gVolStack5,4);
+    end
     %create optimizer and metric, setting modality to multimodal because the
     %template and actual images look different (as template is mean = smoothed)
     [optimizer, metric] = imregconfig('multimodal')    ;
@@ -120,40 +147,61 @@ if volIm == 1
     optimizer.GrowthFactor = 1.01;
     optimizer.MaximumIterations = 300;
     for ind = 1:size(gVolStack,4)
-        ggRegVolStack(:,:,:,ind) = imregister(gVolStack5(:,:,:,ind),gTemplate,'affine', optimizer, metric,'PyramidLevels',1);
-        rrRegVolStack(:,:,:,ind) = imregister(rVolStack5(:,:,:,ind),rTemplate,'affine', optimizer, metric,'PyramidLevels',1);
+        if redChanQ == 1 
+            rrRegVolStack(:,:,:,ind) = imregister(rVolStack5(:,:,:,ind),rTemplate,'affine', optimizer, metric,'PyramidLevels',1);
+        end 
+        if greenChanQ == 1
+            ggRegVolStack(:,:,:,ind) = imregister(gVolStack5(:,:,:,ind),gTemplate,'affine', optimizer, metric,'PyramidLevels',1);
+        end 
     end 
-    [ggVZstacks5] = volStack2splitStacks(ggRegVolStack);
-    [rrVZstacks5] = volStack2splitStacks(rrRegVolStack);
-    %get rid of extra z planes
-    count = 1; 
-    ggVZstacks3 = cell(1,size(gZstacks,2));
-    rrVZstacks3 = cell(1,size(gZstacks,2));
-    for zPlane = 1:size(gZstacks,2)
-        ggVZstacks3{zPlane} = ggVZstacks5{count};
-        rrVZstacks3{zPlane} = rrVZstacks5{count};
-        count = count+2;
+    if redChanQ == 1 
+        [rrVZstacks5] = volStack2splitStacks(rrRegVolStack);
+        %get rid of extra z planes
+        count = 1; 
+        rrVZstacks3 = cell(1,size(gZstacks,2));
+        for zPlane = 1:size(gZstacks,2)
+            rrVZstacks3{zPlane} = rrVZstacks5{count};
+            count = count+2;
+        end 
+        %package data for output 
+        regStacks{2,4} = rrVZstacks3; regStacks{1,4} = 'rrVZstacks3';
     end 
-
-    %package data for output 
-    regStacks{2,3} = ggVZstacks3; regStacks{1,3} = 'ggVZstacks3';     
-    regStacks{2,4} = rrVZstacks3; regStacks{1,4} = 'rrVZstacks3';
+    if greenChanQ == 1
+        [ggVZstacks5] = volStack2splitStacks(ggRegVolStack);
+        %get rid of extra z planes
+        count = 1; 
+        ggVZstacks3 = cell(1,size(gZstacks,2));
+        for zPlane = 1:size(gZstacks,2)
+            ggVZstacks3{zPlane} = ggVZstacks5{count};
+            count = count+2;
+        end 
+        %package data for output 
+        regStacks{2,3} = ggVZstacks3; regStacks{1,3} = 'ggVZstacks3';    
+    end 
 
 elseif volIm == 0   
-    disp('2D Motion Correction')
-    %2D register imaging data    
-%     gTemplate = mean(greenImageStack,3);
-    gTemplate = mean(greenImageStack(:,:,1:42),3);
-    [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
-    ggRegZstacks{1} = ggRegStack;
-%     rTemplate = mean(redImageStack,3);
-    rTemplate = mean(redImageStack(:,:,1:42),3);
-    [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
-    rrRegZstacks{1} = rrRegStack;
-
-    %package data for output 
-    regStacks{2,1} = ggRegZstacks; regStacks{1,1} = 'ggRegZstacks';
-    regStacks{2,2} = rrRegZstacks; regStacks{1,2} = 'rrRegZstacks';  
+    if redChanQ == 1 
+        disp('2D Motion Correction')
+        %2D register imaging data    
+        rTemplate = mean(redImageStack,3);
+%         rTemplate = mean(redImageStack(:,:,1:42),3);
+        [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
+        rrRegZstacks{1} = rrRegStack;
+        
+        %package data for output 
+        regStacks{2,2} = rrRegZstacks; regStacks{1,2} = 'rrRegZstacks';  
+    end 
+    if greenChanQ == 1
+        disp('2D Motion Correction')
+        %2D register imaging data    
+    %     gTemplate = mean(greenImageStack,3);
+        gTemplate = mean(greenImageStack(:,:,1:42),3);
+        [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
+        ggRegZstacks{1} = ggRegStack;
+   
+        %package data for output 
+        regStacks{2,1} = ggRegZstacks; regStacks{1,1} = 'ggRegZstacks';
+    end 
 end 
 %}
 
