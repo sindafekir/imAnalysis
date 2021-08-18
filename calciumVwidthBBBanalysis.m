@@ -11,15 +11,25 @@ if STAstackQ == 1 || distQ == 1
     end 
 end 
 if ETAQ == 1 || STAstackQ == 1 
-    stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
-    if stimStateQ == 0 
-        state = 8;
-    elseif stimStateQ == 1
-        state = 7;
+    optoQ = input('Input 1 if this is an opto exeriment. Input 0 for a behavior experiment. ');
+    if optoQ == 1 
+        stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
+        if stimStateQ == 0 
+            state = 8;
+        elseif stimStateQ == 1
+            state = 7;
+        end 
+    elseif optoQ == 0 
+        state = input('Input the teensy state you care about. ');
     end 
     framePeriod = input('What is the frame period? ');
     FPS = 1/framePeriod; 
-    FPSstack = FPS/3;
+    FPSq = input('Input 1 if the FPS needs to be adjusted based on frame averaging. ');
+    FPSstack = FPS;
+    if FPSq == 1 
+        FPSadjust = input('By what factor does the FPS need to be adjusted? ');
+        FPSstack = FPS/FPSadjust;
+    end 
     vidList = input('What videos are you analyzing? ');
 end 
 if ETAQ == 1 && STAstackQ == 0 
