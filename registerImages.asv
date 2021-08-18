@@ -46,6 +46,7 @@ elseif frameAvQ == 1
         image = imread(fileList(1).name); 
         avFrames = zeros(size(image,1),size(image,2),frameAvNum);
         redImageStack = zeros(size(image,1),size(image,2),redStackLength);
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         avFrame = 1;
         count = 1;
         for frame = 1:(size(fileList,1)/2)
@@ -61,20 +62,13 @@ elseif frameAvQ == 1
     end 
     if greenChanQ == 1 
         greenStackLength = ceil((size(fileList,1)/2)/frameAvNum);
-        image = imread(fileList(1).name); 
-        avFrames = zeros(size(image,1),size(image,2),frameAvNum);
-        greenImageStack = zeros(size(image,1),size(image,2),greenStackLength);
-        avFrame = 1;
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         count = 1; 
-        for frame = (size(fileList,1)/2)+1:size(fileList,1) %CHECK THESE VALUES FOR BELOW TO BE CORRECT
+        greenImageStack = zeros(size(image,1),size(image,2),greenStackLength);
+        for frame = redStackLength+1:(greenStackLength*2) 
             image = imread(fileList(frame).name); 
-            avFrames(:,:,avFrame) = image;
-            avFrame = avFrame + 1;
-            if avFrame > frameAvNum                
-                greenImageStack(:,:,count) = mean(avFrames,3);
-                count = count + 1;
-                avFrame = 1;
-            end         
+            greenImageStack(:,:,count) = image;
+            count = count + 1;
         end 
     end
 end 
