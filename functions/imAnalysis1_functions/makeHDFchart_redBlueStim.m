@@ -7,9 +7,10 @@ sessionTime = parsedStruct.sessionTime;
 vel_wheel_data=parsedStruct.velocity;
 LED1_amp=parsedStruct.c1_amp;
 LED2_amp=parsedStruct.c2_amp;
-LED3_amp=parsedStruct.c3_amp;
+% LED3_amp=parsedStruct.c3_amp;
 
-[TrialTypes] = determineTrialType(LED1_amp,LED2_amp,LED3_amp);
+[TrialTypes] = determineTrialType(LED1_amp,LED2_amp);
+%[TrialTypes] = determineTrialType(LED1_amp,LED2_amp,LED3_amp);
 
 %Find state start and end times 
 [state_start_t,state_end_t] = find_state_bounds(teensyState,sessionTime,state);

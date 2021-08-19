@@ -20,7 +20,11 @@ if vidNumQ == 0
     if volQ == 1 
         numZplanes = input('How many Z planes are there? ');
     elseif volQ == 0
+        downSampleQ = input('Input 1 if frame averaging (over time) was done. ');
         numZplanes = 1;
+        if downSampleQ == 1
+            numZplanes = input('By what factor was the imaging data down sampled? ');
+        end 
     end 
     FPSstack = FPS/numZplanes;
 % if this is not the first video of the data set

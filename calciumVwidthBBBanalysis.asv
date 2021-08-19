@@ -140,21 +140,23 @@ end
 
 %NEED TO ADD IN CODE TO GET STATE START AND END FRAMES FOR BEHAVIOR DATA 
 if ETAQ == 1 && optoQ == 0 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
     trialLengths2 = cell(1,length(vidList));
     for vid = 1:length(vidList)
-        [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
+        [state_start_f,~] = behavior_FindStateBounds(state,framePeriod);
         %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
-        state_start_f{vid} = floor(statestartf/FPSadjust);
-        state_end_f2{vid} = floor(stateendf/FPSadjust);
+        state_start_f{vid} = floor(statestartf/3);
+        state_end_f2{vid} = floor(stateendf/3);
         trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
     end 
     
     % this fixes discrete time rounding errors to ensure the stimuli are
     % all the correct number of frames long 
     stimTimeLengths = input('How many seconds are the stims on for? ');
-    stimFrameLengths = round(stimTimeLengths*FPSstack);
+    stimFrameLengths = floor(stimTimeLengths*FPSstack);
     state_end_f = cell(1,length(vidList));
     trialLengths = cell(1,length(vidList));
     for frameLength = 1:length(stimFrameLengths)
@@ -167,6 +169,7 @@ if ETAQ == 1 && optoQ == 0
             end 
         end 
     end    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 end 
 
 if STAstackQ == 1
