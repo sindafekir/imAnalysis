@@ -154,7 +154,7 @@ if ETAQ == 1 && optoQ == 0
     % this fixes discrete time rounding errors to ensure the stimuli are
     % all the correct number of frames long 
     stimTimeLengths = input('How many seconds are the stims on for? ');
-    stimFrameLengths = round(stimTimeLengths*FPSstack);
+    stimFrameLengths = floor(stimTimeLengths*FPSstack);
     state_end_f = cell(1,length(vidList));
     trialLengths = cell(1,length(vidList));
     for frameLength = 1:length(stimFrameLengths)
@@ -310,19 +310,21 @@ elseif CAQ == 1
     ccellLen = length(terminals);
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%NEED TO ADD IN CONDITOINAL STATEMENT TO MAKE FAUX TRIAL TYPES ARRAY FOR
-%BEHAVIOR DATA SO THE DATA CAN JUST GET SORTED PROPERLY (PUT ALL TRIALS
-%TOGETHER FOR WHATEVER STATE YOU WANT) 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+% makes faux trial type array for behavior data so all behavior data trials
+% (based on selected state) get sorted into the same cell 
+% For opto data, the state is either 7 or 8, but there are 4 different
+% kinds of trials within those states. 
+% For behavior data, you select whatever state you want, but there is only
+% one trial type 
+if optoQ == 0 
+    TrialTypes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        TrialTypes{vid}(1:length(plotStart{vid}),1) = 1:length(plotStart{vid});  
+        TrialTypes{vid}(1:length(plotStart{vid}),2) = 1;        
+    end 
+end 
+
 for ccell = 1:ccellLen
     count1 = 1;
     count2 = 1;
@@ -435,6 +437,25 @@ for tType = 1:numTtypes
         for BBBroi = 1:length(bDataFullTrace{1})
             nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
             Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %PICK UP HERE- NEED TO ADD IN CODE TO DETERMINE MIN VALUE OF
+            %ETA ARRAYS SO THAT I CAN ADD IN MORE THAN THE MIN VALUE TO GET
+            %RID OF NEGATIVE GOING VALUES 
+            minVal = min(min(Beta{BBBroi}{tType}));
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + 100;
         end 
     end 
@@ -453,7 +474,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% ETA: smooth trial, normalize, and plot event triggered averages 
-%{
+
 %BBBQ = 1; VWQ = 1; CAQ = 1; 
  
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
@@ -736,12 +757,17 @@ if RedAVQ == 1
     nsCeta = allRedNScETA; nsBeta = allRedNSbETA; nsVeta = allRedNSvETA;
 end 
 
-% plot 
+%%  plot 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%MAKE ADJUSTMENTS TO PLOTTING CODE TO FIX TIMEAXIS AND ADD IN MARKERS FOR
+%STATE TRANSITIONS 
 if AVQ == 0 
-    if RedAVQ == 0 && CApQ == 0 
+    if RedAVQ == 0 && CAQ == 0 
         termList = 1; 
     end 
-    if RedAVQ == 1 && CApQ == 0 
+    if RedAVQ == 1 && CAQ == 0 
         termList = 1; 
     end 
     for ccell = termList
@@ -806,18 +832,18 @@ if AVQ == 0
                 Frames = size(nsBeta{BBBroi}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*5:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*5:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(nsBeta{BBBroi}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*5:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*5:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             end 
             if BBBQ == 1 
                 plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
                 plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3)
@@ -856,9 +882,10 @@ if AVQ == 0
             ax.FontName = 'Times';
 %                 xLimStart = 17.8*FPSstack;
 %                 xLimEnd = 22*FPSstack;
-            xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
+%             xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
+            xlim([1 length(AVbData{BBBroi}{tType})])
 %                 xlim([xLimStart xLimEnd])
-            ylim([-100 100])
+            ylim([-15000 10000])
             xlabel('time (s)')
             ylabel('percent change')
             % initialize empty string array 

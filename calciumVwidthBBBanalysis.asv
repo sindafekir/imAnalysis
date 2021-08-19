@@ -309,6 +309,27 @@ if CAQ == 0
 elseif CAQ == 1 
     ccellLen = length(terminals);
 end 
+
+
+% makes faux trial type array for behavior data so all behavior data trials
+% (based on selected state) get sorted into the same cell 
+% For opto data, the state is either 7 or 8, but there are 4 different
+% kinds of trials within those states. 
+% For behavior data, you select whatever state you want, but there is only
+% one trial type 
+if optoQ == 0 
+    TrialTypes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        TrialTypes{vid}(1:length(plotStart{vid}),1) = 1:length(plotStart{vid});  
+        TrialTypes{vid}(1:length(plotStart{vid}),2) = 1;        
+    end 
+end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%NEED TO FIGURE OUT WHY BELOW ISN'T WORKING. I MADE A TRIALTYPES ARRAY FOR
+%TH BE
 for ccell = 1:ccellLen
     count1 = 1;
     count2 = 1;
