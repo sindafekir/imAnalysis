@@ -1,5 +1,5 @@
 % get the data you need 
-
+%{
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -138,7 +138,7 @@ if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)
     end    
 end 
 
-%NEED TO ADD IN CODE TO GET STATE START AND END FRAMES FOR BEHAVIOR DATA 
+%this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
 if ETAQ == 1 && optoQ == 0 
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
@@ -259,7 +259,7 @@ if distQ == 1
 end 
 %}
 %% ETA: organize trial data 
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -309,6 +309,20 @@ if CAQ == 0
 elseif CAQ == 1 
     ccellLen = length(terminals);
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%NEED TO ADD IN CONDITOINAL STATEMENT TO MAKE FAUX TRIAL TYPES ARRAY FOR
+%BEHAVIOR DATA SO THE DATA CAN JUST GET SORTED PROPERLY (PUT ALL TRIALS
+%TOGETHER FOR WHATEVER STATE YOU WANT) 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 for ccell = 1:ccellLen
     count1 = 1;
     count2 = 1;

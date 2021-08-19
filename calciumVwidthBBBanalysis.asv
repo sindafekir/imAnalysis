@@ -1,5 +1,5 @@
 % get the data you need 
-
+%{
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -138,25 +138,23 @@ if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)
     end    
 end 
 
-%NEED TO ADD IN CODE TO GET STATE START AND END FRAMES FOR BEHAVIOR DATA 
+%this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
 if ETAQ == 1 && optoQ == 0 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
     trialLengths2 = cell(1,length(vidList));
     for vid = 1:length(vidList)
-        [state_start_f,~] = behavior_FindStateBounds(state,framePeriod);
+        [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
         %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
-        state_start_f{vid} = floor(statestartf/3);
-        state_end_f2{vid} = floor(stateendf/3);
+        state_start_f{vid} = floor(statestartf/FPSadjust);
+        state_end_f2{vid} = floor(stateendf/FPSadjust);
         trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
     end 
     
     % this fixes discrete time rounding errors to ensure the stimuli are
     % all the correct number of frames long 
     stimTimeLengths = input('How many seconds are the stims on for? ');
-    stimFrameLengths = floor(stimTimeLengths*FPSstack);
+    stimFrameLengths = round(stimTimeLengths*FPSstack);
     state_end_f = cell(1,length(vidList));
     trialLengths = cell(1,length(vidList));
     for frameLength = 1:length(stimFrameLengths)
@@ -169,7 +167,6 @@ if ETAQ == 1 && optoQ == 0
             end 
         end 
     end    
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 end 
 
 if STAstackQ == 1
@@ -262,7 +259,7 @@ if distQ == 1
 end 
 %}
 %% ETA: organize trial data 
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
