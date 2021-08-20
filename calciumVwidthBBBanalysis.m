@@ -1,5 +1,5 @@
 % get the data you need 
-%{
+
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -325,94 +325,105 @@ if optoQ == 0
     end 
 end 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%NEED TO ADD IN THE ABILITY TO PICK WHAT TRIALS ARE AVERAGED
+trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
+if trialQ == 0
+    for vid = 1:length(bDataFullTrace)   
+        trialList = 1:length(plotStart{vid});
+    end 
+elseif trialQ == 1 
+    trialList = input('What trials do you want to average and plot? ');
+end 
+
 for ccell = 1:ccellLen
     count1 = 1;
     count2 = 1;
     count3 = 1;
     count4 = 1;
     for vid = 1:length(bDataFullTrace)    
-        for trial = 1:length(plotStart{vid}) 
-            if trialLengths{vid}(trial) ~= 0 
-                 if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
+        for trial = 1:length(trialList) 
+            if trialLengths{vid}(trialList(trial)) ~= 0 
+                 if (state_start_f{vid}(trialList(trial)) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trialList(trial)) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
                     %if the blue light is on
-                    if TrialTypes{vid}(trial,2) == 1
+                    if TrialTypes{vid}(trialList(trial),2) == 1
                         %if it is a 2 sec trial 
-                        if trialLengths{vid}(trial) == floor(2*FPSstack)     
+                        if trialLengths{vid}(trialList(trial)) == floor(2*FPSstack)     
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if velWheelQ == 1 
-                                Weta{1}(count1,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{1}(count1,:) = wDataFullTrace{vid}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             count1 = count1 + 1;                    
                         %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                        elseif trialLengths{vid}(trialList(trial)) == floor(20*FPSstack)
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if velWheelQ == 1 
-                                Weta{2}(count2,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{2}(count2,:) = wDataFullTrace{vid}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             count2 = count2 + 1;
                         end 
                     %if the red light is on 
-                    elseif TrialTypes{vid}(trial,2) == 2
+                    elseif TrialTypes{vid}(trialList(trial),2) == 2
                         %if it is a 2 sec trial 
-                        if trialLengths{vid}(trial) == floor(2*FPSstack)
+                        if trialLengths{vid}(trialList(trial)) == floor(2*FPSstack)
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end
                             end 
                             if velWheelQ == 1 
-                                Weta{3}(count3,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{3}(count3,:) = wDataFullTrace{vid}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             count3 = count3 + 1;                    
                         %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                        elseif trialLengths{vid}(trialList(trial)) == floor(20*FPSstack)
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                                 end 
                             end 
                             if velWheelQ == 1 
-                                Weta{4}(count4,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{4}(count4,:) = wDataFullTrace{vid}(plotStart{vid}(trialList(trial)):plotEnd{vid}(trialList(trial)));
                             end 
                             count4 = count4 + 1;
                         end             
@@ -423,53 +434,50 @@ for ccell = 1:ccellLen
     end
 end 
 
-% remove rows that are all 0 and then add 100 to each trace to avoid
+% remove rows that are all 0 and then add buffer value to each trace to avoid
 %negative going values 
 for tType = 1:numTtypes
     if CAQ == 1
         for ccell = 1:length(terminals)    
+            % replace zero values with NaNs
             nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
             Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
-            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + 100;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Ceta{terminals(ccell)}{tType}))))+100;
+            % add min value 
+            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + minValToAdd;                        
         end 
     end 
     if BBBQ == 1 
         for BBBroi = 1:length(bDataFullTrace{1})
+            % replace zero values with NaNs 
             nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
             Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %PICK UP HERE- NEED TO ADD IN CODE TO DETERMINE MIN VALUE OF
-            %ETA ARRAYS SO THAT I CAN ADD IN MORE THAN THE MIN VALUE TO GET
-            %RID OF NEGATIVE GOING VALUES 
-            minVal = min(min(Beta{BBBroi}{tType}));
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + 100;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Beta{BBBroi}{tType}))))+100;
+            % add min value 
+            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + minValToAdd;
         end 
     end 
     if VWQ == 1
         for VWroi = 1:length(vDataFullTrace{1})
+            % replace zero values with NaNs
             nonZeroRowsV = all(Veta{VWroi}{tType} == 0,2);
             Veta{VWroi}{tType}(nonZeroRowsV,:) = NaN;
-            Veta{VWroi}{tType} = Veta{VWroi}{tType} + 100;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Veta{VWroi}{tType}))))+100;
+            % add min value 
+            Veta{VWroi}{tType} = Veta{VWroi}{tType} + minValToAdd;
         end 
     end 
     if velWheelQ == 1 
+        % replace zero values with NaNs
         nonZeroRowsW = all(Weta{tType} == 0,2);
         Weta{tType}(nonZeroRowsW,:) = NaN;
-        Weta{tType} = Weta{tType} + 100;
+        % determine the minimum value, add space (+100)
+        minValToAdd = abs(ceil(min(min(Weta{tType}{tType}))))+100;
+        % add min value 
+        Weta{tType}{tType} = Weta{tType}{tType} + minValToAdd;
     end 
 end 
 %}
@@ -758,11 +766,6 @@ if RedAVQ == 1
 end 
 
 %%  plot 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%MAKE ADJUSTMENTS TO PLOTTING CODE TO FIX TIMEAXIS AND ADD IN MARKERS FOR
-%STATE TRANSITIONS 
 if AVQ == 0 
     if RedAVQ == 0 && CAQ == 0 
         termList = 1; 
@@ -842,20 +845,22 @@ if AVQ == 0
                 FrameVals = floor((1:FPSstack:Frames)-1); 
             end 
             if BBBQ == 1 
-                plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3)
+                BBBplot = plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3);
                 patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
-                plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+                CaPlot = plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3);
+%                 patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
+                
             end 
             if VWQ == 1
-                plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')            
+                VWplot = plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3);
+                patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')           
             end 
+%             legend('BBB Permeability','Vessel Width')
             if tType == 1 
-                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2) 
+%                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
+%                 plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2) 
             elseif tType == 3 
 %                 plot(AVbData{tType},'k','LineWidth',3)
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'r','LineWidth',2)
@@ -875,31 +880,39 @@ if AVQ == 0
 %             end 
 %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
 %             legend('vessel width')
+%             legend([BBBplot VWplot],{'BBB Permeability' 'Vessel Width'})
             ax=gca;
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;
             ax.FontSize = 30;
-            ax.FontName = 'Times';
+            ax.FontName = 'Arial';
 %                 xLimStart = 17.8*FPSstack;
 %                 xLimEnd = 22*FPSstack;
 %             xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
             xlim([1 length(AVbData{BBBroi}{tType})])
 %                 xlim([xLimStart xLimEnd])
-            ylim([-15000 10000])
+            ylim([-15 25])
             xlabel('time (s)')
             ylabel('percent change')
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label2.FontName = 'Arial';
             % initialize empty string array 
             label = strings;
             if BBBQ == 1
-                label = append(label,sprintf('BBB ROI %d',BBBroi)); 
+                label = append(label,sprintf('  BBB ROI %d',BBBroi)); 
             end 
             if CAQ == 1 
                 label = append(label,sprintf('  Ca ROI %d',terminals(ccell)));
             end 
             if VWQ == 1
-                label = append(label,sprintf('Vessel width ROI %d',VWroi));
+                label = append(label,sprintf('  Vessel width ROI %d',VWroi));
             end 
-            title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+%             title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            title({'Event Triggered Averages';label},'FontName','Arial');
             set(fig,'position', [100 100 900 900])
             alpha(0.5) 
            %make the directory and save the images            
@@ -981,26 +994,26 @@ elseif AVQ == 1
                 Frames = size(nsBeta{1}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(nsBeta{1}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             end 
-            if BBBQ == 1 
-                plot(AVbData{1}{tType}-100,'r','LineWidth',3)
+%             if BBBQ == 1 
+%                 plot(AVbData{1}{tType}-100,'r','LineWidth',3)
 %                 patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
-            end 
+%             end 
             if CAQ == 1 
                 plot(AVcData{1}{tType}-100,'b','LineWidth',3)
 %                 patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
                 plot(AVvData{1}{tType}-100,'k','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
+                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
             end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
@@ -1028,7 +1041,7 @@ elseif AVQ == 1
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;
             ax.FontSize = 30;
-            ax.FontName = 'Times';
+            ax.FontName = 'Arial';
 %                 xLimStart = 18*FPSstack;
 %                 xLimEnd = 32*FPSstack;
             xlim([1 length(AVbData{1}{tType})])
@@ -1038,16 +1051,23 @@ elseif AVQ == 1
             ylabel('percent change')
             % initialize empty string array 
             label = strings;
-            if BBBQ == 1
-                label = append(label,'BBB ROIs averaged'); 
-            end 
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label2.FontName = 'Arial';
+%             if BBBQ == 1
+%                 label = append(label,'  BBB ROIs averaged'); 
+%             end 
             if CAQ == 1 
                 label = append(label,'  Ca ROIs averaged');
             end 
             if VWQ == 1
-                label = append(label,'Vessel width ROIs averaged ');
+                label = append(label,'  Vessel width ROIs averaged ');
             end 
             title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            title({'Event Triggered Averages';label},'FontName','Arial');
             set(fig,'position', [100 100 900 900])
             alpha(0.5) 
            %make the directory and save the images            
