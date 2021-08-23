@@ -1,5 +1,5 @@
 % get the data you need 
-
+%{
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -259,7 +259,7 @@ if distQ == 1
 end 
 %}
 %% ETA: organize trial data 
-
+%{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -310,7 +310,6 @@ elseif CAQ == 1
     ccellLen = length(terminals);
 end 
 
-
 % makes faux trial type array for behavior data so all behavior data trials
 % (based on selected state) get sorted into the same cell 
 % For opto data, the state is either 7 or 8, but there are 4 different
@@ -325,8 +324,7 @@ if optoQ == 0
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%NEED TO ADD IN THE ABILITY TO PICK WHAT TRIALS ARE AVERAGED
+% added ability to pick what trials are averaged 
 trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
 if trialQ == 0
     for vid = 1:length(bDataFullTrace)   
@@ -482,7 +480,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% ETA: smooth trial, normalize, and plot event triggered averages 
-
+%{
 %BBBQ = 1; VWQ = 1; CAQ = 1; 
  
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
@@ -765,7 +763,7 @@ if RedAVQ == 1
     nsCeta = allRedNScETA; nsBeta = allRedNSbETA; nsVeta = allRedNSvETA;
 end 
 
-%%  plot 
+%  plot 
 if AVQ == 0 
     if RedAVQ == 0 && CAQ == 0 
         termList = 1; 
@@ -1003,10 +1001,10 @@ elseif AVQ == 1
                 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
                 FrameVals = floor((1:FPSstack:Frames)-1); 
             end 
-%             if BBBQ == 1 
-%                 plot(AVbData{1}{tType}-100,'r','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
-%             end 
+            if BBBQ == 1 
+                plot(AVbData{1}{tType}-100,'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+            end 
             if CAQ == 1 
                 plot(AVcData{1}{tType}-100,'b','LineWidth',3)
 %                 patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
@@ -1057,9 +1055,9 @@ elseif AVQ == 1
             label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2),'-k',{'water reward'},'LineWidth',2);
             label2.FontSize = 30;
             label2.FontName = 'Arial';
-%             if BBBQ == 1
-%                 label = append(label,'  BBB ROIs averaged'); 
-%             end 
+            if BBBQ == 1
+                label = append(label,'  BBB ROIs averaged'); 
+            end 
             if CAQ == 1 
                 label = append(label,'  Ca ROIs averaged');
             end 
