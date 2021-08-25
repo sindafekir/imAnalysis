@@ -13,11 +13,19 @@ regStacks = regMat.regStacks;
 
 % if this is the first video of the data set 
 if vidNumQ == 0
-    numZplanes = input('How many Z planes are there? ');
     framePeriod = input("What is the framePeriod? ");
-    FPS = 1/framePeriod; 
-    FPSstack = FPS/numZplanes;
+    FPS = 1/framePeriod;     
     volQ = input('Input 1 if this is volume imaging data. Input 0 for 2D data. ');
+    if volQ == 1 
+        numZplanes = input('How many Z planes are there? ');
+    elseif volQ == 0
+        downSampleQ = input('Input 1 if frame averaging (over time) was done. ');
+        numZplanes = 1;
+        if downSampleQ == 1
+            numZplanes = input('By what factor was the imaging data down sampled? ');
+        end 
+    end 
+    FPSstack = FPS/numZplanes;
 % if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 

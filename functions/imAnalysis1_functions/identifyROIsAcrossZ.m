@@ -1,4 +1,4 @@
-function [CaROImasks,userInput,ROIorders] = identifyROIsAcrossZ(reg_Stacks,userInput,UIr,numZplanes)
+function [imThresh,CaROImasks,ROIorders] = identifyROIsAcrossZ(reg_Stacks)
 
 stackAVs = cell(1,length(reg_Stacks));
 CaROImasks = cell(1,length(reg_Stacks));
@@ -11,13 +11,13 @@ for Z = 1:length(reg_Stacks)
 
     CAroiGen = 1;
     while CAroiGen == 1
-        [userInput,nm1BW2,UIr,CAroiGen] = createCaROIs(userInput,stackAVs{Z},UIr,Z);           
+        [imThresh,mask,CAroiGen] = createCaROIs(stackAVs{Z});           
     end 
-    CaROImasks{Z} = nm1BW2; 
+    CaROImasks{Z} = mask; 
 
     %figure out the order that terminal ROIs are looked at to match ROI
     %with data 
-    ROIorders{Z} = bwlabel(nm1BW2);
+    ROIorders{Z} = bwlabel(mask);
 end
 
 meanPixIntArray = cell(1,size(reg_Stacks,2));

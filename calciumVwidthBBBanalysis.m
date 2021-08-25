@@ -140,6 +140,7 @@ end
 
 %this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
 if ETAQ == 1 && optoQ == 0 
+    velWheelQ = 0;
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
     trialLengths2 = cell(1,length(vidList));
@@ -147,8 +148,10 @@ if ETAQ == 1 && optoQ == 0
         [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
         %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
         state_start_f{vid} = floor(statestartf/FPSadjust);
-        state_end_f2{vid} = floor(stateendf/FPSadjust);
-        trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
+        if isempty(stateendf) == 0
+            state_end_f2{vid} = floor(stateendf/FPSadjust);
+            trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
+        end 
     end 
     
     % this fixes discrete time rounding errors to ensure the stimuli are
@@ -160,10 +163,8 @@ if ETAQ == 1 && optoQ == 0
     for frameLength = 1:length(stimFrameLengths)
         for vid = 1:length(vidList)
             for trial = 1:length(state_start_f{vid})
-                if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
-                    state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
-                    trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
-                end 
+                state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
+                trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
             end 
         end 
     end    
@@ -848,7 +849,7 @@ if AVQ == 0
             end 
             if CAQ == 1 
                 CaPlot = plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3);
-%                 patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
+                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
                 
             end 
             if VWQ == 1
@@ -886,8 +887,8 @@ if AVQ == 0
             ax.FontName = 'Arial';
 %                 xLimStart = 17.8*FPSstack;
 %                 xLimEnd = 22*FPSstack;
-%             xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
-            xlim([1 length(AVbData{BBBroi}{tType})])
+            xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
+%             xlim([1 length(AVbData{BBBroi}{tType})])
 %                 xlim([xLimStart xLimEnd])
             ylim([-15 25])
             xlabel('time (s)')
@@ -1007,7 +1008,7 @@ elseif AVQ == 1
             end 
             if CAQ == 1 
                 plot(AVcData{1}{tType}-100,'b','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
                 plot(AVvData{1}{tType}-100,'k','LineWidth',3)
@@ -1422,10 +1423,15 @@ for tType = 1:tTypeNum
         plot(AVcData{tType}-100,'b','LineWidth',3)
         patch([x fliplr(x)],[CI_cLow{tType}-100 fliplr(CI_cHigh{tType}-100)],[0 0 0.5],'EdgeColor','none')
         if tType == 1 
-            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+%             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
             FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{idx}))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
         elseif tType == 3 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
@@ -1446,7 +1452,7 @@ for tType = 1:tTypeNum
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 30;
-        ax.FontName = 'Times';
+        ax.FontName = 'Arial';
         xlim([1 length(AVbData{tType})])
         ylim([-5 5])
         xlabel('time (s)')
@@ -1454,7 +1460,7 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,'  Calcium Signal');
-        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Times');
+        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)        
     end 
@@ -1497,7 +1503,7 @@ for tType = 1:tTypeNum
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 30;
-        ax.FontName = 'Times';
+        ax.FontName = 'Arial';
         xlim([1 length(AVbData{tType})])
         ylim([-2.5 2.5])
         xlabel('time (s)')
@@ -1505,7 +1511,7 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,'BBB Permeabilty'); 
-        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Times');
+        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)      
     end 
@@ -1548,7 +1554,7 @@ for tType = 1:tTypeNum
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 30;
-        ax.FontName = 'Times';
+        ax.FontName = 'Arial';
         xlim([1 length(AVbData{tType})])
         ylim([-0.1 0.25])
         xlabel('time (s)')
@@ -1556,7 +1562,7 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,'Vessel width ROIs averaged ');
-        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Arial');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)     
     end 

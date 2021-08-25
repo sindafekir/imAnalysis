@@ -12,24 +12,29 @@ regMatFileName = uigetfile('*.*','GET THE REGISTERED IMAGES');
 regMat = matfile(regMatFileName);
 regStacks = regMat.regStacks;
 
-if chColor == 0 % green channel 
-    data = regStacks{2,3};
-elseif chColor == 1 % red channel 
-    data = regStacks{2,4};
-end 
-
 % if this is the first video of the data set 
 if vidNumQ == 0
-    numZplanes = input('How many Z planes are there? ');
     framePeriod = input("What is the framePeriod? ");
     FPS = 1/framePeriod; 
-    FPSstack = FPS/3;
-    CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
-    cd(CaROImaskDir);
-    CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
-    CaROImaskMat = matfile(CaROImaskFileName); 
-    CaROImasks = CaROImaskMat.CaROImasks; 
-    ROIorders = CaROImaskMat.ROIorders;
+    volQ = input('Input 1 if this is volume imaging data. Input 0 for 2D data. ');
+    if volQ == 1 
+        numZplanes = input('How many Z planes are there? ');
+    elseif volQ == 0
+        downSampleQ = input('Input 1 if frame averaging (over time) was done. ');
+        numZplanes = 1;
+        if downSampleQ == 1
+            numZplanes = input('By what factor was the imaging data down sampled? ');
+        end 
+    end 
+    FPSstack = FPS/numZplanes;    
+    
+%     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
+%     cd(CaROImaskDir);
+%     CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
+%     CaROImaskMat = matfile(CaROImaskFileName); 
+%     CaROImasks = CaROImaskMat.CaROImasks; 
+%     ROIorders = CaROImaskMat.ROIorders;
+    
 % if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 
@@ -44,6 +49,21 @@ elseif vidNumQ == 1
     ROIorders = BGROIeMat.ROIorders;
     BGsubQ = BGROIeMat.BGsubQ;
     BGsubTypeQ = BGROIeMat.BGsubTypeQ;
+    volQ = BGROIeMat.volQ;
+end 
+
+if volQ == 1 
+    if chColor == 0 % green channel 
+        data = regStacks{2,3};
+    elseif chColor == 1 % red channel 
+        data = regStacks{2,4};
+    end 
+elseif volQ == 0 
+    if chColor == 0 % green channel 
+        data = regStacks{2,1};
+    elseif chColor == 1 % red channel 
+        data = regStacks{2,2};
+    end 
 end 
 
 %% do background subtraction 
@@ -86,39 +106,51 @@ elseif cutOffFrameQ == 0
 end 
 
 clear inputStacks
+%% create CaROImask 
+if vidNumQ == 0
+    if volQ == 1
+        [imThresh,CaROImasks,ROIorders] = identifyROIsAcrossZ(Ims);
+    elseif volQ == 0 
+        [imThresh,CaROImasks,ROIorders] = identifyROIs(Ims);
+    end 
+end 
+masksDoneQ = input('Do the calcium ROIs need to be hand edited? Yes = 1. No = 0.');
+
+if masksDoneQ == 1
+    %return stops the script so you can edit the CaROI mask using the below
+    %code: 
+    ROIorders{1}(ROIorders{1}==4)=0; %CaROImasks{3}(CaROImasks{3}==11)=0; CaROImasks{1}(CaROImasks{1}==3)=0; CaROImasks{3}(CaROImasks{3}==8)=0;%CaROImasks{2}(CaROImasks{2}==10)=0;
+%     figure;imagesc(CaROImasks{1});grid on;figure;imagesc(CaROImasks{2});grid on;figure;imagesc(CaROImasks{3});grid on    
+    return
+end 
+
 %% apply CaROImask and process data 
 
 %determine the indices left for the edited CaROImasks or else
 %there will be indexing problems below through iteration 
-ROIinds = unique([CaROImasks{:}]);
+ROIinds = unique([ROIorders{:}]);
 %remove zero
 ROIinds(ROIinds==0) = [];
-%find max number of cells/terminals 
-maxCells = length(ROIinds);
-
-meanPixIntArray = cell(1,ROIinds(maxCells));
-for ccell = 1:maxCells %cell starts at 2 because that's where our cell identity labels begins (see identifyROIsAcrossZ function)
-    %find the number of z planes a cell/terminal appears in 
-    %this figures out what planes in Z each cell occurs in (cellZ)
-    for Z = 1:length(CaROImasks)                
-        if ismember(ROIinds(ccell),CaROImasks{Z}) == 1 
-            cellInd = max(unique(ROIorders{Z}(CaROImasks{Z} == ROIinds(ccell))));
-            for frame = 1:length(Ims{Z})
-                stats = regionprops(ROIorders{Z},Ims{Z}(:,:,frame),'MeanIntensity');
-                meanPixIntArray{ROIinds(ccell)}(Z,frame) = stats(cellInd).MeanIntensity;
+meanPixIntArray = cell(1,length(CaROImasks));
+%find the number of z planes a cell/terminal appears in 
+%this figures out what planes in Z each cell occurs in (cellZ)
+for Z = 1:length(CaROImasks)                
+    for frame = 1:length(Ims{Z})
+        stats = regionprops(ROIorders{Z},Ims{Z}(:,:,frame),'MeanIntensity');
+        for ROIind = 1:length(ROIinds)
+            meanPixIntArray{ROIinds(ROIind)}(Z,frame) = stats(ROIinds(ROIind)).MeanIntensity;
+            %turn all rows of zeros into NaN    
+            allZeroRows = find(all(meanPixIntArray{ROIinds(ROIind)} == 0,2));
+            for row = 1:length(allZeroRows)
+                meanPixIntArray{ROIinds(ROIind)}(allZeroRows(row),:) = NaN; 
             end 
-        end 
-    end 
-    %turn all rows of zeros into NaNs
-    allZeroRows = find(all(meanPixIntArray{ROIinds(ccell)} == 0,2));
-    for row = 1:length(allZeroRows)
-        meanPixIntArray{ROIinds(ccell)}(allZeroRows(row),:) = NaN; 
+        end         
     end 
 end 
 
-dataSlidingBLs = cell(1,ROIinds(maxCells));
-FsubSBLs = cell(1,ROIinds(maxCells));
- for ccell = 1:maxCells     
+dataSlidingBLs = cell(1,length(ROIinds));
+FsubSBLs = cell(1,length(ROIinds) );
+ for ccell = 1:length(ROIinds)     
         for z = 1:size(meanPixIntArray{ROIinds(ccell)},1)     
             %get sliding baseline 
             [dataSlidingBL]=slidingBaseline(meanPixIntArray{ROIinds(ccell)}(z,:),floor((FPSstack/numZplanes)*10),0.5); %0.5 quantile thresh = the median value
@@ -130,14 +162,14 @@ FsubSBLs = cell(1,ROIinds(maxCells));
 
 %% average across z 
 
-CcellData = cell(1,length(meanPixIntArray));
- for ccell = 1:maxCells
+CcellData = cell(1,length(ROIinds));
+ for ccell = 1:length(ROIinds)
        CcellData{ROIinds(ccell)} = nanmean(FsubSBLs{ROIinds(ccell)},1);
  end 
 
 %% plot calcium traces per Ca ROI to get an idea for what Ca ROIs hit a noise floor 
 
- for ccell = 1:maxCells
+ for ccell = 1:length(ROIinds)
      figure;
      plot(CcellData{ROIinds(ccell)})
      title(sprintf('Ca ROI %d',ROIinds(ccell)))
