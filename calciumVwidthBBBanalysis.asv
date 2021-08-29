@@ -260,7 +260,7 @@ if distQ == 1
 end 
 %}
 %% ETA: organize trial data 
-
+%{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -1861,7 +1861,7 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
-%
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
@@ -2054,22 +2054,43 @@ for term = 1:length(sigPeaks)
             raster{term}{tType} = repelem(raster{term}{tType},RowMultFactor,ColMultFactor);
 
             %create PSTHs 
-            windows = ceil(length(raster2{term}{tType})/winFrames);
-            for win = 1:windows
-                if win == 1 
-                    numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(:,1:winFrames),2);
-                elseif win > 1 
-                    if ((win-1)*winFrames)+1 < size(raster2{term}{tType},2) && winFrames*win < size(raster2{term}{tType},2)
-                        numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
-                    end 
-                end             
-            end
+            if trialQ == 0 || trialQ == 1 && trialHalfQ == 1 
+                windows = ceil(length(raster2{term}{tType})/winFrames);
+                for win = 1:windows
+                    if win == 1 
+                        numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(:,1:winFrames),2);
+                    elseif win > 1 
+                        if ((win-1)*winFrames)+1 < size(raster2{term}{tType},2) && winFrames*win < size(raster2{term}{tType},2)
+                            numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+                        end 
+                    end             
+                end
+            elseif trialQ == 1 && trialHalfQ == 0 
+                %create PSTHs 
+                windows = ceil(length(raster2{term}{tType})/winFrames);
+                for win = 1:windows
+                    
+                        if win == 1 
+
+                            numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(min(trialList{1}{1}):max(trialList{1}{1}),1:winFrames),2);
+
+                        elseif win > 1 
+                            if ((win-1)*winFrames)+1 < size(raster2{term}{tType},2) && winFrames*win < size(raster2{term}{tType},2)
+                                numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(min(trialList{1}{1}):max(trialList{1}{1}),((win-1)*winFrames)+1:winFrames*win),2);
+                            end 
+                        end             
+                end
+            end 
+            
             %figure out the max number of columns 
             colNums{tType}(term) = size(numPeaks{term}{tType},2);
             maxColNum(tType) = max(colNums{tType});
             avTermNumPeaks{term}{tType} = nanmean(numPeaks{term}{tType},1);
             %make avTermNumPeaks the same size
-            
+            if length(avTermNumPeaks{term}{tType}) < maxColNum(tType)
+                avTermNumPeaks{term}{tType}(:,size(avTermNumPeaks{term}{tType},2):maxColNum(tType)) = 0;
+            end 
+%             
             
             % the below code is buggy and unescessary. it's only still here in
             % case I need to do something similar in the future 

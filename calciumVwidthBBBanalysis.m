@@ -260,7 +260,7 @@ if distQ == 1
 end 
 %}
 %% ETA: organize trial data 
-
+%{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -2068,14 +2068,15 @@ for term = 1:length(sigPeaks)
             elseif trialQ == 1 && trialHalfQ == 0 
                 %create PSTHs 
                 windows = ceil(length(raster2{term}{tType})/winFrames);
-                for win = 1:windows
-                    if win == 1 
-                        numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(min(trialList{1}{1}):max(trialList{1}{1}),1:winFrames),2);
-                    elseif win > 1 
-                        if ((win-1)*winFrames)+1 < size(raster2{term}{tType},2) && winFrames*win < size(raster2{term}{tType},2)
-                            numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(min(trialList{1}{1}):max(trialList{1}{1}),((win-1)*winFrames)+1:winFrames*win),2);
-                        end 
-                    end             
+                for win = 1:windows                    
+                        if win == 1 
+                            numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(min(trialList{term}{tType}):max(trialList{term}{tType}),1:winFrames),2);
+
+                        elseif win > 1 
+                            if ((win-1)*winFrames)+1 < size(raster2{term}{tType},2) && winFrames*win < size(raster2{term}{tType},2)
+                                numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(min(trialList{term}{tType}):max(trialList{term}{tType}),((win-1)*winFrames)+1:winFrames*win),2);
+                            end 
+                        end             
                 end
             end 
             
