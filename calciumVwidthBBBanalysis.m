@@ -1868,7 +1868,7 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
-
+%{
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
@@ -2349,124 +2349,190 @@ if allCaROIplotQ == 1
 end 
 %}
 %% calcium peak raster plots and PSTHs (multiple mice) 
-
+%{
 % get the data you need 
 mouseNum = input('How many mice are there? ');
-FPSstack = cell(1,mouseNum);
+FPSstack = zeros(1,mouseNum);
 fullRaster2 = cell(1,mouseNum);
 for mouse = 1:mouseNum
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE RASTER DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
     MatFileName = uigetfile('*.*',sprintf('SELECT THE RASTER DATA FOR MOUSE #%d',mouse));
     Mat = matfile(MatFileName);
-    FPSstack{mouse} = Mat.FPSstack;
+    FPSstack(mouse) = Mat.FPSstack;
     fullRaster2{mouse} = Mat.fullRaster;
+    totalPeakNums{mouse} = Mat.totalPeakNums;
 end 
 
+avQ = input('Input 1 to make average PSTH from the full raster plots. Input 0 to make average PSTH using within mouse PSTHs. ');
 
-% figure out the size you should resample your data to 
-FPSstack2 = zeros(1,mouseNum);
-for mouse = 1:mouseNum
-    FPSstack2(mouse) = FPSstack{mouse};
-end 
-minFPSstack = FPSstack2 == min(FPSstack2);
-idx = find(minFPSstack ~= 0, 1, 'first');
-minLen = zeros(1,size(fullRaster2{1},2));
-for tType = 1:size(fullRaster2{1},2)
-    minLen(tType) = size(fullRaster2{idx}{tType},2);
-end 
-minFPS = FPSstack2(minFPSstack); 
-
-% resample, sort, and binarize data 
-fullRaster = cell(1,size(fullRaster2{1},2));
-for tType = 1:size(fullRaster2{1},2)
-    count = 1;
+if avQ == 1 
+    % figure out the size you should resample your data to 
+    FPSstack2 = zeros(1,mouseNum);
     for mouse = 1:mouseNum
-        for trace = 1:size(fullRaster2{mouse}{tType},1)
-            % (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi},2)))
-            fullRaster{tType}(count,:) = round(resample(double(fullRaster2{mouse}{tType}(trace,:)),minLen(tType),size(fullRaster2{mouse}{tType},2)));
-            count = count + 1;
+        FPSstack2(mouse) = FPSstack{mouse};
+    end 
+    minFPSstack = FPSstack2 == min(FPSstack2);
+    idx = find(minFPSstack ~= 0, 1, 'first');
+    minLen = zeros(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        minLen(tType) = size(fullRaster2{idx}{tType},2);
+    end 
+    minFPS = FPSstack2(minFPSstack); 
+
+    % resample, sort, and binarize data 
+    fullRaster = cell(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        count = 1;
+        for mouse = 1:mouseNum
+            for trace = 1:size(fullRaster2{mouse}{tType},1)
+                % (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi},2)))
+                fullRaster{tType}(count,:) = round(resample(double(fullRaster2{mouse}{tType}(trace,:)),minLen(tType),size(fullRaster2{mouse}{tType},2)));
+                count = count + 1;
+            end 
         end 
     end 
 end 
 
 %% create PSTHs 
-if numel(unique(minFPS)) == 1
-    minFPS = minFPS(1);
+if numel(unique(FPSstack)) == 1
+    minFPS = FPSstack(1);
+elseif numel(unique(FPSstack)) > 1
+    minFPS = min(FPSstack);
 end 
 
-winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
-winFrames = (winSec*minFPS);
-windows = ceil(size(fullRaster{tType},2)/winFrames);
-numPeaks = cell(1,size(fullRaster2{1},2)); 
-avTermNumPeaks = cell(1,size(fullRaster2{1},2)); 
-meanNumPeaks = zeros(1,size(fullRaster2{1},2));
-for tType = 1:size(fullRaster2{1},2)
-    for win = 1:windows
-        if win == 1 
-            numPeaks{tType}(:,win) = sum(~fullRaster{tType}(:,1:winFrames),2);
-        elseif win > 1 
-            if ((win-1)*winFrames)+1 < size(fullRaster{tType},2) && winFrames*win < size(fullRaster{tType},2)
-                numPeaks{tType}(:,win) = nansum(~fullRaster{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+if avQ == 1 
+    winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+    winFrames = (winSec*minFPS);
+    windows = ceil(size(fullRaster{tType},2)/winFrames);
+    numPeaks = cell(1,size(fullRaster2{1},2)); 
+    avTermNumPeaks = cell(1,size(fullRaster2{1},2)); 
+    meanNumPeaks = zeros(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        for win = 1:windows
+            if win == 1 
+                numPeaks{tType}(:,win) = sum(~fullRaster{tType}(:,1:winFrames),2);
+            elseif win > 1 
+                if ((win-1)*winFrames)+1 < size(fullRaster{tType},2) && winFrames*win < size(fullRaster{tType},2)
+                    numPeaks{tType}(:,win) = nansum(~fullRaster{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+                end 
             end 
+            avTermNumPeaks{tType} = nanmean(numPeaks{tType},1);
+        end
+        colNum = ceil(size(fullRaster{tType},2)/winFrames); 
+        if size(avTermNumPeaks{tType},2) < colNum
+            avTermNumPeaks{tType}(size(avTermNumPeaks{tType},2)+1:colNum) = 0;
         end 
-        avTermNumPeaks{tType} = nanmean(numPeaks{tType},1);
-    end
-    colNum = ceil(size(fullRaster{tType},2)/winFrames); 
-    if size(avTermNumPeaks{tType},2) < colNum
-        avTermNumPeaks{tType}(size(avTermNumPeaks{tType},2)+1:colNum) = 0;
+        % determine the mean peak rate 
+        meanNumPeaks(tType) = nanmean(avTermNumPeaks{tType}); 
+        % divide by the mean peak rate to show the variation in spike
+        % rates from the mean 
+        avTermNumPeaks{tType} = avTermNumPeaks{tType}/meanNumPeaks(tType);
     end 
-    % determine the mean peak rate 
-    meanNumPeaks(tType) = nanmean(avTermNumPeaks{tType}); 
-    % divide by the mean peak rate to show the variation in spike
-    % rates from the mean 
-    avTermNumPeaks{tType} = avTermNumPeaks{tType}/meanNumPeaks(tType);
-end 
 
-secBeforeAndAfterStim = input('How many seconds are there before/after the stimulus? ');
-stimTime = input('How many seconds is the stim on for? ');
-for tType = 1:size(fullRaster2{1},2)
-    %plot PSTH for all mice stacked 
-    figure
-    bar(avTermNumPeaks{tType},'k')
-    stimStartF = floor((minFPS*secBeforeAndAfterStim)/winFrames);
-    hold all 
-    if tType == 1 || tType == 3
-        stimStopF = (stimStartF + (minFPS*2)/winFrames);           
-        Frames = size(avTermNumPeaks{tType},2);        
-%         sec_TimeVals = (0:winSec*2:winSec*Frames);
-        sec_TimeVals = [-secBeforeAndAfterStim:secBeforeAndAfterStim+stimTime];
-        FrameVals = (0:2:Frames);            
-    elseif tType == 2 || tType == 4       
-        stimStopF = (stimStartF + (minFPS*20)/winFrames);            
-        Frames = size(avTermNumPeaks{tType},2);        
-        sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
-        FrameVals = (0:4:Frames);
+    secBeforeAndAfterStim = input('How many seconds are there before/after the stimulus? ');
+    stimTime = input('How many seconds is the stim on for? ');
+    for tType = 1:size(fullRaster2{1},2)
+        %plot PSTH for all mice stacked 
+        figure
+        bar(avTermNumPeaks{tType},'k')
+        stimStartF = floor((minFPS*secBeforeAndAfterStim)/winFrames);
+        hold all 
+        if tType == 1 || tType == 3
+            stimStopF = (stimStartF + (minFPS*2)/winFrames);           
+            Frames = size(avTermNumPeaks{tType},2);        
+    %         sec_TimeVals = (0:winSec*2:winSec*Frames);
+            sec_TimeVals = [-secBeforeAndAfterStim:secBeforeAndAfterStim+stimTime];
+            FrameVals = (0:2:Frames);            
+        elseif tType == 2 || tType == 4       
+            stimStopF = (stimStartF + (minFPS*20)/winFrames);            
+            Frames = size(avTermNumPeaks{tType},2);        
+            sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+            FrameVals = (0:4:Frames);
+        end 
+        if tType == 1 || tType == 2
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+        end 
+        label1 = xline(stimStartF,'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(stimStopF,'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';   
+        ylim([0 1])
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('number of Ca peaks')
+        label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
+        sgtitle(label,'FontSize',25);
+    end
+elseif avQ == 0 
+    % reorganize data for averaging 
+    data = cell(1,size(fullRaster2{1},2));
+    for mouse = 1:mouseNum
+        for tType = 1:size(fullRaster2{1},2)
+            data{tType}(mouse,:) = totalPeakNums{mouse}{tType};
+        end 
     end 
-    if tType == 1 || tType == 2
-%         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-%         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-    elseif tType == 3 || tType == 4
-%         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
-%         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+    % average data and plot 
+    winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+    winFrames = (winSec*minFPS);
+    secBeforeAndAfterStim = input('How many seconds are there before/after the stimulus? ');
+    stimTime = input('How many seconds is the stim on for? ');
+    
+    avData = cell(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        avData{tType} = nanmean(data{tType});
+        %plot PSTH for all mice stacked 
+        figure
+        bar(avData{tType},'k')
+        stimStartF = floor((minFPS*secBeforeAndAfterStim)/winFrames);
+        hold all 
+        if tType == 1 || tType == 3
+            stimStopF = (stimStartF + (minFPS*2)/winFrames);           
+            Frames = size(data{tType},2);        
+    %         sec_TimeVals = (0:winSec*2:winSec*Frames);
+            sec_TimeVals = [-secBeforeAndAfterStim:secBeforeAndAfterStim+stimTime];
+            FrameVals = (0:2:Frames);            
+        elseif tType == 2 || tType == 4       
+%             stimStopF = (stimStartF + (minFPS*20)/winFrames);            
+%             Frames = size(data{tType},2);        
+%             sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+%             FrameVals = (0:4:Frames);
+        end 
+        if tType == 1 || tType == 2
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+        end 
+        label1 = xline(stimStartF,'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(stimStopF,'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';   
+        ylim([0 1])
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('number of Ca peaks')
+        label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
+        sgtitle(label,'FontSize',25);
     end 
-    label1 = xline(stimStartF,'-k',{'vibrissal stim'},'LineWidth',2);
-    label1.FontSize = 30;
-    label1.FontName = 'Arial';
-    label2 = xline(stimStopF,'-k',{'water reward'},'LineWidth',2);
-    label2.FontSize = 30;
-    label2.FontName = 'Arial';   
-    ylim([0 1])
-    ax=gca;
-    axis on 
-    xticks(FrameVals)
-    ax.XTickLabel = sec_TimeVals;
-    ax.FontSize = 15;
-    xlabel('time (s)')
-    ylabel('number of Ca peaks')
-    label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
-    sgtitle(label,'FontSize',25);
-end
+end 
 
 %% overlay the red PSTHs 
 
