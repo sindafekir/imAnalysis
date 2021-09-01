@@ -1868,7 +1868,7 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
-%{
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
@@ -2219,34 +2219,41 @@ for term = 1:length(termList)
     end 
 end 
 
+
 %figure out the max number of columns
-colNumsRaster = cell(1,length(raster2{(terminals == termList(term))}));
-maxColNumRaster = zeros(1,length(raster2{(terminals == termList(term))}));
-for term = 1:length(termList)
-    for tType = 1:length(raster2{(terminals == termList(term))})
-        colNumsRaster{tType}((terminals == termList(term))) = size(raster2{(terminals == termList(term))}{tType},2);
+colNumsRaster = cell(1,length(raster2{term}));
+maxColNumRaster = zeros(1,length(raster2{term}));
+for term = 1:length(terminals)
+    for tType = 1:length(raster2{term})
+        colNumsRaster{tType}(term) = size(raster2{term}{tType},2);
         maxColNumRaster(tType) = max(colNumsRaster{tType});
         %make raster2 cells the same size
-        if size(raster2{(terminals == termList(term))}{tType},2) < maxColNumRaster(tType)
-            raster2{(terminals == termList(term))}{tType}(:,size(raster2{(terminals == termList(term))}{tType},2)+1:maxColNumRaster(tType)) = 1;
+        if size(raster2{term}{tType},2) < maxColNumRaster(tType)
+            raster2{term}{tType}(:,size(raster2{term}{tType},2)+1:maxColNumRaster(tType)) = 1;
         end 
     end 
 end 
 % create full raster            
 fullRaster = cell(1,numTtypes);
-for term = 1:length(termList)
-    for tType = 1:length(raster2{(terminals == termList(term))})
-        rowLen = size(raster2{(terminals == termList(term))}{tType},1);
-        if (terminals == termList(term)) == 1
-            fullRaster{tType} = raster2{(terminals == termList(term))}{tType};
-        elseif (terminals == termList(term)) > 1
-            fullRaster{tType}((((terminals == termList(term))-1)*rowLen)+1:(terminals == termList(term))*rowLen,:) = raster2{(terminals == termList(term))}{tType};
+for term = 1:length(terminals)
+    for tType = 1:length(raster2{term})
+        rowLen = size(raster2{term}{tType},1);
+        if term == 1
+            fullRaster{tType} = raster2{term}{tType};
+        elseif term > 1
+            fullRaster{tType}(((term-1)*rowLen)+1:term*rowLen,:) = raster2{term}{tType};
         end 
         % replace rows full of 0s with 1s 
         zeroRows = all(fullRaster{tType} == 0,2);
         fullRaster{tType}(zeroRows,:) = 1;
     end 
 end 
+  
+% replace rows of zeros with NaNs 
+for tType = 1:length(raster2{(terminals == termList(term))})
+    allTermAvPeakNums{tType}(any(allTermAvPeakNums{tType},2) == 0,:) = NaN;
+end 
+
 % plot
 if allCaROIplotQ == 1 
     totalPeakNums = cell(1,numTtypes);
@@ -2291,7 +2298,7 @@ if allCaROIplotQ == 1
         %}
         
         %plot PSTH for all terminals stacked 
-        totalPeakNums{tType} = nansum(allTermAvPeakNums{tType});
+        totalPeakNums{tType} = nanmean(allTermAvPeakNums{tType});
         figure
         bar(totalPeakNums{tType},'k')
         stimStartF = floor((FPSstack*20)/winFrames);
@@ -2343,7 +2350,7 @@ if allCaROIplotQ == 1
 end 
 %}
 %% calcium peak raster plots and PSTHs (multiple mice) 
-%{
+
 % get the data you need 
 mouseNum = input('How many mice are there? ');
 FPSstack = cell(1,mouseNum);
