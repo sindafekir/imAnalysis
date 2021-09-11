@@ -1868,7 +1868,7 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
-%{
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
