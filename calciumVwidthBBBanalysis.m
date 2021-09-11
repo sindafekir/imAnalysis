@@ -260,7 +260,7 @@ if distQ == 1
 end 
 %}
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length  
-
+%{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
@@ -516,7 +516,7 @@ for tType = 1:numTtypes
 end 
 %}
 %% ETA: smooth trial, normalize, and plot event triggered averages 
-
+%{
 %BBBQ = 1; VWQ = 1; CAQ = 1; 
  
 smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
