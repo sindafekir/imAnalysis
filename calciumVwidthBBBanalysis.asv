@@ -346,7 +346,7 @@ if ITIq == 1
         if trialList{vid}(1) > 1 
             trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
         elseif trialList{vid}(1) == 1 
-            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-;    
         end 
         trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
         trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
