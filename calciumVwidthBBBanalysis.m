@@ -1127,7 +1127,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
-
+%{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -1239,76 +1239,49 @@ end
 
 % make it possible to select what trials you want to average per mouse 
 trialQ = input('Input 1 to select what trials to average per mouse. Input 0 otherwise. ');
-if trialQ == 0
-    if CAQ == 1
-        Ctraces = cell(1,mouseNum);
-        for mouse = 1:mouseNum  
-            for tType = 1:tTypeNum
-                Ctraces{mouse}{tType} = 1:size(Ceta{mouse}{CaROIs{mouse}(1)}{tType},1);
-            end 
-        end         
-    end 
-    if BBBQ == 1 
-        Btraces = cell(1,mouseNum);
-        for mouse = 1:mouseNum  
-            for tType = 1:tTypeNum
-                Btraces{mouse}{tType} = 1:size(Beta{mouse}{1}{tType},1);
-            end 
-        end 
-    end 
-    if VWQ == 1 
-        Vtraces = cell(1,mouseNum);
-        for mouse = 1:mouseNum  
-            for tType = 1:tTypeNum
-                Vtraces{mouse}{tType} = 1:size(Veta{mouse}{1}{tType},1);
-            end 
-        end         
-    end 
-elseif trialQ == 1 
-    trials = cell(1,mouseNum);
-    tTypeTrials = cell(1,mouseNum);
-    for mouse = 1:mouseNum 
-        % figure out what trial type each trial got sorted into 
-        for vid = 1:length(TrialTypes{mouse})  
+trials = cell(1,mouseNum);
+tTypeTrials = cell(1,mouseNum);
+for mouse = 1:mouseNum 
+    % figure out what trial type each trial got sorted into 
+    for vid = 1:length(TrialTypes{mouse})  
+        if trialQ == 1 
             trials{mouse}{vid} = input(sprintf('Input what trials you want to average for mouse %d vid %d. ',mouse,vid));
-            for trial = 1:length(trials{mouse}{vid})
-                %if the blue light is on
-                if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
-                    %if it is a 2 sec trial 
-                    if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})  
-                        tTypeTrials{mouse}{vid}{1}(trial) = trials{mouse}{vid}(trial);
-                    %if it is a 20 sec trial
-                    elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
-                        tTypeTrials{mouse}{vid}{2}(trial) = trials{mouse}{vid}(trial);
-                    end 
-                %if the red light is on 
-                elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
-                    %if it is a 2 sec trial 
-                    if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})
-                        tTypeTrials{mouse}{vid}{3}(trial) = trials{mouse}{vid}(trial);
-                    %if it is a 20 sec trial
-                    elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
-                        tTypeTrials{mouse}{vid}{4}(trial) = trials{mouse}{vid}(trial);
-                    end 
-                end                 
-            end 
-        end      
-    end 
-    if CAQ == 1          
-        Ctraces= tTypeTrials;            
-    end 
-    if BBBQ == 1 
-        Btraces= tTypeTrials;
-    end 
-    if VWQ == 1 
-        Vtraces= tTypeTrials;            
-    end 
+        elseif trialQ == 0 
+            trials{mouse}{vid} = 1:length(trialLengths{mouse}{vid});
+        end 
+        for trial = 1:length(trials{mouse}{vid})
+            %if the blue light is on
+            if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
+                %if it is a 2 sec trial 
+                if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})  
+                    tTypeTrials{mouse}{vid}{1}(trial) = trials{mouse}{vid}(trial);
+                %if it is a 20 sec trial
+                elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
+                    tTypeTrials{mouse}{vid}{2}(trial) = trials{mouse}{vid}(trial);
+                end 
+            %if the red light is on 
+            elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
+                %if it is a 2 sec trial 
+                if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})
+                    tTypeTrials{mouse}{vid}{3}(trial) = trials{mouse}{vid}(trial);
+                %if it is a 20 sec trial
+                elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
+                    tTypeTrials{mouse}{vid}{4}(trial) = trials{mouse}{vid}(trial);
+                end 
+            end                 
+        end 
+    end      
 end 
+if CAQ == 1          
+    Ctraces= tTypeTrials;            
+end 
+if BBBQ == 1 
+    Btraces= tTypeTrials;
+end 
+if VWQ == 1 
+    Vtraces= tTypeTrials;            
+end  
 
-%%
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % figure out ITI length and sort ITI length into trial type 
 ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
 if ITIq == 1
@@ -1333,77 +1306,145 @@ if ITIq == 1
                 trialLenTimes{mouse}{vid}{tType} = trialLenFrames{mouse}{vid}{tType}/FPSstack{mouse};
             end 
         end 
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % THE ABOVE WORKS MOVE ON~
+    end 
+    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+    trialListHigh = cell(1,mouseNum);
+    trialListLow = cell(1,mouseNum); 
+    for mouse = 1:mouseNum 
+        for vid = 1:length(state_start_f{mouse}) 
+            for tType = 1:tTypeNum
+                trialListHigh{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} >= trialLenThreshTime));
+                trialListLow{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} < trialLenThreshTime));
+            end
+        end 
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+    if CAQ == 1
+        Ctraces = trialList; 
+    end 
+    if BBBQ == 1
+        Btraces = trialList; 
+    end 
+    if VWQ == 1
+        Vtraces = trialList; 
     end 
 end 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-% resample plot data 
+% resort eta data into vids 
+Ceta2 = cell(1,mouseNum);
+Beta2 = cell(1,mouseNum);
+Veta2 = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    for tType = 1:tTypeNum
+        if CAQ == 1
+            for CaROI = 1:size(CaROIs{mouse},2)
+                count = 1;
+                for vid = 1:length(state_start_f{mouse}) 
+                    for trace = 1:length(trialLengths{mouse}{tType})
+                        Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(count,:);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+        if BBBQ == 1 
+            for BBBroi = 1:size(Beta{mouse},2)  
+                count = 1;
+                for vid = 1:length(state_start_f{mouse}) 
+                    for trace = 1:length(trialLengths{mouse}{tType})
+                        Beta2{mouse}{BBBroi}{vid}{tType}(trace,:) = Beta{mouse}{BBBroi}{tType}(count,:);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:size(Veta{mouse},2)
+                count = 1;
+                for vid = 1:length(state_start_f{mouse}) 
+                    for trace = 1:length(trialLengths{mouse}{tType})
+                        Veta2{mouse}{VWroi}{vid}{tType}(trace,:) = Veta{mouse}{VWroi}{tType}(count,:);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+    end 
+end 
+
+% select specific trials, resample, and plot data 
 for tType = 1:tTypeNum
     Ccounter2 = 1;
     Bcounter2 = 1;
     Vcounter2 = 1;
     for mouse = 1:mouseNum   
-        if tType == 1 || tType == 3  
-            if CAQ == 1
-                Ccounter = 1; 
-                for CaROI = 1:size(CaROIs{mouse},2)
-                    for trace = 1:length(Ctraces{mouse}{tType})
-                        CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(Ctraces{mouse}{tType}(trace),:),minLen13,size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(Ctraces{mouse}{tType}(trace),:),2)); 
-                        Ccounter = Ccounter + 1; 
+        Ccounter = 1;
+        Bcounter = 1; 
+        Vcounter = 1; 
+        Ccounter1 = 1;
+        Bcounter1 = 1; 
+        Vcounter1 = 1; 
+        for vid = 1:length(state_start_f{mouse}) 
+            if tType == 1 || tType == 3  
+                if CAQ == 1                    
+                    for CaROI = 1:size(CaROIs{mouse},2)
+                        for trace = 1:length(Ctraces{mouse}{vid}{tType})
+                            CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),minLen13,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),2)); 
+                            Ccounter = Ccounter + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if BBBQ == 1 
-                Bcounter = 1; 
-                for BBBroi = 1:size(Beta{mouse},2)  
-                    for trace = 1:length(Btraces{mouse}{tType})
-                        BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta{mouse}{BBBroi}{tType}(Btraces{mouse}{tType}(trace),:),minLen13,size(Beta{mouse}{BBBroi}{tType}(Btraces{mouse}{tType}(trace),:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
-                        Bcounter = Bcounter + 1; 
+                if BBBQ == 1                     
+                    for BBBroi = 1:size(Beta{mouse},2)  
+                        for trace = 1:length(Btraces{mouse}{vid}{tType})
+                            BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),minLen13,size(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
+                            Bcounter = Bcounter + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if VWQ == 1 
-                Vcounter = 1; 
-                for VWroi = 1:size(Veta{mouse},2)
-                    for trace = 1:length(Vtraces{mouse}{tType})
-                        VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta{mouse}{VWroi}{tType}(Vtraces{mouse}{tType}(trace),:),minLen13,size(Veta{mouse}{VWroi}{tType}(Vtraces{mouse}{tType}(trace),:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
-                        Vcounter = Vcounter + 1; 
+                if VWQ == 1                     
+                    for VWroi = 1:size(Veta{mouse},2)
+                        for trace = 1:length(Vtraces{mouse}{vid}{tType})
+                            VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),minLen13,size(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
+                            Vcounter = Vcounter + 1; 
+                        end 
                     end 
                 end 
-            end 
-        elseif tType == 2 || tType == 4
-            if CAQ == 1
-                Ccounter = 1; 
-                for CaROI = 1:size(CaROIs{mouse},2)
-                    for trace = 1:length(Ctraces{mouse}{tType})
-                        CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(Ctraces{mouse}{tType}(trace),:),minLen24,size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(Ctraces{mouse}{tType}(trace),:),2)); 
-                        Ccounter = Ccounter + 1; 
+            elseif tType == 2 || tType == 4
+                if CAQ == 1                    
+                    for CaROI = 1:size(CaROIs{mouse},2)
+                        for trace = 1:length(Ctraces{mouse}{vid}{tType})
+                            CetaArray1{mouse}{tType}(Ccounter1,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),minLen24,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),2)); 
+                            Ccounter1 = Ccounter1 + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if BBBQ == 1 
-                Bcounter = 1; 
-                for BBBroi = 1:size(Beta{mouse},2)  
-                    for trace = 1:length(Btraces{mouse}{tType})
-                        BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta{mouse}{BBBroi}{tType}(Btraces{mouse}{tType}(trace),:),minLen24,size(Beta{mouse}{BBBroi}{tType}(Btraces{mouse}{tType}(trace),:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
-                        Bcounter = Bcounter + 1; 
+                if BBBQ == 1 
+                    
+                    for BBBroi = 1:size(Beta{mouse},2)  
+                        for trace = 1:length(Btraces{mouse}{vid}{tType})
+                            BetaArray1{mouse}{tType}(Bcounter1,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),minLen24,size(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
+                            Bcounter1 = Bcounter1 + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if VWQ == 1 
-                Vcounter = 1; 
-                for VWroi = 1:size(Veta{mouse},2)
-                    for trace = 1:length(Vtraces{mouse}{tType})
-                        VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta{mouse}{VWroi}{tType}(Vtraces{mouse}{tType}(trace),:),minLen24,size(Veta{mouse}{VWroi}{tType}(Vtraces{mouse}{tType}(trace),:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
-                        Vcounter = Vcounter + 1; 
+                if VWQ == 1 
+                    for VWroi = 1:size(Veta{mouse},2)
+                        for trace = 1:length(Vtraces{mouse}{vid}{tType})
+                            VetaArray1{mouse}{tType}(Vcounter1,:) = resample(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),minLen24,size(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
+                            Vcounter1 = Vcounter1 + 1; 
+                        end 
                     end 
                 end 
             end 
         end 
+    end
+    for mouse = 1:mouseNum  
         % put all mouse traces together into same array CetaArray{tType}          
         if CAQ == 1
             for trace = 1:size(CetaArray1{mouse}{tType},1)
