@@ -1191,7 +1191,7 @@ elseif CAQ ~= 1 && VWQ == 1
 end 
 
 %sort data
-tTypeNum = input('How many different kinds of trials (trialTypes) are there? '); 
+tTypeNum = max(unique(TrialTypes{1}{1}(:,2))); 
 
 % put all ROI traces together in same array etaArray1{mouse}{tType} and
 % resample across mice 
@@ -1268,55 +1268,40 @@ elseif trialQ == 1
     trials = cell(1,mouseNum);
     tTypeTrials = cell(1,mouseNum);
     for mouse = 1:mouseNum 
-        trials{mouse} = input(sprintf('Input what trials you want to average for mouse %d. ',mouse));
         % figure out what trial type each trial got sorted into 
         for vid = 1:length(TrialTypes{mouse})  
-            for trial = 1:length(trials{mouse})
+            trials{mouse}{vid} = input(sprintf('Input what trials you want to average for mouse %d vid %d. ',mouse,vid));
+            for trial = 1:length(trials{mouse}{vid})
                 %if the blue light is on
-                if TrialTypes{mouse}{vid}(trials{mouse}(trial),2) == 1
+                if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
                     %if it is a 2 sec trial 
-                    if trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(2*FPSstack{mouse})  
-                        tTypeTrials{mouse}{1}(trial) = trials{mouse}(trial);
+                    if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})  
+                        tTypeTrials{mouse}{vid}{1}(trial) = trials{mouse}{vid}(trial);
                     %if it is a 20 sec trial
-                    elseif trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(20*FPSstack{mouse})
-                        tTypeTrials{mouse}{2}(trial) = trials{mouse}(trial);
+                    elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
+                        tTypeTrials{mouse}{vid}{2}(trial) = trials{mouse}{vid}(trial);
                     end 
                 %if the red light is on 
-                elseif TrialTypes{mouse}{vid}(trials{mouse}(trial),2) == 2
+                elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
                     %if it is a 2 sec trial 
-                    if trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(2*FPSstack{mouse})
-                        tTypeTrials{mouse}{3}(trial) = trials{mouse}(trial);
+                    if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})
+                        tTypeTrials{mouse}{vid}{3}(trial) = trials{mouse}{vid}(trial);
                     %if it is a 20 sec trial
-                    elseif trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(20*FPSstack{mouse})
-                        tTypeTrials{mouse}{4}(trial) = trials{mouse}(trial);
+                    elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
+                        tTypeTrials{mouse}{vid}{4}(trial) = trials{mouse}{vid}(trial);
                     end 
                 end                 
             end 
         end      
     end 
-    if CAQ == 1
-        Ctraces = cell(1,mouseNum);
-        for mouse = 1:mouseNum  
-            for tType = 1:tTypeNum
-                Ctraces{mouse}{tType} = tTypeTrials{mouse}{tType};
-            end 
-        end         
+    if CAQ == 1          
+        Ctraces= tTypeTrials;            
     end 
     if BBBQ == 1 
-        Btraces = cell(1,mouseNum);
-        for mouse = 1:mouseNum  
-            for tType = 1:tTypeNum
-                Btraces{mouse}{tType} = tTypeTrials{mouse}{tType};
-            end 
-        end 
+        Btraces= tTypeTrials;
     end 
     if VWQ == 1 
-        Vtraces = cell(1,mouseNum);
-        for mouse = 1:mouseNum  
-            for tType = 1:tTypeNum
-                Vtraces{mouse}{tType} = tTypeTrials{mouse}{tType};
-            end 
-        end         
+        Vtraces= tTypeTrials;            
     end 
 end 
 
@@ -1334,29 +1319,25 @@ if ITIq == 1
     elseif CAQ == 0 && VWQ == 1
         trialList = Vtraces; 
     end 
+    trialLenFrames = cell(1,mouseNum);
+    trialLenTimes = cell(1,mouseNum); 
     for mouse = 1:mouseNum 
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        trialLenFrames = cell(1,mouseNum);
-        trialLenTimes = cell(1,mouseNum);
-        minMaxTrialLenTimes = cell(1,mouseNum);        
         for vid = 1:length(state_start_f{mouse})  
-            
-            if trialList{vid}(1) > 1 
-                trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
-            elseif trialList{vid}(1) == 1 
-                trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+            for tType = 1:tTypeNum
+                if trialList{mouse}{vid}{tType}(1) > 1                     
+                    trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1)-1);    
+                elseif trialList{mouse}{vid}{tType}(1) == 1 
+                    trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-1;    
+                end 
+                trialLenFrames{mouse}{vid}{tType}(2:length(trialList{mouse}{vid}{tType})) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(2:end))-state_end_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1:end-1));
+                trialLenTimes{mouse}{vid}{tType} = trialLenFrames{mouse}{vid}{tType}/FPSstack{mouse};
             end 
-            trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
-            trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
-            minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
-            minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
-            figure; histogram(trialLenTimes{vid})
-            display(minMaxTrialLenTimes{vid})
         end 
         %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % THE ABOVE WORKS MOVE ON~
     end 
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
