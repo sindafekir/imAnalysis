@@ -275,7 +275,7 @@ numTtypes = input('How many different trial types are there? ');
 plotStart = cell(1,length(bDataFullTrace));
 plotEnd = cell(1,length(bDataFullTrace));
 for vid = 1:length(bDataFullTrace)
-    count = 1;
+%     count = 1;
     for trial = 1:length(state_start_f{vid})  
         if trialLengths{vid}(trial) ~= 0 
             if dataParseType == 0    
@@ -1125,7 +1125,9 @@ end
 %% ETA: average across mice 
 % does not take already smooothed/normalized data. Will ask you about
 % smoothing/normalizing below 
-%{
+% will separate data based on trial number and ITI length (so give it all
+% the trials per mouse)
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -1136,12 +1138,20 @@ Ceta = cell(1,mouseNum);
 Beta = cell(1,mouseNum); 
 Veta = cell(1,mouseNum); 
 CaROIs = cell(1,mouseNum); 
+state_start_f = cell(1,mouseNum); 
+state_end_f = cell(1,mouseNum); 
+TrialTypes = cell(1,mouseNum);
+trialLengths = cell(1,mouseNum);
 for mouse = 1:mouseNum
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE ETA DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
     MatFileName = uigetfile('*.*',sprintf('SELECT THE ETA DATA FOR MOUSE #%d',mouse));
     Mat = matfile(MatFileName);
     FPSstack{mouse} = Mat.FPSstack;
+    state_start_f{mouse} = Mat.state_start_f;
+    state_end_f{mouse} = Mat.state_end_f;
+    TrialTypes{mouse} = Mat.TrialTypes;
+    trialLengths{mouse} = Mat.trialLengths;
     if CAQ == 1 
         Ceta{mouse} = Mat.Ceta;
         CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
@@ -1180,7 +1190,7 @@ elseif CAQ ~= 1 && VWQ == 1
     minLen13 = size(Veta{idx}{1}{1},2);
 end 
 
-%resample and sort data
+%sort data
 tTypeNum = input('How many different kinds of trials (trialTypes) are there? '); 
 
 % put all ROI traces together in same array etaArray1{mouse}{tType} and
@@ -1256,14 +1266,39 @@ if trialQ == 0
     end 
 elseif trialQ == 1 
     trials = cell(1,mouseNum);
+    tTypeTrials = cell(1,mouseNum);
     for mouse = 1:mouseNum 
         trials{mouse} = input(sprintf('Input what trials you want to average for mouse %d. ',mouse));
+        % figure out what trial type each trial got sorted into 
+        for vid = 1:length(TrialTypes{mouse})  
+            for trial = 1:length(trials{mouse})
+                %if the blue light is on
+                if TrialTypes{mouse}{vid}(trials{mouse}(trial),2) == 1
+                    %if it is a 2 sec trial 
+                    if trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(2*FPSstack{mouse})  
+                        tTypeTrials{mouse}{1}(trial) = trials{mouse}(trial);
+                    %if it is a 20 sec trial
+                    elseif trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(20*FPSstack{mouse})
+                        tTypeTrials{mouse}{2}(trial) = trials{mouse}(trial);
+                    end 
+                %if the red light is on 
+                elseif TrialTypes{mouse}{vid}(trials{mouse}(trial),2) == 2
+                    %if it is a 2 sec trial 
+                    if trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(2*FPSstack{mouse})
+                        tTypeTrials{mouse}{3}(trial) = trials{mouse}(trial);
+                    %if it is a 20 sec trial
+                    elseif trialLengths{mouse}{vid}(trials{mouse}(trial)) == floor(20*FPSstack{mouse})
+                        tTypeTrials{mouse}{4}(trial) = trials{mouse}(trial);
+                    end 
+                end                 
+            end 
+        end      
     end 
     if CAQ == 1
         Ctraces = cell(1,mouseNum);
         for mouse = 1:mouseNum  
             for tType = 1:tTypeNum
-                Ctraces{mouse}{tType} = trials{mouse};
+                Ctraces{mouse}{tType} = tTypeTrials{mouse}{tType};
             end 
         end         
     end 
@@ -1271,7 +1306,7 @@ elseif trialQ == 1
         Btraces = cell(1,mouseNum);
         for mouse = 1:mouseNum  
             for tType = 1:tTypeNum
-                Btraces{mouse}{tType} = trials{mouse};
+                Btraces{mouse}{tType} = tTypeTrials{mouse}{tType};
             end 
         end 
     end 
@@ -1279,12 +1314,53 @@ elseif trialQ == 1
         Vtraces = cell(1,mouseNum);
         for mouse = 1:mouseNum  
             for tType = 1:tTypeNum
-                Vtraces{mouse}{tType} = trials{mouse};
+                Vtraces{mouse}{tType} = tTypeTrials{mouse}{tType};
             end 
         end         
     end 
 end 
-% plot
+
+%%
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% figure out ITI length and sort ITI length into trial type 
+ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+if ITIq == 1
+    if CAQ == 1
+        trialList = Ctraces; 
+    elseif CAQ == 0 && BBBQ == 1 
+        trialList = Btraces;
+    elseif CAQ == 0 && VWQ == 1
+        trialList = Vtraces; 
+    end 
+    for mouse = 1:mouseNum 
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        trialLenFrames = cell(1,mouseNum);
+        trialLenTimes = cell(1,mouseNum);
+        minMaxTrialLenTimes = cell(1,mouseNum);        
+        for vid = 1:length(state_start_f{mouse})  
+            
+            if trialList{vid}(1) > 1 
+                trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
+            elseif trialList{vid}(1) == 1 
+                trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+            end 
+            trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
+            trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
+            minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
+            minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
+            figure; histogram(trialLenTimes{vid})
+            display(minMaxTrialLenTimes{vid})
+        end 
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    end 
+end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+% resample plot data 
 for tType = 1:tTypeNum
     Ccounter2 = 1;
     Bcounter2 = 1;
