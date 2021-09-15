@@ -325,7 +325,7 @@ if optoQ == 0
     end 
 end 
 
-% added ability to pick what trials are averaged 
+% pick what trials are averaged 
 trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
 if trialQ == 0
     trialList = cell(1,length(bDataFullTrace));
@@ -1378,6 +1378,9 @@ for mouse = 1:mouseNum
 end 
 
 % select specific trials, resample, and plot data 
+snCetaArray = cell(1,tTypeNum);
+snBetaArray = cell(1,tTypeNum);
+snVetaArray = cell(1,tTypeNum);
 for tType = 1:tTypeNum
     Ccounter2 = 1;
     Bcounter2 = 1;
@@ -2001,20 +2004,169 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
-%{
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% UPDATE THIS SO IT SEPARATES TRIALS BASED ON TRIAL NUM AND ITI LENGTH
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
 winFrames = (winSec*FPSstack);
-numPeaks = cell(1,length(terminals));
-avTermNumPeaks = cell(1,length(terminals));
 
-% the below length sizes are semi hard coded in temporarily 
-Len1_3 = length(sCeta{terminals(1)}{1});
-if length(sCeta{terminals(1)}) > 1 
-    Len2_4 = length(sCeta{terminals(1)}{2});
+% pick what trials are used to create PSTHs 
+trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
+if trialQ == 0
+    trialList = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)   
+        trialList{vid} = 1:length(plotStart{vid});
+    end 
+elseif trialQ == 1 
+    trialList{vid} = input(sprintf('What trials do you want to average and plot for vid %d? ',vid));
 end 
+
+% figure out ITI length and sort ITI length into trial type 
+ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+if ITIq == 1 
+    trialLenFrames = cell(1,length(bDataFullTrace));
+    trialLenTimes = cell(1,length(bDataFullTrace));
+    minMaxTrialLenTimes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        if trialList{vid}(1) > 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
+        elseif trialList{vid}(1) == 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+        end 
+        trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
+        trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
+        minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
+        minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
+        figure; histogram(trialLenTimes{vid})
+        display(minMaxTrialLenTimes{vid})
+    end 
+    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+    trialListHigh = cell(1,length(bDataFullTrace));
+    trialListLow = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace) 
+        trialListHigh{vid} = trialList{vid}((trialLenTimes{vid} >= trialLenThreshTime));
+        trialListLow{vid} = trialList{vid}((trialLenTimes{vid} < trialLenThreshTime));
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+end 
+
+% sort the data  
+if CAQ == 1
+    Ceta = cell(1,length(cDataFullTrace{1}));
+end 
+
+if CAQ == 0 
+    ccellLen = 1;
+elseif CAQ == 1 
+    ccellLen = length(terminals);
+end 
+for ccell = 1:ccellLen
+    count1 = 1;
+    count2 = 1;
+    count3 = 1;
+    count4 = 1;
+    for vid = 1:length(bDataFullTrace)    
+        for trial = 1:length(trialList{vid}) 
+            if trialLengths{vid}(trialList{vid}(trial)) ~= 0 
+                 if (state_start_f{vid}(trialList{vid}(trial)) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trialList{vid}(trial)) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
+                    %if the blue light is on
+                    if TrialTypes{vid}(trialList{vid}(trial),2) == 1
+                        %if it is a 2 sec trial 
+                        if trialLengths{vid}(trialList{vid}(trial)) == floor(2*FPSstack)     
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count1 = count1 + 1;                    
+                        %if it is a 20 sec trial
+                        elseif trialLengths{vid}(trialList{vid}(trial)) == floor(20*FPSstack)
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count2 = count2 + 1;
+                        end 
+                    %if the red light is on 
+                    elseif TrialTypes{vid}(trialList{vid}(trial),2) == 2
+                        %if it is a 2 sec trial 
+                        if trialLengths{vid}(trialList{vid}(trial)) == floor(2*FPSstack)
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count3 = count3 + 1;                    
+                        %if it is a 20 sec trial
+                        elseif trialLengths{vid}(trialList{vid}(trial)) == floor(20*FPSstack)
+                            if CAQ == 1
+                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count4 = count4 + 1;
+                        end             
+                    end 
+                end 
+            end 
+        end         
+    end
+end 
+
+% remove rows that are all 0 and then add buffer value to each trace to avoid
+%negative going values 
+for tType = 1:numTtypes
+    if CAQ == 1
+        for ccell = 1:length(terminals)    
+            % replace zero values with NaNs
+            nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
+            Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Ceta{terminals(ccell)}{tType}))))+100;
+            % add min value 
+            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + minValToAdd;                        
+        end 
+    end 
+end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%PICK UP BELOW
+
+% find peaks that are significant relative to the entire data set
+stdTrace = cell(1,length(terminals)); 
+sigPeaks2 = cell(1,length(terminals)); 
+sigLocs2 = cell(1,length(terminals)); 
+for ccell = 1:length(terminals)
+    %find the peaks 
+    [peaks, locs] = findpeaks(Ceta{terminals(ccell)}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %find the sig peaks (peaks above 2 standard deviations from mean) 
+    stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
+    count = 1 ; 
+    for loc = 1:length(locs)
+        if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
+                sigPeaks2{vid}{terminals(ccell)}(count) = peaks(loc);
+                sigLocs2{vid}{terminals(ccell)}(count) = locs(loc);
+                count = count + 1;  
+        end 
+    end 
+end 
+
+
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
 
 % find peaks that are significant relative to the entire data set
 stdTrace = cell(1,length(vidList)); 
@@ -2036,6 +2188,7 @@ for vid = 1:length(vidList)
         end 
     end 
 end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 tTypePlotStart = cell(1,length(bDataFullTrace) ); 
 tTypePlotEnd = cell(1,length(bDataFullTrace) );
@@ -2163,7 +2316,15 @@ elseif termQ == 1
     termList = input('Input the axons you want to plot. ');
 end 
 
+% the below length sizes are semi hard coded in temporarily 
+Len1_3 = length(sCeta{terminals(1)}{1});
+if length(sCeta{terminals(1)}) > 1 
+    Len2_4 = length(sCeta{terminals(1)}{2});
+end 
+
 % create raster and PSTH for all terminals individually 
+numPeaks = cell(1,length(terminals));
+avTermNumPeaks = cell(1,length(terminals));
 allTermAvPeakNums = cell(1,numTtypes);
 raster2 = cell(1,length(sigPeaks));
 raster3 = cell(1,length(sigPeaks));
@@ -2482,6 +2643,9 @@ if allCaROIplotQ == 1
 end 
 %}
 %% calcium peak raster plots and PSTHs (multiple mice) 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% UPDATE THIS SO IT TAKES ETA DATA FROM MULTIPLE MICE 
 %{
 % get the data you need 
 mouseNum = input('How many mice are there? ');
