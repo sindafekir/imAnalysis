@@ -2004,6 +2004,9 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
+% uses ETA .mat file that contains all trials 
+% separates trials based on trial num and ITI length 
+
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % UPDATE THIS SO IT SEPARATES TRIALS BASED ON TRIAL NUM AND ITI LENGTH
@@ -2013,160 +2016,6 @@ indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for ea
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
 winFrames = (winSec*FPSstack);
-
-% pick what trials are used to create PSTHs 
-trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
-if trialQ == 0
-    trialList = cell(1,length(bDataFullTrace));
-    for vid = 1:length(bDataFullTrace)   
-        trialList{vid} = 1:length(plotStart{vid});
-    end 
-elseif trialQ == 1 
-    trialList{vid} = input(sprintf('What trials do you want to average and plot for vid %d? ',vid));
-end 
-
-% figure out ITI length and sort ITI length into trial type 
-ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
-if ITIq == 1 
-    trialLenFrames = cell(1,length(bDataFullTrace));
-    trialLenTimes = cell(1,length(bDataFullTrace));
-    minMaxTrialLenTimes = cell(1,length(bDataFullTrace));
-    for vid = 1:length(bDataFullTrace)  
-        if trialList{vid}(1) > 1 
-            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
-        elseif trialList{vid}(1) == 1 
-            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
-        end 
-        trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
-        trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
-        minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
-        minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
-        figure; histogram(trialLenTimes{vid})
-        display(minMaxTrialLenTimes{vid})
-    end 
-    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
-    trialListHigh = cell(1,length(bDataFullTrace));
-    trialListLow = cell(1,length(bDataFullTrace));
-    for vid = 1:length(bDataFullTrace) 
-        trialListHigh{vid} = trialList{vid}((trialLenTimes{vid} >= trialLenThreshTime));
-        trialListLow{vid} = trialList{vid}((trialLenTimes{vid} < trialLenThreshTime));
-    end 
-    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
-    if ITIq2 == 0
-        trialList = trialListLow;
-    elseif ITIq2 == 1
-        trialList = trialListHigh;
-    end 
-end 
-
-% sort the data  
-if CAQ == 1
-    Ceta = cell(1,length(cDataFullTrace{1}));
-end 
-
-if CAQ == 0 
-    ccellLen = 1;
-elseif CAQ == 1 
-    ccellLen = length(terminals);
-end 
-for ccell = 1:ccellLen
-    count1 = 1;
-    count2 = 1;
-    count3 = 1;
-    count4 = 1;
-    for vid = 1:length(bDataFullTrace)    
-        for trial = 1:length(trialList{vid}) 
-            if trialLengths{vid}(trialList{vid}(trial)) ~= 0 
-                 if (state_start_f{vid}(trialList{vid}(trial)) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trialList{vid}(trial)) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
-                    %if the blue light is on
-                    if TrialTypes{vid}(trialList{vid}(trial),2) == 1
-                        %if it is a 2 sec trial 
-                        if trialLengths{vid}(trialList{vid}(trial)) == floor(2*FPSstack)     
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count1 = count1 + 1;                    
-                        %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trialList{vid}(trial)) == floor(20*FPSstack)
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count2 = count2 + 1;
-                        end 
-                    %if the red light is on 
-                    elseif TrialTypes{vid}(trialList{vid}(trial),2) == 2
-                        %if it is a 2 sec trial 
-                        if trialLengths{vid}(trialList{vid}(trial)) == floor(2*FPSstack)
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count3 = count3 + 1;                    
-                        %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trialList{vid}(trial)) == floor(20*FPSstack)
-                            if CAQ == 1
-                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count4 = count4 + 1;
-                        end             
-                    end 
-                end 
-            end 
-        end         
-    end
-end 
-
-% remove rows that are all 0 and then add buffer value to each trace to avoid
-%negative going values 
-for tType = 1:numTtypes
-    if CAQ == 1
-        for ccell = 1:length(terminals)    
-            % replace zero values with NaNs
-            nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
-            Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
-            % determine the minimum value, add space (+100)
-            minValToAdd = abs(ceil(min(min(Ceta{terminals(ccell)}{tType}))))+100;
-            % add min value 
-            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + minValToAdd;                        
-        end 
-    end 
-end 
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%PICK UP BELOW
-
-% find peaks that are significant relative to the entire data set
-stdTrace = cell(1,length(terminals)); 
-sigPeaks2 = cell(1,length(terminals)); 
-sigLocs2 = cell(1,length(terminals)); 
-for ccell = 1:length(terminals)
-    %find the peaks 
-    [peaks, locs] = findpeaks(Ceta{terminals(ccell)}{tType}(trial,:),'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %find the sig peaks (peaks above 2 standard deviations from mean) 
-    stdTrace{vid}{terminals(ccell)} = std(cDataFullTrace{vid}{terminals(ccell)});  
-    count = 1 ; 
-    for loc = 1:length(locs)
-        if peaks(loc) > stdTrace{vid}{terminals(ccell)}*2
-                sigPeaks2{vid}{terminals(ccell)}(count) = peaks(loc);
-                sigLocs2{vid}{terminals(ccell)}(count) = locs(loc);
-                count = count + 1;  
-        end 
-    end 
-end 
-
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-
 
 % find peaks that are significant relative to the entire data set
 stdTrace = cell(1,length(vidList)); 
@@ -2188,7 +2037,6 @@ for vid = 1:length(vidList)
         end 
     end 
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 tTypePlotStart = cell(1,length(bDataFullTrace) ); 
 tTypePlotEnd = cell(1,length(bDataFullTrace) );
@@ -2245,25 +2093,19 @@ end
 % sort sigLocs 
 sigPeaks = cell(1,length(bDataFullTrace));
 sigLocs = cell(1,length(bDataFullTrace));
-tTypePlotStart2 = cell(1,numTtypes);
-for ccell = 1:ccellLen
-    for tType = 1:numTtypes
-        count2 = 1; 
-        for vid = 1:length(bDataFullTrace) 
+for vid = 1:length(bDataFullTrace) 
+    for ccell = 1:ccellLen
+        for tType = 1:numTtypes        
             if size(tTypePlotStart{vid},2) >= tType && isempty(tTypePlotStart{vid}{tType}) == 0
                 for trial = 1:size(tTypePlotStart{vid}{tType},2) 
-                    count1 = 1;
+                    count = 1;
                     for peak = 1:length(sigPeaks2{vid}{terminals(ccell)})
                         if sigLocs2{vid}{terminals(ccell)}(peak) > tTypePlotStart{vid}{tType}(trial) && sigLocs2{vid}{terminals(ccell)}(peak) < tTypePlotEnd{vid}{tType}(trial)
-                            sigPeaks{ccell}{tType}{count2}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
-                            sigLocs{ccell}{tType}{count2}(count1) = sigLocs2{vid}{terminals(ccell)}(peak);  
-                            count1 = count1 + 1;
+                            sigPeaks{vid}{ccell}{tType}{trial}(count) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+                            sigLocs{vid}{ccell}{tType}{trial}(count) = sigLocs2{vid}{terminals(ccell)}(peak); 
+                            count = count + 1;
                         end 
                     end
-                    tTypePlotStart2{tType}(count2) = tTypePlotStart{vid}{tType}(trial);
-                    if ~isnan(tTypePlotStart{vid}{tType}(trial))  
-                        count2 = count2 + 1;
-                    end 
                 end  
             end 
         end 
@@ -2271,43 +2113,99 @@ for ccell = 1:ccellLen
 end 
 
 % correct peak location based on plot start and end frames 
-correctedSigLocs = cell(1,ccellLen);
-for ccell = 1:ccellLen
-    for tType = 1:length(sigLocs{1})
-        for trial = 1:length(sigLocs{ccell}{tType})
-           correctedSigLocs{ccell}{tType}{trial} = sigLocs{ccell}{tType}{trial} - tTypePlotStart2{tType}(trial);
+correctedSigLocs = cell(1,length(bDataFullTrace) );
+for vid = 1:length(bDataFullTrace) 
+    for ccell = 1:ccellLen
+        for tType = 1:numTtypes      
+            for trial = 1:length(sigLocs{vid}{ccell}{tType})
+               correctedSigLocs{vid}{ccell}{tType}{trial} = sigLocs{vid}{ccell}{tType}{trial} - tTypePlotStart{vid}{tType}(trial);
+            end 
         end 
     end 
-end 
+end
 
 clear trialList
 trialList = cell(1,length(sigPeaks));
 trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
 if trialQ == 0
-    for term = 1:length(sigPeaks) 
-        for tType = 1:length(sigLocs{1})
-            trialList{term}{tType} = 1:length(sigPeaks{term}{tType});
-        end
+    for vid = 1:length(bDataFullTrace) 
+        trialList{vid} = 1:length(tTypePlotStart{vid}{numTtypes});       
     end 
 elseif trialQ == 1 
-    trialHalfQ = input('Input 1 to plot trials at start of exp. Input 0 for trials at end of exp. ');
-    trialThresh = input('Input the trial threshold. ');
-    if trialHalfQ == 1
-        for term = 1:length(sigPeaks) 
-            for tType = 1:length(sigLocs{1})
-                trialList{term}{tType} = 1:trialThresh;
-            end
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %PICK UP BELOW - MAKE TRIALLIST AS SIMPLE AS POSSIBLE SEE ABOVE 
+    %REPLACE TRIALS BELOW WITH TRIAL LIST AND GET RID OF THIS STUPID HALF
+    %TRIAL THRESH BS 
+
+    trials = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace) 
+        trials{vid} = input(sprintf('What trials do you want to average and plot for vid %d? ',vid));
+        
+        trialHalfQ = input('Input 1 to plot trials at start of exp. Input 0 for trials at end of exp. ');
+        trialThresh = input('Input the trial threshold. ');
+        if trialHalfQ == 1
+            for term = 1:length(sigPeaks) 
+                for tType = 1:length(sigLocs{1})
+                    trialList{term}{tType} = 1:trialThresh;
+                end
+            end 
+        elseif trialHalfQ == 0 
+            for term = 1:length(sigPeaks) 
+                for tType = 1:length(sigLocs{1})
+                    if size(sigPeaks{term}{tType},2) >= trialThresh
+                        trialList{term}{tType} = trialThresh+1:size(sigPeaks{term}{tType},2);
+                    end 
+                end
+            end         
         end 
-    elseif trialHalfQ == 0 
-        for term = 1:length(sigPeaks) 
-            for tType = 1:length(sigLocs{1})
-                if size(sigPeaks{term}{tType},2) >= trialThresh
-                    trialList{term}{tType} = trialThresh+1:size(sigPeaks{term}{tType},2);
-                end 
-            end
-        end         
     end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% THEN EDIT THE BELOW CODE TO SORT TRIALS BY ITI LENGTH 
+% figure out ITI length and sort ITI length into trial type 
+ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+if ITIq == 1 
+    trialLenFrames = cell(1,length(bDataFullTrace));
+    trialLenTimes = cell(1,length(bDataFullTrace));
+    minMaxTrialLenTimes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        if trialList{vid}(1) > 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
+        elseif trialList{vid}(1) == 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+        end 
+        trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
+        trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
+        minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
+        minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
+        figure; histogram(trialLenTimes{vid})
+        display(minMaxTrialLenTimes{vid})
+    end 
+    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+    trialListHigh = cell(1,length(bDataFullTrace));
+    trialListLow = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace) 
+        trialListHigh{vid} = trialList{vid}((trialLenTimes{vid} >= trialLenThreshTime));
+        trialListLow{vid} = trialList{vid}((trialLenTimes{vid} < trialLenThreshTime));
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 termQ = input('Input 1 to select what axons are plotted. Input 0 otherwise. ');
 if termQ == 0
@@ -2321,6 +2219,15 @@ Len1_3 = length(sCeta{terminals(1)}{1});
 if length(sCeta{terminals(1)}) > 1 
     Len2_4 = length(sCeta{terminals(1)}{2});
 end 
+
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%LAST: FIX THE BULLSHIT BELOW SO IT ISN'T STUPID/REDUNDANT AND USES THE
+%CORRECT TRIALLIST ARRAY. WILL NEED TO ITERATE THROUGH VIDS IN TRIALLIST
+%AND THEN ADD IN COUNTER TO PUT VID DATA TOGETHER 
 
 % create raster and PSTH for all terminals individually 
 numPeaks = cell(1,length(terminals));
