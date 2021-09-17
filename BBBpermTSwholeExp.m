@@ -20,7 +20,11 @@ if vidNumQ == 0
     if volQ == 1 
         numZplanes = input('How many Z planes are there? ');
     elseif volQ == 0
+        downSampleQ = input('Input 1 if frame averaging (over time) was done. ');
         numZplanes = 1;
+        if downSampleQ == 1
+            numZplanes = input('By what factor was the imaging data down sampled? ');
+        end 
     end 
     FPSstack = FPS/numZplanes;
 % if this is not the first video of the data set
@@ -156,7 +160,7 @@ while segQ == 1
 %         BWstacks = cell(1,numROIs);
 %         BW_perim = cell(1,numROIs);
 %         segOverlays = cell(1,numROIs);         
-        for VROI = 1:length(BBBROIsToSegment)                    
+        for VROI = 2%1:length(BBBROIsToSegment)                    
             for frame = 1:size(ROIstacks{BBBROIsToSegment(VROI)},3)
                 [BW,~] = segmentImageBBB(ROIstacks{BBBROIsToSegment(VROI)}(:,:,frame));
                 BWstacks{BBBROIsToSegment(VROI)}(:,:,frame) = BW; 

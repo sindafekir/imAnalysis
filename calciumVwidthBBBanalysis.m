@@ -11,15 +11,25 @@ if STAstackQ == 1 || distQ == 1
     end 
 end 
 if ETAQ == 1 || STAstackQ == 1 
-    stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
-    if stimStateQ == 0 
-        state = 8;
-    elseif stimStateQ == 1
-        state = 7;
+    optoQ = input('Input 1 if this is an opto exeriment. Input 0 for a behavior experiment. ');
+    if optoQ == 1 
+        stimStateQ = input('Input 0 if you used flyback stimulation. Input 1 if not. ');
+        if stimStateQ == 0 
+            state = 8;
+        elseif stimStateQ == 1
+            state = 7;
+        end 
+    elseif optoQ == 0 
+        state = input('Input the teensy state you care about. ');
     end 
     framePeriod = input('What is the frame period? ');
     FPS = 1/framePeriod; 
-    FPSstack = FPS/3;
+    FPSq = input('Input 1 if the FPS needs to be adjusted based on frame averaging. ');
+    FPSstack = FPS;
+    if FPSq == 1 
+        FPSadjust = input('By what factor does the FPS need to be adjusted? ');
+        FPSstack = FPS/FPSadjust;
+    end 
     vidList = input('What videos are you analyzing? ');
 end 
 if ETAQ == 1 && STAstackQ == 0 
@@ -89,7 +99,7 @@ if ETAQ == 1 || STAstackQ == 1
 end
 
 %get trial data to generate stimulus event triggered averages (ETAs)
-if ETAQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)
+if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)  
     velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');
     state_start_f = cell(1,length(vidList));
     state_end_f2 = cell(1,length(vidList));
@@ -123,6 +133,38 @@ if ETAQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)
                     state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
                     trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
                 end 
+            end 
+        end 
+    end    
+end 
+
+%this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
+if ETAQ == 1 && optoQ == 0 
+    velWheelQ = 0;
+    state_start_f = cell(1,length(vidList));
+    state_end_f2 = cell(1,length(vidList));
+    trialLengths2 = cell(1,length(vidList));
+    for vid = 1:length(vidList)
+        [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
+        %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+        state_start_f{vid} = floor(statestartf/FPSadjust);
+        if isempty(stateendf) == 0
+            state_end_f2{vid} = floor(stateendf/FPSadjust);
+            trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
+        end 
+    end 
+    
+    % this fixes discrete time rounding errors to ensure the stimuli are
+    % all the correct number of frames long 
+    stimTimeLengths = input('How many seconds are the stims on for? ');
+    stimFrameLengths = floor(stimTimeLengths*FPSstack);
+    state_end_f = cell(1,length(vidList));
+    trialLengths = cell(1,length(vidList));
+    for frameLength = 1:length(stimFrameLengths)
+        for vid = 1:length(vidList)
+            for trial = 1:length(state_start_f{vid})
+                state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
+                trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
             end 
         end 
     end    
@@ -197,15 +239,15 @@ if distQ == 1
     redlabel = uigetfile('*.*','SELECT .MAT FILE WITH RED REGISTERED IMAGES'); 
     redMat = matfile(redlabel);       
     redRegStacks = redMat.regStacks;
-    redStacks1 = redRegStacks{2,4};   
+    redStacks1 = redRegStacks{2,2};   
     if BGsubQ == 0 
         redStacks = redStacks1;
     elseif BGsubQ == 1
         if BGsubTypeQ == 0        
-            [redStacks_BS,BG_ROIboundData,CaROImasks] = backgroundSubtraction(redStacks1);
+            [redStacks_BS,~] = backgroundSubtraction(redStacks1);
             redStacks = redStacks_BS;
         elseif BGsubTypeQ == 1
-            [redStacks_BS,BG_ROIboundData,CaROImasks] = backgroundSubtractionPerRow(redStacks1);
+            [redStacks_BS,~] = backgroundSubtractionPerRow(redStacks1);
             redStacks = redStacks_BS;
         end 
     end 
@@ -214,10 +256,10 @@ if distQ == 1
     for Z = 1:length(redStacks)
         redZstack(:,:,Z) = mean(redStacks{Z},3);
     end 
-    clearvars -except redZstack distQ CaROImasks 
+%     clearvars -except redZstack distQ CaROImasks 
 end 
 %}
-%% ETA: organize trial data 
+%% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length  
 %{
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
@@ -233,7 +275,7 @@ numTtypes = input('How many different trial types are there? ');
 plotStart = cell(1,length(bDataFullTrace));
 plotEnd = cell(1,length(bDataFullTrace));
 for vid = 1:length(bDataFullTrace)
-    count = 1;
+%     count = 1;
     for trial = 1:length(state_start_f{vid})  
         if trialLengths{vid}(trial) ~= 0 
             if dataParseType == 0    
@@ -268,94 +310,154 @@ if CAQ == 0
 elseif CAQ == 1 
     ccellLen = length(terminals);
 end 
+
+% makes faux trial type array for behavior data so all behavior data trials
+% (based on selected state) get sorted into the same cell 
+% For opto data, the state is either 7 or 8, but there are 4 different
+% kinds of trials within those states. 
+% For behavior data, you select whatever state you want, but there is only
+% one trial type 
+if optoQ == 0 
+    TrialTypes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        TrialTypes{vid}(1:length(plotStart{vid}),1) = 1:length(plotStart{vid});  
+        TrialTypes{vid}(1:length(plotStart{vid}),2) = 1;        
+    end 
+end 
+
+% pick what trials are averaged 
+trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
+if trialQ == 0
+    trialList = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)   
+        trialList{vid} = 1:length(plotStart{vid});
+    end 
+elseif trialQ == 1 
+    trialList{vid} = input(sprintf('What trials do you want to average and plot for vid %d? ',vid));
+end 
+
+% figure out ITI length and sort ITI length into trial type 
+ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+if ITIq == 1 
+    trialLenFrames = cell(1,length(bDataFullTrace));
+    trialLenTimes = cell(1,length(bDataFullTrace));
+    minMaxTrialLenTimes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        if trialList{vid}(1) > 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
+        elseif trialList{vid}(1) == 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+        end 
+        trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
+        trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
+        minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
+        minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
+        figure; histogram(trialLenTimes{vid})
+        display(minMaxTrialLenTimes{vid})
+    end 
+    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+    trialListHigh = cell(1,length(bDataFullTrace));
+    trialListLow = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace) 
+        trialListHigh{vid} = trialList{vid}((trialLenTimes{vid} >= trialLenThreshTime));
+        trialListLow{vid} = trialList{vid}((trialLenTimes{vid} < trialLenThreshTime));
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+end 
+
 for ccell = 1:ccellLen
     count1 = 1;
     count2 = 1;
     count3 = 1;
     count4 = 1;
     for vid = 1:length(bDataFullTrace)    
-        for trial = 1:length(plotStart{vid}) 
-            if trialLengths{vid}(trial) ~= 0 
-                 if (state_start_f{vid}(trial) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trial) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
+        for trial = 1:length(trialList{vid}) 
+            if trialLengths{vid}(trialList{vid}(trial)) ~= 0 
+                 if (state_start_f{vid}(trialList{vid}(trial)) - floor(sec_before_stim_start*FPSstack)) > 0 && state_end_f{vid}(trialList{vid}(trial)) + floor(sec_after_stim_end*FPSstack) < length(bDataFullTrace{vid}{1})
                     %if the blue light is on
-                    if TrialTypes{vid}(trial,2) == 1
+                    if TrialTypes{vid}(trialList{vid}(trial),2) == 1
                         %if it is a 2 sec trial 
-                        if trialLengths{vid}(trial) == floor(2*FPSstack)     
+                        if trialLengths{vid}(trialList{vid}(trial)) == floor(2*FPSstack)     
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{1}(count1,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if velWheelQ == 1 
-                                Weta{1}(count1,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{1}(count1,:) = wDataFullTrace{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             count1 = count1 + 1;                    
                         %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                        elseif trialLengths{vid}(trialList{vid}(trial)) == floor(20*FPSstack)
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{2}(count2,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if velWheelQ == 1 
-                                Weta{2}(count2,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{2}(count2,:) = wDataFullTrace{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             count2 = count2 + 1;
                         end 
                     %if the red light is on 
-                    elseif TrialTypes{vid}(trial,2) == 2
+                    elseif TrialTypes{vid}(trialList{vid}(trial),2) == 2
                         %if it is a 2 sec trial 
-                        if trialLengths{vid}(trial) == floor(2*FPSstack)
+                        if trialLengths{vid}(trialList{vid}(trial)) == floor(2*FPSstack)
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{3}(count3,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end
                             end 
                             if velWheelQ == 1 
-                                Weta{3}(count3,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{3}(count3,:) = wDataFullTrace{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             count3 = count3 + 1;                    
                         %if it is a 20 sec trial
-                        elseif trialLengths{vid}(trial) == floor(20*FPSstack)
+                        elseif trialLengths{vid}(trialList{vid}(trial)) == floor(20*FPSstack)
                             if CAQ == 1
-                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Ceta{terminals(ccell)}{4}(count4,:) = cDataFullTrace{vid}{terminals(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             if BBBQ == 1 
                                 for BBBroi = 1:length(bDataFullTrace{1})
-                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if VWQ == 1
                                 for VWroi = 1:length(vDataFullTrace{1})
-                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                                 end 
                             end 
                             if velWheelQ == 1 
-                                Weta{4}(count4,:) = wDataFullTrace{vid}(plotStart{vid}(trial):plotEnd{vid}(trial));
+                                Weta{4}(count4,:) = wDataFullTrace{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
                             end 
                             count4 = count4 + 1;
                         end             
@@ -366,34 +468,50 @@ for ccell = 1:ccellLen
     end
 end 
 
-% remove rows that are all 0 and then add 100 to each trace to avoid
+% remove rows that are all 0 and then add buffer value to each trace to avoid
 %negative going values 
 for tType = 1:numTtypes
     if CAQ == 1
         for ccell = 1:length(terminals)    
+            % replace zero values with NaNs
             nonZeroRowsC = all(Ceta{terminals(ccell)}{tType} == 0,2);
             Ceta{terminals(ccell)}{tType}(nonZeroRowsC,:) = NaN;
-            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + 100;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Ceta{terminals(ccell)}{tType}))))+100;
+            % add min value 
+            Ceta{terminals(ccell)}{tType} = Ceta{terminals(ccell)}{tType} + minValToAdd;                        
         end 
     end 
     if BBBQ == 1 
         for BBBroi = 1:length(bDataFullTrace{1})
+            % replace zero values with NaNs 
             nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
             Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
-            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + 100;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Beta{BBBroi}{tType}))))+100;
+            % add min value 
+            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + minValToAdd;
         end 
     end 
     if VWQ == 1
         for VWroi = 1:length(vDataFullTrace{1})
+            % replace zero values with NaNs
             nonZeroRowsV = all(Veta{VWroi}{tType} == 0,2);
             Veta{VWroi}{tType}(nonZeroRowsV,:) = NaN;
-            Veta{VWroi}{tType} = Veta{VWroi}{tType} + 100;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Veta{VWroi}{tType}))))+100;
+            % add min value 
+            Veta{VWroi}{tType} = Veta{VWroi}{tType} + minValToAdd;
         end 
     end 
     if velWheelQ == 1 
+        % replace zero values with NaNs
         nonZeroRowsW = all(Weta{tType} == 0,2);
         Weta{tType}(nonZeroRowsW,:) = NaN;
-        Weta{tType} = Weta{tType} + 100;
+        % determine the minimum value, add space (+100)
+        minValToAdd = abs(ceil(min(min(Weta{tType}{tType}))))+100;
+        % add min value 
+        Weta{tType}{tType} = Weta{tType}{tType} + minValToAdd;
     end 
 end 
 %}
@@ -681,12 +799,12 @@ if RedAVQ == 1
     nsCeta = allRedNScETA; nsBeta = allRedNSbETA; nsVeta = allRedNSvETA;
 end 
 
-% plot 
+%  plot 
 if AVQ == 0 
-    if RedAVQ == 0 && CApQ == 0 
+    if RedAVQ == 0 && CAQ == 0 
         termList = 1; 
     end 
-    if RedAVQ == 1 && CApQ == 0 
+    if RedAVQ == 1 && CAQ == 0 
         termList = 1; 
     end 
     for ccell = termList
@@ -751,30 +869,32 @@ if AVQ == 0
                 Frames = size(nsBeta{BBBroi}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*5:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*5:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(nsBeta{BBBroi}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*5:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*5:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             end 
             if BBBQ == 1 
-                plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+                BBBplot = plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3);
+                patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
-                plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+                CaPlot = plot(AVcData{terminals(ccell)}{tType}-100,'b','LineWidth',3);
+                patch([x fliplr(x)],[CI_cLow{terminals(ccell)}{tType}-100 fliplr(CI_cHigh{terminals(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
+                
             end 
             if VWQ == 1
-                plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')            
+                VWplot = plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3);
+                patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')           
             end 
+%             legend('BBB Permeability','Vessel Width')
             if tType == 1 
-                plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2) 
+%                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
+%                 plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2) 
             elseif tType == 3 
 %                 plot(AVbData{tType},'k','LineWidth',3)
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'r','LineWidth',2)
@@ -794,30 +914,39 @@ if AVQ == 0
 %             end 
 %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
 %             legend('vessel width')
+%             legend([BBBplot VWplot],{'BBB Permeability' 'Vessel Width'})
             ax=gca;
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;
             ax.FontSize = 30;
-            ax.FontName = 'Times';
+            ax.FontName = 'Arial';
 %                 xLimStart = 17.8*FPSstack;
 %                 xLimEnd = 22*FPSstack;
             xlim([1 length(AVcData{terminals(ccell)}{tType})]) 
+%             xlim([1 length(AVbData{BBBroi}{tType})])
 %                 xlim([xLimStart xLimEnd])
-            ylim([-100 100])
+            ylim([-15 25])
             xlabel('time (s)')
             ylabel('percent change')
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label2.FontName = 'Arial';
             % initialize empty string array 
             label = strings;
             if BBBQ == 1
-                label = append(label,sprintf('BBB ROI %d',BBBroi)); 
+                label = append(label,sprintf('  BBB ROI %d',BBBroi)); 
             end 
             if CAQ == 1 
                 label = append(label,sprintf('  Ca ROI %d',terminals(ccell)));
             end 
             if VWQ == 1
-                label = append(label,sprintf('Vessel width ROI %d',VWroi));
+                label = append(label,sprintf('  Vessel width ROI %d',VWroi));
             end 
-            title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+%             title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            title({'Event Triggered Averages';label},'FontName','Arial');
             set(fig,'position', [100 100 900 900])
             alpha(0.5) 
            %make the directory and save the images            
@@ -899,26 +1028,26 @@ elseif AVQ == 1
                 Frames = size(nsBeta{1}{tType},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             elseif tType == 2 || tType == 4 
                 Frames = size(nsBeta{1}{tType},2);
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*2:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*2:Frames)-1); 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
             end 
             if BBBQ == 1 
                 plot(AVbData{1}{tType}-100,'r','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
             end 
             if CAQ == 1 
                 plot(AVcData{1}{tType}-100,'b','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
             end 
             if VWQ == 1
                 plot(AVvData{1}{tType}-100,'k','LineWidth',3)
-%                 patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
+                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
             end 
             if tType == 1 
                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000 5000], 'b','LineWidth',2)
@@ -946,7 +1075,7 @@ elseif AVQ == 1
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;
             ax.FontSize = 30;
-            ax.FontName = 'Times';
+            ax.FontName = 'Arial';
 %                 xLimStart = 18*FPSstack;
 %                 xLimEnd = 32*FPSstack;
             xlim([1 length(AVbData{1}{tType})])
@@ -956,16 +1085,23 @@ elseif AVQ == 1
             ylabel('percent change')
             % initialize empty string array 
             label = strings;
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label2.FontName = 'Arial';
             if BBBQ == 1
-                label = append(label,'BBB ROIs averaged'); 
+                label = append(label,'  BBB ROIs averaged'); 
             end 
             if CAQ == 1 
                 label = append(label,'  Ca ROIs averaged');
             end 
             if VWQ == 1
-                label = append(label,'Vessel width ROIs averaged ');
+                label = append(label,'  Vessel width ROIs averaged ');
             end 
             title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+            title({'Event Triggered Averages';label},'FontName','Arial');
             set(fig,'position', [100 100 900 900])
             alpha(0.5) 
            %make the directory and save the images            
@@ -989,6 +1125,8 @@ end
 %% ETA: average across mice 
 % does not take already smooothed/normalized data. Will ask you about
 % smoothing/normalizing below 
+% will separate data based on trial number and ITI length (so give it all
+% the trials per mouse)
 %{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
@@ -1000,12 +1138,20 @@ Ceta = cell(1,mouseNum);
 Beta = cell(1,mouseNum); 
 Veta = cell(1,mouseNum); 
 CaROIs = cell(1,mouseNum); 
+state_start_f = cell(1,mouseNum); 
+state_end_f = cell(1,mouseNum); 
+TrialTypes = cell(1,mouseNum);
+trialLengths = cell(1,mouseNum);
 for mouse = 1:mouseNum
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE ETA DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
     MatFileName = uigetfile('*.*',sprintf('SELECT THE ETA DATA FOR MOUSE #%d',mouse));
     Mat = matfile(MatFileName);
     FPSstack{mouse} = Mat.FPSstack;
+    state_start_f{mouse} = Mat.state_start_f;
+    state_end_f{mouse} = Mat.state_end_f;
+    TrialTypes{mouse} = Mat.TrialTypes;
+    trialLengths{mouse} = Mat.trialLengths;
     if CAQ == 1 
         Ceta{mouse} = Mat.Ceta;
         CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
@@ -1028,19 +1174,24 @@ end
 minFPSstack = FPSstack2 == min(FPSstack2);
 idx = find(minFPSstack ~= 0, 1, 'first');
 if CAQ == 1
+    if length(Ceta{idx}{CaROIs{idx}(1)}) > 1 
+        minLen24 = size(Ceta{idx}{CaROIs{idx}(1)}{2},2);
+    end 
     minLen13 = size(Ceta{idx}{CaROIs{idx}(1)}{1},2);
-    minLen24 = size(Ceta{idx}{CaROIs{idx}(1)}{2},2);
 elseif CAQ ~= 1 && BBBQ == 1
+    if length(Beta{idx}{1}) > 1 
+        minLen24 = size(Beta{idx}{1}{2},2);
+    end 
     minLen13 = size(Beta{idx}{1}{1},2);
-    minLen24 = size(Beta{idx}{1}{2},2);
 elseif CAQ ~= 1 && VWQ == 1 
+    if length(Veta{idx}{1}) > 1 
+        minLen24 = size(Veta{idx}{1}{2},2);
+    end 
     minLen13 = size(Veta{idx}{1}{1},2);
-    minLen24 = size(Veta{idx}{1}{2},2);
 end 
 
-%resample and sort data
-tTypeNum = input('How many different kinds of trials (trialTypes) are there? '); 
-
+%sort data
+tTypeNum = max(unique(TrialTypes{1}{1}(:,2))); 
 
 % put all ROI traces together in same array etaArray1{mouse}{tType} and
 % resample across mice 
@@ -1085,68 +1236,218 @@ if dataParseType == 0 %peristimulus data to plot
     sec_after_stim_end = input("How many seconds are there after the stimulus ends? ");
     baselineEndFrame = floor(sec_before_stim_start*(FPSstack{idx}));
 end 
+
+% make it possible to select what trials you want to average per mouse 
+trialQ = input('Input 1 to select what trials to average per mouse. Input 0 otherwise. ');
+trials = cell(1,mouseNum);
+tTypeTrials = cell(1,mouseNum);
+for mouse = 1:mouseNum 
+    % figure out what trial type each trial got sorted into 
+    for vid = 1:length(TrialTypes{mouse})  
+        if trialQ == 1 
+            trials{mouse}{vid} = input(sprintf('Input what trials you want to average for mouse %d vid %d. ',mouse,vid));
+        elseif trialQ == 0 
+            trials{mouse}{vid} = 1:length(trialLengths{mouse}{vid});
+        end 
+        for trial = 1:length(trials{mouse}{vid})
+            %if the blue light is on
+            if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
+                %if it is a 2 sec trial 
+                if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})  
+                    tTypeTrials{mouse}{vid}{1}(trial) = trials{mouse}{vid}(trial);
+                %if it is a 20 sec trial
+                elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
+                    tTypeTrials{mouse}{vid}{2}(trial) = trials{mouse}{vid}(trial);
+                end 
+            %if the red light is on 
+            elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
+                %if it is a 2 sec trial 
+                if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack{mouse})
+                    tTypeTrials{mouse}{vid}{3}(trial) = trials{mouse}{vid}(trial);
+                %if it is a 20 sec trial
+                elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack{mouse})
+                    tTypeTrials{mouse}{vid}{4}(trial) = trials{mouse}{vid}(trial);
+                end 
+            end                 
+        end 
+    end      
+end 
+if CAQ == 1          
+    Ctraces= tTypeTrials;            
+end 
+if BBBQ == 1 
+    Btraces= tTypeTrials;
+end 
+if VWQ == 1 
+    Vtraces= tTypeTrials;            
+end  
+
+% figure out ITI length and sort ITI length into trial type 
+ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+if ITIq == 1
+    if CAQ == 1
+        trialList = Ctraces; 
+    elseif CAQ == 0 && BBBQ == 1 
+        trialList = Btraces;
+    elseif CAQ == 0 && VWQ == 1
+        trialList = Vtraces; 
+    end 
+    trialLenFrames = cell(1,mouseNum);
+    trialLenTimes = cell(1,mouseNum); 
+    for mouse = 1:mouseNum 
+        for vid = 1:length(state_start_f{mouse})  
+            for tType = 1:tTypeNum
+                if trialList{mouse}{vid}{tType}(1) > 1                     
+                    trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1)-1);    
+                elseif trialList{mouse}{vid}{tType}(1) == 1 
+                    trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-1;    
+                end 
+                trialLenFrames{mouse}{vid}{tType}(2:length(trialList{mouse}{vid}{tType})) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(2:end))-state_end_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1:end-1));
+                trialLenTimes{mouse}{vid}{tType} = trialLenFrames{mouse}{vid}{tType}/FPSstack{mouse};
+            end 
+        end 
+    end 
+    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+    trialListHigh = cell(1,mouseNum);
+    trialListLow = cell(1,mouseNum); 
+    for mouse = 1:mouseNum 
+        for vid = 1:length(state_start_f{mouse}) 
+            for tType = 1:tTypeNum
+                trialListHigh{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} >= trialLenThreshTime));
+                trialListLow{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} < trialLenThreshTime));
+            end
+        end 
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+    if CAQ == 1
+        Ctraces = trialList; 
+    end 
+    if BBBQ == 1
+        Btraces = trialList; 
+    end 
+    if VWQ == 1
+        Vtraces = trialList; 
+    end 
+end 
+
+% resort eta data into vids 
+Ceta2 = cell(1,mouseNum);
+Beta2 = cell(1,mouseNum);
+Veta2 = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    for tType = 1:tTypeNum
+        if CAQ == 1
+            for CaROI = 1:size(CaROIs{mouse},2)
+                count = 1;
+                for vid = 1:length(state_start_f{mouse}) 
+                    for trace = 1:length(trialLengths{mouse}{tType})
+                        Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(count,:);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+        if BBBQ == 1 
+            for BBBroi = 1:size(Beta{mouse},2)  
+                count = 1;
+                for vid = 1:length(state_start_f{mouse}) 
+                    for trace = 1:length(trialLengths{mouse}{tType})
+                        Beta2{mouse}{BBBroi}{vid}{tType}(trace,:) = Beta{mouse}{BBBroi}{tType}(count,:);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:size(Veta{mouse},2)
+                count = 1;
+                for vid = 1:length(state_start_f{mouse}) 
+                    for trace = 1:length(trialLengths{mouse}{tType})
+                        Veta2{mouse}{VWroi}{vid}{tType}(trace,:) = Veta{mouse}{VWroi}{tType}(count,:);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+    end 
+end 
+
+% select specific trials, resample, and plot data 
+snCetaArray = cell(1,tTypeNum);
+snBetaArray = cell(1,tTypeNum);
+snVetaArray = cell(1,tTypeNum);
 for tType = 1:tTypeNum
     Ccounter2 = 1;
     Bcounter2 = 1;
     Vcounter2 = 1;
     for mouse = 1:mouseNum   
-        if tType == 1 || tType == 3  
-            if CAQ == 1
-                Ccounter = 1; 
-                for CaROI = 1:size(CaROIs{mouse},2)
-                    for trace = 1:size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType},1)
-                        CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),minLen13,size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),2)); 
-                        Ccounter = Ccounter + 1; 
+        Ccounter = 1;
+        Bcounter = 1; 
+        Vcounter = 1; 
+        Ccounter1 = 1;
+        Bcounter1 = 1; 
+        Vcounter1 = 1; 
+        for vid = 1:length(state_start_f{mouse}) 
+            if tType == 1 || tType == 3  
+                if CAQ == 1                    
+                    for CaROI = 1:size(CaROIs{mouse},2)
+                        for trace = 1:length(Ctraces{mouse}{vid}{tType})
+                            CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),minLen13,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),2)); 
+                            Ccounter = Ccounter + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if BBBQ == 1 
-                Bcounter = 1; 
-                for BBBroi = 1:size(Beta{mouse},2)  
-                    for trace = 1:size(Beta{mouse}{BBBroi}{tType},1)
-                        BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta{mouse}{BBBroi}{tType}(trace,:),minLen13,size(Beta{mouse}{BBBroi}{tType}(trace,:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
-                        Bcounter = Bcounter + 1; 
+                if BBBQ == 1                     
+                    for BBBroi = 1:size(Beta{mouse},2)  
+                        for trace = 1:length(Btraces{mouse}{vid}{tType})
+                            BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),minLen13,size(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
+                            Bcounter = Bcounter + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if VWQ == 1 
-                Vcounter = 1; 
-                for VWroi = 1:size(Veta{mouse},2)
-                    for trace = 1:size(Veta{mouse}{VWroi}{tType},1)
-                        VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta{mouse}{VWroi}{tType}(trace,:),minLen13,size(Veta{mouse}{VWroi}{tType}(trace,:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
-                        Vcounter = Vcounter + 1; 
+                if VWQ == 1                     
+                    for VWroi = 1:size(Veta{mouse},2)
+                        for trace = 1:length(Vtraces{mouse}{vid}{tType})
+                            VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),minLen13,size(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
+                            Vcounter = Vcounter + 1; 
+                        end 
                     end 
                 end 
-            end 
-        elseif tType == 2 || tType == 4
-            if CAQ == 1
-                Ccounter = 1; 
-                for CaROI = 1:size(CaROIs{mouse},2)
-                    for trace = 1:size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType},1)
-                        CetaArray1{mouse}{tType}(Ccounter,:) =  resample(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),minLen24,size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tType}(trace,:),2)); 
-                        Ccounter = Ccounter + 1; 
+            elseif tType == 2 || tType == 4
+                if CAQ == 1                    
+                    for CaROI = 1:size(CaROIs{mouse},2)
+                        for trace = 1:length(Ctraces{mouse}{vid}{tType})
+                            CetaArray1{mouse}{tType}(Ccounter1,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),minLen24,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tType}(Ctraces{mouse}{vid}{tType}(trace),:),2)); 
+                            Ccounter1 = Ccounter1 + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if BBBQ == 1 
-                Bcounter = 1; 
-                for BBBroi = 1:size(Beta{mouse},2)  
-                    for trace = 1:size(Beta{mouse}{BBBroi}{tType},1)
-                        BetaArray1{mouse}{tType}(Bcounter,:) =  resample(Beta{mouse}{BBBroi}{tType}(trace,:),minLen24,size(Beta{mouse}{BBBroi}{tType}(trace,:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
-                        Bcounter = Bcounter + 1; 
+                if BBBQ == 1 
+                    
+                    for BBBroi = 1:size(Beta{mouse},2)  
+                        for trace = 1:length(Btraces{mouse}{vid}{tType})
+                            BetaArray1{mouse}{tType}(Bcounter1,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),minLen24,size(Beta2{mouse}{BBBroi}{vid}{tType}(Btraces{mouse}{vid}{tType}(trace),:),2)); %Beta{mouse}{BBBroi}{tType}(trace,:); 
+                            Bcounter1 = Bcounter1 + 1; 
+                        end 
                     end 
                 end 
-            end 
-            if VWQ == 1 
-                Vcounter = 1; 
-                for VWroi = 1:size(Veta{mouse},2)
-                    for trace = 1:size(Veta{mouse}{VWroi}{tType},1)
-                        VetaArray1{mouse}{tType}(Vcounter,:) = resample(Veta{mouse}{VWroi}{tType}(trace,:),minLen24,size(Veta{mouse}{VWroi}{tType}(trace,:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
-                        Vcounter = Vcounter + 1; 
+                if VWQ == 1 
+                    for VWroi = 1:size(Veta{mouse},2)
+                        for trace = 1:length(Vtraces{mouse}{vid}{tType})
+                            VetaArray1{mouse}{tType}(Vcounter1,:) = resample(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),minLen24,size(Veta2{mouse}{VWroi}{vid}{tType}(Vtraces{mouse}{vid}{tType}(trace),:),2));% Veta{mouse}{VWroi}{tType}(trace,:); 
+                            Vcounter1 = Vcounter1 + 1; 
+                        end 
                     end 
                 end 
             end 
         end 
+    end
+    for mouse = 1:mouseNum  
         % put all mouse traces together into same array CetaArray{tType}          
         if CAQ == 1
             for trace = 1:size(CetaArray1{mouse}{tType},1)
@@ -1258,10 +1559,15 @@ for tType = 1:tTypeNum
         plot(AVcData{tType}-100,'b','LineWidth',3)
         patch([x fliplr(x)],[CI_cLow{tType}-100 fliplr(CI_cHigh{tType}-100)],[0 0 0.5],'EdgeColor','none')
         if tType == 1 
-            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+%             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+%             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}:Frames)-1); 
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{idx}))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
         elseif tType == 3 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
@@ -1282,7 +1588,7 @@ for tType = 1:tTypeNum
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 30;
-        ax.FontName = 'Times';
+        ax.FontName = 'Arial';
         xlim([1 length(AVbData{tType})])
         ylim([-5 5])
         xlabel('time (s)')
@@ -1290,7 +1596,7 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,'  Calcium Signal');
-        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Times');
+        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)        
     end 
@@ -1304,10 +1610,15 @@ for tType = 1:tTypeNum
         plot(AVbData{tType}-100,'r','LineWidth',3)
         patch([x fliplr(x)],[CI_bLow{tType}-100 fliplr(CI_bHigh{tType}-100)],[0.5 0 0],'EdgeColor','none')
         if tType == 1 
-            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*2:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*2:Frames)-1); 
+%             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+%             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}:Frames)-1); 
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{idx}))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
         elseif tType == 3 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)    
@@ -1328,7 +1639,7 @@ for tType = 1:tTypeNum
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 30;
-        ax.FontName = 'Times';
+        ax.FontName = 'Arial';
         xlim([1 length(AVbData{tType})])
         ylim([-2.5 2.5])
         xlabel('time (s)')
@@ -1336,7 +1647,7 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,'BBB Permeabilty'); 
-        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Times');
+        title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)      
     end 
@@ -1350,10 +1661,15 @@ for tType = 1:tTypeNum
         plot(AVvData{tType}-100,'k','LineWidth',3)
         patch([x fliplr(x)],[CI_vLow{tType}-100 fliplr(CI_vHigh{tType}-100)],'k','EdgeColor','none')            
         if tType == 1 
-            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*5:Frames_post_stim_start)/FPSstack{idx})+1);
-            FrameVals = floor((1:FPSstack{idx}*5:Frames)-1); 
+%             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+%             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}:Frames_post_stim_start)/FPSstack{idx})+1);
+            FrameVals = floor((1:FPSstack{idx}:Frames)-1); 
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{idx}))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;            
         elseif tType == 3 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)    
@@ -1374,7 +1690,7 @@ for tType = 1:tTypeNum
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;
         ax.FontSize = 30;
-        ax.FontName = 'Times';
+        ax.FontName = 'Arial';
         xlim([1 length(AVbData{tType})])
         ylim([-0.1 0.25])
         xlabel('time (s)')
@@ -1382,7 +1698,7 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,'Vessel width ROIs averaged ');
-        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Arial');
         set(fig,'position', [100 100 900 900])
         alpha(0.5)     
     end 
@@ -1404,16 +1720,23 @@ for tType = 1:tTypeNum
     end 
     if pBBBQ == 1
         plot(AVbData{tType}-100,'r','LineWidth',3)
+        patch([x fliplr(x)],[CI_bLow{tType}-100 fliplr(CI_bHigh{tType}-100)],[0.5 0 0],'EdgeColor','none')
     end 
     if pVWQ == 1 
         plot(AVvData{tType}-100,'k','LineWidth',3)
+        patch([x fliplr(x)],[CI_vLow{tType}-100 fliplr(CI_vHigh{tType}-100)],'k','EdgeColor','none')     
     end 
     
     if tType == 1 
-        plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
+%         plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
+%         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{idx}*1:Frames_post_stim_start)/FPSstack{idx})+1);
         FrameVals = floor((1:FPSstack{idx}*1:Frames)-1); 
+        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{idx}))*2),'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;    
     elseif tType == 3 
         plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
@@ -1681,18 +2004,18 @@ for tType = 1:length(nsCeta{terminals(1)})
 end 
 %}
 %% calcium peak raster plots and PSTHs (one mouse)
-%{
+% uses ETA .mat file that contains all trials 
+% separates trials based on trial num and ITI length 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% UPDATE THIS SO IT SEPARATES TRIALS BASED ON TRIAL NUM AND ITI LENGTH
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
 winFrames = (winSec*FPSstack);
-numPeaks = cell(1,length(terminals));
-avTermNumPeaks = cell(1,length(terminals));
-
-% the below length sizes are semi hard coded in temporarily 
-Len1_3 = length(sCeta{terminals(1)}{1});
-Len2_4 = length(sCeta{terminals(1)}{2});
 
 % find peaks that are significant relative to the entire data set
 stdTrace = cell(1,length(vidList)); 
@@ -1770,25 +2093,19 @@ end
 % sort sigLocs 
 sigPeaks = cell(1,length(bDataFullTrace));
 sigLocs = cell(1,length(bDataFullTrace));
-tTypePlotStart2 = cell(1,numTtypes);
-for ccell = 1:ccellLen
-    for tType = 1:numTtypes
-        count2 = 1; 
-        for vid = 1:length(bDataFullTrace) 
+for vid = 1:length(bDataFullTrace) 
+    for ccell = 1:ccellLen
+        for tType = 1:numTtypes        
             if size(tTypePlotStart{vid},2) >= tType && isempty(tTypePlotStart{vid}{tType}) == 0
                 for trial = 1:size(tTypePlotStart{vid}{tType},2) 
-                    count1 = 1;
+                    count = 1;
                     for peak = 1:length(sigPeaks2{vid}{terminals(ccell)})
                         if sigLocs2{vid}{terminals(ccell)}(peak) > tTypePlotStart{vid}{tType}(trial) && sigLocs2{vid}{terminals(ccell)}(peak) < tTypePlotEnd{vid}{tType}(trial)
-                            sigPeaks{ccell}{tType}{count2}(count1) = sigPeaks2{vid}{terminals(ccell)}(peak); 
-                            sigLocs{ccell}{tType}{count2}(count1) = sigLocs2{vid}{terminals(ccell)}(peak);  
-                            count1 = count1 + 1;
+                            sigPeaks{vid}{ccell}{tType}{trial}(count) = sigPeaks2{vid}{terminals(ccell)}(peak); 
+                            sigLocs{vid}{ccell}{tType}{trial}(count) = sigLocs2{vid}{terminals(ccell)}(peak); 
+                            count = count + 1;
                         end 
                     end
-                    tTypePlotStart2{tType}(count2) = tTypePlotStart{vid}{tType}(trial);
-                    if ~isnan(tTypePlotStart{vid}{tType}(trial))  
-                        count2 = count2 + 1;
-                    end 
                 end  
             end 
         end 
@@ -1796,129 +2113,295 @@ for ccell = 1:ccellLen
 end 
 
 % correct peak location based on plot start and end frames 
-correctedSigLocs = cell(1,ccellLen);
-for ccell = 1:ccellLen
-    for tType = 1:length(sigLocs{1})
-        for trial = 1:length(sigLocs{ccell}{tType})
-           correctedSigLocs{ccell}{tType}{trial} = sigLocs{ccell}{tType}{trial} - tTypePlotStart2{tType}(trial);
+correctedSigLocs = cell(1,length(bDataFullTrace) );
+for vid = 1:length(bDataFullTrace) 
+    for ccell = 1:ccellLen
+        for tType = 1:numTtypes      
+            for trial = 1:length(sigLocs{vid}{ccell}{tType})
+               correctedSigLocs{vid}{ccell}{tType}{trial} = sigLocs{vid}{ccell}{tType}{trial} - tTypePlotStart{vid}{tType}(trial);
+            end 
+        end 
+    end 
+end
+
+clear trialList
+trialList = cell(1,length(sigPeaks));
+trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
+if trialQ == 0
+    for vid = 1:length(bDataFullTrace) 
+        trialList{vid} = 1:length(tTypePlotStart{vid}{numTtypes});       
+    end 
+elseif trialQ == 1 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %PICK UP BELOW - MAKE TRIALLIST AS SIMPLE AS POSSIBLE SEE ABOVE 
+    %REPLACE TRIALS BELOW WITH TRIAL LIST AND GET RID OF THIS STUPID HALF
+    %TRIAL THRESH BS 
+
+    trials = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace) 
+        trials{vid} = input(sprintf('What trials do you want to average and plot for vid %d? ',vid));
+        
+        trialHalfQ = input('Input 1 to plot trials at start of exp. Input 0 for trials at end of exp. ');
+        trialThresh = input('Input the trial threshold. ');
+        if trialHalfQ == 1
+            for term = 1:length(sigPeaks) 
+                for tType = 1:length(sigLocs{1})
+                    trialList{term}{tType} = 1:trialThresh;
+                end
+            end 
+        elseif trialHalfQ == 0 
+            for term = 1:length(sigPeaks) 
+                for tType = 1:length(sigLocs{1})
+                    if size(sigPeaks{term}{tType},2) >= trialThresh
+                        trialList{term}{tType} = trialThresh+1:size(sigPeaks{term}{tType},2);
+                    end 
+                end
+            end         
         end 
     end 
 end 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% THEN EDIT THE BELOW CODE TO SORT TRIALS BY ITI LENGTH 
+% figure out ITI length and sort ITI length into trial type 
+ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+if ITIq == 1 
+    trialLenFrames = cell(1,length(bDataFullTrace));
+    trialLenTimes = cell(1,length(bDataFullTrace));
+    minMaxTrialLenTimes = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace)  
+        if trialList{vid}(1) > 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-state_start_f{vid}(trialList{vid}(1)-1);    
+        elseif trialList{vid}(1) == 1 
+            trialLenFrames{vid}(1) = state_start_f{vid}(trialList{vid}(1))-1;    
+        end 
+        trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{vid}(trialList{vid}(2:end))-state_end_f{vid}(trialList{vid}(1:end-1));
+        trialLenTimes{vid} = trialLenFrames{vid}/FPSstack;
+        minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
+        minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
+        figure; histogram(trialLenTimes{vid})
+        display(minMaxTrialLenTimes{vid})
+    end 
+    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+    trialListHigh = cell(1,length(bDataFullTrace));
+    trialListLow = cell(1,length(bDataFullTrace));
+    for vid = 1:length(bDataFullTrace) 
+        trialListHigh{vid} = trialList{vid}((trialLenTimes{vid} >= trialLenThreshTime));
+        trialListLow{vid} = trialList{vid}((trialLenTimes{vid} < trialLenThreshTime));
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+termQ = input('Input 1 to select what axons are plotted. Input 0 otherwise. ');
+if termQ == 0
+    termList = terminals;
+elseif termQ == 1
+    termList = input('Input the axons you want to plot. ');
+end 
+
+% the below length sizes are semi hard coded in temporarily 
+Len1_3 = length(sCeta{terminals(1)}{1});
+if length(sCeta{terminals(1)}) > 1 
+    Len2_4 = length(sCeta{terminals(1)}{2});
+end 
+
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%LAST: FIX THE BULLSHIT BELOW SO IT ISN'T STUPID/REDUNDANT AND USES THE
+%CORRECT TRIALLIST ARRAY. WILL NEED TO ITERATE THROUGH VIDS IN TRIALLIST
+%AND THEN ADD IN COUNTER TO PUT VID DATA TOGETHER 
+
 % create raster and PSTH for all terminals individually 
+numPeaks = cell(1,length(terminals));
+avTermNumPeaks = cell(1,length(terminals));
 allTermAvPeakNums = cell(1,numTtypes);
 raster2 = cell(1,length(sigPeaks));
 raster3 = cell(1,length(sigPeaks));
 raster = cell(1,length(sigPeaks));
-for term = 1:length(sigPeaks)
+colNums = cell(1,length(sigLocs{1}));
+maxColNum = zeros(1,length(sigLocs{1}));
+meanNumPeaks = cell(1,length(sigPeaks));
+for term = 1:length(termList)
     if indCaROIplotQ == 1
         figure; 
-        t = tiledlayout(2,4);
+        t = tiledlayout(1,2);
         t.TileSpacing = 'compact';
         t.Padding = 'compact';
     end 
-    for tType = 1:length(sigLocs{1})
-        for trial = 1:size(sigPeaks{term}{tType},2)
-            % create raster plot by binarizing data   
-            for peak = 1:length(sigPeaks{term}{tType}{trial})
-                raster2{term}{tType}(trial,correctedSigLocs{term}{tType}{trial}(peak)) = 1;       
-            end 
-        end 
-        raster2{term}{tType} = ~raster2{term}{tType};
-        %make raster plot larger/easier to look at 
-        RowMultFactor = 30;
-        ColMultFactor = 1;
-        raster3{term}{tType} = repelem(raster2{term}{tType},RowMultFactor,ColMultFactor);
-        raster{term}{tType} = repelem(raster2{term}{tType},RowMultFactor,ColMultFactor);
-        %make rasters the correct length  
-        if tType == 1 || tType == 3
-            raster{term}{tType}(:,length(raster3{term}{tType})+1:Len1_3) = 1;
-        elseif tType == 2 || tType == 4   
-            raster{term}{tType}(:,length(raster3{term}{tType})+1:Len2_4) = 1;
-        end   
-        %create PSTHs 
-        windows = ceil(length(raster2{term}{tType})/winFrames);
-        for win = 1:windows
-            if win == 1 
-                numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(:,1:winFrames),2);
-            elseif win > 1 
-                if ((win-1)*winFrames)+1 < length(raster2{term}{tType}) && winFrames*win < length(raster2{term}{tType})
-                    numPeaks{term}{tType}(:,win) = sum(~raster2{term}{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+    if isempty(trialList{(terminals == termList(term))}) == 0 
+        for tType = 1:length(sigLocs{1})
+            for trial = 1:length(trialList{(terminals == termList(term))}{tType})
+                if length(sigPeaks{(terminals == termList(term))}{tType}) >= trial 
+                    % create raster plot by binarizing data   
+                    for peak = 1:length(sigPeaks{(terminals == termList(term))}{tType}{trialList{(terminals == termList(term))}{tType}(trial)})
+                        raster2{(terminals == termList(term))}{tType}(trialList{(terminals == termList(term))}{tType}(trial),correctedSigLocs{(terminals == termList(term))}{tType}{trialList{(terminals == termList(term))}{tType}(trial)}(peak)) = 1;       
+                    end 
                 end 
             end 
-            avTermNumPeaks{term}{tType} = nanmean(numPeaks{term}{tType},1);
-        end
-        colNum = floor(length(sCeta{terminals(term)}{tType})/winFrames); 
-        if length(avTermNumPeaks{term}{tType}) < colNum
-            avTermNumPeaks{term}{tType}(length(avTermNumPeaks{term}{tType})+1:colNum) = 0;
-        end 
-        allTermAvPeakNums{tType}(term,:) = avTermNumPeaks{term}{tType};
-        if indCaROIplotQ == 1 
-            %plot raster  
-            nexttile
-            imshow(raster{term}{tType})
-            hold all 
-            stimStartF = floor(FPSstack*20);
+            raster2{(terminals == termList(term))}{tType} = ~raster2{(terminals == termList(term))}{tType};
+            %make raster plot larger/easier to look at 
+            RowMultFactor = 30;
+            ColMultFactor = 30;
+            raster3{(terminals == termList(term))}{tType} = repelem(raster2{(terminals == termList(term))}{tType},RowMultFactor,ColMultFactor);
+            raster{(terminals == termList(term))}{tType} = raster2{(terminals == termList(term))}{tType};
+            %make rasters the correct length  
             if tType == 1 || tType == 3
-                stimStopF = stimStartF + floor(FPSstack*2);           
-                Frames = size(raster{term}{tType},2);        
-                Frames_pre_stim_start = -((Frames-1)/2); 
-                Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+1);
-                FrameVals = floor((1:FPSstack*4:Frames)-1);            
-            elseif tType == 2 || tType == 4       
-                stimStopF = stimStartF + floor(FPSstack*20);            
-                Frames = size(raster{term}{tType},2);        
-                Frames_pre_stim_start = -((Frames-1)/2); 
-                Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack*4:Frames_post_stim_start)/FPSstack)+10);
-                FrameVals = floor((1:FPSstack*4:Frames)-1);
+                raster{(terminals == termList(term))}{tType}(:,length(raster3{(terminals == termList(term))}{tType})+1:Len1_3) = 1;
+            elseif tType == 2 || tType == 4   
+                raster{(terminals == termList(term))}{tType}(:,length(raster3{(terminals == termList(term))}{tType})+1:Len2_4) = 1;
+            end   
+            %this makes the raster larger/easier to see 
+            raster{(terminals == termList(term))}{tType} = repelem(raster{(terminals == termList(term))}{tType},RowMultFactor,ColMultFactor);
+
+            %create PSTHs 
+            if trialQ == 0 || trialQ == 1 && trialHalfQ == 1 
+                windows = ceil(length(raster2{(terminals == termList(term))}{tType})/winFrames);
+                for win = 1:windows
+                    if win == 1 
+                        numPeaks{(terminals == termList(term))}{tType}(:,win) = sum(~raster2{(terminals == termList(term))}{tType}(:,1:winFrames),2);
+                    elseif win > 1 
+                        if ((win-1)*winFrames)+1 < size(raster2{(terminals == termList(term))}{tType},2) && winFrames*win < size(raster2{(terminals == termList(term))}{tType},2)
+                            numPeaks{(terminals == termList(term))}{tType}(:,win) = sum(~raster2{(terminals == termList(term))}{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+                        end 
+                    end             
+                end
+            elseif trialQ == 1 && trialHalfQ == 0 
+                %create PSTHs 
+                windows = ceil(length(raster2{(terminals == termList(term))}{tType})/winFrames);
+                for win = 1:windows                    
+                        if win == 1 
+                            numPeaks{(terminals == termList(term))}{tType}(:,win) = sum(~raster2{(terminals == termList(term))}{tType}(min(trialList{(terminals == termList(term))}{tType}):max(trialList{(terminals == termList(term))}{tType}),1:winFrames),2);
+
+                        elseif win > 1 
+                            if ((win-1)*winFrames)+1 < size(raster2{(terminals == termList(term))}{tType},2) && winFrames*win < size(raster2{(terminals == termList(term))}{tType},2)
+                                numPeaks{(terminals == termList(term))}{tType}(:,win) = sum(~raster2{(terminals == termList(term))}{tType}(min(trialList{(terminals == termList(term))}{tType}):max(trialList{(terminals == termList(term))}{tType}),((win-1)*winFrames)+1:winFrames*win),2);
+                            end 
+                        end             
+                end
             end 
-            if tType == 1 || tType == 2
-            plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
-            plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
-            elseif tType == 3 || tType == 4
-            plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
-            plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+            
+            %figure out the max number of columns 
+            colNums{tType}((terminals == termList(term))) = size(numPeaks{(terminals == termList(term))}{tType},2);
+            maxColNum(tType) = max(colNums{tType});
+            avTermNumPeaks{(terminals == termList(term))}{tType} = nanmean(numPeaks{(terminals == termList(term))}{tType},1);
+            %make avTermNumPeaks the same size
+            if length(avTermNumPeaks{(terminals == termList(term))}{tType}) < maxColNum(tType)
+                avTermNumPeaks{(terminals == termList(term))}{tType}(:,size(avTermNumPeaks{(terminals == termList(term))}{tType},2):maxColNum(tType)) = 0;
             end 
-            ax=gca;
-            axis on 
-            xticks(FrameVals)
-            ax.XTickLabel = sec_TimeVals;
-            yticks(5:10:size(raster{term}{tType},1)-5)
-            if tType == 1 
-                ylabel('trials')
+            % determine the mean peak rate 
+            meanNumPeaks{(terminals == termList(term))}(tType) = nanmean(avTermNumPeaks{(terminals == termList(term))}{tType}); 
+            % divide by the mean peak rate to show the variation in spike
+            % rates from the mean 
+            avTermNumPeaks{(terminals == termList(term))}{tType} = avTermNumPeaks{(terminals == termList(term))}{tType}/meanNumPeaks{(terminals == termList(term))}(tType);
+            allTermAvPeakNums{tType}((terminals == termList(term)),:) = avTermNumPeaks{(terminals == termList(term))}{tType};
+            if indCaROIplotQ == 1 
+                %plot raster  
+                nexttile
+                imshow(raster{(terminals == termList(term))}{tType})
+                hold all 
+    %             stimStartF = floor(FPSstack*20);
+                if tType == 1 || tType == 3 
+                    Frames = size(sCeta{BBBroi}{tType},2);        
+                    Frames_pre_stim_start = -((Frames-1)/2); 
+                    Frames_post_stim_start = (Frames-1)/2; 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+                    FrameVals = floor((1:FPSstack:Frames)-1); 
+                    FrameVals = FrameVals*ColMultFactor;
+                elseif tType == 2 || tType == 4 
+                    Frames = size(sCeta{BBBroi}{tType},2);
+                    Frames_pre_stim_start = -((Frames-1)/2); 
+                    Frames_post_stim_start = (Frames-1)/2; 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                    FrameVals = floor((1:FPSstack:Frames)-1); 
+                    FrameVals = FrameVals*ColMultFactor;
+                end 
+                if tType == 1 || tType == 2
+    %             plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+    %             plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+                elseif tType == 3 || tType == 4
+    %             plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+    %             plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+                end 
+    %             label1 = xline(ceil(abs(Frames_pre_stim_start)-10)*ColMultFactor,'-k',{'vibrissal stim'},'LineWidth',2);
+    %             label1.FontSize = 30;
+    %             label1.FontName = 'Arial';
+    %             label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2)*ColMultFactor,'-k',{'water reward'},'LineWidth',2);
+    %             label2.FontSize = 30;
+    %             label2.FontName = 'Arial';
+                xline(ceil(abs(Frames_pre_stim_start)-10)*ColMultFactor,'-k','LineWidth',2);
+                xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2)*ColMultFactor,'-k','LineWidth',2);
+                ax=gca;
+                axis on 
+                xticks(FrameVals)
+                ax.XTickLabel = sec_TimeVals;
+                yticks((RowMultFactor:RowMultFactor:((size(raster{(terminals == termList(term))}{tType},1)-5)/RowMultFactor))*RowMultFactor)
+                if tType == 1 
+                    ylabel('trials')
+                end 
+                ax.YTickLabel = ([RowMultFactor:RowMultFactor:((size(raster{(terminals == termList(term))}{tType},1)-5)/RowMultFactor)]);
+                ax.FontSize = 15;
             end 
-            ax.YTickLabel = ([]);
-            ax.FontSize = 15;
-        end 
-    end
-    
+        end
+    end 
+  %
     if indCaROIplotQ == 1 
-        for tType = 1:length(raster2{term})   
+        for tType = 1:length(raster2{(terminals == termList(term))})   
             %plot PSTHs
             nexttile
             hold all 
-            stimStartF = floor((FPSstack*20)/winFrames);
-            if tType == 1 || tType == 3
-                stimStopF = (stimStartF + (FPSstack*2)/winFrames);           
-                Frames = size(avTermNumPeaks{term}{tType},2);        
-                sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
-                FrameVals = (0:4:Frames);            
-            elseif tType == 2 || tType == 4       
-                stimStopF = (stimStartF + (FPSstack*20)/winFrames);            
-                Frames = size(avTermNumPeaks{term}{tType},2);        
-                sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
-                FrameVals = (0:4:Frames);
+%             stimStartF = floor((FPSstack*20)/winFrames);
+            if tType == 1 || tType == 3 
+                Frames = size(sCeta{BBBroi}{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+                FrameVals = floor((1:FPSstack:Frames)-1); 
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+                FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
+            elseif tType == 2 || tType == 4 
+                Frames = size(sCeta{BBBroi}{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
+                FrameVals = FrameVals/length(allTermAvPeakNums{tType});
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+                FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
             end 
-            bar(allTermAvPeakNums{tType}(term,:),'k')
+            bar(allTermAvPeakNums{tType}((terminals == termList(term)),:),'k')
             if tType == 1 || tType == 2
-            plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-            plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+%                 plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+%                 plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
             elseif tType == 3 || tType == 4
-            plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-            plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+%                 plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+%                 plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
             end 
+            ind0 = find(sec_TimeVals == 0);
+            ind2 = find(sec_TimeVals == 2);
+            label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label2.FontName = 'Arial';
             ax=gca;
             axis on 
             xticks(FrameVals)
@@ -1927,9 +2410,9 @@ for term = 1:length(sigPeaks)
             if tType == 1 
                 ylabel('number of Ca peaks')
             end 
-            xlim([1 length(avTermNumPeaks{term}{tType})])
-            ylim([0 2.5])
-            mtitle = sprintf('Terminal %d Ca Peaks',terminals(term));
+            xlim([1 length(avTermNumPeaks{(terminals == termList(term))}{tType})])
+            ylim([0 0.3])
+            mtitle = sprintf('Terminal %d Ca Peaks',terminals((terminals == termList(term))));
             sgtitle(mtitle,'Fontsize',25);
             hold on
         end   
@@ -1937,31 +2420,47 @@ for term = 1:length(sigPeaks)
     end 
 end 
 
-% create raster and PSTH for all terminals stacked 
-for term = 1:length(terminals)
-    for tType = 1:length(raster2{term})  
-        curRowSize = size(raster{term}{tType},1);
-        if curRowSize < size(sCeta{terminals(term)}{tType},1)*RowMultFactor 
-            raster{term}{tType}(curRowSize+1:size(sCeta{terminals(term)}{tType},1)*RowMultFactor,:) = 1;
-        end    
-    end 
-end 
-fullRaster = cell(1,numTtypes);
-for term = 1:length(terminals)
-    for tType = 1:length(raster2{term})
-        rowLen = size(raster{term}{tType},1);
-        if term == 1
-            fullRaster{tType} = raster{term}{tType};
-        elseif term > 1
-            fullRaster{tType}(((term-1)*rowLen)+1:term*rowLen,:) = raster{term}{tType};
+%figure out the max number of columns
+colNumsRaster = cell(1,length(raster2{term}));
+maxColNumRaster = zeros(1,1);
+for term = 1:length(termList)
+    for tType = 1:length(sigLocs{1})
+        colNumsRaster{tType}((terminals == termList(term))) = size(raster2{(terminals == termList(term))}{tType},2);
+        maxColNumRaster(tType) = max(colNumsRaster{tType});
+        %make raster2 cells the same size
+        if size(raster2{(terminals == termList(term))}{tType},2) < maxColNumRaster(tType)
+            raster2{(terminals == termList(term))}{tType}(:,size(raster2{(terminals == termList(term))}{tType},2)+1:maxColNumRaster(tType)) = 1;
         end 
     end 
 end 
+% create full raster            
+fullRaster = cell(1,numTtypes);
+for term = 1:length(termList)
+    for tType = 1:length(sigLocs{1})
+        rowLen = size(raster2{(terminals == termList(term))}{tType},1);
+        if term == 1
+            fullRaster{tType} = raster2{(terminals == termList(term))}{tType};
+        elseif term > 1
+            fullRaster{tType}(((term-1)*rowLen)+1:term*rowLen,:) = raster2{(terminals == termList(term))}{tType};
+        end 
+        % replace rows full of 0s with 1s 
+        zeroRows = all(fullRaster{tType} == 0,2);
+        fullRaster{tType}(zeroRows,:) = 1;
+    end 
+end 
+  
+% replace rows of zeros with NaNs 
+for tType = 1:length(sigLocs{1})
+    allTermAvPeakNums{tType}(any(allTermAvPeakNums{tType},2) == 0,:) = NaN;
+end 
+
+% plot
 if allCaROIplotQ == 1 
     totalPeakNums = cell(1,numTtypes);
-    for tType = 1:length(raster2{term})
-        figure 
-        %plot raster plot of all terminals stacked 
+    for tType = 1:length(sigLocs{1})
+%         figure 
+%{
+%         plot raster plot of all terminals stacked 
         imshow(fullRaster{tType})
         hold all 
         stimStartF = floor(FPSstack*20);
@@ -1995,33 +2494,49 @@ if allCaROIplotQ == 1
         ax.YTickLabel = ([]);
         ax.FontSize = 15;
         xlabel('time (s)')
-        ylabel('trial')        
+        ylabel('trial')     
+        %}
         
         %plot PSTH for all terminals stacked 
-        totalPeakNums{tType} = nansum(allTermAvPeakNums{tType});
+        totalPeakNums{tType} = nanmean(allTermAvPeakNums{tType});
         figure
         bar(totalPeakNums{tType},'k')
         stimStartF = floor((FPSstack*20)/winFrames);
         hold all 
-        if tType == 1 || tType == 3
-            stimStopF = (stimStartF + (FPSstack*2)/winFrames);           
-            Frames = size(avTermNumPeaks{term}{tType},2);        
-            sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
-            FrameVals = (0:4:Frames);            
-        elseif tType == 2 || tType == 4       
-            stimStopF = (stimStartF + (FPSstack*20)/winFrames);            
-            Frames = size(avTermNumPeaks{term}{tType},2);        
-            sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
-            FrameVals = (0:4:Frames);
+        if tType == 1 || tType == 3 
+            Frames = size(sCeta{BBBroi}{tType},2);        
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+            FrameVals = floor((1:FPSstack:Frames)-1); 
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+            FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
+        elseif tType == 2 || tType == 4 
+            Frames = size(sCeta{BBBroi}{tType},2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+            FrameVals = floor((1:FPSstack:Frames)-1); 
+            FrameVals = FrameVals/length(allTermAvPeakNums{tType});
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+            FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
         end 
         if tType == 1 || tType == 2
-            plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-            plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+%             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
         elseif tType == 3 || tType == 4
-            plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
-            plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+%             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
         end 
-        ylim([0 11])
+        ind0 = find(sec_TimeVals == 0);
+        ind2 = find(sec_TimeVals == 2);
+        label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';        
+        ylim([0 0.5])
         ax=gca;
         axis on 
         xticks(FrameVals)
@@ -2035,107 +2550,193 @@ if allCaROIplotQ == 1
 end 
 %}
 %% calcium peak raster plots and PSTHs (multiple mice) 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% UPDATE THIS SO IT TAKES ETA DATA FROM MULTIPLE MICE 
 %{
 % get the data you need 
 mouseNum = input('How many mice are there? ');
-FPSstack = cell(1,mouseNum);
+FPSstack = zeros(1,mouseNum);
 fullRaster2 = cell(1,mouseNum);
 for mouse = 1:mouseNum
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE RASTER DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
     MatFileName = uigetfile('*.*',sprintf('SELECT THE RASTER DATA FOR MOUSE #%d',mouse));
     Mat = matfile(MatFileName);
-    FPSstack{mouse} = Mat.FPSstack;
+    FPSstack(mouse) = Mat.FPSstack;
     fullRaster2{mouse} = Mat.fullRaster;
+    totalPeakNums{mouse} = Mat.totalPeakNums;
 end 
 
+avQ = input('Input 1 to make average PSTH from the full raster plots. Input 0 to make average PSTH using within mouse PSTHs. ');
 
-% figure out the size you should resample your data to 
-FPSstack2 = zeros(1,mouseNum);
-for mouse = 1:mouseNum
-    FPSstack2(mouse) = FPSstack{mouse};
-end 
-minFPSstack = FPSstack2 == min(FPSstack2);
-idx = find(minFPSstack ~= 0, 1, 'first');
-minLen = zeros(1,size(fullRaster2{1},2));
-for tType = 1:size(fullRaster2{1},2)
-    minLen(tType) = size(fullRaster2{idx}{tType},2);
-end 
-minFPS = FPSstack2(minFPSstack); 
-
-% resample, sort, and binarize data 
-fullRaster = cell(1,size(fullRaster2{1},2));
-for tType = 1:size(fullRaster2{1},2)
-    count = 1;
+if avQ == 1 
+    % figure out the size you should resample your data to 
+    FPSstack2 = zeros(1,mouseNum);
     for mouse = 1:mouseNum
-        for trace = 1:size(fullRaster2{mouse}{tType},1)
-            % (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi},2)))
-            fullRaster{tType}(count,:) = round(resample(double(fullRaster2{mouse}{tType}(trace,:)),minLen(tType),size(fullRaster2{mouse}{tType},2)));
-            count = count + 1;
+        FPSstack2(mouse) = FPSstack{mouse};
+    end 
+    minFPSstack = FPSstack2 == min(FPSstack2);
+    idx = find(minFPSstack ~= 0, 1, 'first');
+    minLen = zeros(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        minLen(tType) = size(fullRaster2{idx}{tType},2);
+    end 
+    minFPS = FPSstack2(minFPSstack); 
+
+    % resample, sort, and binarize data 
+    fullRaster = cell(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        count = 1;
+        for mouse = 1:mouseNum
+            for trace = 1:size(fullRaster2{mouse}{tType},1)
+                % (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi},2)))
+                fullRaster{tType}(count,:) = round(resample(double(fullRaster2{mouse}{tType}(trace,:)),minLen(tType),size(fullRaster2{mouse}{tType},2)));
+                count = count + 1;
+            end 
         end 
     end 
 end 
 
 %% create PSTHs 
-winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
-winFrames = (winSec*minFPS);
-windows = ceil(size(fullRaster{tType},2)/winFrames);
-numPeaks = cell(1,size(fullRaster2{1},2)); 
-avTermNumPeaks = cell(1,size(fullRaster2{1},2)); 
-for tType = 1:size(fullRaster2{1},2)
-    for win = 1:windows
-        if win == 1 
-            numPeaks{tType}(:,win) = sum(~fullRaster{tType}(:,1:winFrames),2);
-        elseif win > 1 
-            if ((win-1)*winFrames)+1 < size(fullRaster{tType},2) && winFrames*win < size(fullRaster{tType},2)
-                numPeaks{tType}(:,win) = nansum(~fullRaster{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
-            end 
-        end 
-        avTermNumPeaks{tType} = nanmean(numPeaks{tType},1);
-    end
-    colNum = ceil(size(fullRaster{tType},2)/winFrames); 
-    if size(avTermNumPeaks{tType},2) < colNum
-        avTermNumPeaks{tType}(size(avTermNumPeaks{tType},2)+1:colNum) = 0;
-    end 
+if numel(unique(FPSstack)) == 1
+    minFPS = FPSstack(1);
+elseif numel(unique(FPSstack)) > 1
+    minFPS = min(FPSstack);
 end 
 
+if avQ == 1 
+    winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+    winFrames = (winSec*minFPS);
+    windows = ceil(size(fullRaster{tType},2)/winFrames);
+    numPeaks = cell(1,size(fullRaster2{1},2)); 
+    avTermNumPeaks = cell(1,size(fullRaster2{1},2)); 
+    meanNumPeaks = zeros(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        for win = 1:windows
+            if win == 1 
+                numPeaks{tType}(:,win) = sum(~fullRaster{tType}(:,1:winFrames),2);
+            elseif win > 1 
+                if ((win-1)*winFrames)+1 < size(fullRaster{tType},2) && winFrames*win < size(fullRaster{tType},2)
+                    numPeaks{tType}(:,win) = nansum(~fullRaster{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+                end 
+            end 
+            avTermNumPeaks{tType} = nanmean(numPeaks{tType},1);
+        end
+        colNum = ceil(size(fullRaster{tType},2)/winFrames); 
+        if size(avTermNumPeaks{tType},2) < colNum
+            avTermNumPeaks{tType}(size(avTermNumPeaks{tType},2)+1:colNum) = 0;
+        end 
+        % determine the mean peak rate 
+        meanNumPeaks(tType) = nanmean(avTermNumPeaks{tType}); 
+        % divide by the mean peak rate to show the variation in spike
+        % rates from the mean 
+        avTermNumPeaks{tType} = avTermNumPeaks{tType}/meanNumPeaks(tType);
+    end 
 
-minFPS = FPSstack2(minFPSstack);
-for tType = 1:size(fullRaster2{1},2)
-    %plot PSTH for all mice stacked 
-    figure
-    bar(avTermNumPeaks{tType},'k')
-    stimStartF = floor((minFPS*20)/winFrames);
-    hold all 
-    if tType == 1 || tType == 3
-        stimStopF = (stimStartF + (minFPS*2)/winFrames);           
-        Frames = size(avTermNumPeaks{tType},2);        
-        sec_TimeVals = (0:winSec*4:winSec*Frames)-20;
-        FrameVals = (0:4:Frames);            
-    elseif tType == 2 || tType == 4       
-        stimStopF = (stimStartF + (minFPS*20)/winFrames);            
-        Frames = size(avTermNumPeaks{tType},2);        
-        sec_TimeVals = (1:winSec*4:winSec*(Frames+1))-21;
-        FrameVals = (0:4:Frames);
+    secBeforeAndAfterStim = input('How many seconds are there before/after the stimulus? ');
+    stimTime = input('How many seconds is the stim on for? ');
+    for tType = 1:size(fullRaster2{1},2)
+        %plot PSTH for all mice stacked 
+        figure
+        bar(avTermNumPeaks{tType},'k')
+        stimStartF = floor((minFPS*secBeforeAndAfterStim)/winFrames);
+        hold all 
+        if tType == 1 || tType == 3
+            stimStopF = (stimStartF + (minFPS*2)/winFrames);           
+            Frames = size(avTermNumPeaks{tType},2);        
+    %         sec_TimeVals = (0:winSec*2:winSec*Frames);
+            sec_TimeVals = [-secBeforeAndAfterStim:secBeforeAndAfterStim+stimTime];
+            FrameVals = (0:2:Frames);            
+        elseif tType == 2 || tType == 4       
+            stimStopF = (stimStartF + (minFPS*20)/winFrames);            
+            Frames = size(avTermNumPeaks{tType},2);        
+            sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+            FrameVals = (0:4:Frames);
+        end 
+        if tType == 1 || tType == 2
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+        end 
+        label1 = xline(stimStartF,'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(stimStopF,'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';   
+        ylim([0 1])
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('number of Ca peaks')
+        label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
+        sgtitle(label,'FontSize',25);
+    end
+elseif avQ == 0 
+    % reorganize data for averaging 
+    data = cell(1,size(fullRaster2{1},2));
+    for mouse = 1:mouseNum
+        for tType = 1:size(fullRaster2{1},2)
+            data{tType}(mouse,:) = totalPeakNums{mouse}{tType};
+        end 
     end 
-    if tType == 1 || tType == 2
-        plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-        plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-    elseif tType == 3 || tType == 4
-        plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
-        plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+    % average data and plot 
+    winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+    winFrames = (winSec*minFPS);
+    secBeforeAndAfterStim = input('How many seconds are there before/after the stimulus? ');
+    stimTime = input('How many seconds is the stim on for? ');
+    
+    avData = cell(1,size(fullRaster2{1},2));
+    for tType = 1:size(fullRaster2{1},2)
+        avData{tType} = nanmean(data{tType});
+        %plot PSTH for all mice stacked 
+        figure
+        bar(avData{tType},'k')
+        stimStartF = floor((minFPS*secBeforeAndAfterStim)/winFrames);
+        hold all 
+        if tType == 1 || tType == 3
+            stimStopF = (stimStartF + (minFPS*2)/winFrames);           
+            Frames = size(data{tType},2);        
+    %         sec_TimeVals = (0:winSec*2:winSec*Frames);
+            sec_TimeVals = [-secBeforeAndAfterStim:secBeforeAndAfterStim+stimTime];
+            FrameVals = (0:2:Frames);            
+        elseif tType == 2 || tType == 4       
+%             stimStopF = (stimStartF + (minFPS*20)/winFrames);            
+%             Frames = size(data{tType},2);        
+%             sec_TimeVals = (1:winSec*2:winSec*(Frames+1))-21;
+%             FrameVals = (0:4:Frames);
+        end 
+        if tType == 1 || tType == 2
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+    %         plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+    %         plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+        end 
+        label1 = xline(stimStartF,'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(stimStopF,'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';   
+        ylim([0 1])
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('number of Ca peaks')
+        label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
+        sgtitle(label,'FontSize',25);
     end 
-    ylim([0 1])
-    ax=gca;
-    axis on 
-    xticks(FrameVals)
-    ax.XTickLabel = sec_TimeVals;
-    ax.FontSize = 15;
-    xlabel('time (s)')
-    ylabel('number of Ca peaks')
-    label = sprintf('Number of calcium peaks per %0.2f sec',winSec);
-    sgtitle(label,'FontSize',25);
-end
+end 
 
 %% overlay the red PSTHs 
 
@@ -5838,6 +6439,13 @@ end
 %% determine how far away each terminal is from the vessel of interest (the minimum distance) 
 %{
 if distQ == 1 
+    % get the Ca ROI coordinates 
+    CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
+    cd(CaROImaskDir);
+    CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
+    CaROImaskMat = matfile(CaROImaskFileName); 
+    CaROImasks = CaROImaskMat.ROIorders; 
+    CaROImask = CaROImasks;
     terminals = input('What Ca ROIs do you care about? '); 
     XpixDist = input('How many microns per pixel are there in the X direction? '); 
     YpixDist = input('How many microns per pixel are there in the Y direction? '); 

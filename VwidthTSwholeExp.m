@@ -13,11 +13,19 @@ regStacks = regMat.regStacks;
 
 % if this is the first video of the data set 
 if vidNumQ == 0
-    numZplanes = input('How many Z planes are there? ');
     framePeriod = input("What is the framePeriod? ");
-    FPS = 1/framePeriod; 
-    FPSstack = FPS/numZplanes;
+    FPS = 1/framePeriod;     
     volQ = input('Input 1 if this is volume imaging data. Input 0 for 2D data. ');
+    if volQ == 1 
+        numZplanes = input('How many Z planes are there? ');
+    elseif volQ == 0
+        downSampleQ = input('Input 1 if frame averaging (over time) was done. ');
+        numZplanes = 1;
+        if downSampleQ == 1
+            numZplanes = input('By what factor was the imaging data down sampled? ');
+        end 
+    end 
+    FPSstack = FPS/numZplanes;
 % if this is not the first video of the data set
 elseif vidNumQ == 1 
     % get the background subtraction ROI coordinates 
@@ -51,17 +59,33 @@ end
 %% do background subtraction 
 %select rows that do not have vessels or GCaMP in them 
 if vidNumQ == 0 
-%     [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
-    [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
+    BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
+    if BGsubQ == 0 
+        input_Stacks = data;
+    elseif BGsubQ == 1
+        BGsubTypeQ = input('Input 0 to do a simple background subtraction. Input 1 if you want to do row by row background subtraction. ');
+        if BGsubTypeQ == 0 
+            [input_Stacks,BG_ROIboundData] = backgroundSubtraction(data);
+        elseif BGsubTypeQ == 1
+            [input_Stacks,BG_ROIboundData] = backgroundSubtractionPerRow(data);
+        end 
+    end 
 elseif vidNumQ == 1   
-%     [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
-    [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
-end 
+    if BGsubQ == 0 
+        input_Stacks = data;
+    elseif BGsubQ == 1
+        if BGsubTypeQ == 0 
+            [input_Stacks] = backgroundSubtraction2(data,BG_ROIboundData);
+        elseif BGsubTypeQ == 1
+            [input_Stacks] = backgroundSubtractionPerRow2(data,BG_ROIboundData);
+        end 
+    end  
+end  
 
 %% average registered imaging data across planes in Z 
 clear inputStackArray
-inputStackArray = zeros(size(regStacks{2,4}{1},1),size(regStacks{2,4}{1},2),size(regStacks{2,4}{1},3),size(regStacks{2,4},2));
-for Z = 1:size(regStacks{2,4},2)
+inputStackArray = zeros(size(input_Stacks{1},1),size(input_Stacks{1},2),size(input_Stacks{1},3),size(input_Stacks,2));
+for Z = 1:size(input_Stacks,2)
     inputStackArray(:,:,:,Z) = input_Stacks{Z};
 end 
 inputStacks = mean(inputStackArray,4);
@@ -133,7 +157,7 @@ while segmentVessel == 1
         segOverlays = cell(1,length(rotStack));        
         for VROI = 1:numROIs 
             for frame = 1:500
-                [BW,~] = segmentImage(ROIstacks{VROI}(:,:,frame));
+                [BW,~] = segmentImageVW(ROIstacks{VROI}(:,:,frame));
                 BWstacks{VROI}(:,:,frame) = BW; 
                 %get the segmentation boundaries 
                 BW_perim{VROI}(:,:,frame) = bwperim(BW);
@@ -167,7 +191,7 @@ end
 disp('Vessel Segmentation')
 for VROI = 1:numROIs 
     for frame = 1:size(ROIstacks{VROI},3)
-        [BW,~] = segmentImage(ROIstacks{VROI}(:,:,frame));
+        [BW,~] = segmentImageVW(ROIstacks{VROI}(:,:,frame));
         BWstacks{VROI}(:,:,frame) = BW; 
     end 
 end 
