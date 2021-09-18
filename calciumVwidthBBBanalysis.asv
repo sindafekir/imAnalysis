@@ -2006,7 +2006,7 @@ end
 %% calcium peak raster plots and PSTHs (one mouse)
 % uses ETA .mat file that contains all trials 
 % separates trials based on trial num and ITI length 
-%{
+
 % set plotting paramaters 
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for all Ca ROIs stacked. ');
@@ -2187,8 +2187,8 @@ allTermAvPeakNums = cell(1,numTtypes);
 raster2 = cell(1,length(sigPeaks));
 raster3 = cell(1,length(sigPeaks));
 raster = cell(1,length(sigPeaks));
-colNums = cell(1,length(sigPeaks{1}{1}));
-maxColNum = zeros(1,length(sigPeaks{1}{1}));
+colNums = cell(1,length(sigLocs{1}));
+maxColNum = zeros(1,length(sigLocs{1}));
 meanNumPeaks = cell(1,length(sigPeaks));
 for vid = 1:length(bDataFullTrace)  
     for term = 1:length(termList)   
@@ -2241,7 +2241,7 @@ for vid = 1:length(bDataFullTrace)
         end 
     end 
 end 
-
+%%
 for tType = 1:length(sigPeaks{vid}{term})
     for term = 1:length(termList)           
         if isempty(raster2{(terminals == termList(term))}) == 0 
@@ -2251,9 +2251,10 @@ for tType = 1:length(sigPeaks{vid}{term})
     end 
 end 
 for tType = 1:length(sigPeaks{vid}{term})
-    maxColNum(tType) = max(max(colNums{tType}));
+    maxColNum(tType) = max(colNums{tType});
     for term = 1:length(termList)           
-        if isempty(raster2{(terminals == termList(term))}) == 0  
+        if isempty(raster2{(terminals == termList(term))}) == 0 
+            
             avTermNumPeaks{(terminals == termList(term))}{tType} = nanmean(numPeaks{(terminals == termList(term))}{tType},1);
             %make avTermNumPeaks the same size
             if length(avTermNumPeaks{(terminals == termList(term))}{tType}) < maxColNum(tType)
@@ -2273,117 +2274,113 @@ for tType = 1:length(sigPeaks{vid}{term})
             allTermAvPeakNums{tType}((terminals == termList(term)),:) = avTermNumPeaks{(terminals == termList(term))}{tType};
         end 
     end 
-    % replace rows full of zero with NaNs 
-    allTermAvPeakNums{tType}(any(allTermAvPeakNums{tType},2)==0,:)=NaN;
 end 
 
 if indCaROIplotQ == 1 
     for tType = 1:length(sigPeaks{vid}{term})
-        for term = 1:length(termList)       
-            if isempty(raster2{(terminals == termList(term))}) == 0 
-                figure; 
-                t = tiledlayout(1,2);
-                t.TileSpacing = 'compact';
-                t.Padding = 'compact';        
-                %plot raster  
-                nexttile
-                imshow(raster{(terminals == termList(term))}{tType})
-                hold all 
-    %             stimStartF = floor(FPSstack*20);
-                if tType == 1 || tType == 3 
-                    Frames = size(sCeta{BBBroi}{tType},2);        
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
-                    FrameVals = floor((1:FPSstack:Frames)-1); 
-                    FrameVals = FrameVals*ColMultFactor;
-                elseif tType == 2 || tType == 4 
-                    Frames = size(sCeta{BBBroi}{tType},2);
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
-                    FrameVals = floor((1:FPSstack:Frames)-1); 
-                    FrameVals = FrameVals*ColMultFactor;
-                end 
-                if tType == 1 || tType == 2
-    %             plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
-    %             plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
-                elseif tType == 3 || tType == 4
-    %             plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
-    %             plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
-                end 
-    %             label1 = xline(ceil(abs(Frames_pre_stim_start)-10)*ColMultFactor,'-k',{'vibrissal stim'},'LineWidth',2);
-    %             label1.FontSize = 30;
-    %             label1.FontName = 'Arial';
-    %             label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2)*ColMultFactor,'-k',{'water reward'},'LineWidth',2);
-    %             label2.FontSize = 30;
-    %             label2.FontName = 'Arial';
-                xline(ceil(abs(Frames_pre_stim_start)-10)*ColMultFactor,'-k','LineWidth',2);
-                xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2)*ColMultFactor,'-k','LineWidth',2);
-                ax=gca;
-                axis on 
-                xticks(FrameVals)
-                ax.XTickLabel = sec_TimeVals;
-                yticks((RowMultFactor:RowMultFactor:((size(raster{(terminals == termList(term))}{tType},1)-5)/RowMultFactor))*RowMultFactor)
-                if tType == 1 
-                    ylabel('trials')
-                end 
-                ax.YTickLabel = ([RowMultFactor:RowMultFactor:((size(raster{(terminals == termList(term))}{tType},1)-5)/RowMultFactor)]);
-                ax.FontSize = 15;
-
-                %plot PSTHs
-                nexttile
-                hold all 
-        %             stimStartF = floor((FPSstack*20)/winFrames);
-                if tType == 1 || tType == 3 
-                    Frames = size(sCeta{BBBroi}{tType},2);        
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
-                    FrameVals = floor((1:FPSstack:Frames)-1); 
-        %                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
-                    FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
-                elseif tType == 2 || tType == 4 
-                    Frames = size(sCeta{BBBroi}{tType},2);
-                    Frames_pre_stim_start = -((Frames-1)/2); 
-                    Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
-                    FrameVals = floor((1:FPSstack:Frames)-1); 
-                    FrameVals = FrameVals/length(allTermAvPeakNums{tType});
-        %                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
-                    FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
-                end 
-                bar(allTermAvPeakNums{tType}((terminals == termList(term)),:),'k')
-                if tType == 1 || tType == 2
-        %                 plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
-        %                 plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
-                elseif tType == 3 || tType == 4
-        %                 plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
-        %                 plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
-                end 
-                ind0 = find(sec_TimeVals == 0);
-                ind2 = find(sec_TimeVals == 2);
-                label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
-                label1.FontSize = 30;
-                label1.FontName = 'Arial';
-                label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
-                label2.FontSize = 30;
-                label2.FontName = 'Arial';
-                ax=gca;
-                axis on 
-                xticks(FrameVals)
-                ax.XTickLabel = sec_TimeVals;
-                ax.FontSize = 15;
-                if tType == 1 
-                    ylabel('number of Ca peaks')
-                end 
-                xlim([1 length(avTermNumPeaks{(terminals == termList(term))}{tType})])
-                ylim([0 0.3])
-                mtitle = sprintf('Terminal %d Ca Peaks',terminals((terminals == termList(term))));
-                sgtitle(mtitle,'Fontsize',25);
-                hold on 
-                xlabel(t,'time (s)','Fontsize',15)
+        for term = 1:length(termList)           
+            figure; 
+            t = tiledlayout(1,2);
+            t.TileSpacing = 'compact';
+            t.Padding = 'compact';        
+            %plot raster  
+            nexttile
+            imshow(raster{(terminals == termList(term))}{tType})
+            hold all 
+%             stimStartF = floor(FPSstack*20);
+            if tType == 1 || tType == 3 
+                Frames = size(sCeta{BBBroi}{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+                FrameVals = floor((1:FPSstack:Frames)-1); 
+                FrameVals = FrameVals*ColMultFactor;
+            elseif tType == 2 || tType == 4 
+                Frames = size(sCeta{BBBroi}{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
+                FrameVals = FrameVals*ColMultFactor;
             end 
+            if tType == 1 || tType == 2
+%             plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'b','LineWidth',2)
+            elseif tType == 3 || tType == 4
+%             plot([stimStartF stimStartF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(raster{term}{tType},1)], 'r','LineWidth',2)
+            end 
+%             label1 = xline(ceil(abs(Frames_pre_stim_start)-10)*ColMultFactor,'-k',{'vibrissal stim'},'LineWidth',2);
+%             label1.FontSize = 30;
+%             label1.FontName = 'Arial';
+%             label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2)*ColMultFactor,'-k',{'water reward'},'LineWidth',2);
+%             label2.FontSize = 30;
+%             label2.FontName = 'Arial';
+            xline(ceil(abs(Frames_pre_stim_start)-10)*ColMultFactor,'-k','LineWidth',2);
+            xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack))*2)*ColMultFactor,'-k','LineWidth',2);
+            ax=gca;
+            axis on 
+            xticks(FrameVals)
+            ax.XTickLabel = sec_TimeVals;
+            yticks((RowMultFactor:RowMultFactor:((size(raster{(terminals == termList(term))}{tType},1)-5)/RowMultFactor))*RowMultFactor)
+            if tType == 1 
+                ylabel('trials')
+            end 
+            ax.YTickLabel = ([RowMultFactor:RowMultFactor:((size(raster{(terminals == termList(term))}{tType},1)-5)/RowMultFactor)]);
+            ax.FontSize = 15;
+
+            %plot PSTHs
+            nexttile
+            hold all 
+    %             stimStartF = floor((FPSstack*20)/winFrames);
+            if tType == 1 || tType == 3 
+                Frames = size(sCeta{BBBroi}{tType},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+                FrameVals = floor((1:FPSstack:Frames)-1); 
+    %                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+                FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
+            elseif tType == 2 || tType == 4 
+                Frames = size(sCeta{BBBroi}{tType},2);
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+                FrameVals = floor((1:FPSstack:Frames)-1); 
+                FrameVals = FrameVals/length(allTermAvPeakNums{tType});
+    %                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+                FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
+            end 
+            bar(allTermAvPeakNums{tType}((terminals == termList(term)),:),'k')
+            if tType == 1 || tType == 2
+    %                 plot([stimStartF stimStartF], [-20 20], 'b','LineWidth',2)
+    %                 plot([stimStopF stimStopF], [-20 20], 'b','LineWidth',2)
+            elseif tType == 3 || tType == 4
+    %                 plot([stimStartF stimStartF], [-20 20], 'r','LineWidth',2)
+    %                 plot([stimStopF stimStopF], [-20 20], 'r','LineWidth',2)
+            end 
+            ind0 = find(sec_TimeVals == 0);
+            ind2 = find(sec_TimeVals == 2);
+            label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label2.FontName = 'Arial';
+            ax=gca;
+            axis on 
+            xticks(FrameVals)
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 15;
+            if tType == 1 
+                ylabel('number of Ca peaks')
+            end 
+            xlim([1 length(avTermNumPeaks{(terminals == termList(term))}{tType})])
+            ylim([0 0.3])
+            mtitle = sprintf('Terminal %d Ca Peaks',terminals((terminals == termList(term))));
+            sgtitle(mtitle,'Fontsize',25);
+            hold on 
+            xlabel(t,'time (s)','Fontsize',15)
         end 
     end 
 end 
@@ -2392,38 +2389,28 @@ end
 colNumsRaster = cell(1,length(raster2{term}));
 maxColNumRaster = zeros(1,1);
 for term = 1:length(termList)
-    if isempty(raster2{(terminals == termList(term))}) == 0 
-        for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
-            colNumsRaster{tType}((terminals == termList(term))) = size(raster2{(terminals == termList(term))}{tType},2);
-            maxColNumRaster(tType) = max(colNumsRaster{tType});
-        end 
-    end 
-end 
-for term = 1:length(termList)
-    if isempty(raster2{(terminals == termList(term))}) == 0 
-        for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
-            %make raster2 cells the same size
-            if size(raster2{(terminals == termList(term))}{tType},2) < maxColNumRaster(tType)
-                raster2{(terminals == termList(term))}{tType}(:,size(raster2{(terminals == termList(term))}{tType},2)+1:maxColNumRaster(tType)) = 1;
-            end 
+    for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
+        colNumsRaster{tType}((terminals == termList(term))) = size(raster2{(terminals == termList(term))}{tType},2);
+        maxColNumRaster(tType) = max(colNumsRaster{tType});
+        %make raster2 cells the same size
+        if size(raster2{(terminals == termList(term))}{tType},2) < maxColNumRaster(tType)
+            raster2{(terminals == termList(term))}{tType}(:,size(raster2{(terminals == termList(term))}{tType},2)+1:maxColNumRaster(tType)) = 1;
         end 
     end 
 end 
 % create full raster            
 fullRaster = cell(1,numTtypes);
 for term = 1:length(termList)
-    if isempty(raster2{(terminals == termList(term))}) == 0 
-        for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
-            rowLen = size(raster2{(terminals == termList(term))}{tType},1);
-            if term == 1
-                fullRaster{tType} = raster2{(terminals == termList(term))}{tType};
-            elseif term > 1
-                fullRaster{tType}(((term-1)*rowLen)+1:term*rowLen,:) = raster2{(terminals == termList(term))}{tType};
-            end 
-            % replace rows full of 0s with 1s 
-            zeroRows = all(fullRaster{tType} == 0,2);
-            fullRaster{tType}(zeroRows,:) = 1;
+    for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
+        rowLen = size(raster2{(terminals == termList(term))}{tType},1);
+        if term == 1
+            fullRaster{tType} = raster2{(terminals == termList(term))}{tType};
+        elseif term > 1
+            fullRaster{tType}(((term-1)*rowLen)+1:term*rowLen,:) = raster2{(terminals == termList(term))}{tType};
         end 
+        % replace rows full of 0s with 1s 
+        zeroRows = all(fullRaster{tType} == 0,2);
+        fullRaster{tType}(zeroRows,:) = 1;
     end 
 end 
   
@@ -2527,7 +2514,7 @@ if allCaROIplotQ == 1
 end 
 %}
 %% calcium peak raster plots and PSTHs (multiple mice) 
-%{
+
 % get the data you need 
 mouseNum = input('How many mice are there? ');
 FPSstack = zeros(1,mouseNum);
