@@ -2466,7 +2466,6 @@ for mouse = 1:size(fileList,1)
     end 
     % plot
     if allCaROIplotQ == 1 
-        totalPeakNums = cell(1,numTtypes);
         for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
     %         figure 
     %{
