@@ -2870,7 +2870,6 @@ if tTypeQ == 1
 end 
 %}
 %% STA: sort data based on ca peak location 
-BBBQ = 1; VWQ = 1; CAQ = 1;
 
 windSize = input('How big should the window be around Ca peak in seconds? 24 or 5 sec? ');
 % windSize = 24; 
@@ -5214,6 +5213,7 @@ if tTypeQ == 0
                 AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} = nanmean(allCTraces{groupNum}{terms{groupNum}(ccell)});
             end 
             if VWQ == 1
+                
                 for VWroi = 1:length(sortedVdata{1})
                     if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
                         AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} = (nanmean(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}));
@@ -5227,53 +5227,42 @@ if tTypeQ == 0
             count2 = 1; 
             count3 = 1;
             count4 = 1;
-            if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0
-                for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)},1)
-                    if BBBQ == 1
-                        for BBBroi = 1:length(BBBrois)
-                            if isempty(sortedBdata{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}) == 0
-        %                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2               
-                                    BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(peak,:));
-                                    count2 = count2 + 1;
-        %                         end 
-                            end 
+            for peak = 1:size(allCTraces{groupNum}{terms{groupNum}(ccell)},1)
+                if BBBQ == 1
+                    for BBBroi = 1:length(BBBrois)
+                        if isempty(sortedBdata{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}) == 0
+    %                         if allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) < AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} + nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2  & allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)}(peak,:) > AVSNBdataPeaks2{groupNum}{BBBroi}{terms{groupNum}(ccell)} - nanstd(allBTraces{groupNum}{BBBroi}{terms{groupNum}(ccell)},1)*2               
+                                BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(count2,:) = (allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}(peak,:));
+                                count2 = count2 + 1;
+    %                         end 
                         end 
                     end 
-
-    %                     if allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) < AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} + nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2 & allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) > AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} - nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2                      
-                            CTraces{groupNum}{terms{groupNum}(ccell)}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:));
-                            count3 = count3 + 1;
-    %                     end 
-
-                    if VWQ == 1
-                        for VWroi = 1:length(sortedVdata{1})
-                            if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
-        %                         if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2              
-                                    VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:));
-                                    count4 = count4 + 1;
-        %                         end 
-                            end 
-                        end 
+                end 
+%                     if allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) < AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} + nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2 & allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) > AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} - nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2                      
+                        CTraces{groupNum}{terms{groupNum}(ccell)}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:));
+                        count3 = count3 + 1;
+%                     end 
+                if VWQ == 1
+                    for VWroi = 1:length(sortedVdata{1})
+%                         if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2              
+                            VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:));
+                            count4 = count4 + 1;
+%                         end 
                     end 
-                end
-            end 
+                end 
+            end
 
             % get the average of all the traces excluding outliers 
             if BBBQ == 1
                 for BBBroi = 1:length(BBBrois)
                     if isempty(sortedBdata{vid}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}) == 0
                         AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}(ccell,:) = (nanmean(BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}));
-                    end 
                 end 
             end 
-            if isempty(sortedCdata{vid}{terms{groupNum}(ccell)}) == 0
-                AVSNCdataPeaks3{groupNum}(ccell,:) = nanmean(CTraces{groupNum}{terms{groupNum}(ccell)});
-            end 
+            AVSNCdataPeaks3{groupNum}(ccell,:) = nanmean(CTraces{groupNum}{terms{groupNum}(ccell)});
             if VWQ == 1
                 for VWroi = 1:length(sortedVdata{1})
-                    if isempty(sortedVdata{vid}{VWroi}{terms{groupNum}(ccell)}) == 0
-                        AVSNVdataPeaks3{groupNum}{VWroi}(ccell,:) = (nanmean(VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}));
-                    end 
+                    AVSNVdataPeaks3{groupNum}{VWroi}(ccell,:) = (nanmean(VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}));
                 end 
             end     
         end    
@@ -5421,7 +5410,7 @@ if tTypeQ == 0
                 alpha(0.3)
             end 
             legend([p(1) p(2)],'Close Terminals','Far Terminals')
-            ylabel('vessel width percent change','FontName','Times')
+            ylabel('BBB permeability percent change','FontName','Times')
             title(sprintf('All Terminals Averaged. VW ROI %d.',VWroi))      
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);
