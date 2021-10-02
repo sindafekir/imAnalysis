@@ -2923,17 +2923,20 @@ if tTypeQ == 0
                             if trialQ == 0
                                 if bPerQ == 0 
                                     sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                                elseif bPerQ == 1                                    
+                                elseif bPerQ == 1    
+                                    % create an STA for peaks regardless of
+                                    % when they occur 
+                                    sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
                                     %if the peak occured during the
                                     %stimulus 
                                     if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{2}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
                                     %if the peak occured during the reward
                                     elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{2}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{3}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
                                     %if the peak occured during the ITI
                                     else
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{3}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{4}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
                                     end 
                                 end 
                                 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
