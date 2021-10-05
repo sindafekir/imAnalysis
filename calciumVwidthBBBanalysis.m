@@ -5290,7 +5290,6 @@ if tTypeQ == 0
         allVTraces = cell(1,numGroups);
         VTraces = cell(1,numGroups);
     end 
-
     for groupNum = 1:numGroups
         for ccell = 1:length(terms{groupNum})     
             for per = 1:length(sortedCdata{vid}{terminals(ccell)})
@@ -5376,6 +5375,8 @@ if tTypeQ == 0
                                             BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(count2,:) = (allBTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(peak,:));
                                             count2 = count2 + 1;
                 %                         end 
+                                    %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                    BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per} = BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per}(any(BTraces{groupNum}{BBBrois(BBBroi)}{terms{groupNum}(ccell)}{per},2),:);
                                     end 
                                 end 
                             end 
@@ -5383,6 +5384,8 @@ if tTypeQ == 0
             %                     if allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) < AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} + nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2 & allCTraces{groupNum}{terms{groupNum}(ccell)}(peak,:) > AVSNCdataPeaks2{groupNum}{terms{groupNum}(ccell)} - nanstd(allCTraces{groupNum}{terms{groupNum}(ccell)},1)*2                      
                                     CTraces{groupNum}{terms{groupNum}(ccell)}{per}(count3,:) = (allCTraces{groupNum}{terms{groupNum}(ccell)}{per}(peak,:));
                                     count3 = count3 + 1;
+                                    %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                    CTraces{groupNum}{terms{groupNum}(ccell)}{per} = CTraces{groupNum}{terms{groupNum}(ccell)}{per}(any(CTraces{groupNum}{terms{groupNum}(ccell)}{per},2),:);
             %                     end 
 
                             if VWQ == 1
@@ -5391,6 +5394,8 @@ if tTypeQ == 0
                 %                         if allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) < AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} + nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2 & allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}(peak,:) > AVSNVdataPeaks2{groupNum}{VWroi}{terms{groupNum}(ccell)} - nanstd(allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)},1)*2              
                                             VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(count4,:) = (allVTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(peak,:));
                                             count4 = count4 + 1;
+                                            %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                            VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per} = VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}(any(VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per},2),:);
                 %                         end 
                                     end 
                                 end 
@@ -5415,11 +5420,15 @@ if tTypeQ == 0
                                 AVSNVdataPeaks3{groupNum}{VWroi}{per}(ccell,:) = (nanmean(VTraces{groupNum}{VWroi}{terms{groupNum}(ccell)}{per}));
                             end 
                         end 
-                    end     
+                    end   
                 end 
             end 
         end    
     end 
+    
+    
+        
+
 
     Frames = size(AVSNCdataPeaks3{groupNum}{1},2);
     Frames_pre_stim_start = -((Frames-1)/2); 
@@ -5459,8 +5468,13 @@ if tTypeQ == 0
                         x = 1:length(CI_cLow{groupNum});
 
                         %average across terminals 
-                        AVSNCdataPeaks{groupNum}{per} = nanmean(AVSNCdataPeaks3{groupNum}{per});
-                        AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)}{per} = nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per});
+                        if length(terms{groupNum}) > 1 
+                            AVSNCdataPeaks{groupNum}{per} = nanmean(AVSNCdataPeaks3{groupNum}{per});
+                            AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)}{per} = nanmean(AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per});
+                        elseif length(terms{groupNum}) == 1
+                            AVSNCdataPeaks{groupNum}{per} = AVSNCdataPeaks3{groupNum}{per};
+                            AVSNBdataPeaks{groupNum}{BBBrois(BBBroi)}{per} = AVSNBdataPeaks3{groupNum}{BBBrois(BBBroi)}{per};
+                        end 
                     end 
 
                     % plot 
@@ -5545,8 +5559,13 @@ if tTypeQ == 0
                         x = 1:length(CI_cLow{groupNum});
 
                         %average across terminals 
-                        AVSNCdataPeaks{groupNum}{per} = nanmean(AVSNCdataPeaks3{groupNum}{per});
-                        AVSNVdataPeaks{groupNum}{VWroi}{per} = nanmean(AVSNVdataPeaks3{groupNum}{VWroi}{per});
+                        if length(terms{groupNum}) > 1 
+                            AVSNCdataPeaks{groupNum}{per} = nanmean(AVSNCdataPeaks3{groupNum}{per});
+                            AVSNVdataPeaks{groupNum}{VWroi}{per} = nanmean(AVSNVdataPeaks3{groupNum}{VWroi}{per});
+                        elseif length(terms{groupNum}) == 1
+                            AVSNCdataPeaks{groupNum}{per} = AVSNCdataPeaks3{groupNum}{per};
+                            AVSNVdataPeaks{groupNum}{VWroi}{per} = AVSNVdataPeaks3{groupNum}{VWroi}{per};
+                        end 
                     end 
                     % plot 
                     Ccolors = [0,0,1;0,0.5,1;0,1,1];
