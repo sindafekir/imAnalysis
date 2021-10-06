@@ -4497,31 +4497,7 @@ end
 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)
 for mouse = 1:mouseNum
     for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
-        for ccell = 1:length(closeCTraces{mouse})
-            if ccell == 1 
-                closeCTraceArray{mouse}{per} = closeCTraces{mouse}{ccell}{per}; 
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        closeBTraceArray{mouse}{BBBroi}{per} = closeBTraces{mouse}{BBBroi}{ccell}{per}; 
-                    end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                    end 
-                end 
-            elseif ccell > 1 
-                closeCTraceArray{mouse}{per} = vertcat(closeCTraceArray{mouse}{per},closeCTraces{mouse}{ccell}{per});
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        closeBTraceArray{mouse}{BBBroi}{per} = vertcat(closeBTraceArray{mouse}{BBBroi}{per},closeBTraces{mouse}{BBBroi}{ccell}{per});
-                    end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                    end 
-                end 
-            end 
-        end 
+        closeCTraceArray{mouse}{per} = ; 
     end 
 end 
 
