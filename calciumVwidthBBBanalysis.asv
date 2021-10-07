@@ -4486,274 +4486,174 @@ for mouse = 1:mouseNum
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%% ADD {PER} ARRAY 
-
 % resort data: concatenate all CaROI data 
 % output = CaArray{mouse}{per}(concatenated caRoi data)
 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)
 for mouse = 1:mouseNum
     for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
-        closeCTraceArray{mouse}{per} = ; 
-    end 
-end 
-
-%%
-
-        if length(closeCTraces{mouse}) == 1
-            closeCTraceArray{mouse} = closeCTraces{mouse}{1};
-            if BBBQ == 1
-                for BBBroi = 1:length(BBBrois{mouse})
-                    closeBTraceArray{mouse}{BBBroi} = closeBTraces{mouse}{BBBroi};
+        for ccell = 1:length(closeCTraces{mouse})
+            if ccell == 1 
+                closeCTraceArray{mouse}{per} = closeCTraces{mouse}{ccell}{per}; 
+                if BBBQ == 1
+                    for BBBroi = 1:length(BBBrois{mouse})
+                        closeBTraceArray{mouse}{BBBroi}{per} = closeBTraces{mouse}{BBBroi}{ccell}{per}; 
+                    end 
                 end 
-            end 
-            if VWQ == 1
-                for VWroi = 1:VWroiNum(mouse)
-                    closeVTraceArray{mouse}{VWroi} = closeVTraces{mouse}{VWroi};
+                if VWQ == 1
+                    for VWroi = 1:VWroiNum(mouse)
+                        closeVTraceArray{mouse}{VWroi}{per} = closeVTraces{mouse}{VWroi}{ccell}{per}; 
+                    end 
                 end 
-            end 
+            elseif ccell > 1 
+                closeCTraceArray{mouse}{per} = vertcat(closeCTraceArray{mouse}{per},closeCTraces{mouse}{ccell}{per});
+                if BBBQ == 1
+                    for BBBroi = 1:length(BBBrois{mouse})
+                        closeBTraceArray{mouse}{BBBroi}{per} = vertcat(closeBTraceArray{mouse}{BBBroi}{per},closeBTraces{mouse}{BBBroi}{ccell}{per});
+                    end 
+                end 
+                if VWQ == 1
+                    for VWroi = 1:VWroiNum(mouse)
+                        closeVTraceArray{mouse}{VWroi}{per} = vertcat(closeVTraceArray{mouse}{VWroi}{per},closeVTraces{mouse}{VWroi}{ccell}{per});
+                    end 
+                end 
+            end
         end 
-        for closeTrace = 2:length(closeCTraces{mouse})
-            if closeTrace == 2
-                closeCTraceArray{mouse} = vertcat(closeCTraces{mouse}{1},closeCTraces{mouse}{closeTrace});
+        for ccell = 1:length(farCTraces{mouse})
+            if ccell == 1 
+                farCTraceArray{mouse}{per} = farCTraces{mouse}{ccell}{per};
                 if BBBQ == 1
                     for BBBroi = 1:length(BBBrois{mouse})
-                        closeBTraceArray{mouse}{BBBroi} = vertcat(closeBTraces{mouse}{BBBroi}{1},closeBTraces{mouse}{BBBroi}{closeTrace});
+                        farBTraceArray{mouse}{BBBroi}{per} = farBTraces{mouse}{BBBroi}{ccell}{per}; 
                     end 
                 end 
                 if VWQ == 1
                     for VWroi = 1:VWroiNum(mouse)
-                        closeVTraceArray{mouse}{VWroi} = vertcat(closeVTraces{mouse}{VWroi}{1},closeVTraces{mouse}{VWroi}{closeTrace});
+                        farVTraceArray{mouse}{VWroi}{per} = farVTraces{mouse}{VWroi}{ccell}{per}; 
                     end 
                 end 
-            elseif closeTrace > 2 
-                closeCTraceArray{mouse} = vertcat(closeCTraceArray{mouse},closeCTraces{mouse}{closeTrace});
+            elseif ccell > 1 
+                farCTraceArray{mouse}{per} = vertcat(farCTraceArray{mouse}{per},farCTraces{mouse}{ccell}{per});
                 if BBBQ == 1
                     for BBBroi = 1:length(BBBrois{mouse})
-                        closeBTraceArray{mouse}{BBBroi} = vertcat(closeBTraceArray{mouse}{BBBroi},closeBTraces{mouse}{BBBroi}{closeTrace});
+                        farBTraceArray{mouse}{BBBroi}{per} = vertcat(farBTraceArray{mouse}{BBBroi}{per},farBTraces{mouse}{BBBroi}{ccell}{per});
                     end 
                 end 
                 if VWQ == 1
                     for VWroi = 1:VWroiNum(mouse)
-                        closeVTraceArray{mouse}{VWroi} = vertcat(closeVTraceArray{mouse}{VWroi},closeVTraces{mouse}{VWroi}{closeTrace});
+                        farVTraceArray{mouse}{VWroi}{per} = vertcat(farVTraceArray{mouse}{VWroi}{per},farVTraces{mouse}{VWroi}{ccell}{per});
                     end 
                 end 
-            end 
+            end
         end 
-
-        if length(farCTraces{mouse}) == 1
-            farCTraceArray{mouse} = farCTraces{mouse}{1};
-            if BBBQ == 1
-                for BBBroi = 1:length(BBBrois{mouse})
-                    farBTraceArray{mouse}{BBBroi} = farBTraces{mouse}{BBBroi};
-                end 
-            end 
-            if VWQ == 1
-                for VWroi = 1:VWroiNum(mouse)
-                    farVTraceArray{mouse}{VWroi} = farVTraces{mouse}{VWroi};
-                end 
-            end 
-        end 
-        for farTrace = 2:length(farCTraces{mouse})
-            if farTrace == 2
-                farCTraceArray{mouse} = vertcat(farCTraces{mouse}{1},farCTraces{mouse}{farTrace});
+        for ccell = 1:length(CTraces{mouse})
+            if ccell == 1 
+                CTraceArray{mouse}{per} = CTraces{mouse}{ccell}{per};
                 if BBBQ == 1
                     for BBBroi = 1:length(BBBrois{mouse})
-                        farBTraceArray{mouse}{BBBroi} = vertcat(farBTraces{mouse}{BBBroi}{1},farBTraces{mouse}{BBBroi}{farTrace});
+                        BTraceArray{mouse}{BBBroi}{per} = BTraces{mouse}{BBBroi}{ccell}{per}; 
                     end 
                 end 
                 if VWQ == 1
                     for VWroi = 1:VWroiNum(mouse)
-                        farVTraceArray{mouse}{VWroi} = vertcat(farVTraces{mouse}{VWroi}{1},farVTraces{mouse}{VWroi}{farTrace});
+                        VTraceArray{mouse}{VWroi}{per} = VTraces{mouse}{VWroi}{ccell}{per}; 
                     end 
                 end 
-            elseif farTrace > 2 
-                farCTraceArray{mouse} = vertcat(farCTraceArray{mouse},farCTraces{mouse}{farTrace});
+            elseif ccell > 1 
+                CTraceArray{mouse}{per} = vertcat(CTraceArray{mouse}{per},CTraces{mouse}{ccell}{per});
                 if BBBQ == 1
                     for BBBroi = 1:length(BBBrois{mouse})
-                        farBTraceArray{mouse}{BBBroi} = vertcat(farBTraceArray{mouse}{BBBroi},farBTraces{mouse}{BBBroi}{farTrace});
-                    end
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        farVTraceArray{mouse}{VWroi} = vertcat(farVTraceArray{mouse}{VWroi},farVTraces{mouse}{VWroi}{farTrace});
-                    end 
-                end 
-            end 
-        end 
-
-
-        if length(CTraces{mouse}) == 1
-            CTraceArray{mouse} = CTraces{mouse}{1};
-            if BBBQ == 1
-                for BBBroi = 1:length(BBBrois{mouse})
-                    BTraceArray{mouse}{BBBroi} = BTraces{mouse}{BBBroi};
-                end 
-            end 
-            if VWQ == 1
-                for VWroi = 1:VWroiNum(mouse)
-                    VTraceArray{mouse}{VWroi} = VTraces{mouse}{VWroi};
-                end 
-            end 
-        end 
- 
-
-        for Trace = 2:length(CTraces{mouse})
-            if Trace == 2
-                CTraceArray{mouse} = vertcat(CTraces{mouse}{1},CTraces{mouse}{Trace});
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        BTraceArray{mouse}{BBBroi} = vertcat(BTraces{mouse}{BBBroi}{1},BTraces{mouse}{BBBroi}{Trace});
+                        BTraceArray{mouse}{BBBroi}{per} = vertcat(BTraceArray{mouse}{BBBroi}{per},BTraces{mouse}{BBBroi}{ccell}{per});
                     end 
                 end 
                 if VWQ == 1
                     for VWroi = 1:VWroiNum(mouse)
-                        VTraceArray{mouse}{VWroi} = vertcat(VTraces{mouse}{VWroi}{1},VTraces{mouse}{VWroi}{Trace});
+                        VTraceArray{mouse}{VWroi}{per} = vertcat(VTraceArray{mouse}{VWroi}{per},VTraces{mouse}{VWroi}{ccell}{per});
                     end 
                 end 
-            elseif Trace > 2 
-                CTraceArray{mouse} = vertcat(CTraceArray{mouse},CTraces{mouse}{Trace});
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        BTraceArray{mouse}{BBBroi} = vertcat(BTraceArray{mouse}{BBBroi},BTraces{mouse}{BBBroi}{Trace});
-                    end
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        VTraceArray{mouse}{VWroi} = vertcat(VTraceArray{mouse}{VWroi},VTraces{mouse}{VWroi}{Trace});
-                    end 
-                end 
-            end 
+            end
         end 
 
         %DETERMINE 95% CI
         if BBBQ == 1 
             for BBBroi = 1:length(BBBrois{mouse})
-                if length(closeCaROIs{mouse}) == 1 
-                    close_SEMb = (nanstd(closeBTraceArray{mouse}{BBBroi}{1}))/(sqrt(size(closeBTraceArray{mouse}{BBBroi}{1},1))); % Standard Error            
-                    close_ts_bLow = tinv(0.025,size(closeBTraceArray{mouse}{BBBroi}{1},1)-1);% T-Score for 95% CI
-                    close_ts_bHigh = tinv(0.975,size(closeBTraceArray{mouse}{BBBroi}{1},1)-1);% T-Score for 95% CI
-                    close_CI_bLow{mouse}{BBBroi} = (nanmean(closeBTraceArray{mouse}{BBBroi}{1},1)) + (close_ts_bLow*close_SEMb);  % Confidence Intervals
-                    close_CI_bHigh{mouse}{BBBroi} = (nanmean(closeBTraceArray{mouse}{BBBroi}{1},1)) + (close_ts_bHigh*close_SEMb);  % Confidence Intervals
-                elseif length(closeCaROIs{mouse}) > 1
-                    close_SEMb = (nanstd(closeBTraceArray{mouse}{BBBroi}))/(sqrt(size(closeBTraceArray{mouse}{BBBroi},1))); % Standard Error            
-                    close_ts_bLow = tinv(0.025,size(closeBTraceArray{mouse}{BBBroi},1)-1);% T-Score for 95% CI
-                    close_ts_bHigh = tinv(0.975,size(closeBTraceArray{mouse}{BBBroi},1)-1);% T-Score for 95% CI
-                    close_CI_bLow{mouse}{BBBroi} = (nanmean(closeBTraceArray{mouse}{BBBroi},1)) + (close_ts_bLow*close_SEMb);  % Confidence Intervals
-                    close_CI_bHigh{mouse}{BBBroi} = (nanmean(closeBTraceArray{mouse}{BBBroi},1)) + (close_ts_bHigh*close_SEMb);  % Confidence Intervals
-                end 
-                if length(farCaROIs{mouse}) == 1 
-                    far_SEMb = (nanstd(farBTraceArray{mouse}{BBBroi}{1}))/(sqrt(size(farBTraceArray{mouse}{BBBroi}{1},1))); % Standard Error            
-                    far_ts_bLow = tinv(0.025,size(farBTraceArray{mouse}{BBBroi}{1},1)-1);% T-Score for 95% CI
-                    far_ts_bHigh = tinv(0.975,size(farBTraceArray{mouse}{BBBroi}{1},1)-1);% T-Score for 95% CI
-                    far_CI_bLow{mouse}{BBBroi} = (nanmean(farBTraceArray{mouse}{BBBroi}{1},1)) + (far_ts_bLow*far_SEMb);  % Confidence Intervals
-                    far_CI_bHigh{mouse}{BBBroi} = (nanmean(farBTraceArray{mouse}{BBBroi}{1},1)) + (far_ts_bHigh*far_SEMb);  % Confidence Intervals
-                elseif length(farCaROIs{mouse}) > 1
-                    far_SEMb = (nanstd(farBTraceArray{mouse}{BBBroi}))/(sqrt(size(farBTraceArray{mouse}{BBBroi},1))); % Standard Error            
-                    far_ts_bLow = tinv(0.025,size(farBTraceArray{mouse}{BBBroi},1)-1);% T-Score for 95% CI
-                    far_ts_bHigh = tinv(0.975,size(farBTraceArray{mouse}{BBBroi},1)-1);% T-Score for 95% CI
-                    far_CI_bLow{mouse}{BBBroi} = (nanmean(farBTraceArray{mouse}{BBBroi},1)) + (far_ts_bLow*far_SEMb);  % Confidence Intervals
-                    far_CI_bHigh{mouse}{BBBroi} = (nanmean(farBTraceArray{mouse}{BBBroi},1)) + (far_ts_bHigh*far_SEMb);  % Confidence Intervals
-                end 
-                SEMb = (nanstd(BTraceArray{mouse}{BBBroi}))/(sqrt(size(BTraceArray{mouse}{BBBroi},1))); % Standard Error            
-                ts_bLow = tinv(0.025,size(BTraceArray{mouse}{BBBroi},1)-1);% T-Score for 95% CI
-                ts_bHigh = tinv(0.975,size(BTraceArray{mouse}{BBBroi},1)-1);% T-Score for 95% CI
-                CI_bLow{mouse}{BBBroi} = (nanmean(BTraceArray{mouse}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                CI_bHigh{mouse}{BBBroi} = (nanmean(BTraceArray{mouse}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                close_SEMb = (nanstd(closeBTraceArray{mouse}{BBBroi}{per}))/(sqrt(size(closeBTraceArray{mouse}{BBBroi}{per},1))); % Standard Error            
+                close_ts_bLow = tinv(0.025,size(closeBTraceArray{mouse}{BBBroi}{per},1)-1);% T-Score for 95% CI
+                close_ts_bHigh = tinv(0.975,size(closeBTraceArray{mouse}{BBBroi}{per},1)-1);% T-Score for 95% CI
+                close_CI_bLow{mouse}{BBBroi}{per} = (nanmean(closeBTraceArray{mouse}{BBBroi}{per},1)) + (close_ts_bLow*close_SEMb);  % Confidence Intervals
+                close_CI_bHigh{mouse}{BBBroi}{per} = (nanmean(closeBTraceArray{mouse}{BBBroi}{per},1)) + (close_ts_bHigh*close_SEMb);  % Confidence Intervals
+
+                far_SEMb = (nanstd(farBTraceArray{mouse}{BBBroi}{per}))/(sqrt(size(farBTraceArray{mouse}{BBBroi}{per},1))); % Standard Error            
+                far_ts_bLow = tinv(0.025,size(farBTraceArray{mouse}{BBBroi}{per},1)-1);% T-Score for 95% CI
+                far_ts_bHigh = tinv(0.975,size(farBTraceArray{mouse}{BBBroi}{per},1)-1);% T-Score for 95% CI
+                far_CI_bLow{mouse}{BBBroi}{per} = (nanmean(farBTraceArray{mouse}{BBBroi}{per},1)) + (far_ts_bLow*far_SEMb);  % Confidence Intervals
+                far_CI_bHigh{mouse}{BBBroi}{per} = (nanmean(farBTraceArray{mouse}{BBBroi}{per},1)) + (far_ts_bHigh*far_SEMb);  % Confidence Intervals
+                
+                SEMb = (nanstd(BTraceArray{mouse}{BBBroi}{per}))/(sqrt(size(BTraceArray{mouse}{BBBroi}{per},1))); % Standard Error            
+                ts_bLow = tinv(0.025,size(BTraceArray{mouse}{BBBroi}{per},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(BTraceArray{mouse}{BBBroi}{per},1)-1);% T-Score for 95% CI
+                CI_bLow{mouse}{BBBroi}{per} = (nanmean(BTraceArray{mouse}{BBBroi}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                CI_bHigh{mouse}{BBBroi}{per} = (nanmean(BTraceArray{mouse}{BBBroi}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
             end 
         end 
 
-        close_SEMc = (nanstd(closeCTraceArray{mouse}))/(sqrt(size(closeCTraceArray{mouse},1))); % Standard Error            
-        close_ts_cLow = tinv(0.025,size(closeCTraceArray{mouse},1)-1);% T-Score for 95% CI
-        close_ts_cHigh = tinv(0.975,size(closeCTraceArray{mouse},1)-1);% T-Score for 95% CI
-        close_CI_cLow = (nanmean(closeCTraceArray{mouse},1)) + (close_ts_cLow*close_SEMc);  % Confidence Intervals
-        close_CI_cHigh = (nanmean(closeCTraceArray{mouse},1)) + (close_ts_cHigh*close_SEMc);  % Confidence Intervals
+        close_SEMc = (nanstd(closeCTraceArray{mouse}{per}))/(sqrt(size(closeCTraceArray{mouse}{per},1))); % Standard Error            
+        close_ts_cLow = tinv(0.025,size(closeCTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+        close_ts_cHigh = tinv(0.975,size(closeCTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+        close_CI_cLow{mouse}{per} = (nanmean(closeCTraceArray{mouse}{per},1)) + (close_ts_cLow*close_SEMc);  % Confidence Intervals
+        close_CI_cHigh{mouse}{per} = (nanmean(closeCTraceArray{mouse}{per},1)) + (close_ts_cHigh*close_SEMc);  % Confidence Intervals
 
-        far_SEMc = (nanstd(farCTraceArray{mouse}))/(sqrt(size(farCTraceArray{mouse},1))); % Standard Error            
-        far_ts_cLow = tinv(0.025,size(farCTraceArray{mouse},1)-1);% T-Score for 95% CI
-        far_ts_cHigh = tinv(0.975,size(farCTraceArray{mouse},1)-1);% T-Score for 95% CI
-        far_CI_cLow = (nanmean(farCTraceArray{mouse},1)) + (far_ts_cLow*far_SEMc);  % Confidence Intervals
-        far_CI_cHigh = (nanmean(farCTraceArray{mouse},1)) + (far_ts_cHigh*far_SEMc);  % Confidence Intervals
+        far_SEMc = (nanstd(farCTraceArray{mouse}{per}))/(sqrt(size(farCTraceArray{mouse}{per},1))); % Standard Error            
+        far_ts_cLow = tinv(0.025,size(farCTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+        far_ts_cHigh = tinv(0.975,size(farCTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+        far_CI_cLow{mouse}{per} = (nanmean(farCTraceArray{mouse}{per},1)) + (far_ts_cLow*far_SEMc);  % Confidence Intervals
+        far_CI_cHigh{mouse}{per} = (nanmean(farCTraceArray{mouse}{per},1)) + (far_ts_cHigh*far_SEMc);  % Confidence Intervals
 
-        SEMc = (nanstd(CTraceArray{mouse}))/(sqrt(size(CTraceArray{mouse},1))); % Standard Error            
-        ts_cLow = tinv(0.025,size(CTraceArray{mouse},1)-1);% T-Score for 95% CI
-        ts_cHigh = tinv(0.975,size(CTraceArray{mouse},1)-1);% T-Score for 95% CI
-        CI_cLow = (nanmean(CTraceArray{mouse},1)) + (ts_cLow*SEMc);  % Confidence Intervals
-        CI_cHigh = (nanmean(CTraceArray{mouse},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+        SEMc = (nanstd(CTraceArray{mouse}{per}))/(sqrt(size(CTraceArray{mouse}{per},1))); % Standard Error            
+        ts_cLow = tinv(0.025,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+        ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+        CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+        CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
 
         if VWQ == 1
             for VWroi = 1:VWroiNum(mouse)
-                if length(closeCaROIs{mouse}) == 1 
-                    close_SEMv = (nanstd(closeVTraceArray{mouse}{VWroi}{1}))/(sqrt(size(closeVTraceArray{mouse}{VWroi}{1},1))); % Standard Error            
-                    close_ts_vLow = tinv(0.025,size(closeVTraceArray{mouse}{VWroi}{1},1)-1);% T-Score for 95% CI
-                    close_ts_vHigh = tinv(0.975,size(closeVTraceArray{mouse}{VWroi}{1},1)-1);% T-Score for 95% CI
-                    close_CI_vLow{mouse}{VWroi} = (nanmean(closeVTraceArray{mouse}{VWroi}{1},1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
-                    close_CI_vHigh{mouse}{VWroi} = (nanmean(closeVTraceArray{mouse}{VWroi}{1},1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals
-                elseif length(closeCaROIs{mouse}) > 1 
-                    close_SEMv = (nanstd(closeVTraceArray{mouse}{VWroi}))/(sqrt(size(closeVTraceArray{mouse}{VWroi},1))); % Standard Error            
-                    close_ts_vLow = tinv(0.025,size(closeVTraceArray{mouse}{VWroi},1)-1);% T-Score for 95% CI
-                    close_ts_vHigh = tinv(0.975,size(closeVTraceArray{mouse}{VWroi},1)-1);% T-Score for 95% CI
-                    close_CI_vLow{mouse}{VWroi} = (nanmean(closeVTraceArray{mouse}{VWroi},1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
-                    close_CI_vHigh{mouse}{VWroi} = (nanmean(closeVTraceArray{mouse}{VWroi},1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals
-                end 
-                if length(farCaROIs{mouse}) == 1
-                    far_SEMv = (nanstd(farVTraceArray{mouse}{VWroi}{1}))/(sqrt(size(farVTraceArray{mouse}{VWroi}{1},1))); % Standard Error            
-                    far_ts_vLow = tinv(0.025,size(farVTraceArray{mouse}{VWroi}{1},1)-1);% T-Score for 95% CI
-                    far_ts_vHigh = tinv(0.975,size(farVTraceArray{mouse}{VWroi}{1},1)-1);% T-Score for 95% CI
-                    far_CI_vLow{mouse}{VWroi} = (nanmean(farVTraceArray{mouse}{VWroi}{1},1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
-                    far_CI_vHigh{mouse}{VWroi} = (nanmean(farVTraceArray{mouse}{VWroi}{1},1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
-                elseif length(farCaROIs{mouse}) == 1
-                    far_SEMv = (nanstd(farVTraceArray{mouse}{VWroi}))/(sqrt(size(farVTraceArray{mouse}{VWroi},1))); % Standard Error            
-                    far_ts_vLow = tinv(0.025,size(farVTraceArray{mouse}{VWroi},1)-1);% T-Score for 95% CI
-                    far_ts_vHigh = tinv(0.975,size(farVTraceArray{mouse}{VWroi},1)-1);% T-Score for 95% CI
-                    far_CI_vLow{mouse}{VWroi} = (nanmean(farVTraceArray{mouse}{VWroi},1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
-                    far_CI_vHigh{mouse}{VWroi} = (nanmean(farVTraceArray{mouse}{VWroi},1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
-                end 
-                SEMv = (nanstd(VTraceArray{mouse}{VWroi}))/(sqrt(size(VTraceArray{mouse}{VWroi},1))); % Standard Error            
-                ts_vLow = tinv(0.025,size(VTraceArray{mouse}{VWroi},1)-1);% T-Score for 95% CI
-                ts_vHigh = tinv(0.975,size(VTraceArray{mouse}{VWroi},1)-1);% T-Score for 95% CI
-                CI_vLow{mouse}{VWroi} = (nanmean(VTraceArray{mouse}{VWroi},1)) + (ts_vLow*SEMv);  % Confidence Intervals
-                CI_vHigh{mouse}{VWroi} = (nanmean(VTraceArray{mouse}{VWroi},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+                close_SEMv = (nanstd(closeVTraceArray{mouse}{VWroi}{per}))/(sqrt(size(closeVTraceArray{mouse}{VWroi}{per},1))); % Standard Error            
+                close_ts_vLow = tinv(0.025,size(closeVTraceArray{mouse}{VWroi}{per},1)-1);% T-Score for 95% CI
+                close_ts_vHigh = tinv(0.975,size(closeVTraceArray{mouse}{VWroi}{per},1)-1);% T-Score for 95% CI
+                close_CI_vLow{mouse}{VWroi}{per} = (nanmean(closeVTraceArray{mouse}{VWroi}{per},1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
+                close_CI_vHigh{mouse}{VWroi}{per} = (nanmean(closeVTraceArray{mouse}{VWroi}{per},1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals
+
+                far_SEMv = (nanstd(farVTraceArray{mouse}{VWroi}{per}))/(sqrt(size(farVTraceArray{mouse}{VWroi}{per},1))); % Standard Error            
+                far_ts_vLow = tinv(0.025,size(farVTraceArray{mouse}{VWroi}{per},1)-1);% T-Score for 95% CI
+                far_ts_vHigh = tinv(0.975,size(farVTraceArray{mouse}{VWroi}{per},1)-1);% T-Score for 95% CI
+                far_CI_vLow{mouse}{VWroi}{per} = (nanmean(farVTraceArray{mouse}{VWroi}{per},1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
+                far_CI_vHigh{mouse}{VWroi}{per} = (nanmean(farVTraceArray{mouse}{VWroi}{per},1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
+               
+                SEMv = (nanstd(VTraceArray{mouse}{VWroi}{per}))/(sqrt(size(VTraceArray{mouse}{VWroi}{per},1))); % Standard Error            
+                ts_vLow = tinv(0.025,size(VTraceArray{mouse}{VWroi}{per},1)-1);% T-Score for 95% CI
+                ts_vHigh = tinv(0.975,size(VTraceArray{mouse}{VWroi}{per},1)-1);% T-Score for 95% CI
+                CI_vLow{mouse}{VWroi}{per} = (nanmean(VTraceArray{mouse}{VWroi}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+                CI_vHigh{mouse}{VWroi}{per} = (nanmean(VTraceArray{mouse}{VWroi}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
             end 
         end 
 
-        x = 1:length(close_CI_cLow);
-
+        x = 1:length(close_CI_cLow{mouse}{per});
+   
         %get averages
         if BBBQ == 1
             for BBBroi = 1:length(BBBrois{mouse})
-                if length(closeCaROIs{mouse}) == 1
-                    close_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(closeBTraceArray{mouse}{BBBroi}{1},1);
-                elseif length(closeCaROIs{mouse}) > 1
-                    close_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(closeBTraceArray{mouse}{BBBroi},1);
-                end 
-                if length(farCaROIs{mouse}) == 1
-                    far_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(farBTraceArray{mouse}{BBBroi}{1},1);
-                elseif length(farCaROIs{mouse}) > 1
-                    far_AVSNBdataPeaks{mouse}{BBBroi} = nanmean(farBTraceArray{mouse}{BBBroi},1);
-                end 
-                AVSNBdataPeaks{mouse}{BBBroi} = nanmean(BTraceArray{mouse}{BBBroi},1);
+                close_AVSNBdataPeaks{mouse}{BBBroi}{per} = nanmean(closeBTraceArray{mouse}{BBBroi}{per},1);
+                far_AVSNBdataPeaks{mouse}{BBBroi}{per} = nanmean(farBTraceArray{mouse}{BBBroi}{per},1);
+                AVSNBdataPeaks{mouse}{BBBroi}{per} = nanmean(BTraceArray{mouse}{BBBroi}{per},1);
             end 
         end 
-        close_AVSNCdataPeaks{mouse} = nanmean(closeCTraceArray{mouse},1);
-        far_AVSNCdataPeaks{mouse} = nanmean(farCTraceArray{mouse},1);
-        AVSNCdataPeaks{mouse} = nanmean(CTraceArray{mouse},1);
+        close_AVSNCdataPeaks{mouse}{per} = nanmean(closeCTraceArray{mouse}{per},1);
+        far_AVSNCdataPeaks{mouse}{per} = nanmean(farCTraceArray{mouse}{per},1);
+        AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);
         if VWQ == 1
             for VWroi = 1:VWroiNum(mouse)
-                if length(closeCaROIs{mouse}) == 1
-                    close_AVSNVdataPeaks{mouse}{VWroi} = nanmean(closeVTraceArray{mouse}{VWroi}{1},1);
-                elseif length(closeCaROIs{mouse}) > 1
-                    close_AVSNVdataPeaks{mouse}{VWroi} = nanmean(closeVTraceArray{mouse}{VWroi},1);
-                end 
-                if length(farCaROIs{mouse}) == 1
-                    far_AVSNVdataPeaks{mouse}{VWroi} = nanmean(farVTraceArray{mouse}{VWroi}{1},1);
-                elseif length(farCaROIs{mouse}) > 1
-                    far_AVSNVdataPeaks{mouse}{VWroi} = nanmean(farVTraceArray{mouse}{VWroi},1);
-                end 
-                AVSNVdataPeaks{mouse}{VWroi} = nanmean(VTraceArray{mouse}{VWroi},1);
+                close_AVSNVdataPeaks{mouse}{VWroi}{per} = nanmean(closeVTraceArray{mouse}{VWroi}{per},1);
+                far_AVSNVdataPeaks{mouse}{VWroi}{per} = nanmean(farVTraceArray{mouse}{VWroi}{per},1);
+                AVSNVdataPeaks{mouse}{VWroi}{per} = nanmean(VTraceArray{mouse}{VWroi}{per},1);
             end 
         end 
 
@@ -4913,8 +4813,8 @@ end
             end 
         end
         %}
-%     end 
-% end 
+    end 
+end 
 
 %% AVERAGE ACROSS MICE 
 clear close_Btraces_allMice far_Btraces_allMice close_Ctraces_allMice far_Ctraces_allMice close_Vtraces_allMice far_Vtraces_allMice   
@@ -4926,7 +4826,7 @@ for mouse = 1:mouseNum
 end 
 minFPSstack = FPSstack2 == min(FPSstack2);
 idx = find(minFPSstack ~= 0, 1, 'first');
-minLen = length(close_AVSNCdataPeaks{idx});
+minLen = length(close_AVSNCdataPeaks{idx}{1});
 
 % mouseNums = [1,2,3,4,5];
 mouseNums = input('Input the mice you want to average. ');
@@ -4939,352 +4839,386 @@ counter6 = 1;
 counter7 = 1;
 counter8 = 1;
 counter9 = 1;
+% below commented out code is for normalizing for the total number of traces
+% per data type 
+%{
 if BBBQ == 1
-    closeBtrace_nums = zeros(1,length(mouseNums));
-    farBtrace_nums = zeros(1,length(mouseNums));
-    Btrace_nums = zeros(1,length(mouseNums));
+    closeBtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    farBtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    Btrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
-closeCtrace_nums = zeros(1,length(mouseNums));
-farCtrace_nums = zeros(1,length(mouseNums));
-Ctrace_nums = zeros(1,length(mouseNums));
+closeCtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+farCtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+Ctrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 if VWQ == 1
-    closeVtrace_nums = zeros(1,length(mouseNums));
-    farVtrace_nums = zeros(1,length(mouseNums));
-    Vtrace_nums = zeros(1,length(mouseNums));
+    closeVtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    farVtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    Vtrace_nums = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
 for mouse = 1:length(mouseNums)
-    if BBBQ == 1
-        for BBBroi = 1:length(BBBrois{mouse})
-             closeBtrace_nums(mouse,BBBroi) = size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1);
-             farBtrace_nums(mouse,BBBroi) = size(farBTraceArray{mouseNums(mouse)}{BBBroi},1);
-             Btrace_nums(mouse,BBBroi) = size(BTraceArray{mouseNums(mouse)}{BBBroi},1);
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+        if BBBQ == 1
+            for BBBroi = 1:length(BBBrois{mouse})
+                 closeBtrace_nums{per}(mouse,BBBroi) = size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},1);
+                 farBtrace_nums{per}(mouse,BBBroi) = size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},1);
+                 Btrace_nums{per}(mouse,BBBroi) = size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},1);
+            end 
         end 
-    end 
-     closeCtrace_nums(mouse) = size(closeCTraceArray{mouseNums(mouse)},1);
-     farCtrace_nums(mouse) = size(farCTraceArray{mouseNums(mouse)},1);
-     Ctrace_nums(mouse) = size(CTraceArray{mouseNums(mouse)},1);
-     if VWQ == 1
-         for VWroi = 1:VWroiNum(mouse)
-             closeVtrace_nums(mouse,VWroi) = size(closeVTraceArray{mouseNums(mouse)}{VWroi},1);
-             farVtrace_nums(mouse,VWroi) = size(farVTraceArray{mouseNums(mouse)}{VWroi},1);
-             Vtrace_nums(mouse,VWroi) = size(VTraceArray{mouseNums(mouse)}{VWroi},1);
+         closeCtrace_nums{per}(mouse) = size(closeCTraceArray{mouseNums(mouse)}{per},1);
+         farCtrace_nums{per}(mouse) = size(farCTraceArray{mouseNums(mouse)}{per},1);
+         Ctrace_nums{per}(mouse) = size(CTraceArray{mouseNums(mouse)}{per},1);
+         if VWQ == 1
+             for VWroi = 1:VWroiNum(mouse)
+                 closeVtrace_nums{per}(mouse,VWroi) = size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},1);
+                 farVtrace_nums{per}(mouse,VWroi) = size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},1);
+                 Vtrace_nums{per}(mouse,VWroi) = size(VTraceArray{mouseNums(mouse)}{VWroi}{per},1);
+             end 
          end 
-     end 
+    end 
 end 
-if BBBQ == 1
-    totalNum_closeBtraces = sum(sum(closeBtrace_nums));
-    totalNum_farBtraces = sum(sum(farBtrace_nums));
-    totalNum_Btraces = sum(sum(Btrace_nums));
+
+for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+    if BBBQ == 1
+        totalNum_closeBtraces{per} = sum(sum(closeBtrace_nums{per}));
+        totalNum_farBtraces{per} = sum(sum(farBtrace_nums{per}));
+        totalNum_Btraces{per} = sum(sum(Btrace_nums{per}));
+    end 
+    totalNum_closeCtraces{per} = sum(closeCtrace_nums{per});
+    totalNum_farCtraces{per} = sum(farCtrace_nums{per});
+    totalNum_Ctraces{per} = sum(Ctrace_nums{per});
+    if VWQ == 1
+        totalNum_closeVtraces{per} = sum(sum(closeVtrace_nums{per}));
+        totalNum_farVtraces{per} = sum(sum(farVtrace_nums{per}));
+        totalNum_Vtraces{per} = sum(sum(Vtrace_nums{per}));
+    end 
 end 
-totalNum_closeCtraces = sum(closeCtrace_nums);
-totalNum_farCtraces = sum(farCtrace_nums);
-totalNum_Ctraces = sum(Ctrace_nums);
-if VWQ == 1
-    totalNum_closeVtraces = sum(sum(closeVtrace_nums));
-    totalNum_farVtraces = sum(sum(farVtrace_nums));
-    totalNum_Vtraces = sum(sum(Vtrace_nums));
+%}
+
+close_Ctraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+far_Ctraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+Ctraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+if BBBQ == 1 
+    close_Btraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    far_Btraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    Btraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+end 
+if VWQ == 1 
+    close_Vtraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    far_Vtraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    Vtraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
 for mouse = 1:length(mouseNums)   
-    %resample and sort data
-    if BBBQ == 1
-        for BBBroi = 1:length(BBBrois{mouse})
-            for trace1 = 1:size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)
-                if length(closeCaROIs{mouse}) == 1
-                    close_Btraces_allMice(counter1,:) = (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}{1}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{1},2)));% * (size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_closeBtraces);           
-                elseif length(closeCaROIs{mouse}) > 1
-                    close_Btraces_allMice(counter1,:) = (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi},2)));% * (size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_closeBtraces);           
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+        %resample and sort data
+        if BBBQ == 1
+            for BBBroi = 1:length(BBBrois{mouse})
+                for trace1 = 1:size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
+                    close_Btraces_allMice{per}(counter1,:) = (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},2)));% * (size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_closeBtraces);                              
+                    counter1 = counter1 + 1;
                 end 
-                counter1 = counter1 + 1;
-            end 
-            for trace1 = 1:size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)
-                if length(farCaROIs{mouse}) == 1
-                    far_Btraces_allMice(counter2,:) = resample(farBTraceArray{mouseNums(mouse)}{BBBroi}{1}(trace1,:),minLen,size(farBTraceArray{mouseNums(mouse)}{BBBroi}{1},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
-                elseif length(farCaROIs{mouse}) > 1
-                    far_Btraces_allMice(counter2,:) = resample(farBTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(farBTraceArray{mouseNums(mouse)}{BBBroi},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
+                for trace1 = 1:size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
+                    far_Btraces_allMice{per}(counter2,:) = resample(farBTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);                     
+                    counter2 = counter2 + 1;
                 end 
-                counter2 = counter2 + 1;
-            end 
-            for trace1 = 1:size(BTraceArray{mouseNums(mouse)}{BBBroi},1)
-                Btraces_allMice(counter7,:) = resample(BTraceArray{mouseNums(mouse)}{BBBroi}(trace1,:),minLen,size(BTraceArray{mouseNums(mouse)}{BBBroi},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
-                counter7 = counter7 + 1;
+                for trace1 = 1:size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
+                    Btraces_allMice{per}(counter7,:) = resample(BTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
+                    counter7 = counter7 + 1;
+                end 
             end 
         end 
-    end 
-    for trace2 = 1:size(closeCTraceArray{mouseNums(mouse)},1)
-        close_Ctraces_allMice(counter3,:) = (resample(closeCTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(closeCTraceArray{mouseNums(mouse)},2)));% * (size(closeCTraceArray{mouseNums(mouse)},1)/totalNum_closeCtraces);           
-        counter3 = counter3 + 1;
-    end 
-    for trace2 = 1:size(farCTraceArray{mouseNums(mouse)},1)
-        far_Ctraces_allMice(counter4,:) = resample(farCTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(farCTraceArray{mouseNums(mouse)},2));% * * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
-        counter4 = counter4 + 1;
-    end   
-    for trace2 = 1:size(CTraceArray{mouseNums(mouse)},1)
-        Ctraces_allMice(counter8,:) = resample(CTraceArray{mouseNums(mouse)}(trace2,:),minLen,size(CTraceArray{mouseNums(mouse)},2));% * * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
-        counter8 = counter8 + 1;
-    end   
-    if VWQ == 1
-        for VWroi = 1:VWroiNum(mouse)
-            for trace3 = 1:size(closeVTraceArray{mouseNums(mouse)}{VWroi},1)
-                if length(closeCaROIs{mouse}) == 1
-                    close_Vtraces_allMice(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}{VWroi}{1}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)}{VWroi}{1},2)));% * * (size(closeVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_closeVtraces);           
-                elseif length(closeCaROIs{mouse}) > 1
-                    close_Vtraces_allMice(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}{VWroi}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)}{VWroi},2)));% * * (size(closeVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_closeVtraces);           
+        for trace2 = 1:size(closeCTraceArray{mouseNums(mouse)}{per},1)
+            close_Ctraces_allMice{per}(counter3,:) = (resample(closeCTraceArray{mouseNums(mouse)}{per}(trace2,:),minLen,size(closeCTraceArray{mouseNums(mouse)}{per},2)));% * (size(closeCTraceArray{mouseNums(mouse)},1)/totalNum_closeCtraces);           
+            counter3 = counter3 + 1;
+        end 
+        for trace2 = 1:size(farCTraceArray{mouseNums(mouse)}{per},1)
+            far_Ctraces_allMice{per}(counter4,:) = resample(farCTraceArray{mouseNums(mouse)}{per}(trace2,:),minLen,size(farCTraceArray{mouseNums(mouse)}{per},2));% * * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
+            counter4 = counter4 + 1;
+        end   
+        for trace2 = 1:size(CTraceArray{mouseNums(mouse)}{per},1)
+            Ctraces_allMice{per}(counter8,:) = resample(CTraceArray{mouseNums(mouse)}{per}(trace2,:),minLen,size(CTraceArray{mouseNums(mouse)}{per},2));% * * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
+            counter8 = counter8 + 1;
+        end   
+        if VWQ == 1
+            for VWroi = 1:VWroiNum(mouse)
+                for trace3 = 1:size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},1)                  
+                    close_Vtraces_allMice{per}(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},2)));% * * (size(closeVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_closeVtraces);                               
+                    counter5 = counter5 + 1;
                 end 
-                counter5 = counter5 + 1;
-            end 
-            for trace3 = 1:size(farVTraceArray{mouseNums(mouse)}{VWroi},1)
-                if length(farCaROIs{mouse}) == 1
-                    far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}{1}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi}{1},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
-                elseif length(farCaROIs{mouse}) > 1
-                    far_Vtraces_allMice(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
+                for trace3 = 1:size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},1)                    
+                    far_Vtraces_allMice{per}(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);                    
+                    counter6 = counter6 + 1;
                 end 
-                counter6 = counter6 + 1;
-            end 
-            for trace3 = 1:size(VTraceArray{mouseNums(mouse)}{VWroi},1)
-                Vtraces_allMice(counter9,:) = resample(VTraceArray{mouseNums(mouse)}{VWroi}(trace3,:),minLen,size(VTraceArray{mouseNums(mouse)}{VWroi},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
-                counter9 = counter9 + 1;
+                for trace3 = 1:size(VTraceArray{mouseNums(mouse)}{VWroi}{per},1)
+                    Vtraces_allMice{per}(counter9,:) = resample(VTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(VTraceArray{mouseNums(mouse)}{VWroi}{per},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
+                    counter9 = counter9 + 1;
+                end 
             end 
         end 
     end 
 end 
 
-%average the data 
-if BBBQ == 1
-    close_avBdata = nanmean(close_Btraces_allMice,1);
-    far_avBdata = nanmean(far_Btraces_allMice,1);
-    avBdata = nanmean(Btraces_allMice,1);
-end 
-close_avCdata = nanmean(close_Ctraces_allMice,1);
-far_avCdata = nanmean(far_Ctraces_allMice,1);
-avCdata = nanmean(Ctraces_allMice,1);
-if VWQ == 1
-    close_avVdata = nanmean(close_Vtraces_allMice,1);
-    far_avVdata = nanmean(far_Vtraces_allMice,1);
-    avVdata = nanmean(Vtraces_allMice,1);
-end 
-
-%DETERMINE 95% CI
+%% for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+close_avCdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+far_avCdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+avCdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 if BBBQ == 1 
-    close_SEMb = (nanstd(close_Btraces_allMice))/(sqrt(size(close_Btraces_allMice,1))); % Standard Error            
-    close_ts_bLow = tinv(0.025,size(close_Btraces_allMice,1)-1);% T-Score for 95% CI
-    close_ts_bHigh = tinv(0.975,size(close_Btraces_allMice,1)-1);% T-Score for 95% CI
-    close_CI_bLow = (nanmean(close_Btraces_allMice,1)) + (close_ts_bLow*close_SEMb);  % Confidence Intervals
-    close_CI_bHigh = (nanmean(close_Btraces_allMice,1)) + (close_ts_bHigh*close_SEMb);  % Confidence Intervals        
-    far_SEMb = (nanstd(far_Btraces_allMice))/(sqrt(size(far_Btraces_allMice,1))); % Standard Error            
-    far_ts_bLow = tinv(0.025,size(far_Btraces_allMice,1)-1);% T-Score for 95% CI
-    far_ts_bHigh = tinv(0.975,size(far_Btraces_allMice,1)-1);% T-Score for 95% CI
-    far_CI_bLow = (nanmean(far_Btraces_allMice,1)) + (far_ts_bLow*far_SEMb);  % Confidence Intervals
-    far_CI_bHigh = (nanmean(far_Btraces_allMice,1)) + (far_ts_bHigh*far_SEMb);  % Confidence Intervals
-    SEMb = (nanstd(Btraces_allMice))/(sqrt(size(Btraces_allMice,1))); % Standard Error            
-    ts_bLow = tinv(0.025,size(Btraces_allMice,1)-1);% T-Score for 95% CI
-    ts_bHigh = tinv(0.975,size(Btraces_allMice,1)-1);% T-Score for 95% CI
-    CI_bLow = (nanmean(Btraces_allMice,1)) + (ts_bLow*SEMb);  % Confidence Intervals
-    CI_bHigh = (nanmean(Btraces_allMice,1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+    close_avBdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    far_avBdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    avBdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
-close_SEMc = (nanstd(close_Ctraces_allMice))/(sqrt(size(close_Ctraces_allMice,1))); % Standard Error            
-close_ts_cLow = tinv(0.025,size(close_Ctraces_allMice,1)-1);% T-Score for 95% CI
-close_ts_cHigh = tinv(0.975,size(close_Ctraces_allMice,1)-1);% T-Score for 95% CI
-close_CI_cLow = (nanmean(close_Ctraces_allMice,1)) + (close_ts_cLow*close_SEMc);  % Confidence Intervals
-close_CI_cHigh = (nanmean(close_Ctraces_allMice,1)) + (close_ts_cHigh*close_SEMc);  % Confidence Intervals   
-far_SEMc = (nanstd(far_Ctraces_allMice))/(sqrt(size(far_Ctraces_allMice,1))); % Standard Error            
-far_ts_cLow = tinv(0.025,size(far_Ctraces_allMice,1)-1);% T-Score for 95% CI
-far_ts_cHigh = tinv(0.975,size(far_Ctraces_allMice,1)-1);% T-Score for 95% CI
-far_CI_cLow = (nanmean(far_Ctraces_allMice,1)) + (far_ts_cLow*far_SEMc);  % Confidence Intervals
-far_CI_cHigh = (nanmean(far_Ctraces_allMice,1)) + (far_ts_cHigh*far_SEMc);  % Confidence Intervals
-SEMc = (nanstd(Ctraces_allMice))/(sqrt(size(Ctraces_allMice,1))); % Standard Error            
-ts_cLow = tinv(0.025,size(Ctraces_allMice,1)-1);% T-Score for 95% CI
-ts_cHigh = tinv(0.975,size(Ctraces_allMice,1)-1);% T-Score for 95% CI
-CI_cLow = (nanmean(Ctraces_allMice,1)) + (ts_cLow*SEMc);  % Confidence Intervals
-CI_cHigh = (nanmean(Ctraces_allMice,1)) + (ts_cHigh*SEMc);  % Confidence Intervals
-if VWQ == 1
-    close_SEMv = (nanstd(close_Vtraces_allMice))/(sqrt(size(close_Vtraces_allMice,1))); % Standard Error            
-    close_ts_vLow = tinv(0.025,size(close_Vtraces_allMice,1)-1);% T-Score for 95% CI
-    close_ts_vHigh = tinv(0.975,size(close_Vtraces_allMice,1)-1);% T-Score for 95% CI
-    close_CI_vLow = (nanmean(close_Vtraces_allMice,1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
-    close_CI_vHigh = (nanmean(close_Vtraces_allMice,1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals      
-    far_SEMv = (nanstd(far_Vtraces_allMice))/(sqrt(size(far_Vtraces_allMice,1))); % Standard Error            
-    far_ts_vLow = tinv(0.025,size(far_Vtraces_allMice,1)-1);% T-Score for 95% CI
-    far_ts_vHigh = tinv(0.975,size(far_Vtraces_allMice,1)-1);% T-Score for 95% CI
-    far_CI_vLow = (nanmean(far_Vtraces_allMice,1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
-    far_CI_vHigh = (nanmean(far_Vtraces_allMice,1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
-    SEMv = (nanstd(Vtraces_allMice))/(sqrt(size(Vtraces_allMice,1))); % Standard Error            
-    ts_vLow = tinv(0.025,size(Vtraces_allMice,1)-1);% T-Score for 95% CI
-    ts_vHigh = tinv(0.975,size(Vtraces_allMice,1)-1);% T-Score for 95% CI
-    CI_vLow = (nanmean(Vtraces_allMice,1)) + (ts_vLow*SEMv);  % Confidence Intervals
-    CI_vHigh = (nanmean(Vtraces_allMice,1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+if VWQ == 1 
+    close_avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    far_avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
+    avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
+for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+    %average the data 
+    if BBBQ == 1
+        close_avBdata{per} = nanmean(close_Btraces_allMice{per},1);
+        far_avBdata{per} = nanmean(far_Btraces_allMice{per},1);
+        avBdata{per} = nanmean(Btraces_allMice{per},1);
+    end 
+    close_avCdata{per} = nanmean(close_Ctraces_allMice{per},1);
+    far_avCdata{per} = nanmean(far_Ctraces_allMice{per},1);
+    avCdata{per} = nanmean(Ctraces_allMice{per},1);
+    if VWQ == 1
+        close_avVdata{per} = nanmean(close_Vtraces_allMice{per},1);
+        far_avVdata{per} = nanmean(far_Vtraces_allMice{per},1);
+        avVdata{per} = nanmean(Vtraces_allMice{per},1);
+    end 
 
-x = 1:length(close_CI_cLow);
+    %DETERMINE 95% CI
+    if BBBQ == 1 
+        close_SEMb = (nanstd(close_Btraces_allMice{per}))/(sqrt(size(close_Btraces_allMice{per},1))); % Standard Error            
+        close_ts_bLow = tinv(0.025,size(close_Btraces_allMice{per},1)-1);% T-Score for 95% CI
+        close_ts_bHigh = tinv(0.975,size(close_Btraces_allMice{per},1)-1);% T-Score for 95% CI
+        close_CI_bLow = (nanmean(close_Btraces_allMice{per},1)) + (close_ts_bLow*close_SEMb);  % Confidence Intervals
+        close_CI_bHigh = (nanmean(close_Btraces_allMice{per},1)) + (close_ts_bHigh*close_SEMb);  % Confidence Intervals        
+        far_SEMb = (nanstd(far_Btraces_allMice{per}))/(sqrt(size(far_Btraces_allMice{per},1))); % Standard Error            
+        far_ts_bLow = tinv(0.025,size(far_Btraces_allMice{per},1)-1);% T-Score for 95% CI
+        far_ts_bHigh = tinv(0.975,size(far_Btraces_allMice{per},1)-1);% T-Score for 95% CI
+        far_CI_bLow = (nanmean(far_Btraces_allMice{per},1)) + (far_ts_bLow*far_SEMb);  % Confidence Intervals
+        far_CI_bHigh = (nanmean(far_Btraces_allMice{per},1)) + (far_ts_bHigh*far_SEMb);  % Confidence Intervals
+        SEMb = (nanstd(Btraces_allMice{per}))/(sqrt(size(Btraces_allMice{per},1))); % Standard Error            
+        ts_bLow = tinv(0.025,size(Btraces_allMice{per},1)-1);% T-Score for 95% CI
+        ts_bHigh = tinv(0.975,size(Btraces_allMice{per},1)-1);% T-Score for 95% CI
+        CI_bLow = (nanmean(Btraces_allMice{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+        CI_bHigh = (nanmean(Btraces_allMice{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+    end 
+    close_SEMc = (nanstd(close_Ctraces_allMice{per}))/(sqrt(size(close_Ctraces_allMice{per},1))); % Standard Error            
+    close_ts_cLow = tinv(0.025,size(close_Ctraces_allMice{per},1)-1);% T-Score for 95% CI
+    close_ts_cHigh = tinv(0.975,size(close_Ctraces_allMice{per},1)-1);% T-Score for 95% CI
+    close_CI_cLow = (nanmean(close_Ctraces_allMice{per},1)) + (close_ts_cLow*close_SEMc);  % Confidence Intervals
+    close_CI_cHigh = (nanmean(close_Ctraces_allMice{per},1)) + (close_ts_cHigh*close_SEMc);  % Confidence Intervals   
+    far_SEMc = (nanstd(far_Ctraces_allMice{per}))/(sqrt(size(far_Ctraces_allMice{per},1))); % Standard Error            
+    far_ts_cLow = tinv(0.025,size(far_Ctraces_allMice{per},1)-1);% T-Score for 95% CI
+    far_ts_cHigh = tinv(0.975,size(far_Ctraces_allMice{per},1)-1);% T-Score for 95% CI
+    far_CI_cLow = (nanmean(far_Ctraces_allMice{per},1)) + (far_ts_cLow*far_SEMc);  % Confidence Intervals
+    far_CI_cHigh = (nanmean(far_Ctraces_allMice{per},1)) + (far_ts_cHigh*far_SEMc);  % Confidence Intervals
+    SEMc = (nanstd(Ctraces_allMice{per}))/(sqrt(size(Ctraces_allMice{per},1))); % Standard Error            
+    ts_cLow = tinv(0.025,size(Ctraces_allMice{per},1)-1);% T-Score for 95% CI
+    ts_cHigh = tinv(0.975,size(Ctraces_allMice{per},1)-1);% T-Score for 95% CI
+    CI_cLow = (nanmean(Ctraces_allMice{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+    CI_cHigh = (nanmean(Ctraces_allMice{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+    if VWQ == 1
+        close_SEMv = (nanstd(close_Vtraces_allMice{per}))/(sqrt(size(close_Vtraces_allMice{per},1))); % Standard Error            
+        close_ts_vLow = tinv(0.025,size(close_Vtraces_allMice{per},1)-1);% T-Score for 95% CI
+        close_ts_vHigh = tinv(0.975,size(close_Vtraces_allMice{per},1)-1);% T-Score for 95% CI
+        close_CI_vLow = (nanmean(close_Vtraces_allMice{per},1)) + (close_ts_vLow*close_SEMv);  % Confidence Intervals
+        close_CI_vHigh = (nanmean(close_Vtraces_allMice{per},1)) + (close_ts_vHigh*close_SEMv);  % Confidence Intervals      
+        far_SEMv = (nanstd(far_Vtraces_allMice{per}))/(sqrt(size(far_Vtraces_allMice{per},1))); % Standard Error            
+        far_ts_vLow = tinv(0.025,size(far_Vtraces_allMice{per},1)-1);% T-Score for 95% CI
+        far_ts_vHigh = tinv(0.975,size(far_Vtraces_allMice{per},1)-1);% T-Score for 95% CI
+        far_CI_vLow = (nanmean(far_Vtraces_allMice{per},1)) + (far_ts_vLow*far_SEMv);  % Confidence Intervals
+        far_CI_vHigh = (nanmean(far_Vtraces_allMice{per},1)) + (far_ts_vHigh*far_SEMv);  % Confidence Intervals
+        SEMv = (nanstd(Vtraces_allMice{per}))/(sqrt(size(Vtraces_allMice{per},1))); % Standard Error            
+        ts_vLow = tinv(0.025,size(Vtraces_allMice{per},1)-1);% T-Score for 95% CI
+        ts_vHigh = tinv(0.975,size(Vtraces_allMice{per},1)-1);% T-Score for 95% CI
+        CI_vLow = (nanmean(Vtraces_allMice{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+        CI_vHigh = (nanmean(Vtraces_allMice{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+    end 
 
-% plotting code below 
+    x = 1:length(close_CI_cLow);
 
-Frames = minLen;
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:min(FPSstack2):Frames_post_stim_start)/min(FPSstack2)))+1; %min(FPSstack)
-if Frames > 100
-    FrameVals = round((1:min(FPSstack2):Frames))+10;
-elseif Frames < 100
-    FrameVals = round((1:min(FPSstack2):Frames))+5; 
-end 
-Bcolors = [1,0,0;1,0.5,0;1,1,0];
-Ccolors = [0,0,1;0,0.5,1;0,1,1];
-Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
-
-% plot close and far Ca ROI and BBB data (all mice averaged) overlaid 
-if BBBQ == 1
-    fig = figure;
-    ax=gca;
-    hold all
-    plot(close_avCdata,'Color',Ccolors(1,:),'LineWidth',4)
-    patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
-    alpha(0.3)
-    plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
-    patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
-%     plot(avCdata,'b','LineWidth',4)
-%     patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
-    alpha(0.3)
-    changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
-    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
-    xLimStart = floor(10*min(FPSstack2));
-    xLimEnd = floor(24*min(FPSstack2)); 
-    xlim([1 minLen])
-    ylim([-45 130])
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-    %add right y axis tick marks for a specific DOD figure. 
-    yyaxis right 
-    p(1) = plot(close_avBdata,'Color',Bcolors(1,:),'LineWidth',4);
-    patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],Bcolors(1,:),'EdgeColor','none')
-    alpha(0.3)
-    p(2) = plot(far_avBdata,'-','Color',Bcolors(2,:),'LineWidth',4);
-    patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
-    alpha(0.3)
-%     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('BBB permeability percent change','FontName','Times')
-%     title('Close Terminals. All mice Averaged.')
-    ylim([-0.1 0.25])
-    alpha(0.3)
-    set(gca,'YColor',[0 0 0]);   
+    % plotting code below 
+    Frames = minLen;
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:min(FPSstack2):Frames_post_stim_start)/min(FPSstack2)))+1; %min(FPSstack)
+    if Frames > 100
+        FrameVals = round((1:min(FPSstack2):Frames))+10;
+    elseif Frames < 100
+        FrameVals = round((1:min(FPSstack2):Frames))+5; 
+    end 
+    Bcolors = [1,0,0;1,0.5,0;1,1,0];
+    Ccolors = [0,0,1;0,0.5,1;0,1,1];
+    Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
     
-    fig = figure;
-    ax=gca;
-    hold all
-    plot(avCdata,'b','LineWidth',4)
-    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
-    alpha(0.3)
-    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('calcium signal percent change','FontName','Times')
-    xlim([1 minLen])
-%     ylim([-45 130])
-    ylim([-1 3])
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-    %add right y axis tick marks for a specific DOD figure. 
-%     plot(opto_allRedAVbData_3,'r:','LineWidth',4);
-%     patch([opto_x_2 fliplr(opto_x_2)],[(opto_CI_bLow_3) (fliplr(opto_CI_bHigh_3))],'r','EdgeColor','none')
-%     alpha(0.3)
-%     ylabel({'Optogenetically Triggered';'BBB Permeability Percent Change'},'FontName','Times')
-    
-    yyaxis right 
-    p(1) = plot(avBdata,'r','LineWidth',4);
-    patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
-    alpha(0.3)
-    
+    if per == 1 
+        perLabel = ("Peaks from entire experiment. ");
+    elseif per == 2 
+        perLabel = ("Peaks from stimulus. ");
+    elseif per == 3 
+        perLabel = ("Peaks peaks from reward. ");
+    elseif per == 4 
+        perLabel = ("Peaks from ITI. ");
+    end 
 
-%     plot(avBdata_redLight,'r','LineWidth',4)
-%     plot(avBdata_lightOff,'k','LineWidth',4)
-%     plot(test,'r:','LineWidth',4) % this is resampled opto data
-%     alpha(0.3)
-    plot([123 123], [-5000 5000], 'k:','LineWidth',2)  
-%     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel({'Spike Triggered';'BBB Permeability Percent Change'},'FontName','Times')
-%     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
-    ylim([-0.1 0.25])
-    
-    set(gca,'YColor',[0 0 0]);  
-%     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
-end 
+    % plot close and far Ca ROI and BBB data (all mice averaged) overlaid 
+    if BBBQ == 1
+        fig = figure;
+        ax=gca;
+        hold all
+        plot(close_avCdata{per},'Color',Ccolors(1,:),'LineWidth',4)
+        patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
+        alpha(0.3)
+        plot(far_avCdata{per},'Color',Ccolors(2,:),'LineWidth',4)
+        patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+    %     plot(avCdata,'b','LineWidth',4)
+    %     patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+        alpha(0.3)
+        changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
+        % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('calcium signal percent change','FontName','Times')
+        xLimStart = floor(10*min(FPSstack2));
+        xLimEnd = floor(24*min(FPSstack2)); 
+        xlim([1 minLen])
+        ylim([-45 130])
+        set(fig,'position', [500 100 900 800])
+        alpha(0.3)
+        %add right y axis tick marks for a specific DOD figure. 
+        yyaxis right 
+        p(1) = plot(close_avBdata{per},'Color',Bcolors(1,:),'LineWidth',4);
+        patch([x fliplr(x)],[(close_CI_bLow) (fliplr(close_CI_bHigh))],Bcolors(1,:),'EdgeColor','none')
+        alpha(0.3)
+        p(2) = plot(far_avBdata{per},'-','Color',Bcolors(2,:),'LineWidth',4);
+        patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
+        alpha(0.3)
+        legend([p(1) p(2)],'Close Terminals','Far Terminals')
+        ylabel('BBB permeability percent change','FontName','Times')
+        title({'All mice Averaged.';perLabel)
+        ylim([-0.1 0.25])
+        alpha(0.3)
+        set(gca,'YColor',[0 0 0]);   
 
-% plot close and far Ca ROI and VW data (all mice averaged) overlaid 
-if VWQ == 1
-    fig = figure;
-    ax=gca;
-    hold all
-    plot(close_avCdata,'Color',Ccolors(1,:),'LineWidth',4)
-    patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
-    alpha(0.3)
-    plot(far_avCdata,'Color',Ccolors(2,:),'LineWidth',4)
-    patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
-    alpha(0.3)
-    changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
-    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('Calcium Signal Percent Change','FontName','Times')
-    xLimStart = floor(10*min(FPSstack2));
-    xLimEnd = floor(24*min(FPSstack2)); 
-    xlim([1 minLen])
-    ylim([-10 150])
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-    %add right y axis tick marks for a specific DOD figure. 
-    yyaxis right 
-    p(1) = plot(close_avVdata,'Color',Vcolors(1,:),'LineWidth',4);
-    patch([x fliplr(x)],[(close_CI_vLow) (fliplr(close_CI_vHigh))],Vcolors(1,:),'EdgeColor','none')
-    alpha(0.3)
-    p(2) = plot(far_avVdata,'-','Color',Vcolors(2,:),'LineWidth',4);
-    patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],Vcolors(2,:),'EdgeColor','none')
-    alpha(0.3)
-    legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('Vessel Width Percent Change','FontName','Times')
-%     title('Close Terminals. All mice Averaged.')
-    ylim([-0.02 0.02])
-    alpha(0.3)
-    set(gca,'YColor',[0 0 0]);   
-    
-    fig = figure;
-    ax=gca;
-    hold all
-    plot(avCdata,'b','LineWidth',4)
-    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
-    alpha(0.3)
-    % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;   
-    ax.FontSize = 25;
-    ax.FontName = 'Times';
-    xlabel('time (s)','FontName','Times')
-    ylabel('Calcium Signal Percent Change','FontName','Times')
-    xlim([1 minLen])
-    ylim([-45 130])
-    set(fig,'position', [500 100 900 800])
-    alpha(0.3)
-    %add right y axis tick marks for a specific DOD figure. 
-    yyaxis right 
-    p(1) = plot(avVdata,'k','LineWidth',4);
-    patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
-    alpha(0.3)
-%     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-    ylabel('Vessel Width Percent Change','FontName','Times')
-%     title('Close Terminals. All mice Averaged.')
-    ylim([-0.1 0.25])
-    alpha(0.3)
-    set(gca,'YColor',[0 0 0]);   
+        fig = figure;
+        ax=gca;
+        hold all
+        plot(avCdata{per},'b','LineWidth',4)
+        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+        alpha(0.3)
+        % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('calcium signal percent change','FontName','Times')
+        xlim([1 minLen])
+    %     ylim([-45 130])
+        ylim([-1 3])
+        set(fig,'position', [500 100 900 800])
+        alpha(0.3)
+        %add right y axis tick marks for a specific DOD figure. 
+    %     plot(opto_allRedAVbData_3,'r:','LineWidth',4);
+    %     patch([opto_x_2 fliplr(opto_x_2)],[(opto_CI_bLow_3) (fliplr(opto_CI_bHigh_3))],'r','EdgeColor','none')
+    %     alpha(0.3)
+    %     ylabel({'Optogenetically Triggered';'BBB Permeability Percent Change'},'FontName','Times')
+
+        yyaxis right 
+        p(1) = plot(avBdata{per},'r','LineWidth',4);
+        patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
+        alpha(0.3)
+
+
+    %     plot(avBdata_redLight,'r','LineWidth',4)
+    %     plot(avBdata_lightOff,'k','LineWidth',4)
+    %     plot(test,'r:','LineWidth',4) % this is resampled opto data
+    %     alpha(0.3)
+        plot([123 123], [-5000 5000], 'k:','LineWidth',2)  
+    %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
+        ylabel({'Spike Triggered';'BBB Permeability Percent Change'},'FontName','Times')
+    %     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
+        ylim([-0.1 0.25])
+
+        set(gca,'YColor',[0 0 0]);  
+    %     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
+    end 
+
+    % plot close and far Ca ROI and VW data (all mice averaged) overlaid 
+    if VWQ == 1
+        fig = figure;
+        ax=gca;
+        hold all
+        plot(close_avCdata{per},'Color',Ccolors(1,:),'LineWidth',4)
+        patch([x fliplr(x)],[close_CI_cLow fliplr(close_CI_cHigh)],Ccolors(1,:),'EdgeColor','none')
+        alpha(0.3)
+        plot(far_avCdata{per},'Color',Ccolors(2,:),'LineWidth',4)
+        patch([x fliplr(x)],[far_CI_cLow fliplr(far_CI_cHigh)],Ccolors(2,:),'EdgeColor','none')
+        alpha(0.3)
+        changePt = floor(Frames/2)-floor(0.25*min(FPSstack2));
+        % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('Calcium Signal Percent Change','FontName','Times')
+        xLimStart = floor(10*min(FPSstack2));
+        xLimEnd = floor(24*min(FPSstack2)); 
+        xlim([1 minLen])
+        ylim([-10 150])
+        set(fig,'position', [500 100 900 800])
+        alpha(0.3)
+        %add right y axis tick marks for a specific DOD figure. 
+        yyaxis right 
+        p(1) = plot(close_avVdata{per},'Color',Vcolors(1,:),'LineWidth',4);
+        patch([x fliplr(x)],[(close_CI_vLow) (fliplr(close_CI_vHigh))],Vcolors(1,:),'EdgeColor','none')
+        alpha(0.3)
+        p(2) = plot(far_avVdata{per},'-','Color',Vcolors(2,:),'LineWidth',4);
+        patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],Vcolors(2,:),'EdgeColor','none')
+        alpha(0.3)
+        legend([p(1) p(2)],'Close Terminals','Far Terminals')
+        ylabel('Vessel Width Percent Change','FontName','Times')
+    %     title('Close Terminals. All mice Averaged.')
+        ylim([-0.02 0.02])
+        alpha(0.3)
+        set(gca,'YColor',[0 0 0]);   
+
+        fig = figure;
+        ax=gca;
+        hold all
+        plot(avCdata{per},'b','LineWidth',4)
+        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+        alpha(0.3)
+        % plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;   
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xlabel('time (s)','FontName','Times')
+        ylabel('Calcium Signal Percent Change','FontName','Times')
+        xlim([1 minLen])
+        ylim([-45 130])
+        set(fig,'position', [500 100 900 800])
+        alpha(0.3)
+        %add right y axis tick marks for a specific DOD figure. 
+        yyaxis right 
+        p(1) = plot(avVdata{per},'k','LineWidth',4);
+        patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
+        alpha(0.3)
+    %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
+        ylabel('Vessel Width Percent Change','FontName','Times')
+    %     title('Close Terminals. All mice Averaged.')
+        ylim([-0.1 0.25])
+        alpha(0.3)
+        set(gca,'YColor',[0 0 0]);   
+    end 
 end 
 
 %}
