@@ -3110,6 +3110,7 @@ elseif tTypeQ == 1
 end 
 %}
 %% STA: smooth and normalize to baseline period
+% NEED TO EVENTUALLY UPDATE MINVALUE TO ADD FOR TTYPE == 1 
 %{
 if windSize == 24 
     baselineTime = 5;
@@ -3228,13 +3229,22 @@ if tTypeQ == 0
                     %negative gonig points which mess up the normalizing 
                     if BBBQ == 1
                         for BBBroi = 1:length(bDataFullTrace{1})
-                            sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} + 100;
+                            % determine the minimum value, add space (+100)
+                            minValToAdd = abs(ceil(min(min(SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}))))+100;
+                            % add min value 
+                            sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} + minValToAdd;
                         end
                     end 
-                    sortedCdata2{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per} + 100;
+                    % determine the minimum value, add space (+100)
+                    minValToAdd = abs(ceil(min(min(SCdataPeaks{vid}{terminals(ccell)}{per}))))+100;
+                    % add min value
+                    sortedCdata2{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per} + minValToAdd;
                     if VWQ == 1
                         for VWroi = 1:length(vDataFullTrace{1})
-                            sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} + 100;
+                            % determine the minimum value, add space (+100)
+                            minValToAdd = abs(ceil(min(min(SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}))))+100;
+                            % add min value
+                            sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} + minValToAdd;
                         end 
                     end 
 
@@ -3517,6 +3527,8 @@ if tTypeQ == 0
                     count3 = count3 + 1;
     %                     end               
                 end 
+                %remove rows full of zeros if there are any b = a(any(a,2),:)
+                CTraces{terms(ccell)}{per} = CTraces{terms(ccell)}{per}(any(CTraces{terms(ccell)}{per},2),:);
                 if BBBpQ == 1
                     for BBBroi = 1:length(sortedBdata{1})
                         for peak = 1:size(allBTraces{BBBroi}{terms(ccell)}{per},1)
@@ -3525,6 +3537,8 @@ if tTypeQ == 0
                                     count2 = count2 + 1;
         %                         end 
                         end 
+                        %remove rows full of zeros if there are any b = a(any(a,2),:)
+                        BTraces{BBBroi}{terms(ccell)}{per} = BTraces{BBBroi}{terms(ccell)}{per}(any(BTraces{BBBroi}{terms(ccell)}{per},2),:);
                     end 
                 end 
                 if VWpQ == 1
@@ -3535,6 +3549,8 @@ if tTypeQ == 0
                                     count4 = count4 + 1;
         %                         end 
                         end 
+                        %remove rows full of zeros if there are any b = a(any(a,2),:)
+                        VTraces{VWroi}{terms(ccell)}{per} = VTraces{VWroi}{terms(ccell)}{per}(any(VTraces{VWroi}{terms(ccell)}{per},2),:);
                     end 
                 end 
 
@@ -3685,11 +3701,15 @@ if tTypeQ == 0
                                         BTraces{BBBroi}{terms(ccell)}{per}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}{per}(peak,:));
                                         count2 = count2 + 1;
             %                         end 
+                                        %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                        BTraces{BBBroi}{terms(ccell)}{per} = BTraces{BBBroi}{terms(ccell)}{per}(any(BTraces{BBBroi}{terms(ccell)}{per},2),:);
                                     end 
                                 end 
             %                     if allCTraces{terms(ccell)}(peak,:) < AVSNCdataPeaks2{terms(ccell)} + nanstd(allCTraces{terms(ccell)},1)*2 & allCTraces{terms(ccell)}(peak,:) > AVSNCdataPeaks2{terms(ccell)} - nanstd(allCTraces{terms(ccell)},1)*2                      
                                     CTraces{terms(ccell)}{per}(count3,:) = (allCTraces{terms(ccell)}{per}(peak,:));
                                     count3 = count3 + 1;
+                                    %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                    CTraces{terms(ccell)}{per} = CTraces{terms(ccell)}{per}(any(CTraces{terms(ccell)}{per},2),:);
             %                     end 
                                 if VWpQ == 1
                                     for VWroi = 1:length(sortedVdata{1})
@@ -3697,6 +3717,8 @@ if tTypeQ == 0
                                         VTraces{VWroi}{terms(ccell)}{per}(count4,:) = (allVTraces{VWroi}{terms(ccell)}{per}(peak,:));
                                         count4 = count4 + 1;
             %                         end 
+                                        %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                        VTraces{VWroi}{terms(ccell)}{per} = VTraces{VWroi}{terms(ccell)}{per}(any(VTraces{VWroi}{terms(ccell)}{per},2),:);
                                     end 
                                 end 
                         end 
@@ -4224,7 +4246,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-
+%{
 %get the data you need 
 mouseDistQ = input('Input 1 if you already have a .mat file containing multiple mouse Ca ROI distances. Input 0 to make this .mat file. ');
 if mouseDistQ == 1 
@@ -4470,11 +4492,19 @@ for mouse = 1:mouseNum
             farCTraces{mouse} = allCTraces{mouse}(farCaROIs{mouse}(farCaROI_CaBBBtimeLags{mouse} < 0));
         end           
     end 
+    %remove empty cells if there are any b = a(any(a,2),:)
+    closeCTraces{mouse} = closeCTraces{mouse}(~cellfun('isempty',closeCTraces{mouse}));
+    farCTraces{mouse} = farCTraces{mouse}(~cellfun('isempty',farCTraces{mouse}));
+    CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));
     if BBBQ == 1
         for BBBroi = 1:length(BBBrois{mouse})
             closeBTraces{mouse}{BBBroi} = allBTraces{mouse}{BBBrois{mouse}(BBBroi)}(closeCaROIs{mouse});
             farBTraces{mouse}{BBBroi} = allBTraces{mouse}{BBBrois{mouse}(BBBroi)}(farCaROIs{mouse});
             BTraces{mouse}{BBBroi} = allBTraces{mouse}{BBBrois{mouse}(BBBroi)}(CaROIs{mouse}); 
+            %remove empty cells if there are any b = a(any(a,2),:)
+            closeBTraces{mouse}{BBBroi} = closeBTraces{mouse}{BBBroi}(~cellfun('isempty',closeBTraces{mouse}{BBBroi}));
+            farBTraces{mouse}{BBBroi} = farBTraces{mouse}{BBBroi}(~cellfun('isempty',farBTraces{mouse}{BBBroi}));
+            BTraces{mouse}{BBBroi} = BTraces{mouse}{BBBroi}(~cellfun('isempty',BTraces{mouse}{BBBroi}));
         end
     end 
     if VWQ == 1
@@ -4482,6 +4512,10 @@ for mouse = 1:mouseNum
             closeVTraces{mouse}{VWroi} = allVTraces{mouse}{VWroi}(closeCaROIs{mouse});
             farVTraces{mouse}{VWroi} = allVTraces{mouse}{VWroi}(farCaROIs{mouse});
             VTraces{mouse}{VWroi} = allVTraces{mouse}{VWroi}(CaROIs{mouse});
+            %remove empty cells if there are any b = a(any(a,2),:)
+            closeVTraces{mouse}{VWroi} = closeVTraces{mouse}{VWroi}(~cellfun('isempty',closeVTraces{mouse}{VWroi}));
+            farVTraces{mouse}{VWroi} = farVTraces{mouse}{VWroi}(~cellfun('isempty',farVTraces{mouse}{VWroi}));
+            VTraces{mouse}{VWroi} = VTraces{mouse}{VWroi}(~cellfun('isempty',VTraces{mouse}{VWroi}));
         end 
     end 
 end 
@@ -4490,87 +4524,93 @@ end
 % output = CaArray{mouse}{per}(concatenated caRoi data)
 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)
 for mouse = 1:mouseNum
-    for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         for ccell = 1:length(closeCTraces{mouse})
-            if ccell == 1 
-                closeCTraceArray{mouse}{per} = closeCTraces{mouse}{ccell}{per}; 
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        closeBTraceArray{mouse}{BBBroi}{per} = closeBTraces{mouse}{BBBroi}{ccell}{per}; 
+            if isempty(closeCTraces{mouse}{ccell}) == 0 
+                if ccell == 1 
+                    closeCTraceArray{mouse}{per} = closeCTraces{mouse}{ccell}{per}; 
+                    if BBBQ == 1
+                        for BBBroi = 1:length(BBBrois{mouse})
+                            closeBTraceArray{mouse}{BBBroi}{per} = closeBTraces{mouse}{BBBroi}{ccell}{per}; 
+                        end 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        closeVTraceArray{mouse}{VWroi}{per} = closeVTraces{mouse}{VWroi}{ccell}{per}; 
+                    if VWQ == 1
+                        for VWroi = 1:VWroiNum(mouse)
+                            closeVTraceArray{mouse}{VWroi}{per} = closeVTraces{mouse}{VWroi}{ccell}{per}; 
+                        end 
                     end 
-                end 
-            elseif ccell > 1 
-                closeCTraceArray{mouse}{per} = vertcat(closeCTraceArray{mouse}{per},closeCTraces{mouse}{ccell}{per});
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        closeBTraceArray{mouse}{BBBroi}{per} = vertcat(closeBTraceArray{mouse}{BBBroi}{per},closeBTraces{mouse}{BBBroi}{ccell}{per});
+                elseif ccell > 1 
+                    closeCTraceArray{mouse}{per} = vertcat(closeCTraceArray{mouse}{per},closeCTraces{mouse}{ccell}{per});
+                    if BBBQ == 1
+                        for BBBroi = 1:length(BBBrois{mouse})
+                            closeBTraceArray{mouse}{BBBroi}{per} = vertcat(closeBTraceArray{mouse}{BBBroi}{per},closeBTraces{mouse}{BBBroi}{ccell}{per});
+                        end 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        closeVTraceArray{mouse}{VWroi}{per} = vertcat(closeVTraceArray{mouse}{VWroi}{per},closeVTraces{mouse}{VWroi}{ccell}{per});
+                    if VWQ == 1
+                        for VWroi = 1:VWroiNum(mouse)
+                            closeVTraceArray{mouse}{VWroi}{per} = vertcat(closeVTraceArray{mouse}{VWroi}{per},closeVTraces{mouse}{VWroi}{ccell}{per});
+                        end 
                     end 
-                end 
-            end
+                end
+            end 
         end 
         for ccell = 1:length(farCTraces{mouse})
-            if ccell == 1 
-                farCTraceArray{mouse}{per} = farCTraces{mouse}{ccell}{per};
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        farBTraceArray{mouse}{BBBroi}{per} = farBTraces{mouse}{BBBroi}{ccell}{per}; 
+            if isempty(farCTraces{mouse}{ccell}) == 0 
+                if ccell == 1 
+                    farCTraceArray{mouse}{per} = farCTraces{mouse}{ccell}{per};
+                    if BBBQ == 1
+                        for BBBroi = 1:length(BBBrois{mouse})
+                            farBTraceArray{mouse}{BBBroi}{per} = farBTraces{mouse}{BBBroi}{ccell}{per}; 
+                        end 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        farVTraceArray{mouse}{VWroi}{per} = farVTraces{mouse}{VWroi}{ccell}{per}; 
+                    if VWQ == 1
+                        for VWroi = 1:VWroiNum(mouse)
+                            farVTraceArray{mouse}{VWroi}{per} = farVTraces{mouse}{VWroi}{ccell}{per}; 
+                        end 
                     end 
-                end 
-            elseif ccell > 1 
-                farCTraceArray{mouse}{per} = vertcat(farCTraceArray{mouse}{per},farCTraces{mouse}{ccell}{per});
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        farBTraceArray{mouse}{BBBroi}{per} = vertcat(farBTraceArray{mouse}{BBBroi}{per},farBTraces{mouse}{BBBroi}{ccell}{per});
+                elseif ccell > 1 
+                    farCTraceArray{mouse}{per} = vertcat(farCTraceArray{mouse}{per},farCTraces{mouse}{ccell}{per});
+                    if BBBQ == 1
+                        for BBBroi = 1:length(BBBrois{mouse})
+                            farBTraceArray{mouse}{BBBroi}{per} = vertcat(farBTraceArray{mouse}{BBBroi}{per},farBTraces{mouse}{BBBroi}{ccell}{per});
+                        end 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        farVTraceArray{mouse}{VWroi}{per} = vertcat(farVTraceArray{mouse}{VWroi}{per},farVTraces{mouse}{VWroi}{ccell}{per});
+                    if VWQ == 1
+                        for VWroi = 1:VWroiNum(mouse)
+                            farVTraceArray{mouse}{VWroi}{per} = vertcat(farVTraceArray{mouse}{VWroi}{per},farVTraces{mouse}{VWroi}{ccell}{per});
+                        end 
                     end 
-                end 
-            end
+                end
+            end 
         end 
         for ccell = 1:length(CTraces{mouse})
-            if ccell == 1 
-                CTraceArray{mouse}{per} = CTraces{mouse}{ccell}{per};
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        BTraceArray{mouse}{BBBroi}{per} = BTraces{mouse}{BBBroi}{ccell}{per}; 
+            if isempty(CTraces{mouse}{ccell}) == 0 
+                if ccell == 1 
+                    CTraceArray{mouse}{per} = CTraces{mouse}{ccell}{per};
+                    if BBBQ == 1
+                        for BBBroi = 1:length(BBBrois{mouse})
+                            BTraceArray{mouse}{BBBroi}{per} = BTraces{mouse}{BBBroi}{ccell}{per}; 
+                        end 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        VTraceArray{mouse}{VWroi}{per} = VTraces{mouse}{VWroi}{ccell}{per}; 
+                    if VWQ == 1
+                        for VWroi = 1:VWroiNum(mouse)
+                            VTraceArray{mouse}{VWroi}{per} = VTraces{mouse}{VWroi}{ccell}{per}; 
+                        end 
                     end 
-                end 
-            elseif ccell > 1 
-                CTraceArray{mouse}{per} = vertcat(CTraceArray{mouse}{per},CTraces{mouse}{ccell}{per});
-                if BBBQ == 1
-                    for BBBroi = 1:length(BBBrois{mouse})
-                        BTraceArray{mouse}{BBBroi}{per} = vertcat(BTraceArray{mouse}{BBBroi}{per},BTraces{mouse}{BBBroi}{ccell}{per});
+                elseif ccell > 1 
+                    CTraceArray{mouse}{per} = vertcat(CTraceArray{mouse}{per},CTraces{mouse}{ccell}{per});
+                    if BBBQ == 1
+                        for BBBroi = 1:length(BBBrois{mouse})
+                            BTraceArray{mouse}{BBBroi}{per} = vertcat(BTraceArray{mouse}{BBBroi}{per},BTraces{mouse}{BBBroi}{ccell}{per});
+                        end 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:VWroiNum(mouse)
-                        VTraceArray{mouse}{VWroi}{per} = vertcat(VTraceArray{mouse}{VWroi}{per},VTraces{mouse}{VWroi}{ccell}{per});
+                    if VWQ == 1
+                        for VWroi = 1:VWroiNum(mouse)
+                            VTraceArray{mouse}{VWroi}{per} = vertcat(VTraceArray{mouse}{VWroi}{per},VTraces{mouse}{VWroi}{ccell}{per});
+                        end 
                     end 
-                end 
-            end
+                end
+            end 
         end 
 
         %DETERMINE 95% CI
@@ -4908,7 +4948,7 @@ if VWQ == 1
     Vtraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
 for mouse = 1:length(mouseNums)   
-    for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         %resample and sort data
         if BBBQ == 1
             for BBBroi = 1:length(BBBrois{mouse})
@@ -4924,7 +4964,7 @@ for mouse = 1:length(mouseNums)
                     Btraces_allMice{per}(counter7,:) = resample(BTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
                     counter7 = counter7 + 1;
                 end 
-            end 
+            end    
         end 
         for trace2 = 1:size(closeCTraceArray{mouseNums(mouse)}{per},1)
             close_Ctraces_allMice{per}(counter3,:) = (resample(closeCTraceArray{mouseNums(mouse)}{per}(trace2,:),minLen,size(closeCTraceArray{mouseNums(mouse)}{per},2)));% * (size(closeCTraceArray{mouseNums(mouse)},1)/totalNum_closeCtraces);           
@@ -4957,7 +4997,30 @@ for mouse = 1:length(mouseNums)
     end 
 end 
 
-%% for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+%remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
+for mouse = 1:length(mouseNums)   
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
+        if BBBQ == 1 
+            for BBBroi = 1:length(BBBrois{mouse})
+                close_Btraces_allMice{per} = close_Btraces_allMice{per}(any(close_Btraces_allMice{per},2),:);
+                far_Btraces_allMice{per} = far_Btraces_allMice{per}(any(far_Btraces_allMice{per},2),:);
+                Btraces_allMice{per} = Btraces_allMice{per}(any(Btraces_allMice{per},2),:);  
+            end 
+        end 
+        close_Ctraces_allMice{per} = close_Ctraces_allMice{per}(any(close_Ctraces_allMice{per},2),:);
+        far_Ctraces_allMice{per} = far_Ctraces_allMice{per}(any(far_Ctraces_allMice{per},2),:);
+        Ctraces_allMice{per} = Ctraces_allMice{per}(any(Ctraces_allMice{per},2),:);
+        if VWQ == 1
+            for VWroi = 1:VWroiNum(mouse)
+                close_Vtraces_allMice{per} = close_Vtraces_allMice{per}(any(close_Vtraces_allMice{per},2),:);
+                far_Vtraces_allMice{per} = far_Vtraces_allMice{per}(any(far_Vtraces_allMice{per},2),:);
+                Vtraces_allMice{per} = Vtraces_allMice{per}(any(Vtraces_allMice{per},2),:);
+            end 
+        end 
+    end 
+end 
+
+% plotting code below 
 close_avCdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 far_avCdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 avCdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
@@ -4971,7 +5034,7 @@ if VWQ == 1
     far_avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
     avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
-for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
+for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
     %average the data 
     if BBBQ == 1
         close_avBdata{per} = nanmean(close_Btraces_allMice{per},1);
