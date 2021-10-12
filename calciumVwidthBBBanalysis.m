@@ -2878,7 +2878,6 @@ end
 % the below should usually be commented out
 % BBBQ = 1; VWQ = 1; CAQ = 1;
 
-
 windSize = input('How big should the window be around Ca peak in seconds? 24 or 5 sec? ');
 % windSize = 24; 
 % windSize = 5;
@@ -3292,9 +3291,7 @@ if tTypeQ == 0
                 end     
             end 
         end 
-     end 
-     
-
+     end      
     %} 
 elseif tTypeQ == 1 
     %{
@@ -3673,31 +3670,33 @@ if tTypeQ == 0
         
     elseif AVQ == 1 % average across calcium ROIs 
         for ccell = 1:length(terms) 
-            if isempty(SNCdataPeaks{1}{terms(ccell)}) == 0 
-                for per = 1:length(sortedCdata{1}{terminals(ccell)})
-                    if isempty(SNCdataPeaks{1}{terms(ccell)}{per}) == 0 
+            if isempty(SNCdataPeaks{vid}{terms(ccell)}) == 0 
+                for per = 1:length(sortedCdata{vid}{terminals(ccell)})
+                    if isempty(SNCdataPeaks{vid}{terms(ccell)}{per}) == 0 
                         count = 1;
                         % sort data 
                         for vid = 1:length(vidList)   
-                            for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)}{per},1) 
-                                if BBBpQ == 1
-                                    for BBBroi = 1:length(sortedBdata{1})
-                                        allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100); 
-                                        %remove rows full of zeros if there are any b = a(any(a,2),:)
-                                        allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
+                            if isempty(SNCdataPeaks{vid}{terms(ccell)}) == 0 
+                                for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)}{per},1) 
+                                    if BBBpQ == 1
+                                        for BBBroi = 1:length(sortedBdata{1})
+                                            allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100); 
+                                            %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                            allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
+                                        end 
                                     end 
-                                end 
-                                if VWpQ == 1
-                                    for VWroi = 1:length(sortedVdata{1})
-                                        allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
-                                        %remove rows full of zeros if there are any b = a(any(a,2),:)
-                                        allVTraces{VWroi}{terms(ccell)}{per} = allVTraces{VWroi}{terms(ccell)}{per}(any(allVTraces{VWroi}{terms(ccell)}{per},2),:);
+                                    if VWpQ == 1
+                                        for VWroi = 1:length(sortedVdata{1})
+                                            allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
+                                            %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                            allVTraces{VWroi}{terms(ccell)}{per} = allVTraces{VWroi}{terms(ccell)}{per}(any(allVTraces{VWroi}{terms(ccell)}{per},2),:);
+                                        end 
                                     end 
+                                    allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
+                                    %remove rows full of zeros if there are any b = a(any(a,2),:)
+                                    allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
+                                    count = count + 1;
                                 end 
-                                allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
-                                %remove rows full of zeros if there are any b = a(any(a,2),:)
-                                allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
-                                count = count + 1;
                             end 
                         end 
 
