@@ -4414,18 +4414,89 @@ for mouse = 1:mouseNum
     elseif tTypeQ == 1
         for per = 1:size(allCTraces3{1}{CaROIs{1}(1)},2)
             for CAROI = 1:size(CaROIs{mouse},2)
-                %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
-                allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
-                for BBBroi = 1:size(allBTraces3{mouse},2)
-                    allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
-                end 
-                for VWroi = 1:size(allVTraces3{mouse},2)
-                    allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                if isempty(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}) == 0 
+                    %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
+                    allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    for BBBroi = 1:size(allBTraces3{mouse},2)
+                        allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    end 
+                    for VWroi = 1:size(allVTraces3{mouse},2)
+                        allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    end 
                 end 
             end 
         end 
     end 
 end 
+
+dataQ = input('Input 1 if you need to resort data/select specific spikes by per. Input 0 otherwise. ');
+if dataQ == 1 
+    allCTraces = allCTraces3; allBTraces = allBTraces3; allVTraces = allVTraces3;
+    orgQ = input('How many different kinds of data organizations are there? ');
+    perLoc = zeros(1,orgQ);
+    orgMouseNum = zeros(1,orgQ);
+    for org = 1:orgQ
+        orgMouseNum(org) = input(sprintf('How many mice were #%d organized? ',org));
+        perLoc(org) = input(sprintf('What per do you want to average from group #%d mice? ',org));
+    end 
+    mouseInds = cell(1,orgQ);
+    for org = 1:orgQ
+        for orgNum = 1:orgMouseNum(org)
+            %list indices for mice based on how they're organized 
+            if org == 1
+                mouseInds{org}(orgNum) = orgNum;
+                if isempty(allCTraces3{orgNum}{CaROIs{orgNum}(CAROI)}) == 0 
+                    for CAROI = 1:size(CaROIs{mouse},2)
+                        allCTraces3{orgNum}{CaROIs{orgNum}(CAROI)}{1} = allCTraces{orgNum}{CaROIs{orgNum}(CAROI)}{perLoc(org)};
+                        for BBBroi = 1:size(allBTraces{mouse},2)
+                            allBTraces3{orgNum}{BBBroi}{CaROIs{orgNum}(CAROI)}{1} = allBTraces{orgNum}{BBBroi}{CaROIs{orgNum}(CAROI)}{perLoc(org)};
+                        end 
+                        for VWroi = 1:size(allVTraces{mouse},2)
+                            allVTraces3{orgNum}{VWroi}{CaROIs{orgNum}(CAROI)}{1} = allVTraces{orgNum}{VWroi}{CaROIs{orgNum}(CAROI)}{perLoc(org)};                          
+                        end 
+                    end 
+                end 
+            elseif org > 1 
+                mouseInds{org}(orgNum) = orgNum + max(mouseInds{1});
+                if isempty(allCTraces3{orgNum + max(mouseInds{1}}{CaROIs{orgNum + max(mouseInds{1}}(CAROI)}) == 0 
+                    for CAROI = 1:size(CaROIs{mouse},2)
+                        allCTraces3{orgNum + max(mouseInds{1}}{CaROIs{orgNum}(CAROI)}{1} = allCTraces{orgNum}{CaROIs{orgNum}(CAROI)}{perLoc(org)};
+                        for BBBroi = 1:size(allBTraces{mouse},2)
+                            allBTraces3{orgNum}{BBBroi}{CaROIs{orgNum}(CAROI)}{1} = allBTraces{orgNum}{BBBroi}{CaROIs{orgNum}(CAROI)}{perLoc(org)};
+                        end 
+                        for VWroi = 1:size(allVTraces{mouse},2)
+                            allVTraces3{orgNum}{VWroi}{CaROIs{orgNum}(CAROI)}{1} = allVTraces{orgNum}{VWroi}{CaROIs{orgNum}(CAROI)}{perLoc(org)};                          
+                        end 
+                    end 
+                end                 
+            end 
+        end 
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    end 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+end 
+
+% if tTypeQ == 0 
+%     if per == 1 
+%         perLabel = ("Peaks from entire experiment. ");
+%     elseif per == 2 
+%         perLabel = ("Peaks from stimulus. ");
+%     elseif per == 3 
+%         perLabel = ("Peaks peaks from reward. ");
+%     elseif per == 4 
+%         perLabel = ("Peaks from ITI. ");
+%     end 
+% elseif tTypeQ == 1 
+%     if per == 1 
+%         perLabel = ("Blue light on. ");
+%     elseif per == 2 
+%         perLabel = ("Red light on. ");
+%     elseif per == 3 
+%         perLabel = ("Light off. ");
+%     end 
+% end 
 
 
 %% this plots individual STAs for every BBB and VW ROI per mouse
@@ -5218,24 +5289,28 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
     Bcolors = [1,0,0;1,0.5,0;1,1,0];
     Ccolors = [0,0,1;0,0.5,1;0,1,1];
     Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
-    if tTypeQ == 0 
-        if per == 1 
-            perLabel = ("Peaks from entire experiment. ");
-        elseif per == 2 
-            perLabel = ("Peaks from stimulus. ");
-        elseif per == 3 
-            perLabel = ("Peaks peaks from reward. ");
-        elseif per == 4 
-            perLabel = ("Peaks from ITI. ");
+    if dataQ == 0 
+        if tTypeQ == 0 
+            if per == 1 
+                perLabel = ("Peaks from entire experiment. ");
+            elseif per == 2 
+                perLabel = ("Peaks from stimulus. ");
+            elseif per == 3 
+                perLabel = ("Peaks peaks from reward. ");
+            elseif per == 4 
+                perLabel = ("Peaks from ITI. ");
+            end 
+        elseif tTypeQ == 1 
+            if per == 1 
+                perLabel = ("Blue light on. ");
+            elseif per == 2 
+                perLabel = ("Red light on. ");
+            elseif per == 3 
+                perLabel = ("Light off. ");
+            end 
         end 
-    elseif tTypeQ == 1 
-        if per == 1 
-            perLabel = ("Peaks from blue light. ");
-        elseif per == 2 
-            perLabel = ("Peaks from red light. ");
-        elseif per == 3 
-            perLabel = ("Peaks from light off. ");
-        end 
+    elseif dataQ == 1 
+        perLabel = input('Input the per label. ');
     end 
     
     % plot close and far Ca ROI and BBB data (all mice averaged) overlaid 
