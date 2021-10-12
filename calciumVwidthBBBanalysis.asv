@@ -4348,7 +4348,7 @@ end
 %}
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
-%{
+
 %get the data you need 
 mouseDistQ = input('Input 1 if you already have a .mat file containing multiple mouse Ca ROI distances. Input 0 to make this .mat file. ');
 if mouseDistQ == 1 
@@ -5230,11 +5230,11 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         end 
     elseif tTypeQ == 1 
         if per == 1 
-            perLabel = ("Blue light on. ");
+            perLabel = ("Peaks from blue light. ");
         elseif per == 2 
-            perLabel = ("Red light on. ");
+            perLabel = ("Peaks from red light. ");
         elseif per == 3 
-            perLabel = ("Light off. ");
+            perLabel = ("Peaks from light off. ");
         end 
     end 
     
