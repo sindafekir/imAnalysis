@@ -129,10 +129,10 @@ if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)
     for frameLength = 1:length(stimFrameLengths)
         for vid = 1:length(vidList)
             for trial = 1:length(state_start_f{vid})
-                if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
+%                 if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
                     state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
                     trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
-                end 
+%                 end 
             end 
         end 
     end    
@@ -3394,7 +3394,7 @@ elseif tTypeQ == 1
                               
                             %normalize to baselineTime sec before changePt (calcium peak
                             %onset) BLstart 
-                            changePt = floor(size(sortedCdata{1}{terminals(1)}{1},2)/2)-4;
+                            changePt = floor(size(sortedCdata{1}{terminals(1)}{2},2)/2)-4;
                             BLstart = changePt - floor(baselineTime*FPSstack);
                             if BBBQ == 1
                                 for BBBroi = 1:length(bDataFullTrace{1})
@@ -3874,7 +3874,7 @@ elseif tTypeQ == 1
     %{
     if AVQ == 0 
         for ccell = 1:length(terms)
-            for per = 1:3 
+            for per = 2:3 
                 % plot    
                 fig = figure; 
                 Frames = size(SNBdataPeaks{1}{BBBroi}{terms(ccell)}{3},2);
@@ -3889,24 +3889,26 @@ elseif tTypeQ == 1
                        if length(sortedBdata{vid}{BBBroi}{terms(ccell)}) >= per  
                             if isempty(sortedBdata{vid}{BBBroi}{terms(ccell)}{per}) == 0 
                                 for peak = 1:size(sortedBdata{vid}{BBBroi}{terms(ccell)}{per},1)
-                                    if BBBQ == 1
-                                        for BBBroi = 1:length(sortedBdata{1})
-                                            allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100);
-                                            %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                            allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
+                                    if peak <= size(SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per},1)
+                                        if BBBQ == 1
+                                            for BBBroi = 1:length(sortedBdata{1})
+                                                allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100);
+                                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                                allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
+                                            end 
                                         end 
-                                    end 
-                                    allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
-                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                    allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
-                                    if VWQ == 1
-                                        for VWroi = 1:length(sortedVdata{1})
-                                            allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
-                                            %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                            allVTraces{VWroi}{terms(ccell)}{per} = allVTraces{VWroi}{terms(ccell)}{per}(any(allVTraces{VWroi}{terms(ccell)}{per},2),:);
+                                        allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
+                                        if VWQ == 1
+                                            for VWroi = 1:length(sortedVdata{1})
+                                                allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
+                                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                                allVTraces{VWroi}{terms(ccell)}{per} = allVTraces{VWroi}{terms(ccell)}{per}(any(allVTraces{VWroi}{terms(ccell)}{per},2),:);
+                                            end 
                                         end 
+                                        count = count + 1;
                                     end 
-                                    count = count + 1;
                                 end 
                             end
                        end               
@@ -4069,7 +4071,7 @@ elseif tTypeQ == 1
     elseif AVQ == 1 
         % sort data
         for ccell = 1:length(terms)
-            for per = 1:3
+            for per = 2:3
                 count = 1;
                 for vid = 1:length(vidList)
                    if length(sortedBdata{vid}{BBBroi}{terms(ccell)}) >= per  
@@ -4160,7 +4162,7 @@ elseif tTypeQ == 1
                 end 
             end 
         end  
-        for per = 1:3
+        for per = 2:3
             if per == 1 
                     perLabel = "Blue Light On";
                 elseif per == 2
@@ -5869,7 +5871,7 @@ elseif tTypeQ == 1
 
     for groupNum = 1:numGroups
         for ccell = 1:length(terms{groupNum})    
-            for per = 1:3 
+            for per = 2:3 
                 count1 = 1;
                 % sort C data
                 for vid = 1:length(vidList)      
@@ -5974,7 +5976,7 @@ elseif tTypeQ == 1
     end 
     % get the average of all the traces excluding outliers 
     for groupNum = 1:numGroups
-        for per = 1:3 
+        for per = 2:3 
             if BBBQ == 1
                 for BBBroi = 1:length(BBBrois)
                     %identify what Ca ROIs are left (this is important if
@@ -6028,7 +6030,7 @@ elseif tTypeQ == 1
     
     if BBBQ == 1
         for BBBroi = 1:length(BBBrois)
-            for per = 1:3 
+            for per = 2:3 
                 fig = figure;
                 ax=gca;
                 hold all
@@ -6110,7 +6112,7 @@ elseif tTypeQ == 1
 
     if VWQ == 1
         for VWroi = 1:length(sortedVdata{1})
-            for per = 1:3 
+            for per = 2:3 
                 fig = figure;
                 ax=gca;
                 hold all
@@ -6175,7 +6177,7 @@ elseif tTypeQ == 1
                     perLabel = "Light Off";
                 end 
                 legend([p(1) p(2)],'Close Terminals','Far Terminals')
-                ylabel('BBB permeability percent change','FontName','Times')
+                ylabel('vessel width percent change','FontName','Times')
                 title({sprintf('All Terminals Averaged. VW ROI %d.',VWroi);perLabel})      
                 alpha(0.3)
                 set(gca,'YColor',[0 0 0]);
@@ -6851,7 +6853,7 @@ end
 %% create stacks that are seperated by trial type 
 %}
 %% determine how far away each terminal is from the vessel of interest (the minimum distance) 
-
+%{
 if distQ == 1 
     % get the Ca ROI coordinates 
     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
