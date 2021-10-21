@@ -6851,7 +6851,7 @@ end
 %% create stacks that are seperated by trial type 
 %}
 %% determine how far away each terminal is from the vessel of interest (the minimum distance) 
-%{
+
 if distQ == 1 
     % get the Ca ROI coordinates 
     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');

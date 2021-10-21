@@ -40,6 +40,8 @@ elseif vidNumQ == 1
     numROIs = BGROIeMat.numROIs;
     rotStackAngles = BGROIeMat.rotStackAngles;
     volQ = BGROIeMat.volQ;
+    BGsubQ = BGROIeMat.BGsubQ;
+    BGsubTypeQ = BGROIeMat.BGsubTypeQ;
 end 
 
 if volQ == 1 

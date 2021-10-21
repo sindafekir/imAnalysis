@@ -1,5 +1,5 @@
 %% set the paramaters 
-%{
+
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
     splitType = input('How must the data be split? Serial Split = 0. Alternating Split = 1. '); 
@@ -9,7 +9,7 @@ elseif volIm == 0
 end 
 %}
 %% get the images 
-%{
+
 disp('Importing Images')
 cd(uigetdir('*.*','WHERE ARE THE PHOTOS? '));    
 fileList = dir('*.tif*');
@@ -89,7 +89,7 @@ elseif frameAvQ == 1
 end 
 %}
 %% separate volume imaging data into separate stacks per z plane and motion correction
-%{
+%
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -276,13 +276,12 @@ elseif volIm == 0
         title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
     end 
 end 
-
-%
+% 
 % implay(ggRegZstacks{1});
 % implay(greenImageStack);
 %}
 %% save registered stacks 
-%{
+
 clearvars -except regStacks
 vid = input('What number video is this? '); 
 
