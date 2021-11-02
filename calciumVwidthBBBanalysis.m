@@ -3879,7 +3879,7 @@ if tTypeQ == 0
 elseif tTypeQ == 1
     %{
     if AVQ == 0 
-        for ccell = 1:length(terms)
+        for ccell = 1:length(terms)       
             for per = 2:3 
                 % plot    
                 fig = figure; 
@@ -3974,12 +3974,14 @@ elseif tTypeQ == 1
 
                 %calculate the 95% confidence interval
                 if BBBQ == 1
+                    CI_bLow = cell(1,length(sortedBdata{1}));
+                    CI_bHigh = cell(1,length(sortedBdata{1}));
                     for BBBroi = 1:length(sortedBdata{1})
                         SEMb = (nanstd(BTraces{BBBroi}{terms(ccell)}{per}))/(sqrt(size(BTraces{BBBroi}{terms(ccell)}{per},1))); % Standard Error            
                         ts_bLow = tinv(0.025,size(BTraces{BBBroi}{terms(ccell)}{per},1)-1);% T-Score for 95% CI
                         ts_bHigh = tinv(0.975,size(BTraces{BBBroi}{terms(ccell)}{per},1)-1);% T-Score for 95% CI
-                        CI_bLow = (nanmean(BTraces{BBBroi}{terms(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                        CI_bHigh = (nanmean(BTraces{BBBroi}{terms(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                        CI_bLow{BBBroi} = (nanmean(BTraces{BBBroi}{terms(ccell)}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                        CI_bHigh{BBBroi} = (nanmean(BTraces{BBBroi}{terms(ccell)}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
                     end 
                 end 
 
@@ -3990,12 +3992,14 @@ elseif tTypeQ == 1
                 CI_cHigh = (nanmean(CTraces{terms(ccell)}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
 
                 if VWQ == 1
+                    CI_vLow = cell(1,length(sortedVdata{1}));
+                    CI_vHigh = cell(1,length(sortedVdata{1}));
                     for VWroi = 1:length(sortedVdata{1})
                         SEMv = (nanstd(VTraces{VWroi}{terms(ccell)}{per}))/(sqrt(size(VTraces{VWroi}{terms(ccell)}{per},1))); % Standard Error            
                         ts_vLow = tinv(0.025,size(VTraces{VWroi}{terms(ccell)}{per},1)-1);% T-Score for 95% CI
                         ts_vHigh = tinv(0.975,size(VTraces{VWroi}{terms(ccell)}{per},1)-1);% T-Score for 95% CI
-                        CI_vLow = (nanmean(VTraces{VWroi}{terms(ccell)}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
-                        CI_vHigh = (nanmean(VTraces{VWroi}{terms(ccell)}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals     
+                        CI_vLow{VWroi} = (nanmean(VTraces{VWroi}{terms(ccell)}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+                        CI_vHigh{VWroi} = (nanmean(VTraces{VWroi}{terms(ccell)}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals     
                     end 
                 end 
                 x = 1:length(CI_cLow);
@@ -4044,20 +4048,20 @@ elseif tTypeQ == 1
 
                 %add right y axis tick marks for a specific DOD figure. 
                 yyaxis right 
-                if BBBQ == 1
+                if BBBpQ == 1
                     if isempty(AVSNBdataPeaks{BBBROI}{terms(ccell)}{per}) == 0 && isempty(CI_cLow) == 0 
                         plot(AVSNBdataPeaks{BBBROI}{terms(ccell)}{per},'r','LineWidth',4)
-                        patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+                        patch([x fliplr(x)],[(CI_bLow{BBBROI}) (fliplr(CI_bHigh{BBBROI}))],[0.5 0 0],'EdgeColor','none')
                         ylabel('BBB permeability percent change','FontName','Times')
                         tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBROI);
                         title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBROI);perLabel})
             %             title('BBB permeability Spike Triggered Average')
                     end 
                 end 
-                if VWQ == 1
+                if VWpQ == 1
                     if isempty(AVSNVdataPeaks{VWROI}{terms(ccell)}{per}) == 0 && isempty(CI_cLow) == 0 
                         plot(AVSNVdataPeaks{VWROI}{terms(ccell)}{per},'k','LineWidth',4)
-                        patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
+                        patch([x fliplr(x)],[(CI_vLow{VWROI}) (fliplr(CI_vHigh{VWROI}))],'k','EdgeColor','none')
                         ylabel('Vessel width percent change','FontName','Times')
                         tlabel = sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWROI);
             %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals(ccell),VWroi))
@@ -4077,6 +4081,7 @@ elseif tTypeQ == 1
     elseif AVQ == 1 
         % sort data
         for ccell = 1:length(terms)
+            AVSNCdataPeaks3 = cell(1,3);
             for per = 2:3
                 count = 1;
                 for vid = 1:length(vidList)
@@ -4178,12 +4183,14 @@ elseif tTypeQ == 1
             end 
             %calculate the 95% confidence interval
             if BBBQ == 1
+                CI_bLow = cell(1,length(sortedBdata{1}));
+                CI_bHigh = cell(1,length(sortedBdata{1}));
                 for BBBroi = 1:length(sortedBdata{1})
                     SEMb = (nanstd(AVSNBdataPeaks3{BBBroi}{per}))/(sqrt(size(AVSNBdataPeaks3{BBBroi}{per},1))); % Standard Error            
                     ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{BBBroi}{per},1)-1);% T-Score for 95% CI
                     ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{BBBroi}{per},1)-1);% T-Score for 95% CI
-                    CI_bLow = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                    CI_bHigh = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                    CI_bLow{BBBroi} = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                    CI_bHigh{BBBroi} = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
                 end 
             end 
 
@@ -4194,12 +4201,14 @@ elseif tTypeQ == 1
             CI_cHigh = (nanmean(AVSNCdataPeaks3{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
 
             if VWQ == 1
+                CI_vLow = cell(1,length(sortedVdata{1}));
+                CI_vHigh = cell(1,length(sortedVdata{1}));
                 for VWroi = 1:length(sortedVdata{1})
                     SEMv = (nanstd(AVSNVdataPeaks3{VWroi}{per}))/(sqrt(size(AVSNVdataPeaks3{VWroi}{per},1))); % Standard Error            
                     ts_vLow = tinv(0.025,size(AVSNVdataPeaks3{VWroi}{per},1)-1);% T-Score for 95% CI
                     ts_vHigh = tinv(0.975,size(AVSNVdataPeaks3{VWroi}{per},1)-1);% T-Score for 95% CI
-                    CI_vLow = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
-                    CI_vHigh = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+                    CI_vLow{VWroi} = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+                    CI_vHigh{VWroi} = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
                 end 
             end 
             x = 1:length(CI_cLow);
@@ -4248,14 +4257,14 @@ elseif tTypeQ == 1
             yyaxis right 
             if BBBQ == 1
                 plot(AVSNBdataPeaks{BBBROI}{per},'r','LineWidth',4)
-                patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
+                patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
                 ylabel('BBB permeability percent change','FontName','Times')
                 tlabel = sprintf('Terminal%d_BBBroi%d.',terminals(ccell),BBBROI);
                 title({sprintf('Terminals Averaged. BBB ROI %d.',BBBROI);perLabel})
             end 
             if VWQ == 1
                 plot(AVSNVdataPeaks{VWROI}{per},'k','LineWidth',4)
-                patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
+                patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
                 ylabel('Vessel width percent change','FontName','Times')
                 title({sprintf('Terminals Averaged. VW ROI %d.',VWROI);perLabel})
             end 
@@ -4409,13 +4418,15 @@ for mouse = 1:mouseNum
     if tTypeQ == 0 
         for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
             for CAROI = 1:size(CaROIs{mouse},2)
-                %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
-                allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
-                for BBBroi = 1:size(allBTraces3{mouse},2)
-                    allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
-                end 
-                for VWroi = 1:size(allVTraces3{mouse},2)
-                    allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                if isempty(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}) == 0 
+                    %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
+                    allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    for BBBroi = 1:size(allBTraces3{mouse},2)
+                        allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    end 
+                    for VWroi = 1:size(allVTraces3{mouse},2)
+                        allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    end 
                 end 
             end 
         end 
@@ -4447,7 +4458,11 @@ if dataQ == 1
         orgMouseNum(org) = input(sprintf('How many mice were #%d organized? ',org));
         perLoc(org) = input(sprintf('What per do you want to average from group #%d mice? ',org));
     end 
+    % allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}
     mouseInds = cell(1,orgQ);
+    allCTraces3 = cell(1,mouseNum);
+    allBTraces3 = cell(1,mouseNum);
+    allVTraces3 = cell(1,mouseNum);
     for org = 1:orgQ
         for orgNum = 1:orgMouseNum(org)
             %list indices for mice based on how they're organized 
@@ -4701,7 +4716,7 @@ end
 % output = CaArray{mouse}{per}(concatenated caRoi data)
 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)
 for mouse = 1:mouseNum
-    for per = 2:length(allCTraces3{1}{CaROIs{1}(2)})
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         for ccell = 1:length(closeCTraces{mouse})
             if isempty(closeCTraces{mouse}{ccell}) == 0 
                 if ccell == 1 
@@ -5043,7 +5058,7 @@ for mouse = 1:mouseNum
 end 
 minFPSstack = FPSstack2 == min(FPSstack2);
 idx = find(minFPSstack ~= 0, 1, 'first');
-minLen = length(close_AVSNCdataPeaks{idx}{2});
+minLen = length(close_AVSNCdataPeaks{idx}{1});
 
 % mouseNums = [1,2,3,4,5];
 mouseNums = input('Input the mice you want to average. ');
@@ -5125,7 +5140,7 @@ if VWQ == 1
     Vtraces_allMice = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
 for mouse = 1:length(mouseNums)   
-    for per = 2:length(allCTraces3{1}{CaROIs{1}(2)})
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         %resample and sort data
         if BBBQ == 1
             for BBBroi = 1:length(BBBrois{mouse})
@@ -5176,7 +5191,7 @@ end
 
 %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
 for mouse = 1:length(mouseNums)   
-    for per = 2:length(allCTraces3{1}{CaROIs{1}(2)})
+    for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         if BBBQ == 1 
             for BBBroi = 1:length(BBBrois{mouse})
                 close_Btraces_allMice{per} = close_Btraces_allMice{per}(any(close_Btraces_allMice{per},2),:);
@@ -5211,7 +5226,7 @@ if VWQ == 1
     far_avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
     avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end 
-for per = 2:length(allCTraces3{1}{CaROIs{1}(2)})
+for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
     %average the data 
     if BBBQ == 1
         close_avBdata{per} = nanmean(close_Btraces_allMice{per},1);
