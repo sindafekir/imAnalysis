@@ -1,5 +1,6 @@
 % get the data you need 
-%{
+% includes batch processing (across mice) option for STA/ETA figure generation
+
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -55,119 +56,149 @@ if ETAQ == 1 && STAstackQ == 1
     end 
 end 
 
-% get your data 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAQ == 1
+    batchQ = input('Input 1 if you want to batch process across mice. Input 0 otherwise. ');
+    if batchQ == 0 
+        mouseNum = 1; 
+    elseif batchQ == 1 
+        mouseNum = input('How many mice are you batch processing? ');
+    end 
     if BBBQ == 1 
-        % get BBB data 
-        BBBDir = uigetdir('*.*','WHERE IS THE BBB DATA?');
-        cd(BBBDir);
-        BBBlabel = input('Give a string example of what the BBB data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-        bDataFullTrace = cell(1,length(vidList));
-        for vid = 1:length(vidList)
-            BBBmat = matfile(sprintf(BBBlabel,vidList(vid)));
-            Bdata = BBBmat.Bdata;       
-            bDataFullTrace{vid} = Bdata;
-        end 
+        bDataFullTrace = cell(1,mouseNum);
     end 
     if VWQ == 1 
-        % get vessel width data 
-        VwDir = uigetdir('*.*','WHERE IS THE VESSEL WIDTH DATA?');
-        cd(VwDir);
-        VWlabel = input('Give a string example of what the vessel width data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-        vDataFullTrace = cell(1,length(vidList));
-        for vid = 1:length(vidList)
-            VWmat = matfile(sprintf(VWlabel,vidList(vid)));
-            Vdata = VWmat.Vdata;       
-            vDataFullTrace{vid} = Vdata;
-        end 
+        vDataFullTrace = cell(1,mouseNum);
     end 
-end 
-if ETAQ == 1 || STAstackQ == 1 
     if CAQ == 1 
-        % get calcium data 
-        CaDir = uigetdir('*.*','WHERE IS THE CALCIUM DATA?');
-        cd(CaDir);
-        CAlabel = input('Give a string example of what the calcium data is labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-        terminals = input('What terminals do you care about? Input in correct order. ');
-        cDataFullTrace = cell(1,length(vidList));
-        for vid = 1:length(vidList)
-            CAmat = matfile(sprintf(CAlabel,vidList(vid)));
-            CAdata = CAmat.CcellData;       
-            cDataFullTrace{vid} = CAdata;
-        end 
+        cDataFullTrace = cell(1,mouseNum);
+        terminals = cell(1,mouseNum);
     end 
-end
-
-%get trial data to generate stimulus event triggered averages (ETAs)
-if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)  
-    velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');
-    state_start_f = cell(1,length(vidList));
-    state_end_f2 = cell(1,length(vidList));
-    TrialTypes = cell(1,length(vidList));
-    trialLengths2 = cell(1,length(vidList));
-    velWheelData = cell(1,length(vidList));
-    wDataFullTrace = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
-        state_start_f{vid} = floor(statestartf/3);
-        state_end_f2{vid} = floor(stateendf/3);
-        TrialTypes{vid} = trialTypes(1:length(statestartf),:);
-        trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
-        if velWheelQ == 1 
-            velWheelData{vid} = vel_wheel_data;
-            %resample wheel data 
-            wDataFullTrace{vid} = resample(velWheelData{vid},length(bDataFullTrace{vid}{1}),length(velWheelData{vid}));
-        end 
+    if velWheelQ == 1 
+        wDataFullTrace = cell(1,mouseNum);
     end 
-    
-    % this fixes discrete time rounding errors to ensure the stimuli are
-    % all the correct number of frames long 
-    stimTimeLengths = input('How many seconds are the stims on for? ');
-    stimFrameLengths = floor(stimTimeLengths*FPSstack);
-    state_end_f = cell(1,length(vidList));
-    trialLengths = cell(1,length(vidList));
-    for frameLength = 1:length(stimFrameLengths)
-        for vid = 1:length(vidList)
-            for trial = 1:length(state_start_f{vid})
-%                 if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
-                    state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
-                    trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
-%                 end 
-            end 
-        end 
-    end    
+    state_start_f = cell(1,mouseNum);
+    TrialTypes = cell(1,mouseNum);
+    state_end_f = cell(1,mouseNum);
+    trialLengths = cell(1,mouseNum);
+    dir = cell(1,mouseNum);
+elseif STAstackQ == 1 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %MAKE SURE EVERYTHING IS INCLUDED BELOW 
+    mouseNum = 1; 
+    if CAQ == 1 
+        cDataFullTrace = cell(1,mouseNum);
+    end 
 end 
-
-%this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
-if ETAQ == 1 && optoQ == 0 
-    velWheelQ = 0;
-    state_start_f = cell(1,length(vidList));
-    state_end_f2 = cell(1,length(vidList));
-    trialLengths2 = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
-        %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
-        state_start_f{vid} = floor(statestartf/FPSadjust);
-        if isempty(stateendf) == 0
-            state_end_f2{vid} = floor(stateendf/FPSadjust);
-            trialLengths2{vid} = state_end_f2{vid}-state_start_f{vid};
-        end 
-    end 
-    
-    % this fixes discrete time rounding errors to ensure the stimuli are
-    % all the correct number of frames long 
-    stimTimeLengths = input('How many seconds are the stims on for? ');
-    stimFrameLengths = floor(stimTimeLengths*FPSstack);
-    state_end_f = cell(1,length(vidList));
-    trialLengths = cell(1,length(vidList));
-    for frameLength = 1:length(stimFrameLengths)
-        for vid = 1:length(vidList)
-            for trial = 1:length(state_start_f{vid})
-                state_end_f{vid}(trial) = state_start_f{vid}(trial) + stimFrameLengths(frameLength);
-                trialLengths{vid}(trial) = state_end_f{vid}(trial)-state_start_f{vid}(trial);
+for mouse = 1:mouseNum
+    % get your data 
+    if ETAQ == 1
+        dirLabel = sprintf('WHERE IS THE DATA FOR MOUSE #%d? ',mouse);
+        dir{mouse} = uigetdir('*.*',dirLabel);
+        if BBBQ == 1 
+            % get BBB data 
+            cd(dir);
+            BBBlabel = input(sprintf('Give a string example of what the BBB data is labeled as for mouse #%d. Put %d in place of where the vid number is. ',mouse)); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB            
+            for vid = 1:length(vidList)
+                BBBmat = matfile(sprintf(BBBlabel,vidList(vid)));
+                Bdata = BBBmat.Bdata;       
+                bDataFullTrace{mouse}{vid} = Bdata;
             end 
         end 
-    end    
+        if VWQ == 1 
+            % get vessel width data 
+            cd(dir);
+            VWlabel = input(sprintf('Give a string example of what the vessel width data is labeled as for mouse #%d. Put %d in place of where the vid number is. ',mouse)); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB            
+            for vid = 1:length(vidList)
+                VWmat = matfile(sprintf(VWlabel,vidList(vid)));
+                Vdata = VWmat.Vdata;       
+                vDataFullTrace{mouse}{vid} = Vdata;
+            end 
+        end 
+    end 
+    if ETAQ == 1 || STAstackQ == 1 
+        if CAQ == 1 
+            % get calcium data 
+            cd(dir);
+            CAlabel = input(sprintf('Give a string example of what the calcium data is labeled as for mouse #%d. Put %d in place of where the vid number is. ',mouse)); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
+            terminals{mouse} = input(sprintf('What terminals do you care about for mouse #%d? Input in correct order. ',mouse));            
+            for vid = 1:length(vidList)
+                CAmat = matfile(sprintf(CAlabel,vidList(vid)));
+                CAdata = CAmat.CcellData;       
+                cDataFullTrace{mouse}{vid} = CAdata;
+            end 
+        end 
+    end
+    
+    %get trial data to generate stimulus event triggered averages (ETAs)
+    if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)  
+        velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');        
+        state_end_f2 = cell(1,length(vidList));        
+        trialLengths2 = cell(1,length(vidList));
+        velWheelData = cell(1,length(vidList));       
+        for vid = 1:length(vidList)
+            [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+            state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
+            state_end_f2{vid} = floor(stateendf/FPSadjust);
+            TrialTypes{mouse}{vid} = trialTypes(1:length(statestartf),:);
+            trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
+            if velWheelQ == 1 
+                velWheelData{vid} = vel_wheel_data;
+                %resample wheel data 
+                wDataFullTrace{mouse}{vid} = resample(velWheelData{vid},length(bDataFullTrace{vid}{1}),length(velWheelData{vid}));
+            end 
+        end 
+
+        % this fixes discrete time rounding errors to ensure the stimuli are
+        % all the correct number of frames long 
+        if mouse == 1 
+            stimTimeLengths = input('How many seconds are the stims on for? ');
+        end 
+        stimFrameLengths = floor(stimTimeLengths*FPSstack);              
+        for frameLength = 1:length(stimFrameLengths)
+            for vid = 1:length(vidList)
+                for trial = 1:length(state_start_f{mouse}{vid})
+    %                 if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
+                        state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(frameLength);
+                        trialLengths{mouse}{vid}(trial) = state_end_f{mouse}{vid}(trial)-state_start_f{mouse}{vid}(trial);
+    %                 end 
+                end 
+            end 
+        end    
+    end 
+
+    %this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
+    if ETAQ == 1 && optoQ == 0 
+        velWheelQ = 0;
+        state_end_f2 = cell(1,length(vidList));
+        trialLengths2 = cell(1,length(vidList));
+        for vid = 1:length(vidList)
+            [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
+            %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+            state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
+            if isempty(stateendf) == 0
+                state_end_f2{vid} = floor(stateendf/FPSadjust);
+                trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
+            end 
+        end 
+
+        % this fixes discrete time rounding errors to ensure the stimuli are
+        % all the correct number of frames long 
+        if mouse == 1 
+            stimTimeLengths = input('How many seconds are the stims on for? ');
+        end 
+        stimFrameLengths = floor(stimTimeLengths*FPSstack);
+        for frameLength = 1:length(stimFrameLengths)
+            for vid = 1:length(vidList)
+                for trial = 1:length(state_start_f{mouse}{vid})
+                    state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(frameLength);
+                    trialLengths{mouse}{vid}(trial) = state_end_f{mouse}{vid}(trial)-state_start_f{mouse}{vid}(trial);
+                end 
+            end 
+        end 
+    end 
 end 
 
 if STAstackQ == 1
@@ -258,6 +289,18 @@ if distQ == 1
     end 
 %     clearvars -except redZstack distQ CaROImasks 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%THINGS TO DO NEXT:
+% 1) MAKE FINDING THE BBB/CA/VW DATA STRINGS AUTOMATIC SO THE CODE DOESN'T
+% ASK YOU FOR THEM (this requires making sure the data is saved in the same
+% way) 
+% 2) LOOK AT THE NEXT STEP IN THE STA AND ETA CODE TO MAKE SURE ALL THE
+% VARIABLES THAT NEED {MOUSE} CELL ARE ACCOUNTED FOR 
+% 3) TEST THE BATCH PROCESSING CODE ABOVE 
+
 %}
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length  
 %{
