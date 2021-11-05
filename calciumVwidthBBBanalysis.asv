@@ -1,6 +1,6 @@
 % get the data you need 
 % includes batch processing (across mice) option for STA/ETA figure generation
-%{
+
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -32,6 +32,10 @@ if ETAQ == 1 || STAstackQ == 1
     FPSstack = cell(1,mouseNum);
     vidList = cell(1,mouseNum);
     for mouse = 1:mouseNum
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % NEED TO ITERATE THROUGH MICE FOR THESE BELOW VARIABLES
         framePeriod = input(sprintf('What is the frame period for mouse #%d? ',mouse));
         FPS = 1/framePeriod; 
         FPSq = input(sprintf('Input 1 if the FPS needs to be adjusted based on frame averaging for mouse #%d. ',mouse));
@@ -39,8 +43,6 @@ if ETAQ == 1 || STAstackQ == 1
         if FPSq == 1 
             FPSadjust = input(sprintf('By what factor does the FPS need to be adjusted for mouse #%d? ',mouse));
             FPSstack{mouse} = FPS/FPSadjust;
-        elseif FPSq == 0 
-            FPSadjust = 1;
         end 
         vidList{mouse} = input(sprintf('What videos are you analyzing for mouse #%d? ',mouse));
     end 
@@ -79,7 +81,6 @@ if ETAQ == 1
         cDataFullTrace = cell(1,mouseNum);
         terminals = cell(1,mouseNum);
     end 
-    velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. '); 
     if velWheelQ == 1 
         wDataFullTrace = cell(1,mouseNum);
     end 
@@ -105,9 +106,9 @@ for mouse = 1:mouseNum
         if BBBQ == 1             
             % get BBB data             
             BBBfileList = dir('**/*BBBdata_*.mat'); % list BBB data files in current directory             
-            for vid = 1:length(vidList{mouse})
+            for vid = 1:length(vidList)
                 BBBlabel = BBBfileList(vid).name;
-                BBBmat = matfile(sprintf(BBBlabel,vidList{mouse}(vid)));
+                BBBmat = matfile(sprintf(BBBlabel,vidList(vid)));
                 Bdata = BBBmat.Bdata;       
                 bDataFullTrace{mouse}{vid} = Bdata;
             end 
@@ -115,9 +116,9 @@ for mouse = 1:mouseNum
         if VWQ == 1 
             % get vessel width data 
             VWfileList = dir('**/*VWdata_*.mat'); % list VW data files in current directory 
-            for vid = 1:length(vidList{mouse})
+            for vid = 1:length(vidList)
                 VWlabel = VWfileList(vid).name;
-                VWmat = matfile(sprintf(VWlabel,vidList{mouse}(vid)));
+                VWmat = matfile(sprintf(VWlabel,vidList(vid)));
                 Vdata = VWmat.Vdata;       
                 vDataFullTrace{mouse}{vid} = Vdata;
             end 
@@ -128,9 +129,9 @@ for mouse = 1:mouseNum
             % get calcium data 
             terminals{mouse} = input(sprintf('What terminals do you care about for mouse #%d? Input in correct order. ',mouse));    
             CAfileList = dir('**/*CAdata_*.mat'); % list VW data files in current directory 
-            for vid = 1:length(vidList{mouse})
+            for vid = 1:length(vidList)
                 CAlabel = CAfileList(vid).name;
-                CAmat = matfile(sprintf(CAlabel,vidList{mouse}(vid)));
+                CAmat = matfile(sprintf(CAlabel,vidList(vid)));
                 CAdata = CAmat.CcellData;       
                 cDataFullTrace{mouse}{vid} = CAdata;
             end 
@@ -138,11 +139,12 @@ for mouse = 1:mouseNum
     end
     
     %get trial data to generate stimulus event triggered averages (ETAs)
-    if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)                 
-        state_end_f2 = cell(1,length(vidList{mouse}));        
-        trialLengths2 = cell(1,length(vidList{mouse}));
-        velWheelData = cell(1,length(vidList{mouse}));       
-        for vid = 1:length(vidList{mouse})
+    if ETAQ == 1 && optoQ == 1 ||  (exist('tTypeQ','var') == 1 && tTypeQ == 1)  
+        velWheelQ = input('Input 1 to get wheel data. Input 0 otherwise. ');        
+        state_end_f2 = cell(1,length(vidList));        
+        trialLengths2 = cell(1,length(vidList));
+        velWheelData = cell(1,length(vidList));       
+        for vid = 1:length(vidList)
             [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
             state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
             state_end_f2{vid} = floor(stateendf/FPSadjust);
@@ -151,7 +153,7 @@ for mouse = 1:mouseNum
             if velWheelQ == 1 
                 velWheelData{vid} = vel_wheel_data;
                 %resample wheel data 
-                wDataFullTrace{mouse}{vid} = resample(velWheelData{vid},length(bDataFullTrace{mouse}{vid}{1}),length(velWheelData{vid}));
+                wDataFullTrace{mouse}{vid} = resample(velWheelData{vid},length(bDataFullTrace{vid}{1}),length(velWheelData{vid}));
             end 
         end 
 
@@ -160,9 +162,9 @@ for mouse = 1:mouseNum
         if mouse == 1 
             stimTimeLengths = input('How many seconds are the stims on for? ');
         end 
-        stimFrameLengths = floor(stimTimeLengths*FPSstack{mouse});              
+        stimFrameLengths = floor(stimTimeLengths*FPSstack);              
         for frameLength = 1:length(stimFrameLengths)
-            for vid = 1:length(vidList{mouse})
+            for vid = 1:length(vidList)
                 for trial = 1:length(state_start_f{mouse}{vid})
     %                 if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
                         state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(frameLength);
@@ -176,9 +178,9 @@ for mouse = 1:mouseNum
     %this gets state start/end frames/times for behavior data. can input whatever value you want for the state  
     if ETAQ == 1 && optoQ == 0 
         velWheelQ = 0;
-        state_end_f2 = cell(1,length(vidList{mouse}));
-        trialLengths2 = cell(1,length(vidList{mouse}));
-        for vid = 1:length(vidList{mouse})
+        state_end_f2 = cell(1,length(vidList));
+        trialLengths2 = cell(1,length(vidList));
+        for vid = 1:length(vidList)
             [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
             %[~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
             state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
@@ -193,9 +195,9 @@ for mouse = 1:mouseNum
         if mouse == 1 
             stimTimeLengths = input('How many seconds are the stims on for? ');
         end 
-        stimFrameLengths = floor(stimTimeLengths*FPSstack{mouse});
+        stimFrameLengths = floor(stimTimeLengths*FPSstack);
         for frameLength = 1:length(stimFrameLengths)
-            for vid = 1:length(vidList{mouse})
+            for vid = 1:length(vidList)
                 for trial = 1:length(state_start_f{mouse}{vid})
                     state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(frameLength);
                     trialLengths{mouse}{vid}(trial) = state_end_f{mouse}{vid}(trial)-state_start_f{mouse}{vid}(trial);
@@ -211,20 +213,20 @@ if STAstackQ == 1
     cd(regImDir);
     redlabel = input('Give a string example of what the red stacks are labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
     greenlabel = input('Give a string example of what the green stacks are labeled as. Put %d in place of where the vid number is. '); % example: SF56_20190718_ROI2_vid1_BBB = SF56_20190718_ROI2_vid%d_BBB
-    greenStacks1 = cell(1,length(vidList{mouse}));
-    redStacks1 = cell(1,length(vidList{mouse}));
-    greenStacksBS = cell(1,length(vidList{mouse}));
-    redStacksBS = cell(1,length(vidList{mouse}));
-    redStackArray = cell(1,length(vidList{mouse}));
-    greenStackArray = cell(1,length(vidList{mouse}));
-    greenStacks = cell(1,length(vidList{mouse}));
-    redStacks = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
+    greenStacks1 = cell(1,length(vidList));
+    redStacks1 = cell(1,length(vidList));
+    greenStacksBS = cell(1,length(vidList));
+    redStacksBS = cell(1,length(vidList));
+    redStackArray = cell(1,length(vidList));
+    greenStackArray = cell(1,length(vidList));
+    greenStacks = cell(1,length(vidList));
+    redStacks = cell(1,length(vidList));
+    for vid = 1:length(vidList)
         cd(regImDir);
-        redMat = matfile(sprintf(redlabel,vidList{mouse}(vid)));       
+        redMat = matfile(sprintf(redlabel,vidList(vid)));       
         redRegStacks = redMat.regStacks;
         redStacks1{vid} = redRegStacks{2,4};
-        greenMat = matfile(sprintf(greenlabel,vidList{mouse}(vid)));       
+        greenMat = matfile(sprintf(greenlabel,vidList(vid)));       
         greenRegStacks = greenMat.regStacks;
         greenStacks1{vid} = greenRegStacks{2,3};     
         if BGsubQ == 0 
@@ -294,17 +296,15 @@ if distQ == 1
 %     clearvars -except redZstack distQ CaROImasks 
 end 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%THINGS TO DO NEXT:
+% 3) TEST THE BATCH PROCESSING CODE ABOVE 
+
 %}
-
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% TO DO NEXT: UPDATE ETA AND STA CODE TO BE ABLE TO DO BATCH PROCESSING 
-% - SAVE THE SMOOTHING FOR LAST (SAVE UNSMOOTHED DATA OUT)
-
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length  
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
