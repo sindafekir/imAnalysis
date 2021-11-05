@@ -303,8 +303,35 @@ end
 % TO DO NEXT: UPDATE ETA AND STA CODE TO BE ABLE TO DO BATCH PROCESSING 
 % - SAVE THE SMOOTHING FOR LAST (SAVE UNSMOOTHED DATA OUT)
 
+% How to update the ETA and STA code below: 
+
+% 1) make sure the below variables are updated to include {mouse}
+
+%variables that I added {mouse} to 
+% - b/c/v dataFullTrace
+% - terminals 
+% - state_start_f 
+% - TrialTypes
+% - state_end_f
+% - trialLengths
+% - FPSstack
+% - vidList
+
+% 2) per mouse make sure it accesses the gotten data if it isn't already in
+%the workspace 
+% - iterative 
+
+% 3) make the figures per mouse 
+% - REMOVE smoothing option until right before plotting
+% - ask if you want to plot (if you want to plot, include smoothing option)
+% - save the data out to the right folder 
+
+% 4) make figures across mice 
+% - remove redundant code 
+% - include smoothing option right before plotting 
+
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length  
-%{
+
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
     sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
