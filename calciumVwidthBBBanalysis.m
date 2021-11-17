@@ -341,7 +341,7 @@ end
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
-%{
+
 % set initial paramaters 
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
@@ -412,18 +412,14 @@ if workspaceQ == 0
 end 
 
 %% generate the figures and save the data out per mouse 
-for mouse = 1%:mouseNum
-    dir1 = dataDir{mouse};
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % TO DO 
-    % 2) SAVE THE DATA OUT (THE IMAGES IF YOU WANT) AND THE .MAT FILE FOR
-    % SURE AUTOMATICALLY PER MOUSE 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% TEST THE CODE BELOW. I'M A LITTLE CONCERNED THE TTYPE CODE BELOW NEEDS TO
+% BE UPDATED TRIALTYPE == 2 BUT TTYPE SHOULD BE 3 FOR THIS DATA SET BECAUSE
+% THE RED LIGHT IS ON FOR 2 SEC. 
 
-    
+for mouse = 1%:mouseNum
+    dir1 = dataDir{mouse};   
     % determine plotting start and end frames 
     plotStart = cell(1,length(bDataFullTrace{mouse}));
     plotEnd = cell(1,length(bDataFullTrace{mouse}));
@@ -1054,31 +1050,23 @@ for mouse = 1%:mouseNum
                     set(fig,'position', [100 100 900 900])
                     alpha(0.5) 
                    
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   % DIR1 IS PICKED JUST UNDER MOUSE ITERATION. NEED TO
-                   % EDIT THE BELOW CODE TO SAVE THE IMAGES OUT. MUST MAKE
-                   % IMAGE FOLDER AND EDIT NAME OF FOLDER BASED ON WHAT
-                   % KIND OF EXP WAS DONE. 
-                   
                    % save the images
-                    if saveQ == 1                
-                        if tType == 1
-                            label2 = (' 2 sec Blue Light');
-                        elseif tType == 2
-                            label2 = (' 20 sec Blue Light');
-                        elseif tType == 3
-                            label2 = (' 2 sec Red Light');
-                        elseif tType == 4
-                            label2 = (' 20 sec Red Light');
-                        end   
+                    if saveQ == 1     
+                        if optoQ == 1 % opto exp 
+                            if tType == 1
+                                label2 = (' 2 sec Blue Light');
+                            elseif tType == 2
+                                label2 = (' 20 sec Blue Light');
+                            elseif tType == 3
+                                label2 = (' 2 sec Red Light');
+                            elseif tType == 4
+                                label2 = (' 20 sec Red Light');
+                            end   
+                        elseif optoQ == 0 % behavior exp
+                            label2 = ('Behavior Data'); 
+                        end 
                         dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                        dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
                         export_fig(dir3)
                     end                      
                 end 
@@ -1165,21 +1153,25 @@ for mouse = 1%:mouseNum
                     end 
                     set(fig,'position', [100 100 900 900])
                     alpha(0.5) 
-                   %make the directory and save the images            
-                    if saveQ == 1                
-                        if tType == 1
-                            label2 = (' 2 sec Blue Light');
-                        elseif tType == 2
-                            label2 = (' 20 sec Blue Light');
-                        elseif tType == 3
-                            label2 = (' 2 sec Red Light');
-                        elseif tType == 4
-                            label2 = (' 20 sec Red Light');
-                        end   
+                   % save the images
+                    if saveQ == 1     
+                        if optoQ == 1 % opto exp 
+                            if tType == 1
+                                label2 = (' 2 sec Blue Light');
+                            elseif tType == 2
+                                label2 = (' 20 sec Blue Light');
+                            elseif tType == 3
+                                label2 = (' 2 sec Red Light');
+                            elseif tType == 4
+                                label2 = (' 20 sec Red Light');
+                            end   
+                        elseif optoQ == 0 % behavior exp
+                            label2 = ('Behavior Data'); 
+                        end 
                         dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                        dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
                         export_fig(dir3)
-                    end                      
+                    end                        
                 end 
             end 
         end 
@@ -1264,21 +1256,25 @@ for mouse = 1%:mouseNum
                     end 
                     set(fig,'position', [100 100 900 900])
                     alpha(0.5) 
-                   %make the directory and save the images            
-                    if saveQ == 1                
-                        if tType == 1
-                            label2 = (' 2 sec Blue Light');
-                        elseif tType == 2
-                            label2 = (' 20 sec Blue Light');
-                        elseif tType == 3
-                            label2 = (' 2 sec Red Light');
-                        elseif tType == 4
-                            label2 = (' 20 sec Red Light');
-                        end   
+                   % save the images
+                    if saveQ == 1     
+                        if optoQ == 1 % opto exp 
+                            if tType == 1
+                                label2 = (' 2 sec Blue Light');
+                            elseif tType == 2
+                                label2 = (' 20 sec Blue Light');
+                            elseif tType == 3
+                                label2 = (' 2 sec Red Light');
+                            elseif tType == 4
+                                label2 = (' 20 sec Red Light');
+                            end   
+                        elseif optoQ == 0 % behavior exp
+                            label2 = ('Behavior Data'); 
+                        end 
                         dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                        dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
                         export_fig(dir3)
-                    end                      
+                    end                       
                 end 
             end 
         end 
@@ -1364,21 +1360,25 @@ for mouse = 1%:mouseNum
                 set(fig,'position', [100 100 900 900])
                 alpha(0.5) 
 
-               %make the directory and save the images            
-                if saveQ == 1                
-                    if tType == 1
-                        label2 = (' 2 sec Blue Light');
-                    elseif tType == 2
-                        label2 = (' 20 sec Blue Light');
-                    elseif tType == 3
-                        label2 = (' 2 sec Red Light');
-                    elseif tType == 4
-                        label2 = (' 20 sec Red Light');
-                    end   
+               % save the images
+                if saveQ == 1     
+                    if optoQ == 1 % opto exp 
+                        if tType == 1
+                            label2 = (' 2 sec Blue Light');
+                        elseif tType == 2
+                            label2 = (' 20 sec Blue Light');
+                        elseif tType == 3
+                            label2 = (' 2 sec Red Light');
+                        elseif tType == 4
+                            label2 = (' 20 sec Red Light');
+                        end   
+                    elseif optoQ == 0 % behavior exp
+                        label2 = ('Behavior Data'); 
+                    end 
                     dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                    dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
                     export_fig(dir3)
-                end                 
+                end                
             end 
         end 
         
@@ -1462,21 +1462,25 @@ for mouse = 1%:mouseNum
                 set(fig,'position', [100 100 900 900])
                 alpha(0.5) 
 
-               %make the directory and save the images            
-                if saveQ == 1                
-                    if tType == 1
-                        label2 = (' 2 sec Blue Light');
-                    elseif tType == 2
-                        label2 = (' 20 sec Blue Light');
-                    elseif tType == 3
-                        label2 = (' 2 sec Red Light');
-                    elseif tType == 4
-                        label2 = (' 20 sec Red Light');
-                    end   
+                % save the images
+                if saveQ == 1     
+                    if optoQ == 1 % opto exp 
+                        if tType == 1
+                            label2 = (' 2 sec Blue Light');
+                        elseif tType == 2
+                            label2 = (' 20 sec Blue Light');
+                        elseif tType == 3
+                            label2 = (' 2 sec Red Light');
+                        elseif tType == 4
+                            label2 = (' 20 sec Red Light');
+                        end   
+                    elseif optoQ == 0 % behavior exp
+                        label2 = ('Behavior Data'); 
+                    end 
                     dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                    dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
                     export_fig(dir3)
-                end                 
+                end             
             end 
         end  
         
@@ -1560,24 +1564,30 @@ for mouse = 1%:mouseNum
                 set(fig,'position', [100 100 900 900])
                 alpha(0.5) 
 
-               %make the directory and save the images            
-                if saveQ == 1                
-                    if tType == 1
-                        label2 = (' 2 sec Blue Light');
-                    elseif tType == 2
-                        label2 = (' 20 sec Blue Light');
-                    elseif tType == 3
-                        label2 = (' 2 sec Red Light');
-                    elseif tType == 4
-                        label2 = (' 20 sec Red Light');
-                    end   
+                % save the images
+                if saveQ == 1     
+                    if optoQ == 1 % opto exp 
+                        if tType == 1
+                            label2 = (' 2 sec Blue Light');
+                        elseif tType == 2
+                            label2 = (' 20 sec Blue Light');
+                        elseif tType == 3
+                            label2 = (' 2 sec Red Light');
+                        elseif tType == 4
+                            label2 = (' 20 sec Red Light');
+                        end   
+                    elseif optoQ == 0 % behavior exp
+                        label2 = ('Behavior Data'); 
+                    end 
                     dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                    dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
                     export_fig(dir3)
                 end                 
             end 
         end                 
     end 
+    fileName = 'ETAdata.mat';
+    save(fullfile(dir1,fileName));
 end 
 
 %}
