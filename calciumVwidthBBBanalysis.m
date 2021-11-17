@@ -341,7 +341,7 @@ end
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
-
+%{
 % set initial paramaters 
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
@@ -411,15 +411,17 @@ if workspaceQ == 0
     end 
 end 
 
-% generate the figures and save the data out per mouse 
-for mouse = 1:mouseNum
+%% generate the figures and save the data out per mouse 
+for mouse = 1%:mouseNum
+    dir1 = dataDir{mouse};
     % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % TO DO 
-    % 2) SAVE THE DATA OUT 
+    % 2) SAVE THE DATA OUT (THE IMAGES IF YOU WANT) AND THE .MAT FILE FOR
+    % SURE AUTOMATICALLY PER MOUSE 
 
     
     % determine plotting start and end frames 
@@ -821,14 +823,16 @@ for mouse = 1:mouseNum
     % set paramaters for plotting 
     if mouse == 1 
         AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
+        if optoQ == 1 
+            RedAVQ = input('Input 1 to average across all red trials. Input 0 otherwise.');
+        elseif optoQ == 0 
+            RedAVQ = 0; 
+        end 
     end 
     if AVQ == 1 
         if CAQ == 1 
             termList = 1:length(terminals{mouse});
         end 
-    end 
-    if mouse == 1 
-        RedAVQ = input('Input 1 to average across all red trials. Input 0 otherwise.');
     end 
     if RedAVQ == 1
         tTypeList = 3;
@@ -836,54 +840,16 @@ for mouse = 1:mouseNum
         tTypeList = 1:numTtypes;
     end 
     if mouse == 1 
-        BBBpQ = input('Input 1 if you want to plot BBB data. Input 0 otherwise.');
-    end 
-    
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %   EDIT THE BELOW CODE SO THAT ALL THE BBB AND VW ROIS GET PLOTTED 
-    
-    if AVQ == 0 
-        if BBBpQ == 1
-            BBBroi = input('What BBB ROI data do you want to plot? ');
+        if BBBQ == 1 
+            BBBpQ = input('Input 1 if you want to plot BBB data. Input 0 otherwise.');
         end 
-    end 
-    if mouse == 1
-        CApQ = input('Input 1 if you want to plot calcium data. Input 0 otherwise.');
-    end 
-    if AVQ == 0 
-        if CApQ == 1 
-            allTermQ = input('Input 1 to plot all the calcium terminals. Input 0 otherwise. ');    
-            if allTermQ == 1
-                termList = 1:length(terminals{mouse});
-            elseif allTermQ == 0
-                Term = input('What terminal do you want to plot? ');
-                termList = find(terminals{mouse} == Term); 
-            end 
+        if CAQ == 1 
+            CApQ = input('Input 1 if you want to plot calcium data. Input 0 otherwise.');
         end 
-    end 
-    if mouse == 1
-        VWpQ = input('Input 1 if you want to plot vessel width data. Input 0 otherwise.');
-    end 
-    if AVQ == 0 
-        if VWpQ == 1
-            VWroi = input('What vessel width ROI data do you want to plot? ');
+        if VWQ == 1 
+            VWpQ = input('Input 1 if you want to plot vessel width data. Input 0 otherwise.');
         end 
-    end 
-    if mouse == 1
         saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
-    end 
-    if saveQ == 1               
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % EDIT THE FIGURE SAVING CODE SO THAT THE FIGURES GET SAVED IN THE
-        % RIGHT DIRECTORY (PER MOUSE) AUTOMATICALLY WITHOUT IT NEEDING TO
-        % ASK WHERE TO SAVE THESE FIGURES 
-        dir1 = input('What folder are you saving these images in? ');
     end 
 
     %sort all ROIs together 
@@ -896,7 +862,7 @@ for mouse = 1:mouseNum
             countB = 1;
             countV = 1;
             if CAQ == 1
-                for ccell = termList 
+                for ccell = 1:length(terminals{mouse})
                     for trial = 1:size(nsCeta{terminals{mouse}(ccell)}{tType},1)
                         allNScETA{1}{tType}(count,:) = nsCeta{terminals{mouse}(ccell)}{tType}(trial,:);
                         count = count + 1;
@@ -957,7 +923,7 @@ for mouse = 1:mouseNum
                 end 
             elseif AVQ == 0
                 if CAQ == 1 
-                    for ccell = termList 
+                    for ccell = 1:length(terminals{mouse})
                         for trial = 1:size(nsCeta{terminals{mouse}(ccell)}{redTrialTtypeInds(tType)},1)
                             allRedNScETA{terminals{mouse}(ccell)}{3}(count,:) = nsCeta{terminals{mouse}(ccell)}{redTrialTtypeInds(tType)}(trial,1:size(nsCeta{terminals{mouse}(ccell)}{redTrialTtypeInds(1)},2)); 
                             count = count + 1;
@@ -984,37 +950,26 @@ for mouse = 1:mouseNum
 
     %  plot 
     if AVQ == 0 
+        % THE BELOW CODE (RELATED TO REDAVQ) MAY NEED TO BE UPDATED 
         if RedAVQ == 0 && CAQ == 0 
             termList = 1; 
         end 
         if RedAVQ == 1 && CAQ == 0 
             termList = 1; 
         end 
-        for ccell = termList
-            baselineEndFrame = floor(20*(FPSstack{mouse}));
-            if CAQ == 1
-                AVcData = cell(1,length(nsCeta{terminals{mouse}(ccell)}{tType}));
+ 
+        baselineEndFrame = sec_before_stim_start-baselineInput;
+        % plot calcium data ETAs 
+        if CApQ == 1 
+            for ccell = 1:length(terminals{mouse})
+                % initialize arrays 
+                AVcData = cell(1,length(terminals{mouse}));
                 SEMc = cell(1,numTtypes);
                 STDc = cell(1,numTtypes);
                 CI_cLow = cell(1,numTtypes);
                 CI_cHigh = cell(1,numTtypes);
-            end 
-            if BBBQ == 1
-                AVbData = cell(1,length(Beta));
-                SEMb = cell(1,numTtypes);
-                STDb = cell(1,numTtypes);
-                CI_bLow = cell(1,numTtypes);
-                CI_bHigh = cell(1,numTtypes);
-            end 
-            if VWQ == 1
-                AVvData = cell(1,length(Beta));
-                SEMv = cell(1,numTtypes);
-                STDv = cell(1,numTtypes);
-                CI_vLow = cell(1,numTtypes);
-                CI_vHigh = cell(1,numTtypes);
-            end 
-            for tType = tTypeList          
-                if CAQ == 1
+                for tType = tTypeList    
+                    % calculate the 95% confidence interval 
                     SEMc{terminals{mouse}(ccell)}{tType} = (nanstd(nsCeta{terminals{mouse}(ccell)}{tType}))/(sqrt(size(nsCeta{terminals{mouse}(ccell)}{tType},1))); % Standard Error            
                     STDc{terminals{mouse}(ccell)}{tType} = nanstd(nsCeta{terminals{mouse}(ccell)}{tType});
                     ts_cLow = tinv(0.025,size(nsCeta{terminals{mouse}(ccell)}{tType},1)-1);% T-Score for 95% CI
@@ -1023,141 +978,392 @@ for mouse = 1:mouseNum
                     CI_cHigh{terminals{mouse}(ccell)}{tType} = (nanmean(nsCeta{terminals{mouse}(ccell)}{tType},1)) + (ts_cHigh*SEMc{terminals{mouse}(ccell)}{tType});  % Confidence Intervals
                     x = 1:length(CI_cLow{terminals{mouse}(ccell)}{tType});
                     AVcData{terminals{mouse}(ccell)}{tType} = nanmean(nsCeta{terminals{mouse}(ccell)}{tType},1);
-                end 
-                if BBBQ == 1
-                    for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                        % calculate the 95% confidence interval 
-                        SEMb{BBBroi}{tType} = (nanstd(nsBeta{BBBroi}{tType}))/(sqrt(size(nsBeta{BBBroi}{tType},1))); % Standard Error            
-                        STDb{BBBroi}{tType} = nanstd(nsBeta{BBBroi}{tType});
-                        ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
-                        ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
-                        CI_bLow{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bLow*SEMb{BBBroi}{tType});  % Confidence Intervals
-                        CI_bHigh{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bHigh*SEMb{BBBroi}{tType});  % Confidence Intervals
-                        x = 1:length(CI_bLow{BBBroi}{tType});
-                        AVbData{BBBroi}{tType} = nanmean(nsBeta{BBBroi}{tType},1);
+
+                    fig = figure;             
+                    hold all;
+                    if tType == 1 || tType == 3 
+                        Frames = size(nsCeta{terminals{mouse}(ccell)}{tType},2);        
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
+                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    elseif tType == 2 || tType == 4 
+                        Frames = size(nsCeta{terminals{mouse}(ccell)}{tType},2);
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
+                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                     end 
-                end 
-                if VWQ == 1
-                    for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                        % calculate the 95% confidence interval 
-                        SEMv{VWroi}{tType} = (nanstd(nsVeta{VWroi}{tType}))/(sqrt(size(nsVeta{VWroi}{tType},1))); % Standard Error            
-                        STDv{VWroi}{tType} = nanstd(nsVeta{VWroi}{tType});
-                        ts_vLow = tinv(0.025,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
-                        ts_vHigh = tinv(0.975,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
-                        CI_vLow{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vLow*SEMv{VWroi}{tType});  % Confidence Intervals
-                        CI_vHigh{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vHigh*SEMv{VWroi}{tType});  % Confidence Intervals
-                        x = 1:length(CI_vLow{VWroi}{tType});
-                        AVvData{VWroi}{tType} = nanmean(nsVeta{VWroi}{tType},1);
+
+                    CaPlot = plot(AVcData{terminals{mouse}(ccell)}{tType}-100,'b','LineWidth',3);
+                    patch([x fliplr(x)],[CI_cLow{terminals{mouse}(ccell)}{tType}-100 fliplr(CI_cHigh{terminals{mouse}(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
+
+                    if tType == 1 
+                        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    elseif tType == 3 
+        %                 plot(AVbData{tType},'k','LineWidth',3)
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'k','LineWidth',2)
+        %                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)                      
+                    elseif tType == 2 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    elseif tType == 4 
+        %                 plot(AVbData{tType},'r','LineWidth',3)
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    end
+        %             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
+        %             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
+        %                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
+        %             end 
+        %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
+        %             legend('vessel width')
+        %             legend([BBBplot VWplot],{'BBB Permeability' 'Vessel Width'})
+                    ax=gca;
+                    ax.XTick = FrameVals;
+                    ax.XTickLabel = sec_TimeVals;
+                    ax.FontSize = 30;
+                    ax.FontName = 'Arial';
+        %                 xLimStart = 17.8*FPSstack;
+        %                 xLimEnd = 22*FPSstack;
+                    xlim([1 length(AVcData{terminals{mouse}(ccell)}{tType})]) 
+        %             xlim([1 length(AVbData{BBBroi}{tType})])
+        %                 xlim([xLimStart xLimEnd])
+                    ylim([-15 25])
+                    xlabel('time (s)')
+                    ylabel('percent change')
+                    if optoQ == 0 % behavior data 
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1.FontSize = 30;
+                        label1.FontName = 'Arial';
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2.FontSize = 30;
+                        label2.FontName = 'Arial';
                     end 
+                    % initialize empty string array 
+                    label = strings;
+                    label = append(label,sprintf('  Mouse #%d Ca ROI #%d',mouse,terminals{mouse}(ccell)));
+                    if optoQ == 1 % opto data 
+                        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+                    end 
+                    if optoQ == 0 % behavior data 
+                        title({'Behavior Event Triggered Averages';label},'FontName','Arial');
+                    end 
+                    set(fig,'position', [100 100 900 900])
+                    alpha(0.5) 
+                   
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   % DIR1 IS PICKED JUST UNDER MOUSE ITERATION. NEED TO
+                   % EDIT THE BELOW CODE TO SAVE THE IMAGES OUT. MUST MAKE
+                   % IMAGE FOLDER AND EDIT NAME OF FOLDER BASED ON WHAT
+                   % KIND OF EXP WAS DONE. 
+                   
+                   % save the images
+                    if saveQ == 1                
+                        if tType == 1
+                            label2 = (' 2 sec Blue Light');
+                        elseif tType == 2
+                            label2 = (' 20 sec Blue Light');
+                        elseif tType == 3
+                            label2 = (' 2 sec Red Light');
+                        elseif tType == 4
+                            label2 = (' 20 sec Red Light');
+                        end   
+                        dir2 = strrep(dir1,'\','/');
+                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                        export_fig(dir3)
+                    end                      
                 end 
-                
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               % EDIT THE BELOW CODE SO THAT IT PLOTS ALL THE VW AND BBB
-               % ROIS ITERATIVELY 
-               % EXECUTIVE DECISION: PLOT THE ETAS FOR CA, VW, AND BBB DATA
-               % ON SEPARATE FIGURES (FOR EACH DATA TYPE)
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-               
+            end 
+        end 
+        
+        % plot BBB data ETAs 
+        if BBBpQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                % initialize arrays 
+                AVbData = cell(1,length(Beta));
+                SEMb = cell(1,numTtypes);
+                STDb = cell(1,numTtypes);
+                CI_bLow = cell(1,numTtypes);
+                CI_bHigh = cell(1,numTtypes);
+                for tType = tTypeList                          
+                    % calculate the 95% confidence interval 
+                    SEMb{BBBroi}{tType} = (nanstd(nsBeta{BBBroi}{tType}))/(sqrt(size(nsBeta{BBBroi}{tType},1))); % Standard Error            
+                    STDb{BBBroi}{tType} = nanstd(nsBeta{BBBroi}{tType});
+                    ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
+                    ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
+                    CI_bLow{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bLow*SEMb{BBBroi}{tType});  % Confidence Intervals
+                    CI_bHigh{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bHigh*SEMb{BBBroi}{tType});  % Confidence Intervals
+                    x = 1:length(CI_bLow{BBBroi}{tType});
+                    AVbData{BBBroi}{tType} = nanmean(nsBeta{BBBroi}{tType},1);
+                    
+                    fig = figure;             
+                    hold all;
+                    if tType == 1 || tType == 3 
+                        Frames = size(nsBeta{BBBroi}{tType},2);        
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
+                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    elseif tType == 2 || tType == 4 
+                        Frames = size(nsBeta{BBBroi}{tType},2);
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
+                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    end 
+
+                    BBBplot = plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3);
+                    patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+
+                    if tType == 1 
+                        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    elseif tType == 3 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)                      
+                    elseif tType == 2 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    elseif tType == 4 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    end
+                    ax=gca;
+                    ax.XTick = FrameVals;
+                    ax.XTickLabel = sec_TimeVals;
+                    ax.FontSize = 30;
+                    ax.FontName = 'Arial';
+                    xlim([1 length(AVbData{BBBroi}{tType})]) 
+                    ylim([-15 25])
+                    xlabel('time (s)')
+                    ylabel('percent change')
+                    if optoQ == 0 % behavior data 
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1.FontSize = 30;
+                        label1.FontName = 'Arial';
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2.FontSize = 30;
+                        label2.FontName = 'Arial';
+                    end 
+                    % initialize empty string array 
+                    label = strings;
+                    label = append(label,sprintf('  Mouse #%d BBB ROI #%d',mouse,BBBroi));
+                    if optoQ == 1 % opto data 
+                        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+                    end 
+                    if optoQ == 0 % behavior data 
+                        title({'Behavior Event Triggered Averages';label},'FontName','Arial');
+                    end 
+                    set(fig,'position', [100 100 900 900])
+                    alpha(0.5) 
+                   %make the directory and save the images            
+                    if saveQ == 1                
+                        if tType == 1
+                            label2 = (' 2 sec Blue Light');
+                        elseif tType == 2
+                            label2 = (' 20 sec Blue Light');
+                        elseif tType == 3
+                            label2 = (' 2 sec Red Light');
+                        elseif tType == 4
+                            label2 = (' 20 sec Red Light');
+                        end   
+                        dir2 = strrep(dir1,'\','/');
+                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                        export_fig(dir3)
+                    end                      
+                end 
+            end 
+        end 
+        
+        % plot VW data ETAs 
+        if VWpQ == 1 
+            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                % initialize arrays 
+                AVvData = cell(1,length(Beta));
+                SEMv = cell(1,numTtypes);
+                STDv = cell(1,numTtypes);
+                CI_vLow = cell(1,numTtypes);
+                CI_vHigh = cell(1,numTtypes);
+                for tType = tTypeList                          
+                    % calculate the 95% confidence interval 
+                    SEMv{VWroi}{tType} = (nanstd(nsVeta{VWroi}{tType}))/(sqrt(size(nsVeta{VWroi}{tType},1))); % Standard Error            
+                    STDv{VWroi}{tType} = nanstd(nsVeta{VWroi}{tType});
+                    ts_vLow = tinv(0.025,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
+                    ts_vHigh = tinv(0.975,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
+                    CI_vLow{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vLow*SEMv{VWroi}{tType});  % Confidence Intervals
+                    CI_vHigh{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vHigh*SEMv{VWroi}{tType});  % Confidence Intervals
+                    x = 1:length(CI_vLow{VWroi}{tType});
+                    AVvData{VWroi}{tType} = nanmean(nsVeta{VWroi}{tType},1);
+                    
+                    fig = figure;             
+                    hold all;
+                    if tType == 1 || tType == 3 
+                        Frames = size(nsVeta{VWroi}{tType},2);        
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
+                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    elseif tType == 2 || tType == 4 
+                        Frames = size(nsVeta{VWroi}{tType},2);
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
+                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    end 
+
+                    VWplot = plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3);
+                    patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')   
+
+                    if tType == 1 
+                        plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    elseif tType == 3 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)                      
+                    elseif tType == 2 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    elseif tType == 4 
+                        plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    end
+                    ax=gca;
+                    ax.XTick = FrameVals;
+                    ax.XTickLabel = sec_TimeVals;
+                    ax.FontSize = 30;
+                    ax.FontName = 'Arial';
+                    xlim([1 length(AVvData{VWroi}{tType})]) 
+                    ylim([-15 25])
+                    xlabel('time (s)')
+                    ylabel('percent change')
+                    if optoQ == 0 % behavior data 
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1.FontSize = 30;
+                        label1.FontName = 'Arial';
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2.FontSize = 30;
+                        label2.FontName = 'Arial';
+                    end 
+                    % initialize empty string array 
+                    label = strings;
+                    label = append(label,sprintf('  Mouse #%d VW ROI #%d',mouse,VWroi));
+                    if optoQ == 1 % opto data 
+                        title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+                    end 
+                    if optoQ == 0 % behavior data 
+                        title({'Behavior Event Triggered Averages';label},'FontName','Arial');
+                    end 
+                    set(fig,'position', [100 100 900 900])
+                    alpha(0.5) 
+                   %make the directory and save the images            
+                    if saveQ == 1                
+                        if tType == 1
+                            label2 = (' 2 sec Blue Light');
+                        elseif tType == 2
+                            label2 = (' 20 sec Blue Light');
+                        elseif tType == 3
+                            label2 = (' 2 sec Red Light');
+                        elseif tType == 4
+                            label2 = (' 20 sec Red Light');
+                        end   
+                        dir2 = strrep(dir1,'\','/');
+                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                        export_fig(dir3)
+                    end                      
+                end 
+            end 
+        end 
+    elseif AVQ == 1
+        baselineEndFrame = sec_before_stim_start-baselineInput;
+        % plot CA data 
+        if CApQ == 1
+            % initialize arrays 
+            AVcData = cell(1,length(nsCeta{1}{tType}));
+            SEMc = cell(1,numTtypes);
+            STDc = cell(1,numTtypes);
+            CI_cLow = cell(1,numTtypes);
+            CI_cHigh = cell(1,numTtypes);
+            for tType = tTypeList      
+                % calculate the 95% confidence interval 
+                SEMc{1}{tType} = (nanstd(nsCeta{1}{tType}))/(sqrt(size(nsCeta{1}{tType},1))); % Standard Error            
+                STDc{1}{tType} = nanstd(nsCeta{1}{tType});
+                ts_cLow = tinv(0.025,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
+                CI_cLow{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cLow*SEMc{1}{tType});  % Confidence Intervals
+                CI_cHigh{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cHigh*SEMc{1}{tType});  % Confidence Intervals
+                x = 1:length(CI_cLow{1}{tType});
+                AVcData{1}{tType} = nanmean(nsCeta{1}{tType},1);
+
                 fig = figure;             
                 hold all;
                 if tType == 1 || tType == 3 
-                    Frames = size(nsBeta{BBBroi}{tType},2);        
+                    Frames = size(nsCeta{1}{tType},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                 elseif tType == 2 || tType == 4 
-                    Frames = size(nsBeta{BBBroi}{tType},2);
+                    Frames = size(nsCeta{1}{tType},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                 end 
-                if BBBpQ == 1 
-                    BBBplot = plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3);
-                    patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
-                end 
-                if CApQ == 1 
-                    CaPlot = plot(AVcData{terminals{mouse}(ccell)}{tType}-100,'b','LineWidth',3);
-                    patch([x fliplr(x)],[CI_cLow{terminals{mouse}(ccell)}{tType}-100 fliplr(CI_cHigh{terminals{mouse}(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
 
-                end 
-                if VWpQ == 1
-                    VWplot = plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3);
-                    patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')           
-                end 
-    %             legend('BBB Permeability','Vessel Width')
+                plot(AVcData{1}{tType}-100,'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+
                 if tType == 1 
-    %                 plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'b','LineWidth',2)
-    %                 plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2) 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
                 elseif tType == 3 
-    %                 plot(AVbData{tType},'k','LineWidth',3)
-                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'r','LineWidth',2)
-    %                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'r','LineWidth',2)                      
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
                 elseif tType == 2 
-                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'b','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'b','LineWidth',2)   
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
                 elseif tType == 4 
-    %                 plot(AVbData{tType},'r','LineWidth',3)
-                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'r','LineWidth',2)
-                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'r','LineWidth',2) 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
                 end
-    %             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
-    %             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
-    %                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
-    %             end 
-    %             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
-    %             legend('vessel width')
-    %             legend([BBBplot VWplot],{'BBB Permeability' 'Vessel Width'})
                 ax=gca;
                 ax.XTick = FrameVals;
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-    %                 xLimStart = 17.8*FPSstack;
-    %                 xLimEnd = 22*FPSstack;
-                xlim([1 length(AVcData{terminals{mouse}(ccell)}{tType})]) 
-    %             xlim([1 length(AVbData{BBBroi}{tType})])
-    %                 xlim([xLimStart xLimEnd])
-                ylim([-15 25])
+                xlim([1 length(AVcData{1}{tType})])
+                ylim([-100 100])
                 xlabel('time (s)')
                 ylabel('percent change')
-                label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
-                label1.FontSize = 30;
-                label1.FontName = 'Arial';
-                label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
-                label2.FontSize = 30;
-                label2.FontName = 'Arial';
                 % initialize empty string array 
+                if optoQ == 0 % behavior data 
+                    label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                    label1.FontSize = 30;
+                    label1.FontName = 'Arial';
+                    label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+                    label2.FontSize = 30;
+                    label2.FontName = 'Arial';
+                end 
                 label = strings;
-                if BBBpQ == 1
-                    label = append(label,sprintf('  BBB ROI %d',BBBroi)); 
+                label = append(sprintf(label,'  Ca ROIs averaged. Mouse #%d.',mouse));
+                if optoQ == 1 % opto data 
+                    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
                 end 
-                if CApQ == 1 
-                    label = append(label,sprintf('  Ca ROI %d',terminals{mouse}(ccell)));
+                if optoQ == 0 % behavior data 
+                    title({'Event Triggered Averages';label},'FontName','Arial');
                 end 
-                if VWpQ == 1
-                    label = append(label,sprintf('  Vessel width ROI %d',VWroi));
-                end 
-    %             title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-                title({'Event Triggered Averages';label},'FontName','Arial');
                 set(fig,'position', [100 100 900 900])
                 alpha(0.5) 
+
                %make the directory and save the images            
                 if saveQ == 1                
                     if tType == 1
@@ -1172,47 +1378,19 @@ for mouse = 1:mouseNum
                     dir2 = strrep(dir1,'\','/');
                     dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                     export_fig(dir3)
-                end                      
+                end                 
             end 
-            
-            
-            
         end 
-    elseif AVQ == 1
-        baselineEndFrame = floor(20*(FPSstack{mouse}));
-        if CApQ == 1
-            AVcData = cell(1,length(nsCeta{1}{tType}));
-            SEMc = cell(1,numTtypes);
-            STDc = cell(1,numTtypes);
-            CI_cLow = cell(1,numTtypes);
-            CI_cHigh = cell(1,numTtypes);
-        end 
+        
+        % plot BBB data 
         if BBBpQ == 1
+            % initialize arrays 
             AVbData = cell(1,length(nsBeta{1}{tType}));
             SEMb = cell(1,numTtypes);
             STDb = cell(1,numTtypes);
             CI_bLow = cell(1,numTtypes);
             CI_bHigh = cell(1,numTtypes);
-        end 
-        if VWpQ == 1
-            AVvData = cell(1,length(nsVeta{1}{tType}));
-            SEMv = cell(1,numTtypes);
-            STDv = cell(1,numTtypes);
-            CI_vLow = cell(1,numTtypes);
-            CI_vHigh = cell(1,numTtypes);
-        end 
-        for tType = tTypeList            
-            if CApQ == 1
-                SEMc{1}{tType} = (nanstd(nsCeta{1}{tType}))/(sqrt(size(nsCeta{1}{tType},1))); % Standard Error            
-                STDc{1}{tType} = nanstd(nsCeta{1}{tType});
-                ts_cLow = tinv(0.025,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
-                ts_cHigh = tinv(0.975,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
-                CI_cLow{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cLow*SEMc{1}{tType});  % Confidence Intervals
-                CI_cHigh{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cHigh*SEMc{1}{tType});  % Confidence Intervals
-                x = 1:length(CI_cLow{1}{tType});
-                AVcData{1}{tType} = nanmean(nsCeta{1}{tType},1);
-            end 
-            if BBBpQ == 1
+            for tType = tTypeList   
                 % calculate the 95% confidence interval 
                 SEMb{1}{tType} = (nanstd(nsBeta{1}{tType}))/(sqrt(size(nsBeta{1}{tType},1))); % Standard Error            
                 STDb{1}{tType} = nanstd(nsBeta{1}{tType});
@@ -1222,8 +1400,95 @@ for mouse = 1:mouseNum
                 CI_bHigh{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bHigh*SEMb{1}{tType});  % Confidence Intervals
                 x = 1:length(CI_bLow{1}{tType});
                 AVbData{1}{tType} = nanmean(nsBeta{1}{tType},1);
+
+                fig = figure;             
+                hold all;
+                if tType == 1 || tType == 3 
+                    Frames = size(nsBeta{1}{tType},2);        
+                    Frames_pre_stim_start = -((Frames-1)/2); 
+                    Frames_post_stim_start = (Frames-1)/2; 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
+                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                elseif tType == 2 || tType == 4 
+                    Frames = size(nsBeta{1}{tType},2);
+                    Frames_pre_stim_start = -((Frames-1)/2); 
+                    Frames_post_stim_start = (Frames-1)/2; 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
+                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                end 
+
+                plot(AVbData{1}{tType}-100,'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+
+                if tType == 1 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                elseif tType == 3 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
+                elseif tType == 2 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
+                elseif tType == 4 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                end
+                ax=gca;
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;
+                ax.FontSize = 30;
+                ax.FontName = 'Arial';
+                xlim([1 length(AVbData{1}{tType})])
+                ylim([-100 100])
+                xlabel('time (s)')
+                ylabel('percent change')
+                % initialize empty string array 
+                if optoQ == 0 % behavior data 
+                    label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                    label1.FontSize = 30;
+                    label1.FontName = 'Arial';
+                    label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+                    label2.FontSize = 30;
+                    label2.FontName = 'Arial';
+                end 
+                label = strings;
+                label = append(sprintf(label,'  BBB ROIs averaged. Mouse #%d.',mouse));
+                if optoQ == 1 % opto data 
+                    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+                end 
+                if optoQ == 0 % behavior data 
+                    title({'Event Triggered Averages';label},'FontName','Arial');
+                end 
+                set(fig,'position', [100 100 900 900])
+                alpha(0.5) 
+
+               %make the directory and save the images            
+                if saveQ == 1                
+                    if tType == 1
+                        label2 = (' 2 sec Blue Light');
+                    elseif tType == 2
+                        label2 = (' 20 sec Blue Light');
+                    elseif tType == 3
+                        label2 = (' 2 sec Red Light');
+                    elseif tType == 4
+                        label2 = (' 20 sec Red Light');
+                    end   
+                    dir2 = strrep(dir1,'\','/');
+                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                    export_fig(dir3)
+                end                 
             end 
-            if VWpQ == 1
+        end  
+        
+        % plot VW data 
+        if VWpQ == 1
+            % initialize arrays 
+            AVvData = cell(1,length(nsVeta{1}{tType}));
+            SEMv = cell(1,numTtypes);
+            STDv = cell(1,numTtypes);
+            CI_vLow = cell(1,numTtypes);
+            CI_vHigh = cell(1,numTtypes);
+            for tType = tTypeList   
                 % calculate the 95% confidence interval 
                 SEMv{1}{tType} = (nanstd(nsVeta{1}{tType}))/(sqrt(size(nsVeta{1}{tType},1))); % Standard Error            
                 STDv{1}{tType} = nanstd(nsVeta{1}{tType});
@@ -1233,117 +1498,87 @@ for mouse = 1:mouseNum
                 CI_vHigh{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vHigh*SEMv{1}{tType});  % Confidence Intervals
                 x = 1:length(CI_vLow{1}{tType});
                 AVvData{1}{tType} = nanmean(nsVeta{1}{tType},1);
-            end 
-            fig = figure;             
-            hold all;
-            if tType == 1 || tType == 3 
-                Frames = size(nsBeta{1}{tType},2);        
-                Frames_pre_stim_start = -((Frames-1)/2); 
-                Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-            elseif tType == 2 || tType == 4 
-                Frames = size(nsBeta{1}{tType},2);
-                Frames_pre_stim_start = -((Frames-1)/2); 
-                Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-            end 
-            if BBBpQ == 1 
-                plot(AVbData{1}{tType}-100,'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
-            end 
-            if CApQ == 1 
-                plot(AVcData{1}{tType}-100,'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
-            end 
-            if VWpQ == 1
+
+                fig = figure;             
+                hold all;
+                if tType == 1 || tType == 3 
+                    Frames = size(nsVeta{1}{tType},2);        
+                    Frames_pre_stim_start = -((Frames-1)/2); 
+                    Frames_post_stim_start = (Frames-1)/2; 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
+                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                elseif tType == 2 || tType == 4 
+                    Frames = size(nsVeta{1}{tType},2);
+                    Frames_pre_stim_start = -((Frames-1)/2); 
+                    Frames_post_stim_start = (Frames-1)/2; 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
+                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                end 
+
                 plot(AVvData{1}{tType}-100,'k','LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')            
+                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')  
+
+                if tType == 1 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                elseif tType == 3 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
+                elseif tType == 2 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
+                elseif tType == 4 
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                end
+                ax=gca;
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;
+                ax.FontSize = 30;
+                ax.FontName = 'Arial';
+                xlim([1 length(AVvData{1}{tType})])
+                ylim([-100 100])
+                xlabel('time (s)')
+                ylabel('percent change')
+                % initialize empty string array 
+                if optoQ == 0 % behavior data 
+                    label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                    label1.FontSize = 30;
+                    label1.FontName = 'Arial';
+                    label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+                    label2.FontSize = 30;
+                    label2.FontName = 'Arial';
+                end 
+                label = strings;
+                label = append(sprintf(label,'  VW ROIs averaged. Mouse #%d.',mouse));
+                if optoQ == 1 % opto data 
+                    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+                end 
+                if optoQ == 0 % behavior data 
+                    title({'Event Triggered Averages';label},'FontName','Arial');
+                end 
+                set(fig,'position', [100 100 900 900])
+                alpha(0.5) 
+
+               %make the directory and save the images            
+                if saveQ == 1                
+                    if tType == 1
+                        label2 = (' 2 sec Blue Light');
+                    elseif tType == 2
+                        label2 = (' 20 sec Blue Light');
+                    elseif tType == 3
+                        label2 = (' 2 sec Red Light');
+                    elseif tType == 4
+                        label2 = (' 20 sec Red Light');
+                    end   
+                    dir2 = strrep(dir1,'\','/');
+                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
+                    export_fig(dir3)
+                end                 
             end 
-            if tType == 1 
-                plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-            elseif tType == 3 
-%                 plot(AVbData{tType},'k','LineWidth',3)
-                plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'r','LineWidth',2)
-%                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)                      
-            elseif tType == 2 
-                plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'b','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
-            elseif tType == 4 
-%                 plot(AVbData{tType},'r','LineWidth',3)
-                plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'r','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-            end
-%             colorSet = varycolor(size(nsCeta{terminals(ccell)}{tType},1));            
-%             for trial = 1:size(nsCeta{terminals(ccell)}{tType},1)
-%                 plot(nsCeta{terminals(ccell)}{tType}(trial,:),'Color',colorSet(trial,:),'LineWidth',1.5)
-%             end 
-%             legend('DA calcium','BBB permeability','Location','northwest','FontName','Times')
-%             legend('vessel width')
-            ax=gca;
-            ax.XTick = FrameVals;
-            ax.XTickLabel = sec_TimeVals;
-            ax.FontSize = 30;
-            ax.FontName = 'Arial';
-%                 xLimStart = 18*FPSstack;
-%                 xLimEnd = 32*FPSstack;
-            xlim([1 length(AVbData{1}{tType})])
-%                 xlim([xLimStart xLimEnd])
-            ylim([-100 100])
-            xlabel('time (s)')
-            ylabel('percent change')
-            % initialize empty string array 
-            label = strings;
-            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
-            label1.FontSize = 30;
-            label1.FontName = 'Arial';
-            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
-            label2.FontSize = 30;
-            label2.FontName = 'Arial';
-            if BBBpQ == 1
-                label = append(label,'  BBB ROIs averaged'); 
-            end 
-            if CApQ == 1 
-                label = append(label,'  Ca ROIs averaged');
-            end 
-            if VWpQ == 1
-                label = append(label,'  Vessel width ROIs averaged ');
-            end 
-            title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-            title({'Event Triggered Averages';label},'FontName','Arial');
-            set(fig,'position', [100 100 900 900])
-            alpha(0.5) 
-            
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % FIX THE PLOT TITLES SO THAT IT KNOWS WHETHER THE ETA DATA IS
-            % OPTO OR BEHAVIOR DATA 
-            
-           %make the directory and save the images            
-            if saveQ == 1                
-                if tType == 1
-                    label2 = (' 2 sec Blue Light');
-                elseif tType == 2
-                    label2 = (' 20 sec Blue Light');
-                elseif tType == 3
-                    label2 = (' 2 sec Red Light');
-                elseif tType == 4
-                    label2 = (' 20 sec Red Light');
-                end   
-                dir2 = strrep(dir1,'\','/');
-                dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
-                export_fig(dir3)
-            end                 
-        end 
+        end                 
     end 
 end 
-
 
 %}
 %% ETA: average across mice 
