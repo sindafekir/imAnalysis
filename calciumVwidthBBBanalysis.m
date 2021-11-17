@@ -317,17 +317,9 @@ end
 % - FPSstack
 % - vidList
 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@ ETA UPDATE @@@@@@@@@@@@@@@@@@@@@@@
-
 % 2) per mouse make sure it accesses the gotten data if it isn't already in
 %the workspace 
 % - iterative 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % 3) make the figures per mouse 
 % - REMOVE smoothing option until right before plotting
