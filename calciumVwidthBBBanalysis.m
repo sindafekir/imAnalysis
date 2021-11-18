@@ -976,10 +976,12 @@ for mouse = 1%:mouseNum
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE. THE BELOW CODE WORKS. NEED TO
-    % 1) EDIT THE FIGURES (FIX THE STIM MARK LINES, FIX THE TIME AXIS 
+    % PICK UP HERE. THE BELOW CODE WORKS IF I AM NOT AVERAGING. NEED TO
     % 2) MAKE SURE THE FIGURE SAVING CODE WORKS, WILL NEED TO CHANGE SAVEQ
     % TO 1 
+    
+    % THEN CHANGE AVQ == 1  ALSO
+    % CHECK IMAGE SAVING CODE 
     if AVQ == 0 
         % THE BELOW CODE (RELATED TO REDAVQ) MAY NEED TO BE UPDATED 
         if RedAVQ == 0 && CAQ == 0 
@@ -989,7 +991,7 @@ for mouse = 1%:mouseNum
             termList = 1; 
         end 
  
-        baselineEndFrame = sec_before_stim_start-baselineInput;
+        baselineEndFrame = sec_before_stim_start*FPSstack{mouse};
         % plot calcium data ETAs 
         if CApQ == 1 
             for ccell = 1:length(terminals{mouse})
@@ -1016,14 +1018,14 @@ for mouse = 1%:mouseNum
                         Frames = size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},2);        
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
-                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                        FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                     elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                         Frames = size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
-                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                        FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                     end 
 
                     CaPlot = plot(AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)}-100,'b','LineWidth',3);
@@ -1062,7 +1064,7 @@ for mouse = 1%:mouseNum
                     xlim([1 length(AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)})]) 
         %             xlim([1 length(AVbData{BBBroi}{tType})])
         %                 xlim([xLimStart xLimEnd])
-                    ylim([-15 25])
+                    ylim([min(AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)}-400) max(AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)})+300])
                     xlabel('time (s)')
                     ylabel('percent change')
                     if optoQ == 0 % behavior data 
@@ -1134,14 +1136,14 @@ for mouse = 1%:mouseNum
                         Frames = size(nsBeta{BBBroi}{tTypeInds(tType)},2);        
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
-                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                        FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                     elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                         Frames = size(nsBeta{BBBroi}{tTypeInds(tType)},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
-                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                        FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                     end 
 
                     BBBplot = plot(AVbData{BBBroi}{tTypeInds(tType)}-100,'r','LineWidth',3);
@@ -1166,7 +1168,7 @@ for mouse = 1%:mouseNum
                     ax.FontSize = 30;
                     ax.FontName = 'Arial';
                     xlim([1 length(AVbData{BBBroi}{tTypeInds(tType)})]) 
-                    ylim([-15 25])
+                    ylim([min(AVbData{BBBroi}{tTypeInds(tType)}-400) max(AVbData{BBBroi}{tTypeInds(tType)})+300])
                     xlabel('time (s)')
                     ylabel('percent change')
                     if optoQ == 0 % behavior data 
@@ -1237,14 +1239,14 @@ for mouse = 1%:mouseNum
                         Frames = size(nsVeta{VWroi}{tTypeInds(tType)},2);        
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
-                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                        FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                     elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                         Frames = size(nsVeta{VWroi}{tTypeInds(tType)},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
-                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                        FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                        FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                     end 
 
                     VWplot = plot(AVvData{VWroi}{tTypeInds(tType)}-100,'k','LineWidth',3);
@@ -1269,7 +1271,7 @@ for mouse = 1%:mouseNum
                     ax.FontSize = 30;
                     ax.FontName = 'Arial';
                     xlim([1 length(AVvData{VWroi}{tTypeInds(tType)})]) 
-                    ylim([-15 25])
+                    ylim([min(AVvData{VWroi}{tTypeInds(tType)}-400) max(AVvData{VWroi}{tTypeInds(tType)})+300])
                     xlabel('time (s)')
                     ylabel('percent change')
                     if optoQ == 0 % behavior data 
@@ -1340,14 +1342,14 @@ for mouse = 1%:mouseNum
                     Frames = size(nsCeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                     Frames = size(nsCeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 end 
 
                 plot(AVcData{1}{tTypeInds(tType)}-100,'b','LineWidth',3)
@@ -1372,7 +1374,7 @@ for mouse = 1%:mouseNum
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
                 xlim([1 length(AVcData{1}{tTypeInds(tType)})])
-                ylim([-100 100])
+                ylim([min(AVcData{1}{tTypeInds(tType)}-400) max(AVcData{1}{tTypeInds(tType)})+300])
                 xlabel('time (s)')
                 ylabel('percent change')
                 % initialize empty string array 
@@ -1442,14 +1444,14 @@ for mouse = 1%:mouseNum
                     Frames = size(nsBeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                     Frames = size(nsBeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 end 
 
                 plot(AVbData{1}{tTypeInds(tType)}-100,'r','LineWidth',3)
@@ -1474,7 +1476,7 @@ for mouse = 1%:mouseNum
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
                 xlim([1 length(AVbData{1}{tTypeInds(tType)})])
-                ylim([-100 100])
+                ylim([min(AVbData{1}{tTypeInds(tType)}-400) max(AVbData{1}{tTypeInds(tType)})+300])
                 xlabel('time (s)')
                 ylabel('percent change')
                 % initialize empty string array 
@@ -1544,14 +1546,14 @@ for mouse = 1%:mouseNum
                     Frames = size(nsVeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
-                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                     Frames = size(nsVeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
-                    FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 end 
 
                 plot(AVvData{1}{tTypeInds(tType)}-100,'k','LineWidth',3)
@@ -1576,7 +1578,7 @@ for mouse = 1%:mouseNum
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
                 xlim([1 length(AVvData{1}{tTypeInds(tType)})])
-                ylim([-100 100])
+                ylim([min(AVvData{1}{tTypeInds(tType)}-400) max(AVvData{1}{tTypeInds(tType)})+300])
                 xlabel('time (s)')
                 ylabel('percent change')
                 % initialize empty string array 
