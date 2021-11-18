@@ -317,17 +317,9 @@ end
 % - FPSstack
 % - vidList
 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@ ETA UPDATE @@@@@@@@@@@@@@@@@@@@@@@
-
 % 2) per mouse make sure it accesses the gotten data if it isn't already in
 %the workspace 
 % - iterative 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % 3) make the figures per mouse 
 % - REMOVE smoothing option until right before plotting
@@ -412,17 +404,16 @@ if workspaceQ == 0
 end 
 
 %% generate the figures and save the data out per mouse 
-for mouse = 1%:mouseNum
-    dir1 = dataDir{mouse};
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % TO DO 
-    % 2) SAVE THE THE .MAT FILE FOR AUTOMATICALLY PER MOUSE 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% TEST THE CODE BELOW. I'M A LITTLE CONCERNED THE TTYPE CODE BELOW NEEDS TO
+% BE UPDATED TRIALTYPE == 2 BUT TTYPE SHOULD BE 3 FOR THIS DATA SET BECAUSE
+% THE RED LIGHT IS ON FOR 2 SEC. 
 
-    
+uniqueLightTypes = cell(1,mouseNum);
+uniqueTrialLengths = cell(1,mouseNum);
+for mouse = 1%:mouseNum
+    dir1 = dataDir{mouse};   
     % determine plotting start and end frames 
     plotStart = cell(1,length(bDataFullTrace{mouse}));
     plotEnd = cell(1,length(bDataFullTrace{mouse}));
@@ -669,9 +660,41 @@ for mouse = 1%:mouseNum
             % add min value 
             Weta{tType}{tType} = Weta{tType}{tType} + minValToAdd;
         end 
+    end
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % MAKE SURE TTYPE INDEX IS KNOWN FOR GIVEN TTYPE NUM 
+    
+    if optoQ == 1 
+        % check to see if red or blue opto lights were used         
+        for vid = 1:length(bDataFullTrace{mouse})    
+            uniqueLightTypes{mouse}{vid} = unique(TrialTypes{mouse}{vid}(:,2));
+            uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %if the blue light is on for 2 seconds 
+            if ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+            %if the blue light is on for 20 seconds 
+            elseif ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
+            %if the red light is on for 2 seconds  
+            elseif ismember(uniqueLightTypes{mouse}{vid},2)
+            end             
+            
+            
+            
+        end 
+        
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        
     end 
-
-    % smooth data 
+    
+    
+    
+    %% smooth data
     if mouse == 1 
         smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
     end 
@@ -765,7 +788,8 @@ for mouse = 1%:mouseNum
             end 
         end 
     end 
-    %baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
+    
+    %% baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
     %onset) 
     if mouse == 1 
         baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
@@ -818,7 +842,7 @@ for mouse = 1%:mouseNum
             nsWeta = sWeta; 
         end 
     end 
-
+%%
     % set paramaters for plotting 
     if mouse == 1 
         AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
@@ -1589,7 +1613,8 @@ for mouse = 1%:mouseNum
             end 
         end                 
     end 
-    save(dir1);
+    fileName = 'ETAfigData.mat';
+    save(fullfile(dir1,fileName));
 end 
 
 %}

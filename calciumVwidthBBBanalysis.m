@@ -410,6 +410,8 @@ end
 % BE UPDATED TRIALTYPE == 2 BUT TTYPE SHOULD BE 3 FOR THIS DATA SET BECAUSE
 % THE RED LIGHT IS ON FOR 2 SEC. 
 
+uniqueLightTypes = cell(1,mouseNum);
+uniqueTrialLengths = cell(1,mouseNum);
 for mouse = 1%:mouseNum
     dir1 = dataDir{mouse};   
     % determine plotting start and end frames 
@@ -658,9 +660,45 @@ for mouse = 1%:mouseNum
             % add min value 
             Weta{tType}{tType} = Weta{tType}{tType} + minValToAdd;
         end 
+    end
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % MAKE SURE TTYPE INDEX IS KNOWN FOR GIVEN TTYPE NUM 
+    
+    if optoQ == 1 
+        % check to see if red or blue opto lights were used         
+        for vid = 1:length(bDataFullTrace{mouse})    
+            uniqueLightTypes{mouse}{vid} = unique(TrialTypes{mouse}{vid}(:,2));
+            uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
+            %if the blue light is on for 2 seconds 
+            if ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+            %if the blue light is on for 20 seconds 
+            elseif ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
+            %if the red light is on for 2 seconds  
+            elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+            %if the red light is on for 20 seconds  
+            elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
+            end             
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            % PICK UP HERE. ABOVE I'VE FIGURED OUT HOW TO DETERMINE WHAT
+            % KIND OF TRIAL TYPES THERE ARE. NOW NEED TO INCLUDE THE
+            % CORRECT TRIAL INDEX DEPENDING ON TYPE AND NUMTTYPES
+            
+            
+        end 
+        
+        
+        
     end 
-
-    % smooth data 
+    
+    
+    
+    %% smooth data
     if mouse == 1 
         smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
     end 
@@ -754,7 +792,8 @@ for mouse = 1%:mouseNum
             end 
         end 
     end 
-    %baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
+    
+    %% baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
     %onset) 
     if mouse == 1 
         baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
@@ -807,7 +846,7 @@ for mouse = 1%:mouseNum
             nsWeta = sWeta; 
         end 
     end 
-
+%%
     % set paramaters for plotting 
     if mouse == 1 
         AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
@@ -1578,7 +1617,7 @@ for mouse = 1%:mouseNum
             end 
         end                 
     end 
-    fileName = 'ETAdata.mat';
+    fileName = 'ETAfigData.mat';
     save(fullfile(dir1,fileName));
 end 
 
