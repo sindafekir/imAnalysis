@@ -662,14 +662,7 @@ for mouse = 1%:mouseNum
         end 
     end
     
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % MAKE SURE TTYPE INDEX IS KNOWN FOR GIVEN TTYPE NUM 
-    
+    % make sure tType index is known for given ttype num 
     if optoQ == 1 
         % check to see if red or blue opto lights were used         
         for vid = 1:length(bDataFullTrace{mouse})    
@@ -677,28 +670,31 @@ for mouse = 1%:mouseNum
             uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
             %if the blue light is on for 2 seconds 
             if ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+                tTypes(1) = 1;
             %if the blue light is on for 20 seconds 
             elseif ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
+                tTypes(2) = 1;
             %if the red light is on for 2 seconds  
             elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+                tTypes(3) = 1;
             %if the red light is on for 20 seconds  
             elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
-            end             
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % PICK UP HERE. ABOVE I'VE FIGURED OUT HOW TO DETERMINE WHAT
-            % KIND OF TRIAL TYPES THERE ARE. NOW NEED TO INCLUDE THE
-            % CORRECT TRIAL INDEX DEPENDING ON TYPE AND NUMTTYPES
-            
-            
-        end 
-        
-        
-        
+                tTypes(4) = 1;
+            end                                    
+        end  
+    elseif optoQ == 0
+        tTypeInds = 1;
+    end 
+    % make sure the number of trialTypes in the data matches up with what
+    % you think it should
+    if sum(tTypes(:) == 1) == numTtypes 
+        % make sure the trial type index is known for the code below 
+        tTypeInds = find(tTypes == 1);
+    elseif sum(tTypes(:) == 1) ~= numTtypes 
+        disp('The number of trial types in the data does not match up with the number of trial types inputed by user!!!');
     end 
     
-    
-    
-    %% smooth data
+    % smooth data
     if mouse == 1 
         smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
     end 
@@ -721,32 +717,32 @@ for mouse = 1%:mouseNum
         for tType = 1:numTtypes
             if CAQ == 1
                 for ccell = 1:length(terminals{mouse})
-                    for cTrial = 1:size(Ceta{terminals{mouse}(ccell)}{tType},1)
-                        [sC_Data] = MovMeanSmoothData(Ceta{terminals{mouse}(ccell)}{tType}(cTrial,:),filtTime,FPSstack{mouse});
-                        sCeta{terminals{mouse}(ccell)}{tType}(cTrial,:) = sC_Data;
+                    for cTrial = 1:size(Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)
+                        [sC_Data] = MovMeanSmoothData(Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:),filtTime,FPSstack{mouse});
+                        sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:) = sC_Data;
                     end 
                 end 
             end        
             if BBBQ == 1 
                 for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                    for bTrial = 1:size(Beta{BBBroi}{tType},1)
-                        [sB_Data] = MovMeanSmoothData(Beta{BBBroi}{tType}(bTrial,:),filtTime,FPSstack{mouse});
-                        sBeta{BBBroi}{tType}(bTrial,:) = sB_Data;
+                    for bTrial = 1:size(Beta{BBBroi}{tTypeInds(tType)},1)
+                        [sB_Data] = MovMeanSmoothData(Beta{BBBroi}{tTypeInds(tType)}(bTrial,:),filtTime,FPSstack{mouse});
+                        sBeta{BBBroi}{tTypeInds(tType)}(bTrial,:) = sB_Data;
                     end 
                 end 
             end 
             if VWQ == 1
                 for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                    for vTrial = 1:size(Veta{VWroi}{tType},1)
-                        [sV_Data] = MovMeanSmoothData(Veta{VWroi}{tType}(vTrial,:),filtTime,FPSstack{mouse});
-                        sVeta{VWroi}{tType}(vTrial,:) = sV_Data;   
+                    for vTrial = 1:size(Veta{VWroi}{tTypeInds(tType)},1)
+                        [sV_Data] = MovMeanSmoothData(Veta{VWroi}{tTypeInds(tType)}(vTrial,:),filtTime,FPSstack{mouse});
+                        sVeta{VWroi}{tTypeInds(tType)}(vTrial,:) = sV_Data;   
                     end 
                 end 
             end 
             if velWheelQ == 1 
-                for wTrial = 1:size(Weta{tType},1)
-                    [sW_Data] = MovMeanSmoothData(Weta{tType}(wTrial,:),filtTime,FPSstack{mouse});
-                    sWeta{tType}(wTrial,:) = sW_Data;   
+                for wTrial = 1:size(Weta{tTypeInds(tType)},1)
+                    [sW_Data] = MovMeanSmoothData(Weta{tTypeInds(tType)}(wTrial,:),filtTime,FPSstack{mouse});
+                    sWeta{tTypeInds(tType)}(wTrial,:) = sW_Data;   
                 end 
             end 
         end 
@@ -766,34 +762,34 @@ for mouse = 1%:mouseNum
         for tType = 1:numTtypes
             if CAQ == 1
                 for ccell = 1:length(terminals{mouse})
-                    for cTrial = 1:size(Ceta{terminals{mouse}(ccell)}{tType},1)
-                        sCeta{terminals{mouse}(ccell)}{tType}(cTrial,:) = Ceta{terminals{mouse}(ccell)}{tType}(cTrial,:)-100;
+                    for cTrial = 1:size(Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)
+                        sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:) = Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:)-100;
                     end 
                 end 
             end        
             if BBBQ == 1 
                 for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                    for bTrial = 1:size(Beta{BBBroi}{tType},1)
-                        sBeta{BBBroi}{tType}(bTrial,:) = Beta{BBBroi}{tType}(bTrial,:)-100;
+                    for bTrial = 1:size(Beta{BBBroi}{tTypeInds(tType)},1)
+                        sBeta{BBBroi}{tTypeInds(tType)}(bTrial,:) = Beta{BBBroi}{tTypeInds(tType)}(bTrial,:)-100;
                     end 
                 end 
             end 
             if VWQ == 1
                 for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                    for vTrial = 1:size(Veta{VWroi}{tType},1)
-                        sVeta{VWroi}{tType}(vTrial,:) = Veta{VWroi}{tType}(vTrial,:)-100;   
+                    for vTrial = 1:size(Veta{VWroi}{tTypeInds(tType)},1)
+                        sVeta{VWroi}{tTypeInds(tType)}(vTrial,:) = Veta{VWroi}{tTypeInds(tType)}(vTrial,:)-100;   
                     end 
                 end 
             end 
             if velWheelQ == 1 
-                for wTrial = 1:size(Weta{tType},1)
-                    sWeta{tType}(wTrial,:) = Weta{tType}(wTrial,:)-100;   
+                for wTrial = 1:size(Weta{tTypeInds(tType)},1)
+                    sWeta{tTypeInds(tType)}(wTrial,:) = Weta{tTypeInds(tType)}(wTrial,:)-100;   
                 end 
             end 
         end 
     end 
     
-    %% baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
+    % baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
     %onset) 
     if mouse == 1 
         baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
@@ -815,21 +811,21 @@ for mouse = 1%:mouseNum
         for tType = 1:numTtypes
             if CAQ == 1
                 for ccell = 1:length(terminals{mouse})
-                    nsCeta{terminals{mouse}(ccell)}{tType} = (sCeta{terminals{mouse}(ccell)}{tType} ./ nanmean(sCeta{terminals{mouse}(ccell)}{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
+                    nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)} = (sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)} ./ nanmean(sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
                 end 
             end 
             if BBBQ == 1 
                 for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                    nsBeta{BBBroi}{tType} = (sBeta{BBBroi}{tType} ./ nanmean(sBeta{BBBroi}{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
+                    nsBeta{BBBroi}{tTypeInds(tType)} = (sBeta{BBBroi}{tTypeInds(tType)} ./ nanmean(sBeta{BBBroi}{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
                 end 
             end 
             if VWQ == 1
                 for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                    nsVeta{VWroi}{tType} = (sVeta{VWroi}{tType} ./ nanmean(sVeta{VWroi}{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100;        
+                    nsVeta{VWroi}{tTypeInds(tType)} = (sVeta{VWroi}{tTypeInds(tType)} ./ nanmean(sVeta{VWroi}{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100;        
                 end 
             end 
             if velWheelQ == 1 
-                 nsWeta{tType} = (sWeta{tType} ./ nanmean(sWeta{tType}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
+                 nsWeta{tTypeInds(tType)} = (sWeta{tTypeInds(tType)} ./ nanmean(sWeta{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
             end 
         end    
     elseif dataParseType == 1 %only stimulus data to plot 
@@ -846,12 +842,12 @@ for mouse = 1%:mouseNum
             nsWeta = sWeta; 
         end 
     end 
-%%
+
     % set paramaters for plotting 
     if mouse == 1 
         AVQ = input('Input 1 to average all ROIs. Input 0 otherwise. ');
         if optoQ == 1 
-            RedAVQ = input('Input 1 to average across all red trials. Input 0 otherwise.');
+            RedAVQ = input('Input 1 to average across all red trials. Input 0 otherwise. ');
         elseif optoQ == 0 
             RedAVQ = 0; 
         end 
@@ -890,24 +886,24 @@ for mouse = 1%:mouseNum
             countV = 1;
             if CAQ == 1
                 for ccell = 1:length(terminals{mouse})
-                    for trial = 1:size(nsCeta{terminals{mouse}(ccell)}{tType},1)
-                        allNScETA{1}{tType}(count,:) = nsCeta{terminals{mouse}(ccell)}{tType}(trial,:);
+                    for trial = 1:size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)
+                        allNScETA{1}{tTypeInds(tType)}(count,:) = nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(trial,:);
                         count = count + 1;
                     end        
                 end 
             end 
             if BBBQ == 1
                 for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                    for trial = 1:size(nsBeta{BBBroi}{tType},1)
-                        allNSbETA{1}{tType}(countB,:) = nsBeta{BBBroi}{tType}(trial,:);
+                    for trial = 1:size(nsBeta{BBBroi}{tTypeInds(tType)},1)
+                        allNSbETA{1}{tTypeInds(tType)}(countB,:) = nsBeta{BBBroi}{tTypeInds(tType)}(trial,:);
                         countB = countB + 1;
                     end 
                 end 
             end 
             if VWQ == 1 
                 for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                    for trial = 1:size(nsBeta{BBBroi}{tType},1)
-                        allNSvETA{1}{tType}(countV,:) = nsVeta{VWroi}{tType}(trial,:);
+                    for trial = 1:size(nsBeta{BBBroi}{tTypeInds(tType)},1)
+                        allNSvETA{1}{tTypeInds(tType)}(countV,:) = nsVeta{VWroi}{tTypeInds(tType)}(trial,:);
                         countV = countV + 1;
                     end 
                 end 
@@ -975,7 +971,15 @@ for mouse = 1%:mouseNum
         nsCeta = allRedNScETA; nsBeta = allRedNSbETA; nsVeta = allRedNSvETA;
     end 
 
-    %  plot 
+    %%  plot 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % PICK UP HERE. THE BELOW CODE WORKS. NEED TO
+    % 1) EDIT THE FIGURES (FIX THE STIM MARK LINES, FIX THE TIME AXIS 
+    % 2) MAKE SURE THE FIGURE SAVING CODE WORKS, WILL NEED TO CHANGE SAVEQ
+    % TO 1 
     if AVQ == 0 
         % THE BELOW CODE (RELATED TO REDAVQ) MAY NEED TO BE UPDATED 
         if RedAVQ == 0 && CAQ == 0 
@@ -997,46 +1001,46 @@ for mouse = 1%:mouseNum
                 CI_cHigh = cell(1,numTtypes);
                 for tType = tTypeList    
                     % calculate the 95% confidence interval 
-                    SEMc{terminals{mouse}(ccell)}{tType} = (nanstd(nsCeta{terminals{mouse}(ccell)}{tType}))/(sqrt(size(nsCeta{terminals{mouse}(ccell)}{tType},1))); % Standard Error            
-                    STDc{terminals{mouse}(ccell)}{tType} = nanstd(nsCeta{terminals{mouse}(ccell)}{tType});
-                    ts_cLow = tinv(0.025,size(nsCeta{terminals{mouse}(ccell)}{tType},1)-1);% T-Score for 95% CI
-                    ts_cHigh = tinv(0.975,size(nsCeta{terminals{mouse}(ccell)}{tType},1)-1);% T-Score for 95% CI
-                    CI_cLow{terminals{mouse}(ccell)}{tType} = (nanmean(nsCeta{terminals{mouse}(ccell)}{tType},1)) + (ts_cLow*SEMc{terminals{mouse}(ccell)}{tType});  % Confidence Intervals
-                    CI_cHigh{terminals{mouse}(ccell)}{tType} = (nanmean(nsCeta{terminals{mouse}(ccell)}{tType},1)) + (ts_cHigh*SEMc{terminals{mouse}(ccell)}{tType});  % Confidence Intervals
-                    x = 1:length(CI_cLow{terminals{mouse}(ccell)}{tType});
-                    AVcData{terminals{mouse}(ccell)}{tType} = nanmean(nsCeta{terminals{mouse}(ccell)}{tType},1);
+                    SEMc{terminals{mouse}(ccell)}{tTypeInds(tType)} = (nanstd(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}))/(sqrt(size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1))); % Standard Error            
+                    STDc{terminals{mouse}(ccell)}{tTypeInds(tType)} = nanstd(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)});
+                    ts_cLow = tinv(0.025,size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                    ts_cHigh = tinv(0.975,size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                    CI_cLow{terminals{mouse}(ccell)}{tTypeInds(tType)} = (nanmean(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)) + (ts_cLow*SEMc{terminals{mouse}(ccell)}{tTypeInds(tType)});  % Confidence Intervals
+                    CI_cHigh{terminals{mouse}(ccell)}{tTypeInds(tType)} = (nanmean(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)) + (ts_cHigh*SEMc{terminals{mouse}(ccell)}{tTypeInds(tType)});  % Confidence Intervals
+                    x = 1:length(CI_cLow{terminals{mouse}(ccell)}{tTypeInds(tType)});
+                    AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)} = nanmean(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},1);
 
                     fig = figure;             
                     hold all;
-                    if tType == 1 || tType == 3 
-                        Frames = size(nsCeta{terminals{mouse}(ccell)}{tType},2);        
+                    if tTypeInds(tType) == 1 || tTypeInds(tType) == 3 
+                        Frames = size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},2);        
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
                         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                         FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-                    elseif tType == 2 || tType == 4 
-                        Frames = size(nsCeta{terminals{mouse}(ccell)}{tType},2);
+                    elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
+                        Frames = size(nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
                         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                         FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                     end 
 
-                    CaPlot = plot(AVcData{terminals{mouse}(ccell)}{tType}-100,'b','LineWidth',3);
-                    patch([x fliplr(x)],[CI_cLow{terminals{mouse}(ccell)}{tType}-100 fliplr(CI_cHigh{terminals{mouse}(ccell)}{tType}-100)],[0 0 0.5],'EdgeColor','none');
+                    CaPlot = plot(AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)}-100,'b','LineWidth',3);
+                    patch([x fliplr(x)],[CI_cLow{terminals{mouse}(ccell)}{tTypeInds(tType)}-100 fliplr(CI_cHigh{terminals{mouse}(ccell)}{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none');
 
-                    if tType == 1 
+                    if tTypeInds(tType) == 1 
                         plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
-                    elseif tType == 3 
+                    elseif tTypeInds(tType) == 3 
         %                 plot(AVbData{tType},'k','LineWidth',3)
                         plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'k','LineWidth',2)
         %                 plot([round(baselineEndFrame+((FPSstack)*20)) round(baselineEndFrame+((FPSstack)*20))], [-5000 5000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)                      
-                    elseif tType == 2 
+                    elseif tTypeInds(tType) == 2 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
-                    elseif tType == 4 
+                    elseif tTypeInds(tType) == 4 
         %                 plot(AVbData{tType},'r','LineWidth',3)
                         plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
@@ -1055,7 +1059,7 @@ for mouse = 1%:mouseNum
                     ax.FontName = 'Arial';
         %                 xLimStart = 17.8*FPSstack;
         %                 xLimEnd = 22*FPSstack;
-                    xlim([1 length(AVcData{terminals{mouse}(ccell)}{tType})]) 
+                    xlim([1 length(AVcData{terminals{mouse}(ccell)}{tTypeInds(tType)})]) 
         %             xlim([1 length(AVbData{BBBroi}{tType})])
         %                 xlim([xLimStart xLimEnd])
                     ylim([-15 25])
@@ -1084,13 +1088,13 @@ for mouse = 1%:mouseNum
                    % save the images
                     if saveQ == 1     
                         if optoQ == 1 % opto exp 
-                            if tType == 1
+                            if tTypeInds(tType) == 1
                                 label2 = (' 2 sec Blue Light');
-                            elseif tType == 2
+                            elseif tTypeInds(tType) == 2
                                 label2 = (' 20 sec Blue Light');
-                            elseif tType == 3
+                            elseif tTypeInds(tType) == 3
                                 label2 = (' 2 sec Red Light');
-                            elseif tType == 4
+                            elseif tTypeInds(tType) == 4
                                 label2 = (' 20 sec Red Light');
                             end   
                         elseif optoQ == 0 % behavior exp
@@ -1115,44 +1119,44 @@ for mouse = 1%:mouseNum
                 CI_bHigh = cell(1,numTtypes);
                 for tType = tTypeList                          
                     % calculate the 95% confidence interval 
-                    SEMb{BBBroi}{tType} = (nanstd(nsBeta{BBBroi}{tType}))/(sqrt(size(nsBeta{BBBroi}{tType},1))); % Standard Error            
-                    STDb{BBBroi}{tType} = nanstd(nsBeta{BBBroi}{tType});
-                    ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
-                    ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tType},1)-1);% T-Score for 95% CI
-                    CI_bLow{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bLow*SEMb{BBBroi}{tType});  % Confidence Intervals
-                    CI_bHigh{BBBroi}{tType} = (nanmean(nsBeta{BBBroi}{tType},1)) + (ts_bHigh*SEMb{BBBroi}{tType});  % Confidence Intervals
-                    x = 1:length(CI_bLow{BBBroi}{tType});
-                    AVbData{BBBroi}{tType} = nanmean(nsBeta{BBBroi}{tType},1);
+                    SEMb{BBBroi}{tTypeInds(tType)} = (nanstd(nsBeta{BBBroi}{tTypeInds(tType)}))/(sqrt(size(nsBeta{BBBroi}{tTypeInds(tType)},1))); % Standard Error            
+                    STDb{BBBroi}{tTypeInds(tType)} = nanstd(nsBeta{BBBroi}{tTypeInds(tType)});
+                    ts_bLow = tinv(0.025,size(nsBeta{BBBroi}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                    ts_bHigh = tinv(0.975,size(nsBeta{BBBroi}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                    CI_bLow{BBBroi}{tTypeInds(tType)} = (nanmean(nsBeta{BBBroi}{tTypeInds(tType)},1)) + (ts_bLow*SEMb{BBBroi}{tTypeInds(tType)});  % Confidence Intervals
+                    CI_bHigh{BBBroi}{tTypeInds(tType)} = (nanmean(nsBeta{BBBroi}{tTypeInds(tType)},1)) + (ts_bHigh*SEMb{BBBroi}{tTypeInds(tType)});  % Confidence Intervals
+                    x = 1:length(CI_bLow{BBBroi}{tTypeInds(tType)});
+                    AVbData{BBBroi}{tTypeInds(tType)} = nanmean(nsBeta{BBBroi}{tTypeInds(tType)},1);
                     
                     fig = figure;             
                     hold all;
-                    if tType == 1 || tType == 3 
-                        Frames = size(nsBeta{BBBroi}{tType},2);        
+                    if tTypeInds(tType) == 1 || tTypeInds(tType) == 3 
+                        Frames = size(nsBeta{BBBroi}{tTypeInds(tType)},2);        
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
                         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                         FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-                    elseif tType == 2 || tType == 4 
-                        Frames = size(nsBeta{BBBroi}{tType},2);
+                    elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
+                        Frames = size(nsBeta{BBBroi}{tTypeInds(tType)},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
                         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                         FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                     end 
 
-                    BBBplot = plot(AVbData{BBBroi}{tType}-100,'r','LineWidth',3);
-                    patch([x fliplr(x)],[CI_bLow{BBBroi}{tType}-100 fliplr(CI_bHigh{BBBroi}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+                    BBBplot = plot(AVbData{BBBroi}{tTypeInds(tType)}-100,'r','LineWidth',3);
+                    patch([x fliplr(x)],[CI_bLow{BBBroi}{tTypeInds(tType)}-100 fliplr(CI_bHigh{BBBroi}{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
 
-                    if tType == 1 
+                    if tTypeInds(tType) == 1 
                         plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
-                    elseif tType == 3 
+                    elseif tTypeInds(tType) == 3 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)                      
-                    elseif tType == 2 
+                    elseif tTypeInds(tType) == 2 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
-                    elseif tType == 4 
+                    elseif tTypeInds(tType) == 4 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
                     end
@@ -1161,7 +1165,7 @@ for mouse = 1%:mouseNum
                     ax.XTickLabel = sec_TimeVals;
                     ax.FontSize = 30;
                     ax.FontName = 'Arial';
-                    xlim([1 length(AVbData{BBBroi}{tType})]) 
+                    xlim([1 length(AVbData{BBBroi}{tTypeInds(tType)})]) 
                     ylim([-15 25])
                     xlabel('time (s)')
                     ylabel('percent change')
@@ -1187,13 +1191,13 @@ for mouse = 1%:mouseNum
                    % save the images
                     if saveQ == 1     
                         if optoQ == 1 % opto exp 
-                            if tType == 1
+                            if tTypeInds(tType) == 1
                                 label2 = (' 2 sec Blue Light');
-                            elseif tType == 2
+                            elseif tTypeInds(tType) == 2
                                 label2 = (' 20 sec Blue Light');
-                            elseif tType == 3
+                            elseif tTypeInds(tType) == 3
                                 label2 = (' 2 sec Red Light');
-                            elseif tType == 4
+                            elseif tTypeInds(tType) == 4
                                 label2 = (' 20 sec Red Light');
                             end   
                         elseif optoQ == 0 % behavior exp
@@ -1218,44 +1222,44 @@ for mouse = 1%:mouseNum
                 CI_vHigh = cell(1,numTtypes);
                 for tType = tTypeList                          
                     % calculate the 95% confidence interval 
-                    SEMv{VWroi}{tType} = (nanstd(nsVeta{VWroi}{tType}))/(sqrt(size(nsVeta{VWroi}{tType},1))); % Standard Error            
-                    STDv{VWroi}{tType} = nanstd(nsVeta{VWroi}{tType});
-                    ts_vLow = tinv(0.025,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
-                    ts_vHigh = tinv(0.975,size(nsVeta{VWroi}{tType},1)-1);% T-Score for 95% CI
-                    CI_vLow{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vLow*SEMv{VWroi}{tType});  % Confidence Intervals
-                    CI_vHigh{VWroi}{tType} = (nanmean(nsVeta{VWroi}{tType},1)) + (ts_vHigh*SEMv{VWroi}{tType});  % Confidence Intervals
-                    x = 1:length(CI_vLow{VWroi}{tType});
-                    AVvData{VWroi}{tType} = nanmean(nsVeta{VWroi}{tType},1);
+                    SEMv{VWroi}{tTypeInds(tType)} = (nanstd(nsVeta{VWroi}{tTypeInds(tType)}))/(sqrt(size(nsVeta{VWroi}{tTypeInds(tType)},1))); % Standard Error            
+                    STDv{VWroi}{tTypeInds(tType)} = nanstd(nsVeta{VWroi}{tTypeInds(tType)});
+                    ts_vLow = tinv(0.025,size(nsVeta{VWroi}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                    ts_vHigh = tinv(0.975,size(nsVeta{VWroi}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                    CI_vLow{VWroi}{tTypeInds(tType)} = (nanmean(nsVeta{VWroi}{tTypeInds(tType)},1)) + (ts_vLow*SEMv{VWroi}{tTypeInds(tType)});  % Confidence Intervals
+                    CI_vHigh{VWroi}{tTypeInds(tType)} = (nanmean(nsVeta{VWroi}{tTypeInds(tType)},1)) + (ts_vHigh*SEMv{VWroi}{tTypeInds(tType)});  % Confidence Intervals
+                    x = 1:length(CI_vLow{VWroi}{tTypeInds(tType)});
+                    AVvData{VWroi}{tTypeInds(tType)} = nanmean(nsVeta{VWroi}{tTypeInds(tType)},1);
                     
                     fig = figure;             
                     hold all;
-                    if tType == 1 || tType == 3 
-                        Frames = size(nsVeta{VWroi}{tType},2);        
+                    if tTypeInds(tType) == 1 || tTypeInds(tType) == 3 
+                        Frames = size(nsVeta{VWroi}{tTypeInds(tType)},2);        
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
                         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                         FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-                    elseif tType == 2 || tType == 4 
-                        Frames = size(nsVeta{VWroi}{tType},2);
+                    elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
+                        Frames = size(nsVeta{VWroi}{tTypeInds(tType)},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
                         Frames_post_stim_start = (Frames-1)/2; 
                         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                         FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                     end 
 
-                    VWplot = plot(AVvData{VWroi}{tType}-100,'k','LineWidth',3);
-                    patch([x fliplr(x)],[CI_vLow{VWroi}{tType}-100 fliplr(CI_vHigh{VWroi}{tType}-100)],'k','EdgeColor','none')   
+                    VWplot = plot(AVvData{VWroi}{tTypeInds(tType)}-100,'k','LineWidth',3);
+                    patch([x fliplr(x)],[CI_vLow{VWroi}{tTypeInds(tType)}-100 fliplr(CI_vHigh{VWroi}{tTypeInds(tType)}-100)],'k','EdgeColor','none')   
 
-                    if tType == 1 
+                    if tTypeInds(tType) == 1 
                         plot([round(baselineEndFrame+((FPSstack)*2)) round(baselineEndFrame+((FPSstack)*2))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
-                    elseif tType == 3 
+                    elseif tTypeInds(tType) == 3 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)                      
-                    elseif tType == 2 
+                    elseif tTypeInds(tType) == 2 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
-                    elseif tType == 4 
+                    elseif tTypeInds(tType) == 4 
                         plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000000 5000000], 'k','LineWidth',2)
                         plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
                     end
@@ -1264,7 +1268,7 @@ for mouse = 1%:mouseNum
                     ax.XTickLabel = sec_TimeVals;
                     ax.FontSize = 30;
                     ax.FontName = 'Arial';
-                    xlim([1 length(AVvData{VWroi}{tType})]) 
+                    xlim([1 length(AVvData{VWroi}{tTypeInds(tType)})]) 
                     ylim([-15 25])
                     xlabel('time (s)')
                     ylabel('percent change')
@@ -1290,13 +1294,13 @@ for mouse = 1%:mouseNum
                    % save the images
                     if saveQ == 1     
                         if optoQ == 1 % opto exp 
-                            if tType == 1
+                            if tTypeInds(tType) == 1
                                 label2 = (' 2 sec Blue Light');
-                            elseif tType == 2
+                            elseif tTypeInds(tType) == 2
                                 label2 = (' 20 sec Blue Light');
-                            elseif tType == 3
+                            elseif tTypeInds(tType) == 3
                                 label2 = (' 2 sec Red Light');
-                            elseif tType == 4
+                            elseif tTypeInds(tType) == 4
                                 label2 = (' 20 sec Red Light');
                             end   
                         elseif optoQ == 0 % behavior exp
@@ -1314,51 +1318,51 @@ for mouse = 1%:mouseNum
         % plot CA data 
         if CApQ == 1
             % initialize arrays 
-            AVcData = cell(1,length(nsCeta{1}{tType}));
+            AVcData = cell(1,length(nsCeta{1}{tTypeInds(tType)}));
             SEMc = cell(1,numTtypes);
             STDc = cell(1,numTtypes);
             CI_cLow = cell(1,numTtypes);
             CI_cHigh = cell(1,numTtypes);
             for tType = tTypeList      
                 % calculate the 95% confidence interval 
-                SEMc{1}{tType} = (nanstd(nsCeta{1}{tType}))/(sqrt(size(nsCeta{1}{tType},1))); % Standard Error            
-                STDc{1}{tType} = nanstd(nsCeta{1}{tType});
-                ts_cLow = tinv(0.025,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
-                ts_cHigh = tinv(0.975,size(nsCeta{1}{tType},1)-1);% T-Score for 95% CI
-                CI_cLow{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cLow*SEMc{1}{tType});  % Confidence Intervals
-                CI_cHigh{1}{tType} = (nanmean(nsCeta{1}{tType},1)) + (ts_cHigh*SEMc{1}{tType});  % Confidence Intervals
-                x = 1:length(CI_cLow{1}{tType});
-                AVcData{1}{tType} = nanmean(nsCeta{1}{tType},1);
+                SEMc{1}{tTypeInds(tType)} = (nanstd(nsCeta{1}{tTypeInds(tType)}))/(sqrt(size(nsCeta{1}{tTypeInds(tType)},1))); % Standard Error            
+                STDc{1}{tTypeInds(tType)} = nanstd(nsCeta{1}{tTypeInds(tType)});
+                ts_cLow = tinv(0.025,size(nsCeta{1}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                ts_cHigh = tinv(0.975,size(nsCeta{1}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                CI_cLow{1}{tTypeInds(tType)} = (nanmean(nsCeta{1}{tTypeInds(tType)},1)) + (ts_cLow*SEMc{1}{tTypeInds(tType)});  % Confidence Intervals
+                CI_cHigh{1}{tTypeInds(tType)} = (nanmean(nsCeta{1}{tTypeInds(tType)},1)) + (ts_cHigh*SEMc{1}{tTypeInds(tType)});  % Confidence Intervals
+                x = 1:length(CI_cLow{1}{tTypeInds(tType)});
+                AVcData{1}{tTypeInds(tType)} = nanmean(nsCeta{1}{tTypeInds(tType)},1);
 
                 fig = figure;             
                 hold all;
-                if tType == 1 || tType == 3 
-                    Frames = size(nsCeta{1}{tType},2);        
+                if tTypeInds(tType) == 1 || tTypeInds(tType) == 3 
+                    Frames = size(nsCeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-                elseif tType == 2 || tType == 4 
-                    Frames = size(nsCeta{1}{tType},2);
+                elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
+                    Frames = size(nsCeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                 end 
 
-                plot(AVcData{1}{tType}-100,'b','LineWidth',3)
-                patch([x fliplr(x)],[CI_cLow{1}{tType}-100 fliplr(CI_cHigh{1}{tType}-100)],[0 0 0.5],'EdgeColor','none')
+                plot(AVcData{1}{tTypeInds(tType)}-100,'b','LineWidth',3)
+                patch([x fliplr(x)],[CI_cLow{1}{tTypeInds(tType)}-100 fliplr(CI_cHigh{1}{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none')
 
-                if tType == 1 
+                if tTypeInds(tType) == 1 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
-                elseif tType == 3 
+                elseif tTypeInds(tType) == 3 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
-                elseif tType == 2 
+                elseif tTypeInds(tType) == 2 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
-                elseif tType == 4 
+                elseif tTypeInds(tType) == 4 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
                 end
@@ -1367,7 +1371,7 @@ for mouse = 1%:mouseNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVcData{1}{tType})])
+                xlim([1 length(AVcData{1}{tTypeInds(tType)})])
                 ylim([-100 100])
                 xlabel('time (s)')
                 ylabel('percent change')
@@ -1394,13 +1398,13 @@ for mouse = 1%:mouseNum
                % save the images
                 if saveQ == 1     
                     if optoQ == 1 % opto exp 
-                        if tType == 1
+                        if tTypeInds(tType) == 1
                             label2 = (' 2 sec Blue Light');
-                        elseif tType == 2
+                        elseif tTypeInds(tType) == 2
                             label2 = (' 20 sec Blue Light');
-                        elseif tType == 3
+                        elseif tTypeInds(tType) == 3
                             label2 = (' 2 sec Red Light');
-                        elseif tType == 4
+                        elseif tTypeInds(tType) == 4
                             label2 = (' 20 sec Red Light');
                         end   
                     elseif optoQ == 0 % behavior exp
@@ -1416,51 +1420,51 @@ for mouse = 1%:mouseNum
         % plot BBB data 
         if BBBpQ == 1
             % initialize arrays 
-            AVbData = cell(1,length(nsBeta{1}{tType}));
+            AVbData = cell(1,length(nsBeta{1}{tTypeInds(tType)}));
             SEMb = cell(1,numTtypes);
             STDb = cell(1,numTtypes);
             CI_bLow = cell(1,numTtypes);
             CI_bHigh = cell(1,numTtypes);
             for tType = tTypeList   
                 % calculate the 95% confidence interval 
-                SEMb{1}{tType} = (nanstd(nsBeta{1}{tType}))/(sqrt(size(nsBeta{1}{tType},1))); % Standard Error            
-                STDb{1}{tType} = nanstd(nsBeta{1}{tType});
-                ts_bLow = tinv(0.025,size(nsBeta{1}{tType},1)-1);% T-Score for 95% CI
-                ts_bHigh = tinv(0.975,size(nsBeta{1}{tType},1)-1);% T-Score for 95% CI
-                CI_bLow{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bLow*SEMb{1}{tType});  % Confidence Intervals
-                CI_bHigh{1}{tType} = (nanmean(nsBeta{1}{tType},1)) + (ts_bHigh*SEMb{1}{tType});  % Confidence Intervals
-                x = 1:length(CI_bLow{1}{tType});
-                AVbData{1}{tType} = nanmean(nsBeta{1}{tType},1);
+                SEMb{1}{tTypeInds(tType)} = (nanstd(nsBeta{1}{tTypeInds(tType)}))/(sqrt(size(nsBeta{1}{tTypeInds(tType)},1))); % Standard Error            
+                STDb{1}{tTypeInds(tType)} = nanstd(nsBeta{1}{tTypeInds(tType)});
+                ts_bLow = tinv(0.025,size(nsBeta{1}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                ts_bHigh = tinv(0.975,size(nsBeta{1}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                CI_bLow{1}{tTypeInds(tType)} = (nanmean(nsBeta{1}{tTypeInds(tType)},1)) + (ts_bLow*SEMb{1}{tTypeInds(tType)});  % Confidence Intervals
+                CI_bHigh{1}{tTypeInds(tType)} = (nanmean(nsBeta{1}{tTypeInds(tType)},1)) + (ts_bHigh*SEMb{1}{tTypeInds(tType)});  % Confidence Intervals
+                x = 1:length(CI_bLow{1}{tTypeInds(tType)});
+                AVbData{1}{tTypeInds(tType)} = nanmean(nsBeta{1}{tTypeInds(tType)},1);
 
                 fig = figure;             
                 hold all;
-                if tType == 1 || tType == 3 
-                    Frames = size(nsBeta{1}{tType},2);        
+                if tTypeInds(tType) == 1 || tTypeInds(tType) == 3 
+                    Frames = size(nsBeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-                elseif tType == 2 || tType == 4 
-                    Frames = size(nsBeta{1}{tType},2);
+                elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
+                    Frames = size(nsBeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                 end 
 
-                plot(AVbData{1}{tType}-100,'r','LineWidth',3)
-                patch([x fliplr(x)],[CI_bLow{1}{tType}-100 fliplr(CI_bHigh{1}{tType}-100)],[0.5 0 0],'EdgeColor','none')
+                plot(AVbData{1}{tTypeInds(tType)}-100,'r','LineWidth',3)
+                patch([x fliplr(x)],[CI_bLow{1}{tTypeInds(tType)}-100 fliplr(CI_bHigh{1}{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
 
-                if tType == 1 
+                if tTypeInds(tType) == 1 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
-                elseif tType == 3 
+                elseif tTypeInds(tType) == 3 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
-                elseif tType == 2 
+                elseif tTypeInds(tType) == 2 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
-                elseif tType == 4 
+                elseif tTypeInds(tType) == 4 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
                 end
@@ -1469,7 +1473,7 @@ for mouse = 1%:mouseNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVbData{1}{tType})])
+                xlim([1 length(AVbData{1}{tTypeInds(tType)})])
                 ylim([-100 100])
                 xlabel('time (s)')
                 ylabel('percent change')
@@ -1496,13 +1500,13 @@ for mouse = 1%:mouseNum
                 % save the images
                 if saveQ == 1     
                     if optoQ == 1 % opto exp 
-                        if tType == 1
+                        if tTypeInds(tType) == 1
                             label2 = (' 2 sec Blue Light');
-                        elseif tType == 2
+                        elseif tTypeInds(tType) == 2
                             label2 = (' 20 sec Blue Light');
-                        elseif tType == 3
+                        elseif tTypeInds(tType) == 3
                             label2 = (' 2 sec Red Light');
-                        elseif tType == 4
+                        elseif tTypeInds(tType) == 4
                             label2 = (' 20 sec Red Light');
                         end   
                     elseif optoQ == 0 % behavior exp
@@ -1518,51 +1522,51 @@ for mouse = 1%:mouseNum
         % plot VW data 
         if VWpQ == 1
             % initialize arrays 
-            AVvData = cell(1,length(nsVeta{1}{tType}));
+            AVvData = cell(1,length(nsVeta{1}{tTypeInds(tType)}));
             SEMv = cell(1,numTtypes);
             STDv = cell(1,numTtypes);
             CI_vLow = cell(1,numTtypes);
             CI_vHigh = cell(1,numTtypes);
             for tType = tTypeList   
                 % calculate the 95% confidence interval 
-                SEMv{1}{tType} = (nanstd(nsVeta{1}{tType}))/(sqrt(size(nsVeta{1}{tType},1))); % Standard Error            
-                STDv{1}{tType} = nanstd(nsVeta{1}{tType});
-                ts_vLow = tinv(0.025,size(nsVeta{1}{tType},1)-1);% T-Score for 95% CI
-                ts_vHigh = tinv(0.975,size(nsVeta{1}{tType},1)-1);% T-Score for 95% CI
-                CI_vLow{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vLow*SEMv{1}{tType});  % Confidence Intervals
-                CI_vHigh{1}{tType} = (nanmean(nsVeta{1}{tType},1)) + (ts_vHigh*SEMv{1}{tType});  % Confidence Intervals
-                x = 1:length(CI_vLow{1}{tType});
-                AVvData{1}{tType} = nanmean(nsVeta{1}{tType},1);
+                SEMv{1}{tTypeInds(tType)} = (nanstd(nsVeta{1}{tTypeInds(tType)}))/(sqrt(size(nsVeta{1}{tTypeInds(tType)},1))); % Standard Error            
+                STDv{1}{tTypeInds(tType)} = nanstd(nsVeta{1}{tTypeInds(tType)});
+                ts_vLow = tinv(0.025,size(nsVeta{1}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                ts_vHigh = tinv(0.975,size(nsVeta{1}{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+                CI_vLow{1}{tTypeInds(tType)} = (nanmean(nsVeta{1}{tTypeInds(tType)},1)) + (ts_vLow*SEMv{1}{tTypeInds(tType)});  % Confidence Intervals
+                CI_vHigh{1}{tTypeInds(tType)} = (nanmean(nsVeta{1}{tTypeInds(tType)},1)) + (ts_vHigh*SEMv{1}{tTypeInds(tType)});  % Confidence Intervals
+                x = 1:length(CI_vLow{1}{tTypeInds(tType)});
+                AVvData{1}{tTypeInds(tType)} = nanmean(nsVeta{1}{tTypeInds(tType)},1);
 
                 fig = figure;             
                 hold all;
-                if tType == 1 || tType == 3 
-                    Frames = size(nsVeta{1}{tType},2);        
+                if tTypeInds(tType) == 1 || tTypeInds(tType) == 3 
+                    Frames = size(nsVeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+1);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
-                elseif tType == 2 || tType == 4 
-                    Frames = size(nsVeta{1}{tType},2);
+                elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
+                    Frames = size(nsVeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse})+10);
                     FrameVals = floor((1:FPSstack{mouse}:Frames)-1); 
                 end 
 
-                plot(AVvData{1}{tType}-100,'k','LineWidth',3)
-                patch([x fliplr(x)],[CI_vLow{1}{tType}-100 fliplr(CI_vHigh{1}{tType}-100)],'k','EdgeColor','none')  
+                plot(AVvData{1}{tTypeInds(tType)}-100,'k','LineWidth',3)
+                patch([x fliplr(x)],[CI_vLow{1}{tTypeInds(tType)}-100 fliplr(CI_vHigh{1}{tTypeInds(tType)}-100)],'k','EdgeColor','none')  
 
-                if tType == 1 
+                if tTypeInds(tType) == 1 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
-                elseif tType == 3 
+                elseif tTypeInds(tType) == 3 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*2)) round(baselineEndFrame+((FPSstack{mouse})*2))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)                      
-                elseif tType == 2 
+                elseif tTypeInds(tType) == 2 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
-                elseif tType == 4 
+                elseif tTypeInds(tType) == 4 
                     plot([round(baselineEndFrame+((FPSstack{mouse})*20)) round(baselineEndFrame+((FPSstack{mouse})*20))], [-5000 5000], 'k','LineWidth',2)
                     plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
                 end
@@ -1571,7 +1575,7 @@ for mouse = 1%:mouseNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVvData{1}{tType})])
+                xlim([1 length(AVvData{1}{tTypeInds(tType)})])
                 ylim([-100 100])
                 xlabel('time (s)')
                 ylabel('percent change')
@@ -1598,13 +1602,13 @@ for mouse = 1%:mouseNum
                 % save the images
                 if saveQ == 1     
                     if optoQ == 1 % opto exp 
-                        if tType == 1
+                        if tTypeInds(tType) == 1
                             label2 = (' 2 sec Blue Light');
-                        elseif tType == 2
+                        elseif tTypeInds(tType) == 2
                             label2 = (' 20 sec Blue Light');
-                        elseif tType == 3
+                        elseif tTypeInds(tType) == 3
                             label2 = (' 2 sec Red Light');
-                        elseif tType == 4
+                        elseif tTypeInds(tType) == 4
                             label2 = (' 20 sec Red Light');
                         end   
                     elseif optoQ == 0 % behavior exp
@@ -1619,6 +1623,7 @@ for mouse = 1%:mouseNum
     end 
     fileName = 'ETAfigData.mat';
     save(fullfile(dir1,fileName));
+    %%
 end 
 
 %}
