@@ -333,7 +333,7 @@ end
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
-
+%{
 % set initial paramaters 
 dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
 if dataParseType == 0 
@@ -404,15 +404,10 @@ if workspaceQ == 0
 end 
 
 %% generate the figures and save the data out per mouse 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% TEST THE CODE BELOW. I'M A LITTLE CONCERNED THE TTYPE CODE BELOW NEEDS TO
-% BE UPDATED TRIALTYPE == 2 BUT TTYPE SHOULD BE 3 FOR THIS DATA SET BECAUSE
-% THE RED LIGHT IS ON FOR 2 SEC. 
 
 uniqueLightTypes = cell(1,mouseNum);
 uniqueTrialLengths = cell(1,mouseNum);
-for mouse = 1%:mouseNum
+for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
     % determine plotting start and end frames 
     plotStart = cell(1,length(bDataFullTrace{mouse}));
@@ -971,17 +966,6 @@ for mouse = 1%:mouseNum
         nsCeta = allRedNScETA; nsBeta = allRedNSbETA; nsVeta = allRedNSvETA;
     end 
 
-    %%  plot 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE. THE BELOW CODE WORKS IF I AM NOT AVERAGING. NEED TO
-    % 2) MAKE SURE THE FIGURE SAVING CODE WORKS, WILL NEED TO CHANGE SAVEQ
-    % TO 1 
-    
-    % THEN CHANGE AVQ == 1  ALSO
-    % CHECK IMAGE SAVING CODE 
     if AVQ == 0 
         % THE BELOW CODE (RELATED TO REDAVQ) MAY NEED TO BE UPDATED 
         if RedAVQ == 0 && CAQ == 0 
@@ -1103,7 +1087,7 @@ for mouse = 1%:mouseNum
                             label2 = ('Behavior Data'); 
                         end 
                         dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
+                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                         export_fig(dir3)
                     end                      
                 end 
@@ -1206,7 +1190,7 @@ for mouse = 1%:mouseNum
                             label2 = ('Behavior Data'); 
                         end 
                         dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
+                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                         export_fig(dir3)
                     end                        
                 end 
@@ -1309,14 +1293,14 @@ for mouse = 1%:mouseNum
                             label2 = ('Behavior Data'); 
                         end 
                         dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
+                        dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                         export_fig(dir3)
                     end                       
                 end 
             end 
         end 
     elseif AVQ == 1
-        baselineEndFrame = sec_before_stim_start-baselineInput;
+        baselineEndFrame = sec_before_stim_start*FPSstack{mouse};
         % plot CA data 
         if CApQ == 1
             % initialize arrays 
@@ -1387,7 +1371,7 @@ for mouse = 1%:mouseNum
                     label2.FontName = 'Arial';
                 end 
                 label = strings;
-                label = append(sprintf(label,'  Ca ROIs averaged. Mouse #%d.',mouse));
+                label = append(label,sprintf('  Ca ROIs averaged. Mouse #%d.',mouse));
                 if optoQ == 1 % opto data 
                     title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
                 end 
@@ -1413,7 +1397,7 @@ for mouse = 1%:mouseNum
                         label2 = ('Behavior Data'); 
                     end 
                     dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
+                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                     export_fig(dir3)
                 end                
             end 
@@ -1489,7 +1473,7 @@ for mouse = 1%:mouseNum
                     label2.FontName = 'Arial';
                 end 
                 label = strings;
-                label = append(sprintf(label,'  BBB ROIs averaged. Mouse #%d.',mouse));
+                label = append(label,sprintf('  BBB ROIs averaged. Mouse #%d.',mouse));
                 if optoQ == 1 % opto data 
                     title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
                 end 
@@ -1515,7 +1499,7 @@ for mouse = 1%:mouseNum
                         label2 = ('Behavior Data'); 
                     end 
                     dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
+                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                     export_fig(dir3)
                 end             
             end 
@@ -1591,7 +1575,7 @@ for mouse = 1%:mouseNum
                     label2.FontName = 'Arial';
                 end 
                 label = strings;
-                label = append(sprintf(label,'  VW ROIs averaged. Mouse #%d.',mouse));
+                label = append(label,sprintf('  VW ROIs averaged. Mouse #%d.',mouse));
                 if optoQ == 1 % opto data 
                     title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
                 end 
@@ -1617,7 +1601,7 @@ for mouse = 1%:mouseNum
                         label2 = ('Behavior Data'); 
                     end 
                     dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s%s/%s%s.tif',dir2,label,label2,label,label2);
+                    dir3 = sprintf('%s/%s%s.tif',dir2,label,label2);
                     export_fig(dir3)
                 end                 
             end 
@@ -1625,7 +1609,6 @@ for mouse = 1%:mouseNum
     end 
     fileName = 'ETAfigData.mat';
     save(fullfile(dir1,fileName));
-    %%
 end 
 
 %}
