@@ -300,7 +300,7 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% TO DO NEXT: UPDATE ETA AND STA CODE TO BE ABLE TO DO BATCH PROCESSING 
+% TO DO NEXT: UPDATE STA CODE TO BE ABLE TO DO BATCH PROCESSING 
 % - SAVE THE SMOOTHING FOR LAST (SAVE UNSMOOTHED DATA OUT)
 
 % How to update the ETA and STA code below: 
