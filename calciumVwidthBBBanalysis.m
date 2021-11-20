@@ -1621,6 +1621,11 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% CHECK THIS FOR REDUNDANCY 
 %{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
@@ -3222,6 +3227,65 @@ sgtitle(label,'FontSize',25);
 % STA: find calcium peaks per terminal across entire experiment, sort data
 % based on ca peak location, smooth and normalize to baseline period, and plot calcium spike triggered averages
 
+% get the data if it already isn't in the workspace 
+workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
+if workspaceQ == 0 
+    dataOrgQ = input('Input 1 if the batch processing data is saved in one .mat file. Input 0 if you need to open multiple .mat files (one per animal). ');
+    if dataOrgQ == 1 
+        dirLabel = 'WHERE IS THE BATCH DATA? ';
+        dataDir = uigetdir('*.*',dirLabel);
+        cd(dataDir); % go to the right directory 
+        uiopen('*.mat'); % get data  
+    elseif dataOrgQ == 0
+        mouseNum = input('How many mice are there? ');
+        dataDir = cell(1,mouseNum);
+        bDataFullTrace1 = cell(1,mouseNum);
+        cDataFullTrace1 = cell(1,mouseNum);
+        vDataFullTrace1 = cell(1,mouseNum);
+        terminals1 = cell(1,mouseNum);
+        state_start_f1 = cell(1,mouseNum);
+        TrialTypes1 = cell(1,mouseNum);
+        state_end_f1 = cell(1,mouseNum);
+        trialLengths1 = cell(1,mouseNum);
+        FPSstack1 = cell(1,mouseNum);
+        vidList1 = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            dirLabel = sprintf('WHERE IS THE DATA FOR MOUSE #%d? ',mouse);
+            dataDir{mouse} = uigetdir('*.*',dirLabel);
+            cd(dataDir); % go to the right directory 
+            uiopen('*.mat'); % get data  
+            if BBBQ == 1     
+                bDataFullTrace1{mouse} = bDataFullTrace;
+            end 
+            if CAQ == 1
+                cDataFullTrace1{mouse} = cDataFullTrace;
+                terminals1{mouse} = terminals;
+            end 
+            if VWQ == 1 
+                vDataFullTrace1{mouse} = vDataFullTrace;
+            end 
+            state_start_f1{mouse} = state_start_f;            
+            TrialTypes1{mouse} = TrialTypes;
+            state_end_f1{mouse} = state_end_f;              
+            trialLengths1{mouse} = trialLengths;      
+            FPSstack1{mouse} = FPSstack;             
+            vidList1{mouse} = vidList; 
+        end 
+        clear bDataFullTrace cDataFullTrace vDataFullTrace terminals state_start_f TrialTypes state_end_f trialLengths FPSstack vidList
+        bDataFullTrace = bDataFullTrace1;
+        cDataFullTrace = cDataFullTrace1;
+        vDataFullTrace = vDataFullTrace1;
+        terminals = terminals1;
+        state_start_f = state_start_f1;
+        TrialTypes = TrialTypes1;
+        state_end_f = state_end_f1;
+        trialLengths = trialLengths1;
+        FPSstack = FPSstack1;
+        vidList = vidList1;
+    end 
+end 
+
+%%
 for mouse = 1:mouseNum
     % find peaks and then plot where they are in the entire TS 
     stdTrace = cell(1,length(vidList{mouse}));
@@ -3371,190 +3435,180 @@ for mouse = 1:mouseNum
         end 
     end 
     
-    
-    
-    
-    
-    
-end 
-%}
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-%% STA: sort data based on ca peak location 
-% when tTypeQ == 0, you can select what trials to plot from and generate
-% figures for spikes that occur throughout the entire experiment, during
-% the wait period, the stim, and the reward (this was made for analyzing
-% behavior data) 
-%{
-% the below should usually be commented out
-% BBBQ = 1; VWQ = 1; CAQ = 1;
-
-windSize = input('How big should the window be around Ca peak in seconds? 24 or 5 sec? ');
-% windSize = 24; 
-% windSize = 5;
-if tTypeQ == 0 
-    trialQ = input('Input 1 to plot spikes from specific trials. Input 0 otherwise. ');
-    if trialQ == 1
-        trials = input('Input what trials you want to plot spikes from. ');
-    elseif trialQ == 0
-        trials = 1:length(state_start_f{vid});
-    end 
-    bPerQ = input('Input 1 to plot STAs for spikes at different points in the task. Input 0 otherwise. ');
-    if bPerQ == 1
-        rewPerLen = input('How long (in sec) is the reward period? ');
-        rewPerFlen = floor(rewPerLen*FPSstack);
-        %make a lists of all frames where the stim and rew occur
-        stimFrames2 = cell(1,length(vidList));
-        rewFrames2 = cell(1,length(vidList));
-        for vid = 1:length(vidList)
-            for trial = 1:length(trials)
-                stimFrames2{vid}{trials(trial)} = state_start_f{vid}(trials(trial)):state_end_f{vid}(trials(trial));
-                rewFrames2{vid}{trials(trial)} = state_end_f{vid}(trials(trial))+1:state_end_f{vid}(trials(trial))+rewPerFlen+1;
-            end 
-            stimFrames = arrayfun(@(row) horzcat(stimFrames2{vid}{row, :}), 1:size(stimFrames2{vid}, 1), 'UniformOutput', false);
-            rewFrames = arrayfun(@(row) horzcat(rewFrames2{vid}{row, :}), 1:size(rewFrames2{vid}, 1), 'UniformOutput', false);
+    % STA: sort data based on ca peak location 
+    % when tTypeQ == 0, you can select what trials to plot from and generate
+    % figures for spikes that occur throughout the entire experiment, during
+    % the wait period, the stim, and the reward (this was made for analyzing
+    % behavior data)     
+    windSize = 24;
+    if tTypeQ == 0 
+        if mouse == 1 
+            trialQ = input('Input 1 to plot spikes from specific trials. Input 0 otherwise. ');
+            if optoQ == 0 
+                bPerQ = input('Input 1 to plot STAs for spikes at different points in the task. Input 0 otherwise. ');
+            end             
+        end         
+        if trialQ == 1
+            trials = input(sprintf('Input what trials you want to plot spikes from for mouse #%d. ',mouse));
+        elseif trialQ == 0
+            trials = 1:length(state_start_f{mouse}{vid});
         end 
-    end 
-    sortedCdata = cell(1,length(vidList));
-    sortedBdata = cell(1,length(vidList));
-    sortedVdata = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
-            for peak = 1:length(sigLocs{vid}{terminals(ccell)})            
-                if sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack) > 0 && sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                
-                    start = sigLocs{vid}{terminals(ccell)}(peak)-floor((windSize/2)*FPSstack);
-                    stop = sigLocs{vid}{terminals(ccell)}(peak)+floor((windSize/2)*FPSstack);                
-                    if start == 0 
-                        start = 1 ;
-                        stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
-                    end        
-                    if BBBQ == 1
-                        for BBBroi = 1:length(bDataFullTrace{1})
-                            if trialQ == 0
-                                if bPerQ == 0 
-                                    sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                                elseif bPerQ == 1    
-                                    % create an STA for peaks regardless of
-                                    % when they occur 
-                                    sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                                    %if the peak occured during the
-                                    %stimulus 
-                                    if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{2}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                                    %if the peak occured during the reward
-                                    elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{3}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                                    %if the peak occured during the ITI
-                                    else
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{4}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                                    end 
-                                end 
-                            elseif trialQ == 1 
-                                if sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(trials(1)) && sigLocs{vid}{terminals(ccell)}(peak) < state_end_f{vid}(trials(end))
+        if bPerQ == 1
+            if mouse == 1 
+                rewPerLen = input('How long (in sec) is the reward period? ');
+            end 
+            rewPerFlen = floor(rewPerLen*FPSstack{mouse});
+            %make a lists of all frames where the stim and rew occur
+            stimFrames2 = cell(1,length(vidList{mouse}));
+            rewFrames2 = cell(1,length(vidList{mouse}));
+            for vid = 1:length(vidList{mouse})
+                for trial = 1:length(trials)
+                    stimFrames2{vid}{trials(trial)} = state_start_f{mouse}{vid}(trials(trial)):state_end_f{mouse}{vid}(trials(trial));
+                    rewFrames2{vid}{trials(trial)} = state_end_f{mouse}{vid}(trials(trial))+1:state_end_f{mouse}{vid}(trials(trial))+rewPerFlen+1;
+                end 
+                stimFrames = arrayfun(@(row) horzcat(stimFrames2{vid}{row, :}), 1:size(stimFrames2{vid}, 1), 'UniformOutput', false);
+                rewFrames = arrayfun(@(row) horzcat(rewFrames2{vid}{row, :}), 1:size(rewFrames2{vid}, 1), 'UniformOutput', false);
+            end 
+        end 
+        sortedCdata = cell(1,length(vidList{mouse}));
+        sortedBdata = cell(1,length(vidList{mouse}));
+        sortedVdata = cell(1,length(vidList{mouse}));
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                for peak = 1:length(sigLocs{vid}{terminals{mouse}(ccell)})            
+                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{vid}{terminals{mouse}(ccell)})                
+                        start = sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse});
+                        stop = sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse});                
+                        if start == 0 
+                            start = 1 ;
+                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                        end        
+                        if BBBQ == 1
+                            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                if trialQ == 0
                                     if bPerQ == 0 
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{1}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
                                     elseif bPerQ == 1    
                                         % create an STA for peaks regardless of
                                         % when they occur 
-                                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{1}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{1}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
                                         %if the peak occured during the
                                         %stimulus 
-                                        if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                            sortedBdata{vid}{BBBroi}{terminals(ccell)}{2}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        if ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),stimFrames{vid}) == 1 
+                                            sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{2}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
                                         %if the peak occured during the reward
-                                        elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                            sortedBdata{vid}{BBBroi}{terminals(ccell)}{3}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                        elseif ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),rewFrames{vid}) == 1 
+                                            sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{3}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
                                         %if the peak occured during the ITI
                                         else
-                                            sortedBdata{vid}{BBBroi}{terminals(ccell)}{4}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
+                                            sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{4}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
+                                        end 
+                                    end 
+                                elseif trialQ == 1 
+                                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials(end))
+                                        if bPerQ == 0 
+                                            sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{1}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
+                                        elseif bPerQ == 1    
+                                            % create an STA for peaks regardless of
+                                            % when they occur 
+                                            sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{1}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
+                                            %if the peak occured during the
+                                            %stimulus 
+                                            if ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),stimFrames{vid}) == 1 
+                                                sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{2}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
+                                            %if the peak occured during the reward
+                                            elseif ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),rewFrames{vid}) == 1 
+                                                sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{3}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
+                                            %if the peak occured during the ITI
+                                            else
+                                                sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{4}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
+                                            end 
                                         end 
                                     end 
                                 end 
                             end 
                         end 
-                    end 
-                    if trialQ == 0
-                        if bPerQ == 0 
-                            sortedCdata{vid}{terminals(ccell)}{1}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                        elseif bPerQ == 1    
-                            % create an STA for peaks regardless of
-                            % when they occur 
-                            sortedCdata{vid}{terminals(ccell)}{1}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                            %if the peak occured during the
-                            %stimulus 
-                            if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                sortedCdata{vid}{terminals(ccell)}{2}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                            %if the peak occured during the reward
-                            elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                sortedCdata{vid}{terminals(ccell)}{3}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                            %if the peak occured during the ITI
-                            else
-                                sortedCdata{vid}{terminals(ccell)}{4}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                            end 
-                        end 
-                    elseif trialQ == 1
-                        if sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(trials(1)) && sigLocs{vid}{terminals(ccell)}(peak) < state_end_f{vid}(trials(end))
+                        if trialQ == 0
                             if bPerQ == 0 
-                                sortedCdata{vid}{terminals(ccell)}{1}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                                sortedCdata{vid}{terminals{mouse}(ccell)}{1}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                             elseif bPerQ == 1    
                                 % create an STA for peaks regardless of
                                 % when they occur 
-                                sortedCdata{vid}{terminals(ccell)}{1}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                                sortedCdata{vid}{terminals{mouse}(ccell)}{1}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                 %if the peak occured during the
                                 %stimulus 
-                                if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                    sortedCdata{vid}{terminals(ccell)}{2}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                                if ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),stimFrames{vid}) == 1 
+                                    sortedCdata{vid}{terminals{mouse}(ccell)}{2}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                 %if the peak occured during the reward
-                                elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                    sortedCdata{vid}{terminals(ccell)}{3}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                                elseif ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),rewFrames{vid}) == 1 
+                                    sortedCdata{vid}{terminals{mouse}(ccell)}{3}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                 %if the peak occured during the ITI
                                 else
-                                    sortedCdata{vid}{terminals(ccell)}{4}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
+                                    sortedCdata{vid}{terminals{mouse}(ccell)}{4}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                 end 
                             end 
-                        end 
-                    end 
-                    if VWQ == 1
-                        for VWroi = 1:length(vDataFullTrace{1})
-                            if trialQ == 0
+                        elseif trialQ == 1
+                            if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials(end))
                                 if bPerQ == 0 
-                                    sortedVdata{vid}{VWroi}{terminals(ccell)}{1}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                    sortedCdata{vid}{terminals{mouse}(ccell)}{1}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                 elseif bPerQ == 1    
                                     % create an STA for peaks regardless of
                                     % when they occur 
-                                    sortedVdata{vid}{VWroi}{terminals(ccell)}{1}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                    sortedCdata{vid}{terminals{mouse}(ccell)}{1}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                     %if the peak occured during the
                                     %stimulus 
-                                    if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                        sortedVdata{vid}{VWroi}{terminals(ccell)}{2}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                    if ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),stimFrames{vid}) == 1 
+                                        sortedCdata{vid}{terminals{mouse}(ccell)}{2}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                     %if the peak occured during the reward
-                                    elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                        sortedVdata{vid}{VWroi}{terminals(ccell)}{3}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                    elseif ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),rewFrames{vid}) == 1 
+                                        sortedCdata{vid}{terminals{mouse}(ccell)}{3}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                     %if the peak occured during the ITI
                                     else
-                                        sortedVdata{vid}{VWroi}{terminals(ccell)}{4}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                        sortedCdata{vid}{terminals{mouse}(ccell)}{4}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                     end 
                                 end 
-                            elseif trialQ == 1
-                                if sigLocs{vid}{terminals(ccell)}(peak) > state_start_f{vid}(trials(1)) && sigLocs{vid}{terminals(ccell)}(peak) < state_end_f{vid}(trials(end))
+                            end 
+                        end 
+                        if VWQ == 1
+                            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                if trialQ == 0
                                     if bPerQ == 0 
-                                        sortedVdata{vid}{VWroi}{terminals(ccell)}{1}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                        sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{1}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
                                     elseif bPerQ == 1    
                                         % create an STA for peaks regardless of
                                         % when they occur 
-                                        sortedVdata{vid}{VWroi}{terminals(ccell)}{1}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                        sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{1}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
                                         %if the peak occured during the
                                         %stimulus 
-                                        if ismember(sigLocs{vid}{terminals(ccell)}(peak),stimFrames{vid}) == 1 
-                                            sortedVdata{vid}{VWroi}{terminals(ccell)}{2}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                        if ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),stimFrames{vid}) == 1 
+                                            sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{2}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
                                         %if the peak occured during the reward
-                                        elseif ismember(sigLocs{vid}{terminals(ccell)}(peak),rewFrames{vid}) == 1 
-                                            sortedVdata{vid}{VWroi}{terminals(ccell)}{3}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                        elseif ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),rewFrames{vid}) == 1 
+                                            sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{3}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
                                         %if the peak occured during the ITI
                                         else
-                                            sortedVdata{vid}{VWroi}{terminals(ccell)}{4}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
+                                            sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{4}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
+                                        end 
+                                    end 
+                                elseif trialQ == 1
+                                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials(end))
+                                        if bPerQ == 0 
+                                            sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{1}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
+                                        elseif bPerQ == 1    
+                                            % create an STA for peaks regardless of
+                                            % when they occur 
+                                            sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{1}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
+                                            %if the peak occured during the
+                                            %stimulus 
+                                            if ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),stimFrames{vid}) == 1 
+                                                sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{2}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
+                                            %if the peak occured during the reward
+                                            elseif ismember(sigLocs{vid}{terminals{mouse}(ccell)}(peak),rewFrames{vid}) == 1 
+                                                sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{3}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
+                                            %if the peak occured during the ITI
+                                            else
+                                                sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{4}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
+                                            end 
                                         end 
                                     end 
                                 end 
@@ -3564,372 +3618,376 @@ if tTypeQ == 0
                 end 
             end 
         end 
-    end 
-    %replace rows of all 0s w/NaNs
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals) 
-            for per = 1:length(sortedCdata{vid}{terminals(ccell)})
-                if BBBQ == 1
-                    for BBBroi = 1:length(bDataFullTrace{1})
-                        nonZeroRowsB = all(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per} == 0,2);
-                        sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}(nonZeroRowsB,:) = NaN;
-                    end 
-                end 
-                nonZeroRowsC = all(sortedCdata{vid}{terminals(ccell)}{per} == 0,2);
-                sortedCdata{vid}{terminals(ccell)}{per}(nonZeroRowsC,:) = NaN;
-                if VWQ == 1
-                    for VWroi = 1:length(vDataFullTrace{1})
-                        nonZeroRowsV = all(sortedVdata{vid}{VWroi}{terminals(ccell)}{per} == 0,2);
-                        sortedVdata{vid}{VWroi}{terminals(ccell)}{per}(nonZeroRowsV,:) = NaN;
-                    end 
-                end 
-            end 
-        end 
-    end 
-    
-elseif tTypeQ == 1 
-    %sort C,B,V calcium peak time locked data (into different categories depending on whether a light was on and color light) 
-    sortedCdata = cell(1,length(vidList));
-    sortedBdata = cell(1,length(vidList));
-    sortedVdata = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
-            for per = 1:3                               
-                for peak = 1:length(tTypeSigLocs{vid}{terminals(ccell)}{per})                                        
-                    if tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)-floor((windSize/2)*FPSstack) > 0 && tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)+floor((windSize/2)*FPSstack) < length(cDataFullTrace{vid}{terminals(ccell)})                                     
-                        start = tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)-floor((windSize/2)*FPSstack);
-                        stop = tTypeSigLocs{vid}{terminals(ccell)}{per}(peak)+floor((windSize/2)*FPSstack);                
-                        if start == 0 
-                            start = 1 ;
-                            stop = start + floor((windSize/2)*FPSstack) + floor((windSize/2)*FPSstack);
-                        end     
-                        if BBBQ == 1
-                            for BBBroi = 1:length(bDataFullTrace{1})
-                                sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}(peak,:) = bDataFullTrace{vid}{BBBroi}(start:stop);
-                            end 
-                        end 
-                        sortedCdata{vid}{terminals(ccell)}{per}(peak,:) = cDataFullTrace{vid}{terminals(ccell)}(start:stop);
-                        if VWQ == 1
-                            for VWroi = 1:length(vDataFullTrace{1})
-                                sortedVdata{vid}{VWroi}{terminals(ccell)}{per}(peak,:) = vDataFullTrace{vid}{VWroi}(start:stop);
-                            end 
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end  
-end 
-%}
-%% STA: smooth and normalize to baseline period
-%{
-if windSize == 24 
-    baselineTime = 5;
-elseif windSize == 5
-    baselineTime = 0.5;
-end 
-
-if tTypeQ == 0 
-    %{
-    %find the BBB traces that increase after calcium peak onset (changePt) 
-    %{
-    SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
-    nonWeighted_SNBdataPeaks_IncAfterCa = cell(1,length(vidList));
-    SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList));
-    nonWeighted_SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList));
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)   
-            count1 = 1;
-            count2 = 1;
-            for peak = 1:size(NBdataPeaks{vid}{terminals(ccell)},1)
-                %if pre changePt mean is less than post changePt mean 
-                if mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) < mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
-                    SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(count1,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);                              
-                    nonWeighted_SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}(count1,:) = SNonWeightedBdataPeaks{vid}{terminals(ccell)}(peak,:);
-                    count1 = count1+1;
-                %find the traces that do not increase after calcium peak onset 
-                elseif mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,1:changePt)) >= mean(SNBdataPeaks{vid}{terminals(ccell)}(peak,changePt:end))
-                    SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)}(count2,:) = SNBdataPeaks{vid}{terminals(ccell)}(peak,:);
-                    nonWeighted_SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)}(count2,:) = SNonWeightedBdataPeaks{vid}{terminals(ccell)}(peak,:);
-                    count2 = count2+1;
-                end 
-            end 
-        end 
-    end 
-
-    SNBdataPeaks_IncAfterCa_2 = cell(1,length(vidList));
-    SNBdataPeaks_NotIncAfterCa_2 = cell(1,length(vidList));
-    AVSNBdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    AVSNBdataPeaksNotInc = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
-    %average the BBB traces that increase after calcium peak onset and those
-    %that don't
-    for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
-            if terminals(ccell) <= length(SNBdataPeaks_IncAfterCa{vid}) 
-                if isempty(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)}) == 0 
-                    SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(vid,:) = mean(SNBdataPeaks_IncAfterCa{vid}{terminals(ccell)},1);  
-                    SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)}(vid,:) = mean(SNBdataPeaks_NotIncAfterCa{vid}{terminals(ccell)},1); 
-                end            
-            end
-            %find all 0 rows and replace with NaNs
-            zeroRows = all(SNBdataPeaks_IncAfterCa_2{terminals(ccell)} == 0,2);
-            SNBdataPeaks_IncAfterCa_2{terminals(ccell)}(zeroRows,:) = NaN; 
-            zeroRowsNotInc = all(SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)} == 0,2);
-            SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)}(zeroRowsNotInc,:) = NaN; 
-            %create average trace per terminal
-            AVSNBdataPeaks{terminals(ccell)} = nansum(SNBdataPeaks_IncAfterCa_2{terminals(ccell)},1);
-            AVSNBdataPeaksNotInc{terminals(ccell)} = nansum(SNBdataPeaks_NotIncAfterCa_2{terminals(ccell)},1);
-        end 
-    end 
-%}
-    
-    %smoothing option
-    smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
-    if smoothQ == 0 
-        if BBBQ == 1
-            SBdataPeaks = sortedBdata;
-        end 
-        SCdataPeaks = sortedCdata;
-        if VWQ == 1
-            SVdataPeaks = sortedVdata;
-        end 
-    elseif smoothQ == 1
-        filtTime = input('How many seconds do you want to smooth your data by? ');
-        SBdataPeaks = cell(1,length(vidList));
-%         SNCdataPeaks = cell(1,length(vidList));
-        SVdataPeaks = cell(1,length(vidList));
-        SCdataPeaks = sortedCdata;
-        for vid = 1:length(vidList)
-            for ccell = 1:length(terminals)
-                for per = 1:length(sortedCdata{vid}{terminals(ccell)})
-    %                 [sC_Data] = MovMeanSmoothData(sortedCdata{vid}{terminals(ccell)},filtTime,FPSstack);
-    %                 SCdataPeaks{vid}{terminals(ccell)} = sC_Data; 
+        %replace rows of all 0s w/NaNs
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse}) 
+                for per = 1:length(sortedCdata{vid}{terminals{mouse}(ccell)})
                     if BBBQ == 1
-                        for BBBroi = 1:length(bDataFullTrace{1})
-                            [sB_Data] = MovMeanSmoothData(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per},filtTime,FPSstack);
-                            SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} = sB_Data;
-                            %remove rows full of 0s if there are any b = a(any(a,2),:)
-                            SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(any(SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per},2),:);
-                        end
-                    end 
-                    if VWQ == 1
-                        for VWroi = 1:length(vDataFullTrace{1})
-                            [sV_Data] = MovMeanSmoothData(sortedVdata{vid}{VWroi}{terminals(ccell)}{per},filtTime,FPSstack);
-                            SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} = sV_Data;
-                            %remove rows full of 0s if there are any b = a(any(a,2),:)
-                            SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(any(SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per},2),:);
+                        for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                            nonZeroRowsB = all(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per} == 0,2);
+                            sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(nonZeroRowsB,:) = NaN;
                         end 
                     end 
-                    %remove rows full of 0s if there are any b = a(any(a,2),:)
-                    SCdataPeaks{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per}(any(SCdataPeaks{vid}{terminals(ccell)}{per},2),:);
+                    nonZeroRowsC = all(sortedCdata{vid}{terminals{mouse}(ccell)}{per} == 0,2);
+                    sortedCdata{vid}{terminals{mouse}(ccell)}{per}(nonZeroRowsC,:) = NaN;
+                    if VWQ == 1
+                        for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                            nonZeroRowsV = all(sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{per} == 0,2);
+                            sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{per}(nonZeroRowsV,:) = NaN;
+                        end 
+                    end 
                 end 
             end 
         end 
-    end 
-   
-    %normalize
-    if BBBQ == 1
-        SNBdataPeaks = cell(1,length(vidList));
-        sortedBdata2 = cell(1,length(vidList));
-    end 
-    if VWQ == 1 
-        SNVdataPeaks = cell(1,length(vidList));
-        sortedVdata2 = cell(1,length(vidList));
-    end     
-    SNCdataPeaks = cell(1,length(vidList));    
-    sortedCdata2 = cell(1,length(vidList));   
-     for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
-            for per = 1:length(sortedCdata{vid}{terminals(ccell)})
-                if isempty(SBdataPeaks{vid}{BBBroi}{terminals(ccell)}) == 0 
-                    %the data needs to be added to because there are some
-                    %negative gonig points which mess up the normalizing 
-                    if BBBQ == 1
-                        for BBBroi = 1:length(bDataFullTrace{1})
-                            % determine the minimum value, add space (+100)
-                            minValToAdd = abs(ceil(min(min(SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}))))+100;
-                            % add min value 
-                            sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} + minValToAdd;
-                        end
-                    end 
-                    % determine the minimum value, add space (+100)
-                    minValToAdd = abs(ceil(min(min(SCdataPeaks{vid}{terminals(ccell)}{per}))))+100;
-                    % add min value
-                    sortedCdata2{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per} + minValToAdd;
-                    if VWQ == 1
-                        for VWroi = 1:length(vDataFullTrace{1})
-                            % determine the minimum value, add space (+100)
-                            minValToAdd = abs(ceil(min(min(SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}))))+100;
-                            % add min value
-                            sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} + minValToAdd;
-                        end 
-                    end 
 
-                    %normalize to baselineTime sec before changePt (calcium peak
-                    %onset) BLstart 
-                    changePt = floor(size(sortedCdata{1}{terminals(1)}{1},2)/2)-4;
-    %                 BLstart = changePt - floor(0.5*FPSstack);
-                    BLstart = changePt - floor(baselineTime*FPSstack);
-                    if BBBQ == 1
-                        for BBBroi = 1:length(bDataFullTrace{1})
-                            if isempty(sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per}) == 0
-                                SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;
-                            end 
-                        end 
-                    end 
-                    if isempty(sortedCdata2{vid}{terminals(ccell)}{per}) == 0 
-                        SNCdataPeaks{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;
-                    end 
-                    if VWQ == 1
-                        if isempty(sortedVdata2{vid}{VWroi}{terminals(ccell)}{per}) == 0 
-                            for VWroi = 1:length(vDataFullTrace{1})
-                                SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;
-                            end 
-                        end 
-                    end 
-
-                    %normalize to the first 0.5 sec (THIS IS JUST A SANITY
-                    %CHECK 
-                    %{
-                    for BBBroi = 1:length(bDataFullTrace{1})
-                        NsortedBdata{vid}{BBBroi}{terminals(ccell)} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}(:,1:floor(0.5*FPSstack)),2)))*100;
-                    end 
-                    NsortedCdata{vid}{terminals(ccell)} = ((sortedCdata2{vid}{terminals(ccell)})./(nanmean(sortedCdata2{vid}{terminals(ccell)}(:,1:floor(0.5*FPSstack)),2)))*100;
-                    if VWQ == 1
-                        for VWroi = 1:length(vDataFullTrace{1})
-                            NsortedVdata{vid}{VWroi}{terminals(ccell)} = ((sortedVdata2{vid}{VWroi}{terminals(ccell)})./(nanmean(sortedVdata2{vid}{VWroi}{terminals(ccell)}(:,1:floor(0.5*FPSstack)),2)))*100;
-                        end 
-                    end 
-                    %}
-                end     
-            end 
-        end 
-     end      
-    %} 
-elseif tTypeQ == 1 
-    %{
-    smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
-    if smoothQ == 0 
-        if BBBQ == 1
-            SBdataPeaks = sortedBdata;
-        end 
-        if VWQ == 1
-            SVdataPeaks = sortedVdata;
-        end 
-        SCdataPeaks = sortedCdata;        
-    elseif smoothQ == 1
-        filtTime = input('How many seconds do you want to smooth your data by? ');
-        SBdataPeaks = cell(1,length(vidList));
-%         SCdataPeaks = cell(1,length(vidList));
-        SVdataPeaks = cell(1,length(vidList));
-        SCdataPeaks = sortedCdata;
-         for vid = 1:length(vidList)
-            for ccell = 1:length(terminals)
-                for per = 1:3   
-                    if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
-                        if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
-                            for peak = 1:size(sortedBdata{vid}{1}{terminals(ccell)}{per},1)
-                                if BBBQ == 1
-                                    for BBBroi = 1:length(bDataFullTrace{1})
-                                        [SBPeak_Data] = MovMeanSmoothData(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                                        SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(peak,:) = SBPeak_Data; 
-                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                        SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}(any(SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per},2),:);
-                                    end 
-                                end
-    %                             [SCPeak_Data] = MovMeanSmoothData(sortedCdata{vid}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-    %                             SCdataPeaks{vid}{terminals(ccell)}{per}(peak,:) = SCPeak_Data;     
-                                if VWQ == 1
-                                    for VWroi = 1:length(vDataFullTrace{1})
-                                        [SVPeak_Data] = MovMeanSmoothData(sortedVdata{vid}{VWroi}{terminals(ccell)}{per}(peak,:),filtTime,FPSstack);
-                                        SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(peak,:) = SVPeak_Data;   
-                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                        SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}(any(SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per},2),:);
-                                    end 
-                                end 
-                            end 
-                        end
-                        %remove rows full of 0s if there are any b = a(any(a,2),:)
-                        SCdataPeaks{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per}(any(SCdataPeaks{vid}{terminals(ccell)}{per},2),:);
-                    end 
-                end 
-            end 
-         end        
-    end  
-    
-    %normalize
-    if BBBQ == 1
-        SNBdataPeaks = cell(1,length(vidList));
-        sortedBdata2 = cell(1,length(vidList));
-    end 
-    if VWQ == 1
-        SNVdataPeaks = cell(1,length(vidList));
-        sortedVdata2 = cell(1,length(vidList));
-    end 
-    SNCdataPeaks = cell(1,length(vidList));        
-    sortedCdata2 = cell(1,length(vidList));    
-     for vid = 1:length(vidList)
-        for ccell = 1:length(terminals)
-            if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}) == 0 
-                for per = 1:3      
-                    if length(sortedBdata{vid}{BBBroi}{terminals(ccell)}) >= per  
-                        if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
-                            %the data needs to be added to because there are some
-                            %negative gonig points which mess up the normalizing 
+    elseif tTypeQ == 1 
+        %sort C,B,V calcium peak time locked data (into different categories depending on whether a light was on and color light) 
+        sortedCdata = cell(1,length(vidList{mouse}));
+        sortedBdata = cell(1,length(vidList{mouse}));
+        sortedVdata = cell(1,length(vidList{mouse}));
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                for per = 1:3                               
+                    for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                                        
+                        if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{vid}{terminals{mouse}(ccell)})                                     
+                            start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
+                            stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse});                
+                            if start == 0 
+                                start = 1 ;
+                                stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                            end     
                             if BBBQ == 1
-                                for BBBroi = 1:length(bDataFullTrace{1})     
-                                    % determine the minimum value, add space (+100)
-                                    minValToAdd = abs(ceil(min(min(SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per}))))+100;
-                                    % add min value 
-                                    sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} + minValToAdd;                    
-                                end     
-                            end 
-                            % determine the minimum value, add space (+100)
-                            minValToAdd = abs(ceil(min(min(SCdataPeaks{vid}{terminals(ccell)}{per}))))+100;
-                            % add min value 
-                            sortedCdata2{vid}{terminals(ccell)}{per} = SCdataPeaks{vid}{terminals(ccell)}{per} + minValToAdd;     
-                            if VWQ == 1 
-                                for VWroi = 1:length(vDataFullTrace{1})     
-                                    % determine the minimum value, add space (+100)
-                                    minValToAdd = abs(ceil(min(min(SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per}))))+100;
-                                    % add min value 
-                                    sortedVdata2{vid}{VWroi}{terminals(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} + minValToAdd;                 
+                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                    sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
                                 end 
                             end 
-
-                              %this normalizes to the first 1/3 section of the trace
-                              %(18 frames) 
-            %{
-                                NsortedBdata{vid}{terminals(ccell)}{per} = ((sortedBdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedBdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-                                NsortedCdata{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;
-                                NsortedVdata{vid}{terminals(ccell)}{per} = ((sortedVdata2{vid}{terminals(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals(ccell)})/3)),2))))*100;            
-            %}                     
-                              
-                            %normalize to baselineTime sec before changePt (calcium peak
-                            %onset) BLstart 
-                            changePt = floor(size(sortedCdata{1}{terminals(1)}{2},2)/2)-4;
-                            BLstart = changePt - floor(baselineTime*FPSstack);
-                            if BBBQ == 1
-                                for BBBroi = 1:length(bDataFullTrace{1})
-                                    if isempty(sortedBdata{vid}{BBBroi}{terminals(ccell)}{per}) == 0 
-                                        SNBdataPeaks{vid}{BBBroi}{terminals(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                
-                                    end 
-                                end 
-                            end 
-                            SNCdataPeaks{vid}{terminals(ccell)}{per} = ((sortedCdata2{vid}{terminals(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;               
+                            sortedCdata{vid}{terminals{mouse}(ccell)}{per}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                             if VWQ == 1
-                                for VWroi = 1:length(vDataFullTrace{1})                    
-                                    SNVdataPeaks{vid}{VWroi}{terminals(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals(ccell)}{per}(:,BLstart:changePt),2)))*100;                    
+                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                    sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
                                 end 
                             end 
                         end 
                     end 
                 end 
             end 
+        end  
+    end     
+
+    % STA: smooth and normalize to baseline period
+    baselineTime = 5;
+    if tTypeQ == 0     
+        %find the BBB traces that increase after calcium peak onset (changePt) 
+        SNBdataPeaks_IncAfterCa = cell(1,length(vidList{mouse}));
+        nonWeighted_SNBdataPeaks_IncAfterCa = cell(1,length(vidList{mouse}));
+        SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList{mouse}));
+        nonWeighted_SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList{mouse}));
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})   
+                count1 = 1;
+                count2 = 1;
+                for peak = 1:size(NBdataPeaks{vid}{terminals{mouse}(ccell)},1)
+                    %if pre changePt mean is less than post changePt mean 
+                    if mean(SNBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,1:changePt)) < mean(SNBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,changePt:end))
+                        SNBdataPeaks_IncAfterCa{vid}{terminals{mouse}(ccell)}(count1,:) = SNBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,:);                              
+                        nonWeighted_SNBdataPeaks_IncAfterCa{vid}{terminals{mouse}(ccell)}(count1,:) = SNonWeightedBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,:);
+                        count1 = count1+1;
+                    %find the traces that do not increase after calcium peak onset 
+                    elseif mean(SNBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,1:changePt)) >= mean(SNBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,changePt:end))
+                        SNBdataPeaks_NotIncAfterCa{vid}{terminals{mouse}(ccell)}(count2,:) = SNBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,:);
+                        nonWeighted_SNBdataPeaks_NotIncAfterCa{vid}{terminals{mouse}(ccell)}(count2,:) = SNonWeightedBdataPeaks{vid}{terminals{mouse}(ccell)}(peak,:);
+                        count2 = count2+1;
+                    end 
+                end 
+            end 
         end 
-     end 
-    %}
+
+        SNBdataPeaks_IncAfterCa_2 = cell(1,length(vidList{mouse}));
+        SNBdataPeaks_NotIncAfterCa_2 = cell(1,length(vidList{mouse}));
+        AVSNBdataPeaks = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+        AVSNBdataPeaksNotInc = cell(1,length(SNBdataPeaks_IncAfterCa{4}));
+        %average the BBB traces that increase after calcium peak onset and those
+        %that don't
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                if terminals{mouse}(ccell) <= length(SNBdataPeaks_IncAfterCa{vid}) 
+                    if isempty(SNBdataPeaks_IncAfterCa{vid}{terminals{mouse}(ccell)}) == 0 
+                        SNBdataPeaks_IncAfterCa_2{terminals{mouse}(ccell)}(vid,:) = mean(SNBdataPeaks_IncAfterCa{vid}{terminals{mouse}(ccell)},1);  
+                        SNBdataPeaks_NotIncAfterCa_2{terminals{mouse}(ccell)}(vid,:) = mean(SNBdataPeaks_NotIncAfterCa{vid}{terminals{mouse}(ccell)},1); 
+                    end            
+                end
+                %find all 0 rows and replace with NaNs
+                zeroRows = all(SNBdataPeaks_IncAfterCa_2{terminals{mouse}(ccell)} == 0,2);
+                SNBdataPeaks_IncAfterCa_2{terminals{mouse}(ccell)}(zeroRows,:) = NaN; 
+                zeroRowsNotInc = all(SNBdataPeaks_NotIncAfterCa_2{terminals{mouse}(ccell)} == 0,2);
+                SNBdataPeaks_NotIncAfterCa_2{terminals{mouse}(ccell)}(zeroRowsNotInc,:) = NaN; 
+                %create average trace per terminal
+                AVSNBdataPeaks{terminals{mouse}(ccell)} = nansum(SNBdataPeaks_IncAfterCa_2{terminals{mouse}(ccell)},1);
+                AVSNBdataPeaksNotInc{terminals{mouse}(ccell)} = nansum(SNBdataPeaks_NotIncAfterCa_2{terminals{mouse}(ccell)},1);
+            end 
+        end 
+
+        %smoothing option
+        if mouse == 1 
+            smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
+        end         
+        if smoothQ == 0 
+            if BBBQ == 1
+                SBdataPeaks = sortedBdata;
+            end 
+            SCdataPeaks = sortedCdata;
+            if VWQ == 1
+                SVdataPeaks = sortedVdata;
+            end 
+        elseif smoothQ == 1
+            if mouse == 1 
+                filtTime = input('How many seconds do you want to smooth your data by? ');
+            end             
+            SBdataPeaks = cell(1,length(vidList{mouse}));
+    %         SNCdataPeaks = cell(1,length(vidList{mouse}));
+            SVdataPeaks = cell(1,length(vidList{mouse}));
+            SCdataPeaks = sortedCdata;
+            for vid = 1:length(vidList{mouse})
+                for ccell = 1:length(terminals{mouse})
+                    for per = 1:length(sortedCdata{vid}{terminals{mouse}(ccell)})
+        %                 [sC_Data] = MovMeanSmoothData(sortedCdata{vid}{terminals{mouse}(ccell)},filtTime,FPSstack{mouse});
+        %                 SCdataPeaks{vid}{terminals{mouse}(ccell)} = sC_Data; 
+                        if BBBQ == 1
+                            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                [sB_Data] = MovMeanSmoothData(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
+                                SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = sB_Data;
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(any(SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                            end
+                        end 
+                        if VWQ == 1
+                            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                [sV_Data] = MovMeanSmoothData(sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
+                                SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} = sV_Data;
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per}(any(SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per},2),:);
+                            end 
+                        end 
+                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                        SCdataPeaks{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{vid}{terminals{mouse}(ccell)}{per},2),:);
+                    end 
+                end 
+            end 
+        end 
+
+        %normalize
+        if BBBQ == 1
+            SNBdataPeaks = cell(1,length(vidList{mouse}));
+            sortedBdata2 = cell(1,length(vidList{mouse}));
+        end 
+        if VWQ == 1 
+            SNVdataPeaks = cell(1,length(vidList{mouse}));
+            sortedVdata2 = cell(1,length(vidList{mouse}));
+        end     
+        SNCdataPeaks = cell(1,length(vidList{mouse}));    
+        sortedCdata2 = cell(1,length(vidList{mouse}));   
+         for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                for per = 1:length(sortedCdata{vid}{terminals{mouse}(ccell)})
+                    if isempty(SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}) == 0 
+                        %the data needs to be added to because there are some
+                        %negative gonig points which mess up the normalizing 
+                        if BBBQ == 1
+                            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value 
+                                sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                            end
+                        end 
+                        % determine the minimum value, add space (+100)
+                        minValToAdd = abs(ceil(min(min(SCdataPeaks{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                        % add min value
+                        sortedCdata2{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                        if VWQ == 1
+                            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value
+                                sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                            end 
+                        end 
+
+                        %normalize to baselineTime sec before changePt (calcium peak
+                        %onset) BLstart 
+                        changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{1},2)/2)-4;
+        %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
+                        BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+                        if BBBQ == 1
+                            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                if isempty(sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0
+                                    SNBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                                end 
+                            end 
+                        end 
+                        if isempty(sortedCdata2{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                            SNCdataPeaks{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                        end 
+                        if VWQ == 1
+                            if isempty(sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per}) == 0 
+                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                    SNVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                                end 
+                            end 
+                        end 
+
+                        %normalize to the first 0.5 sec (THIS IS JUST A SANITY
+                        %CHECK 
+                        %{
+                        for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                            NsortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)} = ((sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}(:,1:floor(0.5*FPSstack{mouse})),2)))*100;
+                        end 
+                        NsortedCdata{vid}{terminals{mouse}(ccell)} = ((sortedCdata2{vid}{terminals{mouse}(ccell)})./(nanmean(sortedCdata2{vid}{terminals{mouse}(ccell)}(:,1:floor(0.5*FPSstack{mouse})),2)))*100;
+                        if VWQ == 1
+                            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                NsortedVdata{vid}{VWroi}{terminals{mouse}(ccell)} = ((sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)})./(nanmean(sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}(:,1:floor(0.5*FPSstack{mouse})),2)))*100;
+                            end 
+                        end 
+                        %}
+                    end     
+                end 
+            end 
+         end     
+    elseif tTypeQ == 1   
+        if mouse == 1 
+            smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
+        end         
+        if smoothQ == 0 
+            if BBBQ == 1
+                SBdataPeaks = sortedBdata;
+            end 
+            if VWQ == 1
+                SVdataPeaks = sortedVdata;
+            end 
+            SCdataPeaks = sortedCdata;        
+        elseif smoothQ == 1
+            if mouse == 1 
+                filtTime = input('How many seconds do you want to smooth your data by? ');
+            end 
+            SBdataPeaks = cell(1,length(vidList{mouse}));
+    %         SCdataPeaks = cell(1,length(vidList{mouse}));
+            SVdataPeaks = cell(1,length(vidList{mouse}));
+            SCdataPeaks = sortedCdata;
+             for vid = 1:length(vidList{mouse})
+                for ccell = 1:length(terminals{mouse})
+                    for per = 1:3   
+                        if length(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}) >= per  
+                            if isempty(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                                for peak = 1:size(sortedBdata{vid}{1}{terminals{mouse}(ccell)}{per},1)
+                                    if BBBQ == 1
+                                        for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                            [SBPeak_Data] = MovMeanSmoothData(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:),filtTime,FPSstack{mouse});
+                                            SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:) = SBPeak_Data; 
+                                            %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                            SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(any(SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                                        end 
+                                    end
+        %                             [SCPeak_Data] = MovMeanSmoothData(sortedCdata{vid}{terminals{mouse}(ccell)}{per}(peak,:),filtTime,FPSstack{mouse});
+        %                             SCdataPeaks{vid}{terminals{mouse}(ccell)}{per}(peak,:) = SCPeak_Data;     
+                                    if VWQ == 1
+                                        for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                            [SVPeak_Data] = MovMeanSmoothData(sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:),filtTime,FPSstack{mouse});
+                                            SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:) = SVPeak_Data;   
+                                            %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                            SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per}(any(SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per},2),:);
+                                        end 
+                                    end 
+                                end 
+                            end
+                            %remove rows full of 0s if there are any b = a(any(a,2),:)
+                            SCdataPeaks{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{vid}{terminals{mouse}(ccell)}{per},2),:);
+                        end 
+                    end 
+                end 
+             end        
+        end  
+
+        %normalize
+        if BBBQ == 1
+            SNBdataPeaks = cell(1,length(vidList{mouse}));
+            sortedBdata2 = cell(1,length(vidList{mouse}));
+        end 
+        if VWQ == 1
+            SNVdataPeaks = cell(1,length(vidList{mouse}));
+            sortedVdata2 = cell(1,length(vidList{mouse}));
+        end 
+        SNCdataPeaks = cell(1,length(vidList{mouse}));        
+        sortedCdata2 = cell(1,length(vidList{mouse}));    
+         for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                if isempty(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}) == 0 
+                    for per = 1:3      
+                        if length(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}) >= per  
+                            if isempty(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                                %the data needs to be added to because there are some
+                                %negative gonig points which mess up the normalizing 
+                                if BBBQ == 1
+                                    for BBBroi = 1:length(bDataFullTrace{mouse}{1})     
+                                        % determine the minimum value, add space (+100)
+                                        minValToAdd = abs(ceil(min(min(SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per}))))+100;
+                                        % add min value 
+                                        sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} + minValToAdd;                    
+                                    end     
+                                end 
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SCdataPeaks{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value 
+                                sortedCdata2{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;     
+                                if VWQ == 1 
+                                    for VWroi = 1:length(vDataFullTrace{mouse}{1})     
+                                        % determine the minimum value, add space (+100)
+                                        minValToAdd = abs(ceil(min(min(SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per}))))+100;
+                                        % add min value 
+                                        sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;                 
+                                    end 
+                                end 
+
+                                  %this normalizes to the first 1/3 section of the trace
+                                  %(18 frames) 
+                %{
+                                    NsortedBdata{vid}{terminals{mouse}(ccell)}{per} = ((sortedBdata2{vid}{terminals{mouse}(ccell)}{per})./((nanmean(sortedBdata2{vid}{terminals{mouse}(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals{mouse}(ccell)})/3)),2))))*100;
+                                    NsortedCdata{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{vid}{terminals{mouse}(ccell)}{per})./((nanmean(sortedCdata2{vid}{terminals{mouse}(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals{mouse}(ccell)})/3)),2))))*100;
+                                    NsortedVdata{vid}{terminals{mouse}(ccell)}{per} = ((sortedVdata2{vid}{terminals{mouse}(ccell)}{per})./((nanmean(sortedVdata2{vid}{terminals{mouse}(ccell)}{per}(:,1:floor(length(avSortedCdata{terminals{mouse}(ccell)})/3)),2))))*100;            
+                %}                     
+
+                                %normalize to baselineTime sec before changePt (calcium peak
+                                %onset) BLstart 
+                                changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                                BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+                                if BBBQ == 1
+                                    for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                        if isempty(sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                                            SNBdataPeaks{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = ((sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedBdata2{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;                
+                                        end 
+                                    end 
+                                end 
+                                SNCdataPeaks{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;               
+                                if VWQ == 1
+                                    for VWroi = 1:length(vDataFullTrace{mouse}{1})                    
+                                        SNVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} = ((sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;                    
+                                    end 
+                                end 
+                            end 
+                        end 
+                    end 
+                end 
+            end 
+         end 
+    end 
+    
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
 end 
+
+
+
+
+
 %}                     
 %% STA 1: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
 % if you are averaging, this plots one trace at a time. if not averaging,
