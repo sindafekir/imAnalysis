@@ -321,14 +321,10 @@ end
 %the workspace 
 % - iterative 
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % 3) make the figures per mouse (need to combine STA1 and 2)
 % - REMOVE smoothing option until right before plotting
 % - ask if you want to plot (if you want to plot, include smoothing option)
 % - save the data out to the right folder 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % 4) make figures across mice 
 % - remove redundant code 
@@ -3214,12 +3210,7 @@ sgtitle(label,'FontSize',25);
 %}
 %}
 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% WORKING ON STA UPDATES BELOW 
-
-% STA: find calcium peaks per terminal across entire experiment, sort data
+%% STA: find calcium peaks per terminal across entire experiment, sort data
 % based on ca peak location, smooth and normalize to baseline period, and
 % plot calcium spike triggered averages (per mouse - optimized for batch
 % processing, saves the data out per mouse)
@@ -3437,14 +3428,42 @@ for mouse = 1:mouseNum
     % when tTypeQ == 0, you can select what trials to plot from and generate
     % figures for spikes that occur throughout the entire experiment, during
     % the wait period, the stim, and the reward (this was made for analyzing
-    % behavior data)     
+    % behavior data)   
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% check STA code. 
+% 
+% Make sure the figures are made properly if:
+% 
+% tType Q == 0 AVQ ==  0
+% tType Q == 0 AVQ ==  1
+% tType Q == 1 AVQ ==  0 
+% tType Q == 1 AVQ ==  1
+% 
+% Make sure it saves the figs and .mat files if: 
+% 
+% tType Q == 0 AVQ ==  0
+% tType Q == 0 AVQ ==  1
+% tType Q == 1 AVQ ==  0 
+% tType Q == 1 AVQ ==  1
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     windSize = 24;
     if tTypeQ == 0 
         if mouse == 1 
             trialQ = input('Input 1 to plot spikes from specific trials. Input 0 otherwise. ');
             if optoQ == 0 
                 bPerQ = input('Input 1 to plot STAs for spikes at different points in the task. Input 0 otherwise. ');
-            end             
+            elseif optoQ == 1
+                bPerQ = 0;
+            end 
         end         
         if trialQ == 1
             trials = input(sprintf('Input what trials you want to plot spikes from for mouse #%d. ',mouse));
@@ -3474,7 +3493,7 @@ for mouse = 1:mouseNum
         for vid = 1:length(vidList{mouse})
             for ccell = 1:length(terminals{mouse})
                 for peak = 1:length(sigLocs{vid}{terminals{mouse}(ccell)})            
-                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{vid}{terminals{mouse}(ccell)})                
+                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
                         start = sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse});
                         stop = sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse});                
                         if start == 0 
@@ -3647,7 +3666,7 @@ for mouse = 1:mouseNum
             for ccell = 1:length(terminals{mouse})
                 for per = 1:3                               
                     for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                                        
-                        if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{vid}{terminals{mouse}(ccell)})                                     
+                        if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                                     
                             start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
                             stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse});                
                             if start == 0 
@@ -3676,6 +3695,9 @@ for mouse = 1:mouseNum
     baselineTime = 5;
     if tTypeQ == 0     
         %find the BBB traces that increase after calcium peak onset (changePt) 
+        % THIS CODE LIKELY NEEDS TO BE PUT AFTER THE SMOOTHING AND
+        % NORMALIZING 
+        %{
         SNBdataPeaks_IncAfterCa = cell(1,length(vidList{mouse}));
         nonWeighted_SNBdataPeaks_IncAfterCa = cell(1,length(vidList{mouse}));
         SNBdataPeaks_NotIncAfterCa = cell(1,length(vidList{mouse}));
@@ -3724,7 +3746,8 @@ for mouse = 1:mouseNum
                 AVSNBdataPeaksNotInc{terminals{mouse}(ccell)} = nansum(SNBdataPeaks_NotIncAfterCa_2{terminals{mouse}(ccell)},1);
             end 
         end 
-
+        %}
+        
         %smoothing option
         if mouse == 1 
             smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
@@ -3983,12 +4006,6 @@ for mouse = 1:mouseNum
     % plots all VW and BBB ROIs whether you are averaging Ca ROIs or not
     % and then saves these figures out (if you choose to plot them), as
     % well as the .mat file per mouse 
-    
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% UPDATE SAVE DIR STUFF (CHECK END OF EACH PLOTTING SECTION)
 
     %initialize arrays 
     if CAQ == 1 
@@ -4035,14 +4052,11 @@ for mouse = 1:mouseNum
         if AVQ == 0 
             for ccell = 1:length(terms)
                 for per = 1:length(sortedCdata{vid}{terminals{mouse}(ccell)})
-                    fig = figure;
                     Frames = size(SNBdataPeaks{1}{1}{terms(ccell)}{per},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
                     FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-                    ax=gca;
-                    hold all
                     count = 1;
                     % sort data 
                     for vid = 1:length(vidList{mouse})      
@@ -4181,6 +4195,9 @@ for mouse = 1:mouseNum
                         % plot 
                         if BBBpQ == 1 
                             for BBBroi = 1:length(sortedBdata{1})
+                                fig = figure;
+                                ax=gca;
+                                hold all
                                 plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
                     %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
                                 ax.XTick = FrameVals;
@@ -4192,7 +4209,7 @@ for mouse = 1:mouseNum
     %                             xLimStart = floor(10*FPSstack{mouse});
     %                             xLimEnd = floor(24*FPSstack{mouse}); 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
-                                ylim([-60 100])
+                                ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
                                 patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
                                 set(fig,'position', [500 100 900 800])
                                 alpha(0.3)
@@ -4227,6 +4244,9 @@ for mouse = 1:mouseNum
                         
                         if VWpQ == 1 
                             for VWroi = 1:length(sortedVdata{1})
+                                fig = figure;
+                                ax=gca;
+                                hold all
                                 plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
                     %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
                                 ax.XTick = FrameVals;
@@ -4239,6 +4259,7 @@ for mouse = 1:mouseNum
                                 xLimEnd = floor(24*FPSstack{mouse}); 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                                 ylim([-60 100])
+                                ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
                                 patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
                                 set(fig,'position', [500 100 900 800])
                                 alpha(0.3)
@@ -4371,14 +4392,11 @@ for mouse = 1:mouseNum
             end       
             for per = 1:length(sortedCdata{1}{terminals{mouse}(1)})
                 if isempty(SNCdataPeaks{1}{terms(1)}{per}) == 0 
-                    fig = figure;
                     Frames = size(AVSNCdataPeaks3{per},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
                     FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-                    ax=gca;
-                    hold all
 
                     %DETERMINE 95% CI
                     if BBBQ == 1
@@ -4428,6 +4446,9 @@ for mouse = 1:mouseNum
                     % plot
                     if BBBpQ == 1 
                         for BBBroi = 1:length(sortedBdata{1})
+                            fig = figure;
+                            ax=gca;
+                            hold all
                             plot(AVSNCdataPeaks{per},'b','LineWidth',4)
                     %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
                             ax.XTick = FrameVals;
@@ -4439,7 +4460,7 @@ for mouse = 1:mouseNum
 %                             xLimStart = floor(10*FPSstack{mouse});
 %                             xLimEnd = floor(24*FPSstack{mouse}); 
                             xlim([1 size(AVSNCdataPeaks{per},2)])
-                            ylim([-60 100])
+                            ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4473,6 +4494,9 @@ for mouse = 1:mouseNum
                     
                     if VWpQ == 1 
                         for VWroi = 1:length(sortedVdata{1})
+                            fig = figure;
+                            ax=gca;
+                            hold all
                             plot(AVSNCdataPeaks{per},'b','LineWidth',4)
                     %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
                             ax.XTick = FrameVals;
@@ -4484,7 +4508,7 @@ for mouse = 1:mouseNum
                             xLimStart = floor(10*FPSstack{mouse});
                             xLimEnd = floor(24*FPSstack{mouse}); 
                             xlim([1 size(AVSNCdataPeaks{per},2)])
-                            ylim([-60 100])
+                            ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4524,14 +4548,11 @@ for mouse = 1:mouseNum
             for ccell = 1:length(terms)       
                 for per = 2:3 
                     % plot    
-                    fig = figure; 
                     Frames = size(SNBdataPeaks{1}{BBBroi}{terms(ccell)}{3},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
                     FrameVals = round((1:FPSstack{mouse}:Frames)+5); 
-                    ax=gca;
-                    hold all
                     count = 1;
                     for vid = 1:length(vidList{mouse})
                        if length(sortedBdata{vid}{BBBroi}{terms(ccell)}) >= per  
@@ -4662,6 +4683,9 @@ for mouse = 1:mouseNum
                     % plot 
                     if BBBpQ == 1
                         for BBBroi = 1:length(sortedBdata{1})
+                            fig = figure;
+                            ax=gca;
+                            hold all
                             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                                 plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
                             end 
@@ -4677,8 +4701,7 @@ for mouse = 1:mouseNum
                             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                             end 
-                            ylim([-60 100])
-
+                            ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4712,6 +4735,9 @@ for mouse = 1:mouseNum
                     
                     if VWpQ == 1
                         for VWroi = 1:length(sortedVdata{1})
+                            fig = figure;
+                            ax=gca;
+                            hold all
                             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                                 plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
                             end 
@@ -4727,7 +4753,7 @@ for mouse = 1:mouseNum
                             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                             end 
-                            ylim([-60 100])
+                            ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4910,7 +4936,7 @@ for mouse = 1:mouseNum
 
                 % plot   
                 if BBBpQ == 1
-                    for BBBroi = 1:length(sortedBdata{1})
+                    for BBBroi = 1:length(sortedBdata{1}) 
                         fig = figure; 
                         Frames = size(AVSNCdataPeaks3{per},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
@@ -4930,7 +4956,7 @@ for mouse = 1:mouseNum
 %                         xLimStart = floor(10*FPSstack{mouse});
 %                         xLimEnd = floor(24*FPSstack{mouse}); 
                         xlim([1 size(AVSNCdataPeaks{per},2)])
-                        ylim([-60 100])
+                        ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
                         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                         set(fig,'position', [500 100 900 800])
                         alpha(0.3)
@@ -4974,7 +5000,7 @@ for mouse = 1:mouseNum
                         xLimStart = floor(10*FPSstack{mouse});
                         xLimEnd = floor(24*FPSstack{mouse}); 
                         xlim([1 size(AVSNCdataPeaks{per},2)])
-                        ylim([-60 100])
+                        ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
                         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                         set(fig,'position', [500 100 900 800])
                         alpha(0.3)
