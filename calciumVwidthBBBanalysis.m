@@ -307,8 +307,6 @@ end
 
 % 1) make sure the below variables are updated to include {mouse}
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %variables that I added {mouse} to 
 % - b/c/v dataFullTrace
 % - terminals 
@@ -318,17 +316,19 @@ end
 % - trialLengths
 % - FPSstack
 % - vidList
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % 2) per mouse make sure it accesses the gotten data if it isn't already in
 %the workspace 
 % - iterative 
 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % 3) make the figures per mouse (need to combine STA1 and 2)
 % - REMOVE smoothing option until right before plotting
 % - ask if you want to plot (if you want to plot, include smoothing option)
 % - save the data out to the right folder 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % 4) make figures across mice 
 % - remove redundant code 
@@ -3220,7 +3220,9 @@ sgtitle(label,'FontSize',25);
 % WORKING ON STA UPDATES BELOW 
 
 % STA: find calcium peaks per terminal across entire experiment, sort data
-% based on ca peak location, smooth and normalize to baseline period, and plot calcium spike triggered averages
+% based on ca peak location, smooth and normalize to baseline period, and
+% plot calcium spike triggered averages (per mouse - optimized for batch
+% processing, saves the data out per mouse)
 
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
@@ -3282,6 +3284,7 @@ end
 
 %%
 for mouse = 1:mouseNum
+    dir1 = dataDir{mouse};   
     % find peaks and then plot where they are in the entire TS 
     stdTrace = cell(1,length(vidList{mouse}));
     sigPeaks = cell(1,length(vidList{mouse}));
@@ -3974,16 +3977,18 @@ for mouse = 1:mouseNum
             end 
          end 
     end 
-    % STA 1: plot calcium spike triggered averages (this can plot traces within 2 std from the mean, but all data gets stored)
+    
+    % STA 1: plot calcium spike triggered averages (this can plot traces
+    % within 2 std from the mean, but all data gets stored). Automatically
+    % plots all VW and BBB ROIs whether you are averaging Ca ROIs or not
+    % and then saves these figures out (if you choose to plot them), as
+    % well as the .mat file per mouse 
+    
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
 % UPDATE SAVE DIR STUFF (CHECK END OF EACH PLOTTING SECTION)
-% MAKE SURE THE CI MATCHES UP FOR EACH PLOTTING CODE SECTION
-
-    % if you are averaging, this plots one trace at a time. if not averaging,
-    % this plots all traces. this also only plots one BBB or VW ROI at once. 
 
     %initialize arrays 
     if CAQ == 1 
@@ -4012,14 +4017,7 @@ for mouse = 1:mouseNum
         VWpQ = input('Input 1 if you want to plot vessel width data. ');
         BBBpQ = input('Input 1 if you want to plot BBB data. ');
         AVQ = input('Input 1 to average across Ca ROIs. Input 0 otherwise. ');
-    end 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % UPDATE SAVE DIR SO IT'S AUTOMATIC 
-    if saveQ == 1                
-        dir1 = input('What folder are you saving these images in? ');
-    end         
+    end     
     if AVQ == 1
         if mouse == 1
             AVQ2 = input('Input 1 to specify what Ca ROIs to average. Input 0 to average all Ca ROIs. ');
@@ -4212,16 +4210,16 @@ for mouse = 1:mouseNum
                                 plot(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per},'r','LineWidth',4)
                                 patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
                                 ylabel('BBB permeability percent change','FontName','Times')
-                                tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBroi);
+                                tlabel = sprintf('Mouse #%d. Ca ROI #%d. BBB ROI #%d. ',mouse,terms(ccell),BBBroi);
             %                     perLabel = 
-                                title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBroi);perLabel})
+                                title({sprintf('Mouse #%d. Ca ROI #%d. BBB ROI #%d.',mouse,terms(ccell),BBBroi);perLabel})
                     %             title('BBB permeability Spike Triggered Average')
                                 alpha(0.3)
                                 set(gca,'YColor',[0 0 0]);
                                 %make the directory and save the images   
                                 if saveQ == 1  
                                     dir2 = strrep(dir1,'\','/');
-                                    dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                    dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                                     export_fig(dir3)
                                 end
                             end 
@@ -4258,15 +4256,15 @@ for mouse = 1:mouseNum
                                 plot(AVSNVdataPeaks{VWroi}{terms(ccell)}{per},'k','LineWidth',4)
                                 patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
                                 ylabel('Vessel width percent change','FontName','Times')
-                                tlabel = ({sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWroi);perLabel});
+                                tlabel = ({sprintf('Mouse #%d. Ca ROI #%d. VW ROI #%d. ',mouse,terms(ccell),VWroi);perLabel});
                     %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
-                                title({sprintf('Terminal %d. VW ROI %d.',terms(ccell),VWroi),perLabel})
+                                title({sprintf('Mouse #%d. Ca ROI #%d. VW ROI #%d.',mouse,terms(ccell),VWroi),perLabel})
                                 alpha(0.3)
                                 set(gca,'YColor',[0 0 0]);
                                 %make the directory and save the images   
                                 if saveQ == 1  
                                     dir2 = strrep(dir1,'\','/');
-                                    dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                    dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                                     export_fig(dir3)
                                 end
                             end 
@@ -4459,14 +4457,15 @@ for mouse = 1:mouseNum
                             plot(AVSNBdataPeaks{BBBroi}{per},'r','LineWidth',4)
                             patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
                             ylabel('BBB permeability percent change','FontName','Times')
-                            title({sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi);perLabel})
+                            title({sprintf('Mouse #%d. All Ca ROIs Averaged. BBB ROI #%d.',mouse,BBBroi);perLabel})
+                            tlabel = sprintf('Mouse #%d. All Ca ROIs Averaged. BBB ROI #%d. ',mouse,BBBroi);
                 %             title('BBB permeability Spike Triggered Average')
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
-                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                                 export_fig(dir3)
                             end                               
                         end 
@@ -4504,13 +4503,14 @@ for mouse = 1:mouseNum
                             patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
                             ylabel('Vessel width percent change','FontName','Times')
                 %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
-                            title({sprintf('All Terminals Averaged. VW ROI %d.',VWroi);perLabel})
+                            title({sprintf('Mouse #%d. All Ca ROIs Averaged. VW ROI %d.',mouse,VWroi);perLabel})
+                            tlabel = sprintf('Mouse #%d. All Ca ROIs Averaged. VW ROI #%d. ',mouse,VWroi);
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
-                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                                 export_fig(dir3)
                             end   
                         end 
@@ -4695,8 +4695,8 @@ for mouse = 1:mouseNum
                                 plot(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per},'r','LineWidth',4)
                                 patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
                                 ylabel('BBB permeability percent change','FontName','Times')
-                                tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBroi);
-                                title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBroi);perLabel})
+                                tlabel = sprintf('Mouse #%d. Ca ROI #%d. BBB ROI #%d. ',mouse,terms(ccell),BBBroi);
+                                title({sprintf('Mouse #%d. Ca ROI #%d. BBB ROI #%d.',mouse,terms(ccell),BBBroi);perLabel})
                     %             title('BBB permeability Spike Triggered Average')
                             end 
                             alpha(0.3)
@@ -4704,7 +4704,7 @@ for mouse = 1:mouseNum
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
-                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                                 export_fig(dir3)
                             end                              
                         end 
@@ -4744,16 +4744,16 @@ for mouse = 1:mouseNum
                                 plot(AVSNVdataPeaks{VWroi}{terms(ccell)}{per},'k','LineWidth',4)
                                 patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
                                 ylabel('Vessel width percent change','FontName','Times')
-                                tlabel = sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWroi);
+                                tlabel = sprintf('Mouse #%d. Ca ROI #%d. VW ROI #%d. ',mouse,terms(ccell),VWroi);
                     %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
-                                title({sprintf('Terminal %d. VW ROI %d.',terms(ccell),VWroi);perLabel})
+                                title({sprintf('Mouse #%d. Ca ROI #%d. VW ROI #%d.',mouse,terms(ccell),VWroi);perLabel})
                             end 
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
-                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                                 export_fig(dir3)
                             end                              
                         end 
@@ -4940,14 +4940,14 @@ for mouse = 1:mouseNum
                         plot(AVSNBdataPeaks{BBBroi}{per},'r','LineWidth',4)
                         patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
                         ylabel('BBB permeability percent change','FontName','Times')
-                        tlabel = sprintf('Terminal%d_BBBroi%d.',terminals{mouse}(ccell),BBBroi);
-                        title({sprintf('Terminals Averaged. BBB ROI %d.',BBBroi);perLabel})                      
+                        tlabel = sprintf('Mouse #%d. All Ca ROIs Averaged. BBB ROI #%d. ',mouse,BBBroi);
+                        title({sprintf('Mouse #%d. All Ca ROIs Averaged. BBB ROI #%d.',mouse,BBBroi);perLabel})                      
                         alpha(0.3)
                         set(gca,'YColor',[0 0 0]);
                         %make the directory and save the images   
                         if saveQ == 1  
                             dir2 = strrep(dir1,'\','/');
-                            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                            dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                             export_fig(dir3)
                         end 
                     end 
@@ -4984,13 +4984,14 @@ for mouse = 1:mouseNum
                         plot(AVSNVdataPeaks{VWroi}{per},'k','LineWidth',4)
                         patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
                         ylabel('Vessel width percent change','FontName','Times')
-                        title({sprintf('Terminals Averaged. VW ROI %d.',VWroi);perLabel})
+                        title({sprintf('Mouse #%d. All Ca ROIs Averaged. VW ROI #%d.',mouse,VWroi);perLabel})
+                        tlabel = sprintf('Mouse #%d. All Ca ROIs Averaged. VW ROI #%d. ',mouse,VWroi);
                         alpha(0.3)
                         set(gca,'YColor',[0 0 0]);
                         %make the directory and save the images   
                         if saveQ == 1  
                             dir2 = strrep(dir1,'\','/');
-                            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                            dir3 = sprintf('%s/%s%s.tif',dir2,tlabel,perLabel);
                             export_fig(dir3)
                         end 
                     end 
@@ -5078,9 +5079,10 @@ for mouse = 1:mouseNum
             end 
         end
         %}
-    
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
+     
+    % save the .mat file per mouse
+    fileName = 'STAfigData.mat';
+    save(fullfile(dir1,fileName));
 end 
 
 
