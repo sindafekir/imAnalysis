@@ -3978,9 +3978,9 @@ for mouse = 1:mouseNum
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% DOUBLE CHECK WHAT THIS DOES 
-% ALL ROIS GET PLOTTED 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+% UPDATE SAVE DIR STUFF (CHECK END OF EACH PLOTTING SECTION)
+% MAKE SURE THE CI MATCHES UP FOR EACH PLOTTING CODE SECTION
 
     % if you are averaging, this plots one trace at a time. if not averaging,
     % this plots all traces. this also only plots one BBB or VW ROI at once. 
@@ -4009,25 +4009,25 @@ for mouse = 1:mouseNum
     end 
     if mouse == 1 
         saveQ = input('Input 1 to save the figures. Input 0 otherwise. ');
+        VWpQ = input('Input 1 if you want to plot vessel width data. ');
+        BBBpQ = input('Input 1 if you want to plot BBB data. ');
+        AVQ = input('Input 1 to average across Ca ROIs. Input 0 otherwise. ');
     end 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % UPDATE SAVE DIR SO IT'S AUTOMATIC 
     if saveQ == 1                
         dir1 = input('What folder are you saving these images in? ');
     end         
-    VWpQ = input('Input 1 if you want to plot vessel width data. ');
-    if VWpQ == 1 
-        VWROI = input('Input what VW ROI you want to plot. ');
-    end 
-    BBBpQ = input('Input 1 if you want to plot BBB data. ');
-    if BBBpQ == 1
-        BBBROI = input('Input what BBB ROI you want to plot. ');
-    end 
-    AVQ = input('Input 1 to average across Ca ROIs. Input 0 otherwise. ');
     if AVQ == 1
-        AVQ2 = input('Input 1 to specify what Ca ROIs to average. Input 0 to average all Ca ROIs. ');
+        if mouse == 1
+            AVQ2 = input('Input 1 to specify what Ca ROIs to average. Input 0 to average all Ca ROIs. ');
+        end 
         if AVQ2 == 0 % average all Ca ROIs 
             terms = terminals{mouse};
         elseif AVQ2 == 1 % specify what Ca ROIs to average 
-            terms = input('Input the Ca ROIs you want to average. ');
+            terms = input(sprintf('Input the Ca ROIs you want to average for mouse #%d. ',mouse));
         end 
     elseif AVQ == 0 
         terms = terminals{mouse}; 
@@ -4082,13 +4082,13 @@ for mouse = 1:mouseNum
 
                     if per <= size(allCTraces{terms(ccell)},2)
                         %get averages of all traces
-                        if BBBpQ == 1
+                        if BBBQ == 1
                             for BBBroi = 1:length(sortedBdata{1})
                                 AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = (nanmean(allBTraces{BBBroi}{terms(ccell)}{per}));
                             end 
                         end 
                         AVSNCdataPeaks2{terms(ccell)}{per} = nanmean(allCTraces{terms(ccell)}{per});
-                        if VWpQ == 1
+                        if VWQ == 1
                             for VWroi = 1:length(sortedVdata{1})
                                 AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = (nanmean(allVTraces{VWroi}{terms(ccell)}{per}));
                             end 
@@ -4108,7 +4108,7 @@ for mouse = 1:mouseNum
                         end 
                         %remove rows full of zeros if there are any b = a(any(a,2),:)
                         CTraces{terms(ccell)}{per} = CTraces{terms(ccell)}{per}(any(CTraces{terms(ccell)}{per},2),:);
-                        if BBBpQ == 1
+                        if BBBQ == 1
                             for BBBroi = 1:length(sortedBdata{1})
                                 for peak = 1:size(allBTraces{BBBroi}{terms(ccell)}{per},1)
                 %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
@@ -4120,7 +4120,7 @@ for mouse = 1:mouseNum
                                 BTraces{BBBroi}{terms(ccell)}{per} = BTraces{BBBroi}{terms(ccell)}{per}(any(BTraces{BBBroi}{terms(ccell)}{per},2),:);
                             end 
                         end 
-                        if VWpQ == 1
+                        if VWQ == 1
                             for VWroi = 1:length(sortedVdata{1})
                                 for peak = 1:size(allVTraces{VWroi}{terms(ccell)}{per},1)
                 %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
@@ -4135,7 +4135,7 @@ for mouse = 1:mouseNum
 
 
                         %DETERMINE 95% CI
-                        if BBBpQ == 1
+                        if BBBQ == 1
                             CI_bLow = cell(1,length(sortedBdata{1}));
                             CI_bHigh = cell(1,length(sortedBdata{1}));
                             for BBBroi = 1:length(sortedBdata{1})
@@ -4153,7 +4153,7 @@ for mouse = 1:mouseNum
                         CI_cLow = (nanmean(CTraces{terms(ccell)}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
                         CI_cHigh = (nanmean(CTraces{terms(ccell)}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
 
-                        if VWpQ == 1
+                        if VWQ == 1
                             CI_vLow = cell(1,length(sortedVdata{1}));
                             CI_vHigh = cell(1,length(sortedVdata{1}));
                             for VWroi = 1:length(sortedVdata{1})
@@ -4168,73 +4168,113 @@ for mouse = 1:mouseNum
                         x = 1:length(CI_cLow);
 
                         %get averages of traces excluding outliers  
-                        if BBBpQ == 1
+                        if BBBQ == 1
                             for BBBroi = 1:length(sortedBdata{1})
                                 AVSNBdataPeaks{BBBroi}{terms(ccell)}{per} = (nanmean(BTraces{BBBroi}{terms(ccell)}{per}));
                             end 
                         end 
                         AVSNCdataPeaks{terms(ccell)}{per} = nanmean(CTraces{terms(ccell)}{per});
-                        if VWpQ == 1
+                        if VWQ == 1
                             for VWroi = 1:length(sortedVdata{1})
                                 AVSNVdataPeaks{VWroi}{terms(ccell)}{per} = (nanmean(VTraces{VWroi}{terms(ccell)}{per}));
                             end 
                         end 
+
                         % plot 
-                        plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
-            %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-                        ax.XTick = FrameVals;
-                        ax.XTickLabel = sec_TimeVals;   
-                        ax.FontSize = 25;
-                        ax.FontName = 'Times';
-                        xlabel('time (s)','FontName','Times')
-                        ylabel('calcium signal percent change','FontName','Times')
-                        xLimStart = floor(10*FPSstack{mouse});
-                        xLimEnd = floor(24*FPSstack{mouse}); 
-                        xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
-                        ylim([-60 100])
-                        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
-                        set(fig,'position', [500 100 900 800])
-                        alpha(0.3)
-                        if per == 1 
-                            perLabel = ("Peaks from entire experiment. ");
-                        elseif per == 2 
-                            perLabel = ("Peaks from stimulus. ");
-                        elseif per == 3 
-                            perLabel = ("Peaks peaks from reward. ");
-                        elseif per == 4 
-                            perLabel = ("Peaks from ITI. ");
+                        if BBBpQ == 1 
+                            for BBBroi = 1:length(sortedBdata{1})
+                                plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
+                    %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                                ax.XTick = FrameVals;
+                                ax.XTickLabel = sec_TimeVals;   
+                                ax.FontSize = 25;
+                                ax.FontName = 'Times';
+                                xlabel('time (s)','FontName','Times')
+                                ylabel('calcium signal percent change','FontName','Times')
+    %                             xLimStart = floor(10*FPSstack{mouse});
+    %                             xLimEnd = floor(24*FPSstack{mouse}); 
+                                xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
+                                ylim([-60 100])
+                                patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
+                                set(fig,'position', [500 100 900 800])
+                                alpha(0.3)
+                                if per == 1 
+                                    perLabel = ("Peaks from entire experiment. ");
+                                elseif per == 2 
+                                    perLabel = ("Peaks from stimulus. ");
+                                elseif per == 3 
+                                    perLabel = ("Peaks peaks from reward. ");
+                                elseif per == 4 
+                                    perLabel = ("Peaks from ITI. ");
+                                end 
+                                %add right y axis tick marks for a specific DOD figure. 
+                                yyaxis right 
+                                plot(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per},'r','LineWidth',4)
+                                patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
+                                ylabel('BBB permeability percent change','FontName','Times')
+                                tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBroi);
+            %                     perLabel = 
+                                title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBroi);perLabel})
+                    %             title('BBB permeability Spike Triggered Average')
+                                alpha(0.3)
+                                set(gca,'YColor',[0 0 0]);
+                                %make the directory and save the images   
+                                if saveQ == 1  
+                                    dir2 = strrep(dir1,'\','/');
+                                    dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                    export_fig(dir3)
+                                end
+                            end 
                         end 
-                        %add right y axis tick marks for a specific DOD figure. 
-                        yyaxis right 
-                        if BBBpQ == 1
-                            plot(AVSNBdataPeaks{BBBROI}{terms(ccell)}{per},'r','LineWidth',4)
-                            patch([x fliplr(x)],[(CI_bLow{BBBROI}) (fliplr(CI_bHigh{BBBROI}))],[0.5 0 0],'EdgeColor','none')
-                            ylabel('BBB permeability percent change','FontName','Times')
-                            tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBROI);
-        %                     perLabel = 
-                            title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBROI);perLabel})
-                %             title('BBB permeability Spike Triggered Average')
+                        
+                        if VWpQ == 1 
+                            for VWroi = 1:length(sortedVdata{1})
+                                plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
+                    %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                                ax.XTick = FrameVals;
+                                ax.XTickLabel = sec_TimeVals;   
+                                ax.FontSize = 25;
+                                ax.FontName = 'Times';
+                                xlabel('time (s)','FontName','Times')
+                                ylabel('calcium signal percent change','FontName','Times')
+                                xLimStart = floor(10*FPSstack{mouse});
+                                xLimEnd = floor(24*FPSstack{mouse}); 
+                                xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
+                                ylim([-60 100])
+                                patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
+                                set(fig,'position', [500 100 900 800])
+                                alpha(0.3)
+                                if per == 1 
+                                    perLabel = ("Peaks from entire experiment. ");
+                                elseif per == 2 
+                                    perLabel = ("Peaks from stimulus. ");
+                                elseif per == 3 
+                                    perLabel = ("Peaks peaks from reward. ");
+                                elseif per == 4 
+                                    perLabel = ("Peaks from ITI. ");
+                                end 
+                                %add right y axis tick marks for a specific DOD figure. 
+                                yyaxis right 
+                                plot(AVSNVdataPeaks{VWroi}{terms(ccell)}{per},'k','LineWidth',4)
+                                patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
+                                ylabel('Vessel width percent change','FontName','Times')
+                                tlabel = ({sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWroi);perLabel});
+                    %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
+                                title({sprintf('Terminal %d. VW ROI %d.',terms(ccell),VWroi),perLabel})
+                                alpha(0.3)
+                                set(gca,'YColor',[0 0 0]);
+                                %make the directory and save the images   
+                                if saveQ == 1  
+                                    dir2 = strrep(dir1,'\','/');
+                                    dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                    export_fig(dir3)
+                                end
+                            end 
                         end 
-                        if VWpQ == 1
-                            plot(AVSNVdataPeaks{VWROI}{terms(ccell)}{per},'k','LineWidth',4)
-                            patch([x fliplr(x)],[(CI_vLow{VWROI}) (fliplr(CI_vHigh{VWROI}))],'k','EdgeColor','none')
-                            ylabel('Vessel width percent change','FontName','Times')
-                            tlabel = ({sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWROI);perLabel});
-                %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
-                            title({sprintf('Terminal %d. VW ROI %d.',terms(ccell),VWROI),perLabel})
-                        end 
-                        alpha(0.3)
-                        set(gca,'YColor',[0 0 0]);
-                        %make the directory and save the images   
-                        if saveQ == 1  
-                            dir2 = strrep(dir1,'\','/');
-                            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
-                            export_fig(dir3)
-                        end
                     end 
                 end 
             end
-
+            
         elseif AVQ == 1 % average across calcium ROIs 
             for ccell = 1:length(terms) 
                 if isempty(SNCdataPeaks{vid}{terms(ccell)}) == 0 
@@ -4245,14 +4285,14 @@ for mouse = 1:mouseNum
                             for vid = 1:length(vidList{mouse})   
                                 if isempty(SNCdataPeaks{vid}{terms(ccell)}) == 0 
                                     for peak = 1:size(SNCdataPeaks{vid}{terms(ccell)}{per},1) 
-                                        if BBBpQ == 1
+                                        if BBBQ == 1
                                             for BBBroi = 1:length(sortedBdata{1})
                                                 allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100); 
                                                 %remove rows full of zeros if there are any b = a(any(a,2),:)
                                                 allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
                                             end 
                                         end 
-                                        if VWpQ == 1
+                                        if VWQ == 1
                                             for VWroi = 1:length(sortedVdata{1})
                                                 allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
                                                 %remove rows full of zeros if there are any b = a(any(a,2),:)
@@ -4268,13 +4308,13 @@ for mouse = 1:mouseNum
                             end 
 
                             %get averages of all traces 
-                            if BBBpQ == 1
+                            if BBBQ == 1
                                 for BBBroi = 1:length(sortedBdata{1})
                                     AVSNBdataPeaks2{BBBroi}{terms(ccell)}{per} = (nanmean(allBTraces{BBBroi}{terms(ccell)}{per}));
                                 end 
                             end 
                             AVSNCdataPeaks2{terms(ccell)}{per} = nanmean(allCTraces{terms(ccell)}{per});
-                            if VWpQ == 1
+                            if VWQ == 1
                                 for VWroi = 1:length(sortedVdata{1})
                                     AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = (nanmean(allVTraces{VWroi}{terms(ccell)}{per}));
                                 end 
@@ -4287,7 +4327,7 @@ for mouse = 1:mouseNum
                             count3 = 1;
                             count4 = 1;
                             for peak = 1:size(allCTraces{terms(ccell)}{per},1)
-                                    if BBBpQ == 1
+                                    if BBBQ == 1
                                         for BBBroi = 1:length(sortedBdata{1})
                 %                         if allBTraces{BBBroi}{terms(ccell)}(peak,:) < AVSNBdataPeaks2{BBBroi}{terms(ccell)} + nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2  & allBTraces{BBBroi}{terms(ccell)}(peak,:) > AVSNBdataPeaks2{BBBroi}{terms(ccell)} - nanstd(allBTraces{BBBroi}{terms(ccell)},1)*2               
                                             BTraces{BBBroi}{terms(ccell)}{per}(count2,:) = (allBTraces{BBBroi}{terms(ccell)}{per}(peak,:));
@@ -4303,7 +4343,7 @@ for mouse = 1:mouseNum
                                         %remove rows full of zeros if there are any b = a(any(a,2),:)
                                         CTraces{terms(ccell)}{per} = CTraces{terms(ccell)}{per}(any(CTraces{terms(ccell)}{per},2),:);
                 %                     end 
-                                    if VWpQ == 1
+                                    if VWQ == 1
                                         for VWroi = 1:length(sortedVdata{1})
                 %                         if allVTraces{VWroi}{terms(ccell)}(peak,:) < AVSNVdataPeaks2{VWroi}{terms(ccell)} + nanstd(allVTraces{VWroi}{terms(ccell)},1)*2 & allVTraces{VWroi}{terms(ccell)}(peak,:) > AVSNVdataPeaks2{VWroi}{terms(ccell)} - nanstd(allVTraces{VWroi}{terms(ccell)},1)*2              
                                             VTraces{VWroi}{terms(ccell)}{per}(count4,:) = (allVTraces{VWroi}{terms(ccell)}{per}(peak,:));
@@ -4316,13 +4356,13 @@ for mouse = 1:mouseNum
                             end 
 
                             % get the average of all the traces excluding outliers 
-                            if BBBpQ == 1
+                            if BBBQ == 1
                                 for BBBroi = 1:length(sortedBdata{1})
                                     AVSNBdataPeaks3{BBBroi}{per}(ccell,:) = (nanmean(BTraces{BBBroi}{terms(ccell)}{per}));
                                 end 
                             end 
                             AVSNCdataPeaks3{per}(ccell,:) = nanmean(CTraces{terms(ccell)}{per});
-                            if VWpQ == 1
+                            if VWQ == 1
                                 for VWroi = 1:length(sortedVdata{1})
                                     AVSNVdataPeaks3{VWroi}{per}(ccell,:) = (nanmean(VTraces{VWroi}{terms(ccell)}{per}));
                                 end 
@@ -4343,13 +4383,15 @@ for mouse = 1:mouseNum
                     hold all
 
                     %DETERMINE 95% CI
-                    if BBBpQ == 1
+                    if BBBQ == 1
+                        CI_bLow = cell(1,length(sortedBdata{1}));
+                        CI_bHigh = cell(1,length(sortedBdata{1}));
                         for BBBroi = 1:length(sortedBdata{1})
                             SEMb = (nanstd(AVSNBdataPeaks3{BBBroi}{per})/(sqrt(size(AVSNBdataPeaks3{BBBroi}{per},1)))); % Standard Error            
                             ts_bLow = tinv(0.025,size(AVSNBdataPeaks3{BBBroi}{per},1)-1);% T-Score for 95% CI
                             ts_bHigh = tinv(0.975,size(AVSNBdataPeaks3{BBBroi}{per},1)-1);% T-Score for 95% CI
-                            CI_bLow = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-                            CI_bHigh = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+                            CI_bLow{BBBroi} = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+                            CI_bHigh{BBBroi} = (nanmean(AVSNBdataPeaks3{BBBroi}{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
                         end 
                     end 
 
@@ -4359,83 +4401,124 @@ for mouse = 1:mouseNum
                     CI_cLow = (nanmean(AVSNCdataPeaks3{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
                     CI_cHigh = (nanmean(AVSNCdataPeaks3{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
 
-                    if VWpQ == 1
+                    if VWQ == 1
+                        CI_vLow = cell(1,length(sortedVdata{1}));
+                        CI_vHigh = cell(1,length(sortedVdata{1}));
                         for VWroi = 1:length(sortedVdata{1})
                             SEMv = (nanstd(AVSNVdataPeaks3{VWroi}{per}))/(sqrt(size(AVSNVdataPeaks3{VWroi}{per},1))); % Standard Error            
                             ts_vLow = tinv(0.025,size(AVSNVdataPeaks3{VWroi}{per},1)-1);% T-Score for 95% CI
                             ts_vHigh = tinv(0.975,size(AVSNVdataPeaks3{VWroi}{per},1)-1);% T-Score for 95% CI
-                            CI_vLow = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
-                            CI_vHigh = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+                            CI_vLow{VWroi} = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
+                            CI_vHigh{VWroi} = (nanmean(AVSNVdataPeaks3{VWroi}{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
                         end 
                     end 
-
                     x = 1:length(CI_cLow);
 
                     %average across terminals 
                     AVSNCdataPeaks{per} = nanmean(AVSNCdataPeaks3{per});
-                    if BBBpQ == 1
+                    if BBBQ == 1
                         for BBBroi = 1:length(sortedBdata{1})
                             AVSNBdataPeaks{BBBroi}{per} = nanmean(AVSNBdataPeaks3{BBBroi}{per});
                         end 
                     end 
-                    if VWpQ == 1
+                    if VWQ == 1
                         for VWroi = 1:length(sortedVdata{1})
                             AVSNVdataPeaks{VWroi}{per} = nanmean(AVSNVdataPeaks3{VWroi}{per});
                         end 
                     end 
-
-                    % plot 
-                    plot(AVSNCdataPeaks{per},'b','LineWidth',4)
-            %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-                    ax.XTick = FrameVals;
-                    ax.XTickLabel = sec_TimeVals;   
-                    ax.FontSize = 25;
-                    ax.FontName = 'Times';
-                    xlabel('time (s)','FontName','Times')
-                    ylabel('calcium signal percent change','FontName','Times')
-                    xLimStart = floor(10*FPSstack{mouse});
-                    xLimEnd = floor(24*FPSstack{mouse}); 
-                    xlim([1 size(AVSNCdataPeaks{per},2)])
-                    ylim([-60 100])
-                    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-                    set(fig,'position', [500 100 900 800])
-                    alpha(0.3)
-                    if per == 1 
-                        perLabel = ("Peaks from entire experiment. ");
-                    elseif per == 2 
-                        perLabel = ("Peaks from stimulus. ");
-                    elseif per == 3 
-                        perLabel = ("Peaks peaks from reward. ");
-                    elseif per == 4 
-                        perLabel = ("Peaks from ITI. ");
+                    
+                    % plot
+                    if BBBpQ == 1 
+                        for BBBroi = 1:length(sortedBdata{1})
+                            plot(AVSNCdataPeaks{per},'b','LineWidth',4)
+                    %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                            ax.XTick = FrameVals;
+                            ax.XTickLabel = sec_TimeVals;   
+                            ax.FontSize = 25;
+                            ax.FontName = 'Times';
+                            xlabel('time (s)','FontName','Times')
+                            ylabel('calcium signal percent change','FontName','Times')
+%                             xLimStart = floor(10*FPSstack{mouse});
+%                             xLimEnd = floor(24*FPSstack{mouse}); 
+                            xlim([1 size(AVSNCdataPeaks{per},2)])
+                            ylim([-60 100])
+                            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                            set(fig,'position', [500 100 900 800])
+                            alpha(0.3)
+                            if per == 1 
+                                perLabel = ("Peaks from entire experiment. ");
+                            elseif per == 2 
+                                perLabel = ("Peaks from stimulus. ");
+                            elseif per == 3 
+                                perLabel = ("Peaks peaks from reward. ");
+                            elseif per == 4 
+                                perLabel = ("Peaks from ITI. ");
+                            end 
+                            %add right y axis tick marks for a specific DOD figure. 
+                            yyaxis right 
+                            plot(AVSNBdataPeaks{BBBroi}{per},'r','LineWidth',4)
+                            patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
+                            ylabel('BBB permeability percent change','FontName','Times')
+                            title({sprintf('All Terminals Averaged. BBB ROI %d.',BBBroi);perLabel})
+                %             title('BBB permeability Spike Triggered Average')
+                            alpha(0.3)
+                            set(gca,'YColor',[0 0 0]);
+                            %make the directory and save the images   
+                            if saveQ == 1  
+                                dir2 = strrep(dir1,'\','/');
+                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                export_fig(dir3)
+                            end                               
+                        end 
                     end 
-                    %add right y axis tick marks for a specific DOD figure. 
-                    yyaxis right 
-                    if BBBpQ == 1
-                        plot(AVSNBdataPeaks{BBBROI}{per},'r','LineWidth',4)
-                        patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],[0.5 0 0],'EdgeColor','none')
-                        ylabel('BBB permeability percent change','FontName','Times')
-                        title({sprintf('All Terminals Averaged. BBB ROI %d.',BBBROI);perLabel})
-            %             title('BBB permeability Spike Triggered Average')
+                    
+                    if VWpQ == 1 
+                        for VWroi = 1:length(sortedVdata{1})
+                            plot(AVSNCdataPeaks{per},'b','LineWidth',4)
+                    %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                            ax.XTick = FrameVals;
+                            ax.XTickLabel = sec_TimeVals;   
+                            ax.FontSize = 25;
+                            ax.FontName = 'Times';
+                            xlabel('time (s)','FontName','Times')
+                            ylabel('calcium signal percent change','FontName','Times')
+                            xLimStart = floor(10*FPSstack{mouse});
+                            xLimEnd = floor(24*FPSstack{mouse}); 
+                            xlim([1 size(AVSNCdataPeaks{per},2)])
+                            ylim([-60 100])
+                            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                            set(fig,'position', [500 100 900 800])
+                            alpha(0.3)
+                            if per == 1 
+                                perLabel = ("Peaks from entire experiment. ");
+                            elseif per == 2 
+                                perLabel = ("Peaks from stimulus. ");
+                            elseif per == 3 
+                                perLabel = ("Peaks peaks from reward. ");
+                            elseif per == 4 
+                                perLabel = ("Peaks from ITI. ");
+                            end 
+                            %add right y axis tick marks for a specific DOD figure. 
+                            yyaxis right 
+                            plot(AVSNVdataPeaks{VWroi}{per},'k','LineWidth',4)
+                            patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
+                            ylabel('Vessel width percent change','FontName','Times')
+                %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
+                            title({sprintf('All Terminals Averaged. VW ROI %d.',VWroi);perLabel})
+                            alpha(0.3)
+                            set(gca,'YColor',[0 0 0]);
+                            %make the directory and save the images   
+                            if saveQ == 1  
+                                dir2 = strrep(dir1,'\','/');
+                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                export_fig(dir3)
+                            end   
+                        end 
                     end 
-                    if VWpQ == 1
-                        plot(AVSNVdataPeaks{VWROI}{per},'k','LineWidth',4)
-                        patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
-                        ylabel('Vessel width percent change','FontName','Times')
-            %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
-                        title({sprintf('All Terminals Averaged. VW ROI %d.',VWROI);perLabel})
-                    end 
-                    alpha(0.3)
-                    set(gca,'YColor',[0 0 0]);
-                    %make the directory and save the images   
-                    if saveQ == 1  
-                        dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s.tif',dir2,tlabel);
-                        export_fig(dir3)
-                    end   
                 end 
             end 
         end 
+        
     elseif tTypeQ == 1
         if AVQ == 0 
             for ccell = 1:length(terms)       
@@ -4451,32 +4534,32 @@ for mouse = 1:mouseNum
                     hold all
                     count = 1;
                     for vid = 1:length(vidList{mouse})
-                           if length(sortedBdata{vid}{BBBroi}{terms(ccell)}) >= per  
-                                if isempty(sortedBdata{vid}{BBBroi}{terms(ccell)}{per}) == 0 
-                                    for peak = 1:size(sortedBdata{vid}{BBBroi}{terms(ccell)}{per},1)
-                                        if peak <= size(SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per},1)
-                                            if BBBQ == 1
-                                                for BBBroi = 1:length(sortedBdata{1})
-                                                    allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100);
-                                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                                    allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
-                                                end 
+                       if length(sortedBdata{vid}{BBBroi}{terms(ccell)}) >= per  
+                            if isempty(sortedBdata{vid}{BBBroi}{terms(ccell)}{per}) == 0 
+                                for peak = 1:size(sortedBdata{vid}{BBBroi}{terms(ccell)}{per},1)
+                                    if peak <= size(SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per},1)
+                                        if BBBQ == 1
+                                            for BBBroi = 1:length(sortedBdata{1})
+                                                allBTraces{BBBroi}{terms(ccell)}{per}(count,:) = (SNBdataPeaks{vid}{BBBroi}{terms(ccell)}{per}(peak,:)-100);
+                                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                                allBTraces{BBBroi}{terms(ccell)}{per} = allBTraces{BBBroi}{terms(ccell)}{per}(any(allBTraces{BBBroi}{terms(ccell)}{per},2),:);
                                             end 
-                                            allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
-                                            %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                            allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
-                                            if VWQ == 1
-                                                for VWroi = 1:length(sortedVdata{1})
-                                                    allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
-                                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                                    allVTraces{VWroi}{terms(ccell)}{per} = allVTraces{VWroi}{terms(ccell)}{per}(any(allVTraces{VWroi}{terms(ccell)}{per},2),:);
-                                                end 
-                                            end 
-                                            count = count + 1;
                                         end 
+                                        allCTraces{terms(ccell)}{per}(count,:) = (SNCdataPeaks{vid}{terms(ccell)}{per}(peak,:)-100);
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allCTraces{terms(ccell)}{per} = allCTraces{terms(ccell)}{per}(any(allCTraces{terms(ccell)}{per},2),:);
+                                        if VWQ == 1
+                                            for VWroi = 1:length(sortedVdata{1})
+                                                allVTraces{VWroi}{terms(ccell)}{per}(count,:) = (SNVdataPeaks{vid}{VWroi}{terms(ccell)}{per}(peak,:)-100); 
+                                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                                allVTraces{VWroi}{terms(ccell)}{per} = allVTraces{VWroi}{terms(ccell)}{per}(any(allVTraces{VWroi}{terms(ccell)}{per},2),:);
+                                            end 
+                                        end 
+                                        count = count + 1;
                                     end 
-                                end
-                           end               
+                                end 
+                            end
+                       end               
                     end 
 
                     %get averages of all traces 
@@ -4491,7 +4574,7 @@ for mouse = 1:mouseNum
                             AVSNVdataPeaks2{VWroi}{terms(ccell)}{per} = nanmean(allVTraces{VWroi}{terms(ccell)}{per},1);
                         end 
                     end 
-
+                    
                     %remove traces that are outliers 
                     %statistically (greater than 2 standard deviations from the
                     %mean 
@@ -4575,66 +4658,106 @@ for mouse = 1:mouseNum
                             AVSNVdataPeaks{VWroi}{terms(ccell)}{per} = nanmean(VTraces{VWroi}{terms(ccell)}{per},1);
                         end     
                     end 
-
-                    if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
-                        plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
-                    end 
-        %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-                    ax.XTick = FrameVals;
-                    ax.XTickLabel = sec_TimeVals;   
-                    ax.FontSize = 25;
-                    ax.FontName = 'Times';
-                    xlabel('time (s)','FontName','Times')
-                    ylabel('calcium signal percent change','FontName','Times')
-                    xLimStart = floor(10*FPSstack{mouse});
-                    xLimEnd = floor(24*FPSstack{mouse}); 
-                    if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
-                        xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
-                    end 
-                    ylim([-60 100])
-
-                    patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-                    set(fig,'position', [500 100 900 800])
-                    alpha(0.3)
-
-                    if per == 1 
-                        perLabel = "Blue Light On";
-                    elseif per == 2
-                        perLabel = "Red Light On";
-                    elseif per == 3
-                        perLabel = "Light Off";
-                    end 
-
-                    %add right y axis tick marks for a specific DOD figure. 
-                    yyaxis right 
+                    
+                    % plot 
                     if BBBpQ == 1
-                        if isempty(AVSNBdataPeaks{BBBROI}{terms(ccell)}{per}) == 0 && isempty(CI_cLow) == 0 
-                            plot(AVSNBdataPeaks{BBBROI}{terms(ccell)}{per},'r','LineWidth',4)
-                            patch([x fliplr(x)],[(CI_bLow{BBBROI}) (fliplr(CI_bHigh{BBBROI}))],[0.5 0 0],'EdgeColor','none')
-                            ylabel('BBB permeability percent change','FontName','Times')
-                            tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBROI);
-                            title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBROI);perLabel})
-                %             title('BBB permeability Spike Triggered Average')
+                        for BBBroi = 1:length(sortedBdata{1})
+                            if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
+                                plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
+                            end 
+                %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                            ax.XTick = FrameVals;
+                            ax.XTickLabel = sec_TimeVals;   
+                            ax.FontSize = 25;
+                            ax.FontName = 'Times';
+                            xlabel('time (s)','FontName','Times')
+                            ylabel('calcium signal percent change','FontName','Times')
+%                             xLimStart = floor(10*FPSstack{mouse});
+%                             xLimEnd = floor(24*FPSstack{mouse}); 
+                            if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
+                                xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
+                            end 
+                            ylim([-60 100])
+
+                            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                            set(fig,'position', [500 100 900 800])
+                            alpha(0.3)
+                            if per == 1 
+                                perLabel = "Blue Light On";
+                            elseif per == 2
+                                perLabel = "Red Light On";
+                            elseif per == 3
+                                perLabel = "Light Off";
+                            end 
+                            %add right y axis tick marks for a specific DOD figure. 
+                            yyaxis right 
+                            if isempty(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per}) == 0 && isempty(CI_cLow) == 0 
+                                plot(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per},'r','LineWidth',4)
+                                patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
+                                ylabel('BBB permeability percent change','FontName','Times')
+                                tlabel = sprintf('Terminal%d_BBBroi%d.',terms(ccell),BBBroi);
+                                title({sprintf('Terminal %d. BBB ROI %d.',terms(ccell),BBBroi);perLabel})
+                    %             title('BBB permeability Spike Triggered Average')
+                            end 
+                            alpha(0.3)
+                            set(gca,'YColor',[0 0 0]);
+                            %make the directory and save the images   
+                            if saveQ == 1  
+                                dir2 = strrep(dir1,'\','/');
+                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                export_fig(dir3)
+                            end                              
                         end 
                     end 
+                    
                     if VWpQ == 1
-                        if isempty(AVSNVdataPeaks{VWROI}{terms(ccell)}{per}) == 0 && isempty(CI_cLow) == 0 
-                            plot(AVSNVdataPeaks{VWROI}{terms(ccell)}{per},'k','LineWidth',4)
-                            patch([x fliplr(x)],[(CI_vLow{VWROI}) (fliplr(CI_vHigh{VWROI}))],'k','EdgeColor','none')
-                            ylabel('Vessel width percent change','FontName','Times')
-                            tlabel = sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWROI);
-                %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
-                            title({sprintf('Terminal %d. VW ROI %d.',terms(ccell),VWROI);perLabel})
+                        for VWroi = 1:length(sortedVdata{1})
+                            if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
+                                plot(AVSNCdataPeaks{terms(ccell)}{per},'b','LineWidth',4)
+                            end 
+                %             plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                            ax.XTick = FrameVals;
+                            ax.XTickLabel = sec_TimeVals;   
+                            ax.FontSize = 25;
+                            ax.FontName = 'Times';
+                            xlabel('time (s)','FontName','Times')
+                            ylabel('calcium signal percent change','FontName','Times')
+                            xLimStart = floor(10*FPSstack{mouse});
+                            xLimEnd = floor(24*FPSstack{mouse}); 
+                            if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
+                                xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
+                            end 
+                            ylim([-60 100])
+                            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                            set(fig,'position', [500 100 900 800])
+                            alpha(0.3)
+                            if per == 1 
+                                perLabel = "Blue Light On";
+                            elseif per == 2
+                                perLabel = "Red Light On";
+                            elseif per == 3
+                                perLabel = "Light Off";
+                            end 
+                            %add right y axis tick marks for a specific DOD figure. 
+                            yyaxis right    
+                            if isempty(AVSNVdataPeaks{VWroi}{terms(ccell)}{per}) == 0 && isempty(CI_cLow) == 0 
+                                plot(AVSNVdataPeaks{VWroi}{terms(ccell)}{per},'k','LineWidth',4)
+                                patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
+                                ylabel('Vessel width percent change','FontName','Times')
+                                tlabel = sprintf('Terminal%d_VwidthROI%d.',terms(ccell),VWroi);
+                    %             title(sprintf('Terminal %d. Vessel width ROI %d.',terminals{mouse}(ccell),VWroi))
+                                title({sprintf('Terminal %d. VW ROI %d.',terms(ccell),VWroi);perLabel})
+                            end 
+                            alpha(0.3)
+                            set(gca,'YColor',[0 0 0]);
+                            %make the directory and save the images   
+                            if saveQ == 1  
+                                dir2 = strrep(dir1,'\','/');
+                                dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                                export_fig(dir3)
+                            end                              
                         end 
                     end 
-                    alpha(0.3)
-                    set(gca,'YColor',[0 0 0]);
-                    %make the directory and save the images   
-                    if saveQ == 1  
-                        dir2 = strrep(dir1,'\','/');
-                        dir3 = sprintf('%s/%s.tif',dir2,tlabel);
-                        export_fig(dir3)
-                    end        
                 end 
             end 
         elseif AVQ == 1 
@@ -4785,56 +4908,93 @@ for mouse = 1:mouseNum
                     end 
                 end 
 
-                % plot    
-                fig = figure; 
-                Frames = size(AVSNCdataPeaks3{per},2);
-                Frames_pre_stim_start = -((Frames-1)/2); 
-                Frames_post_stim_start = (Frames-1)/2; 
-                sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-                FrameVals = round((1:FPSstack{mouse}:Frames)+5); 
-                ax=gca;
-                hold all
+                % plot   
+                if BBBpQ == 1
+                    for BBBroi = 1:length(sortedBdata{1})
+                        fig = figure; 
+                        Frames = size(AVSNCdataPeaks3{per},2);
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                        FrameVals = round((1:FPSstack{mouse}:Frames)+5); 
+                        ax=gca;
+                        hold all
+                        plot(AVSNCdataPeaks{per},'b','LineWidth',4)
+                %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                        ax.XTick = FrameVals;
+                        ax.XTickLabel = sec_TimeVals;   
+                        ax.FontSize = 25;
+                        ax.FontName = 'Times';
+                        xlabel('time (s)','FontName','Times')
+                        ylabel('calcium signal percent change','FontName','Times')
+%                         xLimStart = floor(10*FPSstack{mouse});
+%                         xLimEnd = floor(24*FPSstack{mouse}); 
+                        xlim([1 size(AVSNCdataPeaks{per},2)])
+                        ylim([-60 100])
+                        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                        set(fig,'position', [500 100 900 800])
+                        alpha(0.3)
 
-                plot(AVSNCdataPeaks{per},'b','LineWidth',4)
-        %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
-                ax.XTick = FrameVals;
-                ax.XTickLabel = sec_TimeVals;   
-                ax.FontSize = 25;
-                ax.FontName = 'Times';
-                xlabel('time (s)','FontName','Times')
-                ylabel('calcium signal percent change','FontName','Times')
-                xLimStart = floor(10*FPSstack{mouse});
-                xLimEnd = floor(24*FPSstack{mouse}); 
-                xlim([1 size(AVSNCdataPeaks{per},2)])
-                ylim([-60 100])
+                        %add right y axis tick marks for a specific DOD figure. 
+                        yyaxis right 
+                        plot(AVSNBdataPeaks{BBBroi}{per},'r','LineWidth',4)
+                        patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
+                        ylabel('BBB permeability percent change','FontName','Times')
+                        tlabel = sprintf('Terminal%d_BBBroi%d.',terminals{mouse}(ccell),BBBroi);
+                        title({sprintf('Terminals Averaged. BBB ROI %d.',BBBroi);perLabel})                      
+                        alpha(0.3)
+                        set(gca,'YColor',[0 0 0]);
+                        %make the directory and save the images   
+                        if saveQ == 1  
+                            dir2 = strrep(dir1,'\','/');
+                            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                            export_fig(dir3)
+                        end 
+                    end 
+                end
+                
+                if VWpQ == 1
+                    for VWroi = 1:length(sortedVdata{1})
+                        fig = figure; 
+                        Frames = size(AVSNCdataPeaks3{per},2);
+                        Frames_pre_stim_start = -((Frames-1)/2); 
+                        Frames_post_stim_start = (Frames-1)/2; 
+                        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                        FrameVals = round((1:FPSstack{mouse}:Frames)+5); 
+                        ax=gca;
+                        hold all
+                        plot(AVSNCdataPeaks{per},'b','LineWidth',4)
+                %         plot([changePt changePt], [-100000 100000], 'k:','LineWidth',4)
+                        ax.XTick = FrameVals;
+                        ax.XTickLabel = sec_TimeVals;   
+                        ax.FontSize = 25;
+                        ax.FontName = 'Times';
+                        xlabel('time (s)','FontName','Times')
+                        ylabel('calcium signal percent change','FontName','Times')
+                        xLimStart = floor(10*FPSstack{mouse});
+                        xLimEnd = floor(24*FPSstack{mouse}); 
+                        xlim([1 size(AVSNCdataPeaks{per},2)])
+                        ylim([-60 100])
+                        patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+                        set(fig,'position', [500 100 900 800])
+                        alpha(0.3)
 
-                patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
-                set(fig,'position', [500 100 900 800])
-                alpha(0.3)
-
-                %add right y axis tick marks for a specific DOD figure. 
-                yyaxis right 
-                if BBBQ == 1
-                    plot(AVSNBdataPeaks{BBBROI}{per},'r','LineWidth',4)
-                    patch([x fliplr(x)],[(CI_bLow{BBBroi}) (fliplr(CI_bHigh{BBBroi}))],[0.5 0 0],'EdgeColor','none')
-                    ylabel('BBB permeability percent change','FontName','Times')
-                    tlabel = sprintf('Terminal%d_BBBroi%d.',terminals{mouse}(ccell),BBBROI);
-                    title({sprintf('Terminals Averaged. BBB ROI %d.',BBBROI);perLabel})
+                        %add right y axis tick marks for a specific DOD figure. 
+                        yyaxis right 
+                        plot(AVSNVdataPeaks{VWroi}{per},'k','LineWidth',4)
+                        patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
+                        ylabel('Vessel width percent change','FontName','Times')
+                        title({sprintf('Terminals Averaged. VW ROI %d.',VWroi);perLabel})
+                        alpha(0.3)
+                        set(gca,'YColor',[0 0 0]);
+                        %make the directory and save the images   
+                        if saveQ == 1  
+                            dir2 = strrep(dir1,'\','/');
+                            dir3 = sprintf('%s/%s.tif',dir2,tlabel);
+                            export_fig(dir3)
+                        end 
+                    end 
                 end 
-                if VWQ == 1
-                    plot(AVSNVdataPeaks{VWROI}{per},'k','LineWidth',4)
-                    patch([x fliplr(x)],[(CI_vLow{VWroi}) (fliplr(CI_vHigh{VWroi}))],'k','EdgeColor','none')
-                    ylabel('Vessel width percent change','FontName','Times')
-                    title({sprintf('Terminals Averaged. VW ROI %d.',VWROI);perLabel})
-                end 
-                alpha(0.3)
-                set(gca,'YColor',[0 0 0]);
-                %make the directory and save the images   
-                if saveQ == 1  
-                    dir2 = strrep(dir1,'\','/');
-                    dir3 = sprintf('%s/%s.tif',dir2,tlabel);
-                    export_fig(dir3)
-                end        
             end 
         end 
     end 
