@@ -3429,31 +3429,6 @@ for mouse = 1:mouseNum
     % figures for spikes that occur throughout the entire experiment, during
     % the wait period, the stim, and the reward (this was made for analyzing
     % behavior data)   
-    
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% check STA code. 
-% 
-% Make sure the figures are made properly if:
-% 
-% tType Q == 0 AVQ ==  0
-% tType Q == 0 AVQ ==  1
-% tType Q == 1 AVQ ==  0 
-% tType Q == 1 AVQ ==  1
-% 
-% Make sure it saves the figs and .mat files if: 
-% 
-% tType Q == 0 AVQ ==  0
-% tType Q == 0 AVQ ==  1
-% tType Q == 1 AVQ ==  0 
-% tType Q == 1 AVQ ==  1
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     windSize = 24;
     if tTypeQ == 0 
@@ -4195,6 +4170,29 @@ for mouse = 1:mouseNum
                         % plot 
                         if BBBpQ == 1 
                             for BBBroi = 1:length(sortedBdata{1})
+                                %determine range of data Ca data
+                                CaDataRange = max(AVSNCdataPeaks{terms(ccell)}{per})-min(AVSNCdataPeaks{terms(ccell)}{per});
+                                %determine plotting buffer space for Ca data 
+                                CaBufferSpace = CaDataRange;
+                                %determine first set of plotting min and max values for Ca data
+                                CaPlotMin = min(AVSNCdataPeaks{terms(ccell)}{per})-CaBufferSpace;
+                                CaPlotMax = max(AVSNCdataPeaks{terms(ccell)}{per})+CaBufferSpace; 
+                                %determine Ca 0 ratio/location 
+                                CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                                %determine range of BBB data 
+                                BBBdataRange = max(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per})-min(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per});
+                                %determine plotting buffer space for BBB data 
+                                BBBbufferSpace = BBBdataRange;
+                                %determine first set of plotting min and max values for BBB data
+                                BBBplotMin = min(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per})-BBBbufferSpace;
+                                BBBplotMax = max(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per})+BBBbufferSpace;
+                                %determine BBB 0 ratio/location
+                                BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+                                %determine how much to shift the BBB axis so that the zeros align 
+                                BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+                                BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+ 
                                 fig = figure;
                                 ax=gca;
                                 hold all
@@ -4209,7 +4207,7 @@ for mouse = 1:mouseNum
     %                             xLimStart = floor(10*FPSstack{mouse});
     %                             xLimEnd = floor(24*FPSstack{mouse}); 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
-                                ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
+                                ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-CaBufferSpace) max(AVSNCdataPeaks{terms(ccell)}{per}+CaBufferSpace)])
                                 patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
                                 set(fig,'position', [500 100 900 800])
                                 alpha(0.3)
@@ -4233,6 +4231,7 @@ for mouse = 1:mouseNum
                     %             title('BBB permeability Spike Triggered Average')
                                 alpha(0.3)
                                 set(gca,'YColor',[0 0 0]);
+                                ylim([-BBBbelowZero BBBaboveZero])
                                 %make the directory and save the images   
                                 if saveQ == 1  
                                     dir2 = strrep(dir1,'\','/');
@@ -4244,6 +4243,29 @@ for mouse = 1:mouseNum
                         
                         if VWpQ == 1 
                             for VWroi = 1:length(sortedVdata{1})
+                                %determine range of data Ca data
+                                CaDataRange = max(AVSNCdataPeaks{terms(ccell)}{per})-min(AVSNCdataPeaks{terms(ccell)}{per});
+                                %determine plotting buffer space for Ca data 
+                                CaBufferSpace = CaDataRange;
+                                %determine first set of plotting min and max values for Ca data
+                                CaPlotMin = min(AVSNCdataPeaks{terms(ccell)}{per})-CaBufferSpace;
+                                CaPlotMax = max(AVSNCdataPeaks{terms(ccell)}{per})+CaBufferSpace; 
+                                %determine Ca 0 ratio/location 
+                                CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                                %determine range of BBB data 
+                                VWdataRange = max(AVSNVdataPeaks{VWroi}{terms(ccell)}{per})-min(AVSNVdataPeaks{VWroi}{terms(ccell)}{per});
+                                %determine plotting buffer space for BBB data 
+                                VWbufferSpace = VWdataRange;
+                                %determine first set of plotting min and max values for BBB data
+                                VWplotMin = min(AVSNVdataPeaks{VWroi}{terms(ccell)}{per})-VWbufferSpace;
+                                VWplotMax = max(AVSNVdataPeaks{VWroi}{terms(ccell)}{per})+VWbufferSpace;
+                                %determine BBB 0 ratio/location
+                                VWzeroRatio = abs(VWplotMin)/(VWplotMax-VWplotMin);
+                                %determine how much to shift the BBB axis so that the zeros align 
+                                VWbelowZero = (VWplotMax-VWplotMin)*CaZeroRatio;
+                                VWaboveZero = (VWplotMax-VWplotMin)-VWbelowZero;                                
+
                                 fig = figure;
                                 ax=gca;
                                 hold all
@@ -4259,7 +4281,7 @@ for mouse = 1:mouseNum
                                 xLimEnd = floor(24*FPSstack{mouse}); 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                                 ylim([-60 100])
-                                ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
+                                ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-CaBufferSpace) max(AVSNCdataPeaks{terms(ccell)}{per}+CaBufferSpace)])
                                 patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
                                 set(fig,'position', [500 100 900 800])
                                 alpha(0.3)
@@ -4282,6 +4304,7 @@ for mouse = 1:mouseNum
                                 title({sprintf('Mouse #%d. Ca ROI #%d. VW ROI #%d.',mouse,terms(ccell),VWroi),perLabel})
                                 alpha(0.3)
                                 set(gca,'YColor',[0 0 0]);
+                                ylim([-VWbelowZero VWaboveZero])
                                 %make the directory and save the images   
                                 if saveQ == 1  
                                     dir2 = strrep(dir1,'\','/');
@@ -4446,6 +4469,29 @@ for mouse = 1:mouseNum
                     % plot
                     if BBBpQ == 1 
                         for BBBroi = 1:length(sortedBdata{1})
+                            %determine range of data Ca data
+                            CaDataRange = max(AVSNCdataPeaks{per})-min(AVSNCdataPeaks{per});
+                            %determine plotting buffer space for Ca data 
+                            CaBufferSpace = CaDataRange;
+                            %determine first set of plotting min and max values for Ca data
+                            CaPlotMin = min(AVSNCdataPeaks{per})-CaBufferSpace;
+                            CaPlotMax = max(AVSNCdataPeaks{per})+CaBufferSpace; 
+                            %determine Ca 0 ratio/location 
+                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                            %determine range of BBB data 
+                            BBBdataRange = max(AVSNBdataPeaks{BBBroi}{per})-min(AVSNBdataPeaks{BBBroi}{per});
+                            %determine plotting buffer space for BBB data 
+                            BBBbufferSpace = BBBdataRange;
+                            %determine first set of plotting min and max values for BBB data
+                            BBBplotMin = min(AVSNBdataPeaks{BBBroi}{per})-BBBbufferSpace;
+                            BBBplotMax = max(AVSNBdataPeaks{BBBroi}{per})+BBBbufferSpace;
+                            %determine BBB 0 ratio/location
+                            BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+                            %determine how much to shift the BBB axis so that the zeros align 
+                            BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+                            BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+                                                        
                             fig = figure;
                             ax=gca;
                             hold all
@@ -4460,7 +4506,7 @@ for mouse = 1:mouseNum
 %                             xLimStart = floor(10*FPSstack{mouse});
 %                             xLimEnd = floor(24*FPSstack{mouse}); 
                             xlim([1 size(AVSNCdataPeaks{per},2)])
-                            ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
+                            ylim([min(AVSNCdataPeaks{per}-CaBufferSpace) max(AVSNCdataPeaks{per}+CaBufferSpace)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4483,6 +4529,7 @@ for mouse = 1:mouseNum
                 %             title('BBB permeability Spike Triggered Average')
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
+                            ylim([-BBBbelowZero BBBaboveZero])
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
@@ -4494,6 +4541,29 @@ for mouse = 1:mouseNum
                     
                     if VWpQ == 1 
                         for VWroi = 1:length(sortedVdata{1})
+                            %determine range of data Ca data
+                            CaDataRange = max(AVSNCdataPeaks{per})-min(AVSNCdataPeaks{per});
+                            %determine plotting buffer space for Ca data 
+                            CaBufferSpace = CaDataRange;
+                            %determine first set of plotting min and max values for Ca data
+                            CaPlotMin = min(AVSNCdataPeaks{per})-CaBufferSpace;
+                            CaPlotMax = max(AVSNCdataPeaks{per})+CaBufferSpace; 
+                            %determine Ca 0 ratio/location 
+                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                            %determine range of BBB data 
+                            VWdataRange = max(AVSNVdataPeaks{VWroi}{per})-min(AVSNVdataPeaks{VWroi}{per});
+                            %determine plotting buffer space for BBB data 
+                            VWbufferSpace = VWdataRange;
+                            %determine first set of plotting min and max values for BBB data
+                            VWplotMin = min(AVSNVdataPeaks{VWroi}{per})-VWbufferSpace;
+                            VWplotMax = max(AVSNVdataPeaks{VWroi}{per})+VWbufferSpace;
+                            %determine BBB 0 ratio/location
+                            VWzeroRatio = abs(VWplotMin)/(VWplotMax-VWplotMin);
+                            %determine how much to shift the BBB axis so that the zeros align 
+                            VWbelowZero = (VWplotMax-VWplotMin)*CaZeroRatio;
+                            VWaboveZero = (VWplotMax-VWplotMin)-VWbelowZero;   
+                            
                             fig = figure;
                             ax=gca;
                             hold all
@@ -4508,7 +4578,7 @@ for mouse = 1:mouseNum
                             xLimStart = floor(10*FPSstack{mouse});
                             xLimEnd = floor(24*FPSstack{mouse}); 
                             xlim([1 size(AVSNCdataPeaks{per},2)])
-                            ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
+                            ylim([min(AVSNCdataPeaks{per}-CaBufferSpace) max(AVSNCdataPeaks{per}+CaBufferSpace)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4531,6 +4601,7 @@ for mouse = 1:mouseNum
                             tlabel = sprintf('Mouse #%d. All Ca ROIs Averaged. VW ROI #%d. ',mouse,VWroi);
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
+                            ylim([-VWbelowZero VWaboveZero])
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
@@ -4683,6 +4754,29 @@ for mouse = 1:mouseNum
                     % plot 
                     if BBBpQ == 1
                         for BBBroi = 1:length(sortedBdata{1})
+                            %determine range of data Ca data
+                            CaDataRange = max(AVSNCdataPeaks{terms(ccell)}{per})-min(AVSNCdataPeaks{terms(ccell)}{per});
+                            %determine plotting buffer space for Ca data 
+                            CaBufferSpace = CaDataRange;
+                            %determine first set of plotting min and max values for Ca data
+                            CaPlotMin = min(AVSNCdataPeaks{terms(ccell)}{per})-CaBufferSpace;
+                            CaPlotMax = max(AVSNCdataPeaks{terms(ccell)}{per})+CaBufferSpace; 
+                            %determine Ca 0 ratio/location 
+                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                            %determine range of BBB data 
+                            BBBdataRange = max(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per})-min(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per});
+                            %determine plotting buffer space for BBB data 
+                            BBBbufferSpace = BBBdataRange;
+                            %determine first set of plotting min and max values for BBB data
+                            BBBplotMin = min(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per})-BBBbufferSpace;
+                            BBBplotMax = max(AVSNBdataPeaks{BBBroi}{terms(ccell)}{per})+BBBbufferSpace;
+                            %determine BBB 0 ratio/location
+                            BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+                            %determine how much to shift the BBB axis so that the zeros align 
+                            BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+                            BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+                            
                             fig = figure;
                             ax=gca;
                             hold all
@@ -4701,7 +4795,7 @@ for mouse = 1:mouseNum
                             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                             end 
-                            ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
+                            ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-CaBufferSpace) max(AVSNCdataPeaks{terms(ccell)}{per}+CaBufferSpace)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4724,6 +4818,7 @@ for mouse = 1:mouseNum
                             end 
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
+                            ylim([-BBBbelowZero BBBaboveZero])
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
@@ -4735,6 +4830,29 @@ for mouse = 1:mouseNum
                     
                     if VWpQ == 1
                         for VWroi = 1:length(sortedVdata{1})
+                            %determine range of data Ca data
+                            CaDataRange = max(AVSNCdataPeaks{terms(ccell)}{per})-min(AVSNCdataPeaks{terms(ccell)}{per});
+                            %determine plotting buffer space for Ca data 
+                            CaBufferSpace = CaDataRange;
+                            %determine first set of plotting min and max values for Ca data
+                            CaPlotMin = min(AVSNCdataPeaks{terms(ccell)}{per})-CaBufferSpace;
+                            CaPlotMax = max(AVSNCdataPeaks{terms(ccell)}{per})+CaBufferSpace; 
+                            %determine Ca 0 ratio/location 
+                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                            %determine range of BBB data 
+                            VWdataRange = max(AVSNVdataPeaks{VWroi}{terms(ccell)}{per})-min(AVSNVdataPeaks{VWroi}{terms(ccell)}{per});
+                            %determine plotting buffer space for BBB data 
+                            VWbufferSpace = VWdataRange;
+                            %determine first set of plotting min and max values for BBB data
+                            VWplotMin = min(AVSNVdataPeaks{VWroi}{terms(ccell)}{per})-VWbufferSpace;
+                            VWplotMax = max(AVSNVdataPeaks{VWroi}{terms(ccell)}{per})+VWbufferSpace;
+                            %determine BBB 0 ratio/location
+                            VWzeroRatio = abs(VWplotMin)/(VWplotMax-VWplotMin);
+                            %determine how much to shift the BBB axis so that the zeros align 
+                            VWbelowZero = (VWplotMax-VWplotMin)*CaZeroRatio;
+                            VWaboveZero = (VWplotMax-VWplotMin)-VWbelowZero;    
+
                             fig = figure;
                             ax=gca;
                             hold all
@@ -4753,7 +4871,7 @@ for mouse = 1:mouseNum
                             if isempty(AVSNCdataPeaks{terms(ccell)}{per}) == 0 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                             end 
-                            ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-20) max(AVSNCdataPeaks{terms(ccell)}{per}+20)])
+                            ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-CaBufferSpace) max(AVSNCdataPeaks{terms(ccell)}{per}+CaBufferSpace)])
                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
@@ -4776,6 +4894,7 @@ for mouse = 1:mouseNum
                             end 
                             alpha(0.3)
                             set(gca,'YColor',[0 0 0]);
+                            ylim([-VWbelowZero VWaboveZero])
                             %make the directory and save the images   
                             if saveQ == 1  
                                 dir2 = strrep(dir1,'\','/');
@@ -4937,6 +5056,29 @@ for mouse = 1:mouseNum
                 % plot   
                 if BBBpQ == 1
                     for BBBroi = 1:length(sortedBdata{1}) 
+                        %determine range of data Ca data
+                        CaDataRange = max(AVSNCdataPeaks{per})-min(AVSNCdataPeaks{per});
+                        %determine plotting buffer space for Ca data 
+                        CaBufferSpace = CaDataRange;
+                        %determine first set of plotting min and max values for Ca data
+                        CaPlotMin = min(AVSNCdataPeaks{per})-CaBufferSpace;
+                        CaPlotMax = max(AVSNCdataPeaks{per})+CaBufferSpace; 
+                        %determine Ca 0 ratio/location 
+                        CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                        %determine range of BBB data 
+                        BBBdataRange = max(AVSNBdataPeaks{BBBroi}{per})-min(AVSNBdataPeaks{BBBroi}{per});
+                        %determine plotting buffer space for BBB data 
+                        BBBbufferSpace = BBBdataRange;
+                        %determine first set of plotting min and max values for BBB data
+                        BBBplotMin = min(AVSNBdataPeaks{BBBroi}{per})-BBBbufferSpace;
+                        BBBplotMax = max(AVSNBdataPeaks{BBBroi}{per})+BBBbufferSpace;
+                        %determine BBB 0 ratio/location
+                        BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+                        %determine how much to shift the BBB axis so that the zeros align 
+                        BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+                        BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+                        
                         fig = figure; 
                         Frames = size(AVSNCdataPeaks3{per},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
@@ -4956,7 +5098,7 @@ for mouse = 1:mouseNum
 %                         xLimStart = floor(10*FPSstack{mouse});
 %                         xLimEnd = floor(24*FPSstack{mouse}); 
                         xlim([1 size(AVSNCdataPeaks{per},2)])
-                        ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
+                        ylim([min(AVSNCdataPeaks{per}-CaBufferSpace) max(AVSNCdataPeaks{per}+CaBufferSpace)])
                         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                         set(fig,'position', [500 100 900 800])
                         alpha(0.3)
@@ -4970,6 +5112,7 @@ for mouse = 1:mouseNum
                         title({sprintf('Mouse #%d. All Ca ROIs Averaged. BBB ROI #%d.',mouse,BBBroi);perLabel})                      
                         alpha(0.3)
                         set(gca,'YColor',[0 0 0]);
+                        ylim([-BBBbelowZero BBBaboveZero])
                         %make the directory and save the images   
                         if saveQ == 1  
                             dir2 = strrep(dir1,'\','/');
@@ -4981,6 +5124,29 @@ for mouse = 1:mouseNum
                 
                 if VWpQ == 1
                     for VWroi = 1:length(sortedVdata{1})
+                        %determine range of data Ca data
+                        CaDataRange = max(AVSNCdataPeaks{per})-min(AVSNCdataPeaks{per});
+                        %determine plotting buffer space for Ca data 
+                        CaBufferSpace = CaDataRange;
+                        %determine first set of plotting min and max values for Ca data
+                        CaPlotMin = min(AVSNCdataPeaks{per})-CaBufferSpace;
+                        CaPlotMax = max(AVSNCdataPeaks{per})+CaBufferSpace; 
+                        %determine Ca 0 ratio/location 
+                        CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+
+                        %determine range of BBB data 
+                        VWdataRange = max(AVSNVdataPeaks{VWroi}{per})-min(AVSNVdataPeaks{VWroi}{per});
+                        %determine plotting buffer space for BBB data 
+                        VWbufferSpace = VWdataRange;
+                        %determine first set of plotting min and max values for BBB data
+                        VWplotMin = min(AVSNVdataPeaks{VWroi}{per})-VWbufferSpace;
+                        VWplotMax = max(AVSNVdataPeaks{VWroi}{per})+VWbufferSpace;
+                        %determine BBB 0 ratio/location
+                        VWzeroRatio = abs(VWplotMin)/(VWplotMax-VWplotMin);
+                        %determine how much to shift the BBB axis so that the zeros align 
+                        VWbelowZero = (VWplotMax-VWplotMin)*CaZeroRatio;
+                        VWaboveZero = (VWplotMax-VWplotMin)-VWbelowZero;       
+
                         fig = figure; 
                         Frames = size(AVSNCdataPeaks3{per},2);
                         Frames_pre_stim_start = -((Frames-1)/2); 
@@ -5000,7 +5166,7 @@ for mouse = 1:mouseNum
                         xLimStart = floor(10*FPSstack{mouse});
                         xLimEnd = floor(24*FPSstack{mouse}); 
                         xlim([1 size(AVSNCdataPeaks{per},2)])
-                        ylim([min(AVSNCdataPeaks{per}-20) max(AVSNCdataPeaks{per}+20)])
+                        ylim([min(AVSNCdataPeaks{per}-CaBufferSpace) max(AVSNCdataPeaks{per}+CaBufferSpace)])
                         patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                         set(fig,'position', [500 100 900 800])
                         alpha(0.3)
@@ -5014,6 +5180,7 @@ for mouse = 1:mouseNum
                         tlabel = sprintf('Mouse #%d. All Ca ROIs Averaged. VW ROI #%d. ',mouse,VWroi);
                         alpha(0.3)
                         set(gca,'YColor',[0 0 0]);
+                        ylim([-VWbelowZero VWaboveZero])
                         %make the directory and save the images   
                         if saveQ == 1  
                             dir2 = strrep(dir1,'\','/');
