@@ -3214,7 +3214,7 @@ sgtitle(label,'FontSize',25);
 % based on ca peak location, smooth and normalize to baseline period, and
 % plot calcium spike triggered averages (per mouse - optimized for batch
 % processing, saves the data out per mouse)
-
+%{
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
 if workspaceQ == 0 
