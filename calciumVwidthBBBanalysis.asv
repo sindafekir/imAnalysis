@@ -1617,7 +1617,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
-
+%{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -2143,28 +2143,32 @@ for tType = 1:tTypeNum
                 label1.FontName = 'Arial';
                 label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
                 label2.FontSize = 30;
-                label3 = (' 2 sec Blue Light');
+                label3 = ('Behavior Data');
             elseif optoQ == 1 
-                plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                label3 = ('2 sec Blue Light');
             end 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
             FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
         elseif tTypeInds(tType) == 3 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
+            plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
             FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('2 sec Red Light');
         elseif tTypeInds(tType) == 2 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)   
+            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
             FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('20 sec Blue Light');
         elseif tTypeInds(tType) == 4 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
             FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('20 sec Red Light');
         end
         ax=gca;
         ax.XTick = FrameVals;
@@ -2177,19 +2181,13 @@ for tType = 1:tTypeNum
         ylabel('percent change')
         % initialize empty string array 
         label = strings;
-        label = append(label,sprintf('  Calcium Signal. N = %d.',mouseNum));
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %PICK UP HERE WITH LABEL2 PUT IT IN ABOVE TTYPE IF STATEMENT 
-        label2 = ;
-        
-        
+        label = append(label,sprintf('  Calcium Signal. N = %d.',mouseNum));        
 %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         if optoQ == 1 % opto data 
-            title({'Optogenetic Stimulation Event Triggered Averages';label;label2},'FontName','Times');
+            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Times');
         end 
         if optoQ == 0 % behavior data 
-            title({'Behavior Event Triggered Averages';label},'FontName','Arial');
+            title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         set(fig,'position', [100 100 900 900])
         alpha(0.5)        
@@ -2210,27 +2208,32 @@ for tType = 1:tTypeNum
                 label1.FontName = 'Arial';
                 label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
                 label2.FontSize = 30;
+                label3 = ('Behavior Data');
             elseif optoQ == 1 
-                plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                label3 = ('2 sec Blue Light');
             end 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
-            FrameVals = floor((1:FPSstack2(idx):Frames)-1);  
+            FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
         elseif tTypeInds(tType) == 3 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)    
+            plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
             FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('2 sec Red Light');
         elseif tTypeInds(tType) == 2 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)  
+            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
             FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('20 sec Blue Light');
         elseif tTypeInds(tType) == 4 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
             FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('20 sec Red Light');
         end
         ax=gca;
         ax.XTick = FrameVals;
@@ -2246,10 +2249,10 @@ for tType = 1:tTypeNum
         label = append(label,sprintf('BBB Permeabilty. N = %d.',mouseNum));       
 %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         if optoQ == 1 % opto data 
-            title({'Optogenetic Stimulation Event Triggered Averages';label},'FontName','Times');
+            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Times');
         end 
         if optoQ == 0 % behavior data 
-            title({'Behavior Event Triggered Averages';label},'FontName','Arial');
+            title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         set(fig,'position', [100 100 900 900])
         alpha(0.5)      
@@ -2270,27 +2273,32 @@ for tType = 1:tTypeNum
                 label1.FontName = 'Arial';
                 label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
                 label2.FontSize = 30;
+                label3 = ('Behavior Data');
             elseif optoQ == 1 
-                plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'k','LineWidth',2)
-                plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
+                plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                label3 = ('2 sec Blue Light');
             end 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
-            FrameVals = floor((1:FPSstack2(idx):Frames)-1);             
+            FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
         elseif tTypeInds(tType) == 3 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2)    
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*5:Frames_post_stim_start)/FPSstack2(idx))+1);
-            FrameVals = floor((1:FPSstack2(idx)*5:Frames)-1); 
+            plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
+            FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('2 sec Red Light');
         elseif tTypeInds(tType) == 2 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*5:Frames_post_stim_start)/FPSstack2(idx))+10);
-            FrameVals = floor((1:FPSstack2(idx)*5:Frames)-1); 
+            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+            FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('20 sec Blue Light');
         elseif tTypeInds(tType) == 4 
-            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'k','LineWidth',2)
-            plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*5:Frames_post_stim_start)/FPSstack2(idx))+10);
-            FrameVals = floor((1:FPSstack2(idx)*5:Frames)-1); 
+            plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+            FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            label3 = ('20 sec Red Light');
         end
         ax=gca;
         ax.XTick = FrameVals;
@@ -2306,10 +2314,10 @@ for tType = 1:tTypeNum
         label = append(label,sprintf('Vessel width ROIs averaged. N = %d.',mouseNum));
 %         title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Arial');
         if optoQ == 1 % opto data 
-            title({'Optogenetic Stimulation Event Triggered Averages';label},'FontName','Times');
+            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Times');
         end 
         if optoQ == 0 % behavior data 
-            title({'Behavior Event Triggered Averages';label},'FontName','Arial');
+            title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         set(fig,'position', [100 100 900 900])
         alpha(0.5)     
@@ -5391,14 +5399,12 @@ end
 
 %}                     
 
-
 %% STA 1: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % takes already smooothed/normalized data 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% EDIT THIS SO IT DOESN'T TAKE ALREADY SMOOTHED/NORMALIZED DATA 
 % ENSURE IT (PER MOUSE) SPITS OUT NEAR VS FAR STA FIGS 
-%{
+
 %get the data you need 
 mouseDistQ = input('Input 1 if you already have a .mat file containing multiple mouse Ca ROI distances. Input 0 to make this .mat file. ');
 if mouseDistQ == 1 
@@ -5412,33 +5418,33 @@ if mouseDistQ == 1
 elseif mouseDistQ == 0 
     mouseNum = input('How many mice are there? ');  
 end 
-% closeCaROI_CaBBBtimeLags = Mat.closeCaROI_CaBBBtimeLags;
-% farCaROI_CaBBBtimeLags = Mat.farCaROI_CaBBBtimeLags;
-allCTraces3 = cell(1,mouseNum);
-allBTraces3 = cell(1,mouseNum);
-allVTraces3 = cell(1,mouseNum);
+
 CaROIs = cell(1,mouseNum);
-FPSstack = cell(1,mouseNum);
-SNCdataPeaks = cell(1,mouseNum);
-SNBdataPeaks = cell(1,mouseNum);
-SNVdataPeaks = cell(1,mouseNum);
+sortedCdata = cell(1,mouseNum);
+sortedVdata = cell(1,mouseNum);
+sortedBdata = cell(1,mouseNum);
 for mouse = 1:mouseNum
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
     MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
-    Mat = matfile(MatFileName);
-    FPSstack{mouse} = Mat.FPSstack;
-    allCTraces3{mouse} = Mat.allCTraces;
-    SNCdataPeaks{mouse} = Mat.SNCdataPeaks;    
-    allBTraces3{mouse} = Mat.allBTraces;
-    SNBdataPeaks{mouse} = Mat.SNBdataPeaks;
-    allVTraces3{mouse} = Mat.allVTraces;
-    SNVdataPeaks{mouse} = Mat.SNVdataPeaks;  
+    Mat = matfile(MatFileName);   
+    sortedCdata{mouse} = Mat.sortedCdata;
+    sortedVdata{mouse} = Mat.sortedVdata;
+    sortedBdata{mouse} = Mat.sortedBdata;
     if mouseDistQ == 0
         closeCaROIs{mouse} = input(sprintf('What are the close Ca ROIs for mouse #%d? ',mouse));
         farCaROIs{mouse} = input(sprintf('What are the far Ca ROIs for mouse #%d? ',mouse));
     end 
     CaROIs{mouse} = horzcat(closeCaROIs{mouse},farCaROIs{mouse});
+end 
+vidList = Mat.vidList;
+BBBQ = Mat.BBBQ;
+VWQ = Mat.VWQ;
+terminals = CaROIs;
+FPSstack2 = Mat.FPSstack;
+FPSstack = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    FPSstack{mouse} = FPSstack2{mouse};
 end 
 if mouseDistQ == 0 
     saveDir = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE CA ROI DISTANCE DATA FOR MULTIPLE MICE?');
@@ -5446,34 +5452,150 @@ if mouseDistQ == 0
     save('CaROIdistances.mat','closeCaROIs','farCaROIs')
 end 
 tTypeQ = input('Input 1 if data is separated by light condition. Input 0 otherwise. ');
-
+%%
+SCdataPeaks = cell(1,mouseNum);
+SNCdataPeaks = cell(1,mouseNum);
+sortedCdata2 = cell(1,mouseNum);
+allCTraces3 = cell(1,mouseNum);
+if BBBQ == 1
+    SBdataPeaks = cell(1,mouseNum);
+    SNBdataPeaks = cell(1,mouseNum);
+    sortedBdata2 = cell(1,mouseNum);
+    allBTraces3 = cell(1,mouseNum);
+end 
+if VWQ == 1 
+    SVdataPeaks = cell(1,mouseNum);
+    SNVdataPeaks = cell(1,mouseNum);
+    sortedVdata2 = cell(1,mouseNum);
+    allVTraces3 = cell(1,mouseNum);
+end     
+baselineTime = 5;
 for mouse = 1:mouseNum
-    if tTypeQ == 0 
-        for per = 1:length(allCTraces3{1}{CaROIs{1}(1)})
-            for CAROI = 1:size(CaROIs{mouse},2)
-                if isempty(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}) == 0 
-                    %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
-                    allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
-                    for BBBroi = 1:size(allBTraces3{mouse},2)
-                        allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
-                    end 
-                    for VWroi = 1:size(allVTraces3{mouse},2)
-                        allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+    
+    %smoothing option
+    if mouse == 1 
+        smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
+    end         
+    if smoothQ == 0 
+        if BBBQ == 1
+            SBdataPeaks{mouse} = sortedBdata{mouse};
+        end 
+        SCdataPeaks{mouse} = sortedCdata{mouse};
+        if VWQ == 1
+            SVdataPeaks{mouse} = sortedVdata{mouse};
+        end 
+    elseif smoothQ == 1
+        if mouse == 1 
+            filtTime = input('How many seconds do you want to smooth your data by? ');
+        end             
+        SCdataPeaks{mouse} = sortedCdata{mouse};
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
+                    if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                        if BBBQ == 1
+                            for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                [sB_Data] = MovMeanSmoothData(sortedBdata{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
+                                SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = sB_Data;
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(any(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                            end
+                        end 
+                        if VWQ == 1
+                            for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                [sV_Data] = MovMeanSmoothData(sortedVdata{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
+                                SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = sV_Data;
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(any(SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per},2),:);
+                            end 
+                        end 
+                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                        SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},2),:);                 
                     end 
                 end 
             end 
         end 
-    elseif tTypeQ == 1
-        for per = 1:size(allCTraces3{1}{CaROIs{1}(1)},2)
-            for CAROI = 1:size(CaROIs{mouse},2)
-                if isempty(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}) == 0 
-                    %remove rows full of 0s/Nans if there are any b = a(any(a,2),:)
-                    allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per} = allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per}(any(allCTraces3{mouse}{CaROIs{mouse}(CAROI)}{per},2),:);
-                    for BBBroi = 1:size(allBTraces3{mouse},2)
-                        allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per} = allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per}(any(allBTraces3{mouse}{BBBroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+    end     
+    
+    %normalize
+     for vid = 1:length(vidList{mouse})
+        for ccell = 1:length(terminals{mouse})
+            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                    %the data needs to be added to because there are some
+                    %negative gonig points which mess up the normalizing 
+                    if BBBQ == 1
+                        for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                            % determine the minimum value, add space (+100)
+                            minValToAdd = abs(ceil(min(min(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}))))+100;
+                            % add min value 
+                            sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                        end
                     end 
-                    for VWroi = 1:size(allVTraces3{mouse},2)
-                        allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per} = allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per}(any(allVTraces3{mouse}{VWroi}{CaROIs{mouse}(CAROI)}{per},2),:);
+                    % determine the minimum value, add space (+100)
+                    minValToAdd = abs(ceil(min(min(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                    % add min value
+                    sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                    if VWQ == 1
+                        for VWroi = 1:length(sortedVdata{mouse}{vid})
+                            % determine the minimum value, add space (+100)
+                            minValToAdd = abs(ceil(min(min(SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}))))+100;
+                            % add min value
+                            sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                        end 
+                    end 
+
+                    %normalize to baselineTime sec before changePt (calcium peak
+                    %onset) BLstart 
+                    changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{per},2)/2)-4;
+    %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
+                    BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+                    if BBBQ == 1
+                        for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                            if isempty(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0
+                                SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = ((sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                            end 
+                        end 
+                    end 
+                    if isempty(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                        SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                    end 
+                    if VWQ == 1
+                        if isempty(sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}) == 0 
+                            for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = ((sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                            end 
+                        end 
+                    end 
+                end               
+            end 
+        end 
+     end     
+    
+    count = 1;
+    for vid = 1:length(vidList{mouse})   
+        for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+            for ccell = 1:size(CaROIs{mouse},2)
+                if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                    for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
+                        if BBBQ == 1
+                            for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per} = allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(any(allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                            end 
+                        end 
+                        if VWQ == 1
+                            for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per} = allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(any(allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per},2),:);                                    
+                            end 
+                        end 
+                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
+                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
+                        count = count + 1;
                     end 
                 end 
             end 
