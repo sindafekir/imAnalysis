@@ -3322,7 +3322,7 @@ if workspaceQ == 0
         for mouse = 1:mouseNum
             dirLabel = sprintf('WHERE IS THE DATA FOR MOUSE #%d? ',mouse);
             dataDir{mouse} = uigetdir('*.*',dirLabel);
-            cd(dataDir); % go to the right directory 
+            cd(dataDir{mouse}); % go to the right directory 
             uiopen('*.mat'); % get data  
             if BBBQ == 1     
                 bDataFullTrace1{mouse} = bDataFullTrace;
@@ -3355,7 +3355,12 @@ if workspaceQ == 0
     end 
 end 
 
+
 %%
+tTypeQ = input('Input 1 to separate data by light condition. Input 0 otherwise. ');
+if tTypeQ == 0 
+    optoQ = input('Input 1 if this is opto data. Input 0 if this is behavior data. ');
+end 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
     % find peaks and then plot where they are in the entire TS 
@@ -3893,7 +3898,11 @@ for mouse = 1:mouseNum
 
                         %normalize to baselineTime sec before changePt (calcium peak
                         %onset) BLstart 
-                        changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                        if isempty(sortedCdata{1}{terminals{mouse}(1)}{1}) == 0
+                            changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{1}{terminals{mouse}(1)}{2}) == 0
+                            changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                        end 
         %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
                         BLstart = changePt - floor(baselineTime*FPSstack{mouse});
                         if BBBQ == 1
@@ -4035,7 +4044,11 @@ for mouse = 1:mouseNum
 
                                 %normalize to baselineTime sec before changePt (calcium peak
                                 %onset) BLstart 
-                                changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                                if isempty(sortedCdata{1}{terminals{mouse}(1)}{1}) == 0
+                                    changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                                elseif isempty(sortedCdata{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{1}{terminals{mouse}(1)}{2}) == 0
+                                    changePt = floor(size(sortedCdata{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                                end                                 
                                 BLstart = changePt - floor(baselineTime*FPSstack{mouse});
                                 if BBBQ == 1
                                     for BBBroi = 1:length(bDataFullTrace{mouse}{1})
@@ -5356,7 +5369,12 @@ for mouse = 1:mouseNum
         %}
      
     % save the .mat file per mouse
-    fileName = 'STAfigData.mat';
+    if tTypeQ == 0 
+        fileName = 'STAfigData_allLightConditions.mat';
+    elseif tTypeQ == 1 
+        fileName = 'STAfigData_dataSeparatedByLightCondition.mat';
+    end 
+    
     save(fullfile(dir1,fileName));
 end 
 
@@ -5365,7 +5383,7 @@ end
 %% STA: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % optimized for batch processing
 % takes unsmoothed data and asks about smoothing
-%{
+
 %get the data you need 
 mouseDistQ = input('Input 1 if you already have a .mat file containing multiple mouse Ca ROI distances. Input 0 to make this .mat file. ');
 if mouseDistQ == 1 
@@ -5384,6 +5402,8 @@ CaROIs = cell(1,mouseNum);
 sortedCdata = cell(1,mouseNum);
 sortedVdata = cell(1,mouseNum);
 sortedBdata = cell(1,mouseNum);
+FPSstack2 = cell(1,mouseNum);
+vidList2 = cell(1,mouseNum);
 for mouse = 1:mouseNum
     regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
     cd(regImDir);
@@ -5397,23 +5417,26 @@ for mouse = 1:mouseNum
         farCaROIs{mouse} = input(sprintf('What are the far Ca ROIs for mouse #%d? ',mouse));
     end 
     CaROIs{mouse} = horzcat(closeCaROIs{mouse},farCaROIs{mouse});
+    FPSstack2{mouse} = Mat.FPSstack;
+    vidList2{mouse} = Mat.vidList;
 end 
-vidList = Mat.vidList;
+
 BBBQ = Mat.BBBQ;
 VWQ = Mat.VWQ;
 terminals = CaROIs;
-FPSstack2 = Mat.FPSstack;
-FPSstack = cell(1,mouseNum);
-tTypeQ = Mat.tTypeQ;
-for mouse = 1:mouseNum
-    FPSstack{mouse} = FPSstack2{mouse};
-end 
+
+% FPSstack = cell(1,mouseNum);
+% tTypeQ = Mat.tTypeQ;
+% for mouse = 1:mouseNum
+%     FPSstack{mouse} = FPSstack2{mouse};
+% end 
 if mouseDistQ == 0 
     saveDir = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE CA ROI DISTANCE DATA FOR MULTIPLE MICE?');
     cd(saveDir);
     save('CaROIdistances.mat','closeCaROIs','farCaROIs')
 end 
 
+disp('May need to hand edit/make FPSstack and vidList arrays.');
 %% sort data 
 SCdataPeaks = cell(1,mouseNum);
 SNCdataPeaks = cell(1,mouseNum);
@@ -5432,8 +5455,7 @@ if VWQ == 1
     allVTraces3 = cell(1,mouseNum);
 end     
 baselineTime = 5;
-for mouse = 1:mouseNum
-    
+for mouse = 1:mouseNum   
     %smoothing option
     if mouse == 1 
         smoothQ = input('Input 0 to plot non-smoothed data. Input 1 to plot smoothed data. ');
@@ -5483,7 +5505,7 @@ for mouse = 1:mouseNum
      for vid = 1:length(vidList{mouse})
         for ccell = 1:length(terminals{mouse})
             for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
-                if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
                     %the data needs to be added to because there are some
                     %negative gonig points which mess up the normalizing 
                     if BBBQ == 1
@@ -5506,12 +5528,37 @@ for mouse = 1:mouseNum
                             sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
                         end 
                     end 
-
+                    
                     %normalize to baselineTime sec before changePt (calcium peak
                     %onset) BLstart 
-                    changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{per},2)/2)-4;
+                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}) == 0
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                        end   
+                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}) == 0
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2},2)/2)-4;
+                        end  
+                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}) == 0
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                        end   
+                    end 
+                                                                
+                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                    end   
     %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
                     BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+
                     if BBBQ == 1
                         for BBBroi = 1:length(sortedBdata{mouse}{vid})
                             if isempty(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0
@@ -5538,26 +5585,28 @@ for mouse = 1:mouseNum
     for vid = 1:length(vidList{mouse})   
         for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
             for ccell = 1:size(CaROIs{mouse},2)
-                if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
-                    for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
-                        if BBBQ == 1
-                            for BBBroi = 1:length(sortedBdata{mouse}{vid})
-                                allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
-                                %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per} = allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(any(allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}) == 0 
+                    if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                        for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
+                            if BBBQ == 1
+                                for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                    allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
+                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                    allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per} = allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(any(allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                                end 
                             end 
-                        end 
-                        if VWQ == 1
-                            for VWroi = 1:length(sortedVdata{mouse}{vid})
-                                allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
-                                %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per} = allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(any(allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per},2),:);                                    
+                            if VWQ == 1
+                                for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                    allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
+                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                    allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per} = allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(any(allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per},2),:);                                    
+                                end 
                             end 
+                            allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
+                            %remove rows full of 0s if there are any b = a(any(a,2),:)
+                            allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
+                            count = count + 1;
                         end 
-                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
-                        %remove rows full of 0s if there are any b = a(any(a,2),:)
-                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
-                        count = count + 1;
                     end 
                 end 
             end 
@@ -5565,6 +5614,7 @@ for mouse = 1:mouseNum
     end 
 end 
 
+%%
 dataQ = input('Input 1 if you need to resort data/select specific spikes by per. Input 0 otherwise. ');
 if dataQ == 1 
     allCTraces = allCTraces3; allBTraces = allBTraces3; allVTraces = allVTraces3;
@@ -6295,7 +6345,7 @@ for mouse = 1:mouseNum
 end 
 minFPSstack = FPSstack2 == min(FPSstack2);
 idx = find(minFPSstack ~= 0, 1, 'first');
-minLen = length(close_AVSNCdataPeaks{idx}{2});
+minLen = length(close_AVSNCdataPeaks{idx}{1});
 
 % mouseNums = [1,2,3,4,5];
 mouseNums = input('Input the mice you want to average. ');
@@ -6464,6 +6514,28 @@ if VWQ == 1
     avVdata = cell(1,length(allCTraces3{1}{CaROIs{1}(1)}));
 end  
 
+realMouseNum = input('How many unique mice are apart of this data set? ');
+CaROIcount1 = zeros(1,mouseNum);
+spikeCount1 = zeros(1,mouseNum);
+count = 1;
+for mouse = 1:mouseNum
+    CaROIcount1(mouse) = length(CaROIs{mouse});
+    for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(2)})
+        if isempty(allCTraces3{mouse}{CaROIs{mouse}(2)}{per}) == 0 
+            for ccell = 1:length(closeCTraces{mouse})
+                if isempty(closeCTraces{mouse}{ccell}) == 0 
+                    if isempty(allCTraces3{mouse}{terminals{mouse}(ccell)}) == 0
+                        spikeCount1(count) = size(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},1);
+                        count = count + 1;
+                    end 
+                end 
+            end 
+        end 
+    end 
+end 
+CaROIcount = sum(CaROIcount1);
+spikeCount = sum(spikeCount1);
+
 for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
     if isempty(allCTraces3{1}{CaROIs{1}(2)}{per}) == 0 
         %average the data 
@@ -6609,9 +6681,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xlabel('time (s)','FontName','Times')
-            ylabel('calcium signal percent change','FontName','Times')
+            ax.FontName = 'Arial';
+            xlabel('time (s)','FontName','Arial')
+            ylabel('calcium signal percent change','FontName','Arial')
             xLimStart = floor(10*min(FPSstack2));
             xLimEnd = floor(24*min(FPSstack2)); 
             xlim([1 minLen])
@@ -6627,12 +6699,14 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             patch([x fliplr(x)],[(far_CI_bLow) (fliplr(far_CI_bHigh))],Bcolors(2,:),'EdgeColor','none')
             alpha(0.3)
             legend([p(1) p(2)],'Close Terminals','Far Terminals')
-            ylabel('BBB permeability percent change','FontName','Times')
+            ylabel('BBB permeability percent change','FontName','Arial')
             title({'All mice Averaged.';perLabel})
             ylim([-BBBbelowZero BBBaboveZero])
             alpha(0.3)
-            set(gca,'YColor',[0 0 0]);   
-
+            set(gca,'YColor',[0 0 0]);              
+            txt = {sprintf('%d animals',realMouseNum),sprintf('%d sessions',mouseNum),sprintf('%d Ca ROIs',CaROIcount),sprintf('%d Ca spikes',spikeCount)};
+            text(2,-0.5,txt,'FontSize',14)
+            
             fig = figure;
             ax=gca;
             hold all
@@ -6642,9 +6716,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xlabel('time (s)','FontName','Times')
-            ylabel('calcium signal percent change','FontName','Times')
+            ax.FontName = 'Arial';
+            xlabel('time (s)','FontName','Arial')
+            ylabel('calcium signal percent change','FontName','Arial')
             xlim([1 minLen])
         %     ylim([-45 130])
             ylim([min(avCdata{per}-CaBufferSpace) max(avCdata{per}+CaBufferSpace)])
@@ -6661,11 +6735,12 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
             alpha(0.3)
         %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-            ylabel({'Spike Triggered';'BBB Permeability Percent Change'},'FontName','Times')
+            ylabel({'Spike Triggered';'BBB Permeability Percent Change'},'FontName','Arial')
         %     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
             set(gca,'YColor',[0 0 0]); 
             ylim([-BBBbelowZero BBBaboveZero])
         %     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
+            text(2,-0.5,txt,'FontSize',14)
         end 
 
         % plot close and far Ca ROI and VW data (all mice averaged) overlaid 
@@ -6707,9 +6782,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xlabel('time (s)','FontName','Times')
-            ylabel('Calcium Signal Percent Change','FontName','Times')
+            ax.FontName = 'Arial';
+            xlabel('time (s)','FontName','Arial')
+            ylabel('Calcium Signal Percent Change','FontName','Arial')
             xLimStart = floor(10*min(FPSstack2));
             xLimEnd = floor(24*min(FPSstack2)); 
             xlim([1 minLen])
@@ -6725,13 +6800,15 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             patch([x fliplr(x)],[(far_CI_vLow) (fliplr(far_CI_vHigh))],Vcolors(2,:),'EdgeColor','none')
             alpha(0.3)
             legend([p(1) p(2)],'Close Terminals','Far Terminals')
-            ylabel('Vessel Width Percent Change','FontName','Times')
+            ylabel('Vessel Width Percent Change','FontName','Arial')
         %     title('Close Terminals. All mice Averaged.')
             title({'All mice Averaged.';perLabel})
             ylim([-0.02 0.02])
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);  
             ylim([-VWbelowZero VWaboveZero])
+            txt = {sprintf('%d animals',realMouseNum),sprintf('%d sessions',mouseNum),sprintf('%d Ca ROIs',CaROIcount),sprintf('%d Ca spikes',spikeCount)};
+            text(2,-0.02,txt,'FontSize',14)
 
             fig = figure;
             ax=gca;
@@ -6742,9 +6819,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xlabel('time (s)','FontName','Times')
-            ylabel('Calcium Signal Percent Change','FontName','Times')
+            ax.FontName = 'Arial';
+            xlabel('time (s)','FontName','Arial')
+            ylabel('Calcium Signal Percent Change','FontName','Arial')
             xlim([1 minLen])
             ylim([min(avCdata{per}-CaBufferSpace) max(avCdata{per}+CaBufferSpace)])
             set(fig,'position', [500 100 900 800])
@@ -6755,13 +6832,14 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
             alpha(0.3)
         %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-            ylabel('Vessel Width Percent Change','FontName','Times')
+            ylabel('Vessel Width Percent Change','FontName','Arial')
         %     title('Close Terminals. All mice Averaged.')
             title({'All mice Averaged.';perLabel})
             ylim([-0.1 0.25])
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);   
             ylim([-VWbelowZero VWaboveZero])
+            text(2,-0.02,txt,'FontSize',14)
         end 
     end 
 end 
