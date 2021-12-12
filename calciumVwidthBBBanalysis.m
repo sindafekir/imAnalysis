@@ -5383,7 +5383,7 @@ end
 %% STA: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % optimized for batch processing
 % takes unsmoothed data and asks about smoothing
-
+%{
 %get the data you need 
 mouseDistQ = input('Input 1 if you already have a .mat file containing multiple mouse Ca ROI distances. Input 0 to make this .mat file. ');
 if mouseDistQ == 1 
