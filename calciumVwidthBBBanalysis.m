@@ -2588,10 +2588,10 @@ for tType = 1:length(nsCeta{terminals(1)})
    end 
 end 
 %}
-%% calcium peak raster plots and PSTHs 
+%% calcium peak raster plots and PSTHs for multiple animals at once 
 % uses ETA .mat file that contains all trials 
 % separates trials based on trial num and ITI length 
-%{
+
 % shere is the ETA data?  
 etaDir = uigetdir('*.*','WHERE IS THE ETA DATA');
 cd(etaDir);
@@ -2602,10 +2602,15 @@ fileList = dir(fullfile(etaDir,'*.mat'));
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot PSTH for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
 totalPeakNums2 = cell(1,size(fileList,1));    
-for mouse = 1:size(fileList,1)
+for mouse = 1%:size(fileList,1)
     MatFileName = fileList(mouse).name;
     load(MatFileName,'-regexp','^(?!indCaROIplotQ|allCaROIplotQ|winSec|trialQ|ITIq|trialLenThreshTime|histQ|ITIq2|termQ$)\w')
     winFrames = (winSec*FPSstack);
@@ -3143,9 +3148,82 @@ for mouse = 1:size(fileList,1)
     FPSstack2(mouse) = FPSstack;
     fullRaster2{mouse} = fullRaster;
     totalPeakNums2{mouse} = totalPeakNums;
-    clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
+    
+    % determine ISI 
+    ISIdiffs = cell(1,length(bDataFullTrace));
+    ISIframeMatrix = cell(1,length(bDataFullTrace));
+    ISIs = cell(1,length(termList));
+    avISIs = cell(1,length(termList));
+    for vid = 1:length(bDataFullTrace)
+        for term = 1:length(termList)   
+            for tType = 1:length(sigPeaks{vid}{term})
+                count = 1 ;
+                for trial = 1:length(trialList{vid})
+                    if length(sigPeaks{vid}{(terminals == termList(term))}{tType}) >= trialList{vid}(trial)
+                        if isempty(correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial}) == 0
+
+                            % spikes already found in correctedSigLocs 
+                            % get diff of spike locations 
+                            ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial} = diff(correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial});
+                            % create matrix of ISI lengths in correct frame
+                            if isempty(ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial}) == 0 
+                                for peak = 1:length(ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial})
+                                    
+                                    ISIframeMatrix{vid}{(terminals == termList(term))}{tType}(trial,correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial}(peak):correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial}(peak+1)) = ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial}(peak);
+                                end 
+                            end                             
+                        end                        
+                        
+                    end 
+                end 
+                % fill out the empty rows 
+                ISIframeMatrix{vid}{(terminals == termList(term))}{tType}(size(ISIframeMatrix{vid}{(terminals == termList(term))}{tType},1)+1:size(raster2{(terminals == termList(term))}{tType},1),:) = 0;                
+                % average ISIframeMatrix into bins as was done for numpeaks
+                for win = 1:windows
+                    if win == 1 
+                        ISIs{(terminals == termList(term))}{tType}(:,win) = sum(ISIframeMatrix{vid}{(terminals == termList(term))}{tType}(:,1:winFrames),2);
+                    elseif win > 1 
+                        if ((win-1)*winFrames)+1 < size(raster2{(terminals == termList(term))}{tType},2) && winFrames*win < size(raster2{(terminals == termList(term))}{tType},2)
+                            ISIs{(terminals == termList(term))}{tType}(:,win) = sum(ISIframeMatrix{vid}{(terminals == termList(term))}{tType}(:,((win-1)*winFrames)+1:winFrames*win),2);
+                        end 
+                    end             
+                end 
+                % determine the average ISI across trials 
+                avISIs{(terminals == termList(term))}{tType} = nanmean(ISIs{(terminals == termList(term))}{tType},1);
+                % convert avISIs from frame to seconds 
+                avISIs{(terminals == termList(term))}{tType} = avISIs{(terminals == termList(term))}{tType}/FPSstack;
+                
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                % PLOT ISI PER MOUSE 
+                % PICK UP HERE. I FINISHED CALCULATING THE AV ISI PER
+                % TERMINAL/TRIAL TYPE, NOW I JUST NEED TO PLOT IT PER MOUSE
+                % AND ACROSS MICE 
+            end 
+        end 
+    end 
+                    
+
+    
+    %sigLocs{vid}{ccell}{tType}{trial}
+    
+    
+    
+    
+% WHEN DONE MAKING THE UPDATE ABOVE, RE-ADD THE BELOW CODE 
+%     clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % THEN PLOT AVERAGE ISI BELOW 
 end 
 
+%%
 avQ = input('Input 1 to average PSTHs across mice. ');
 if avQ == 1 
     % calcium peak raster plots and PSTHs (multiple mice) 
@@ -3230,7 +3308,7 @@ if avQ == 1
     end 
 end 
 
-clearvars
+% clearvars
 
 %% overlay the red PSTHs 
 %THIS NEEDS TO BE UPDATED TO USE TOTALPEAKNUMS INSTEAD OF THE FULL RASTER
