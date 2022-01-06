@@ -2607,10 +2607,27 @@ winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs?
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% WHAT THE CODE CURRENTLY DOES:
+% 1) Within each trial window, found where spikes are 
+% 2) Calculated the ISI for spikes within the trial window, binned by 0.5 sec
+% 3) Averaged across axons per mouse 
+% 4) plotted 
+
+% this method ignores trials where only one spike occurs/edge ISIs  
+
+% WHAT I NEED TO TRY NEXT:
+% New method: 
+% 1) determine interspike intervals throughout entire experiment 
+% 2) sort ISI into trials 
+% 3) average across trials and terminals per mouse 
+% 4) plot  
+
+
+
 FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
 totalPeakNums2 = cell(1,size(fileList,1));    
-for mouse = 1:size(fileList,1)
+for mouse = 1%:size(fileList,1)
     MatFileName = fileList(mouse).name;
     load(MatFileName,'-regexp','^(?!indCaROIplotQ|allCaROIplotQ|winSec|trialQ|ITIq|trialLenThreshTime|histQ|ITIq2|termQ$)\w')
     winFrames = (winSec*FPSstack);
@@ -2618,6 +2635,7 @@ for mouse = 1:size(fileList,1)
     stdTrace = cell(1,length(vidList)); 
     sigPeaks2 = cell(1,length(vidList)); 
     sigLocs2 = cell(1,length(vidList)); 
+    ISIdiffsWholeExp = cell(1,length(vidList)); 
     for vid = 1:length(vidList)
         for ccell = 1:length(terminals)
             %find the peaks 
@@ -2632,6 +2650,21 @@ for mouse = 1:size(fileList,1)
                         count = count + 1;  
                 end 
             end 
+            
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            % determine interspike intervals (by frame) throughout entire experiment 
+            ISIdiffsWholeExp{vid}{terminals(ccell)} = diff(sigLocs2{vid}{terminals(ccell)});
+            % spread out the ISIs to fill in each frame 
+            % separate ISIs into trials
+            % average across trials 
+            % average across axons (just outside of these two loops)
+            % plot 
+
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         end 
     end 
 
@@ -3149,6 +3182,11 @@ for mouse = 1:size(fileList,1)
     fullRaster2{mouse} = fullRaster;
     totalPeakNums2{mouse} = totalPeakNums;
     
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % THIS IS MATHMATICALLY NOT CORRECT, BUT WORKS PROGRAMATICALLY 
+    
     % determine ISI 
     ISIdiffs = cell(1,length(bDataFullTrace));
     ISIframeMatrix = cell(1,length(bDataFullTrace));
@@ -3163,12 +3201,12 @@ for mouse = 1:size(fileList,1)
                         if isempty(correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial}) == 0
 
                             % spikes already found in correctedSigLocs 
-                            % get diff of spike locations 
+                            % get diff of spike locations (this is the
+                            % ISI by frame 
                             ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial} = diff(correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial});
                             % create matrix of ISI lengths in correct frame
                             if isempty(ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial}) == 0 
-                                for peak = 1:length(ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial})
-                                    
+                                for peak = 1:length(ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial})                                    
                                     ISIframeMatrix{vid}{(terminals == termList(term))}{tType}(trial,correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial}(peak):correctedSigLocs{vid}{(terminals == termList(term))}{tType}{trial}(peak+1)) = ISIdiffs{vid}{(terminals == termList(term))}{tType}{trial}(peak);
                                 end 
                             end                             
@@ -3251,8 +3289,12 @@ for mouse = 1:size(fileList,1)
         ylabel('Inter-Spike Interval (sec)')
         label = sprintf('Inter-Spike Interval per %0.2f sec. Mouse %d.',winSec, mouse);
         sgtitle(label,'FontSize',25);        
-    end                          
-    clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
+    end                      
+    
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % WHEN DONE TROUBLESHOOTING THE ABOVE CODE, ADD THE BELOW LINE BACK IN 
+%     clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
 end 
 
 %%
