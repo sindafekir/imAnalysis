@@ -2610,7 +2610,7 @@ winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs?
 FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
 totalPeakNums2 = cell(1,size(fileList,1));    
-for mouse = 1%:size(fileList,1)
+for mouse = 1:size(fileList,1)
     MatFileName = fileList(mouse).name;
     load(MatFileName,'-regexp','^(?!indCaROIplotQ|allCaROIplotQ|winSec|trialQ|ITIq|trialLenThreshTime|histQ|ITIq2|termQ$)\w')
     winFrames = (winSec*FPSstack);
@@ -3153,7 +3153,7 @@ for mouse = 1%:size(fileList,1)
     ISIdiffs = cell(1,length(bDataFullTrace));
     ISIframeMatrix = cell(1,length(bDataFullTrace));
     ISIs = cell(1,length(termList));
-    avISIs = cell(1,length(termList));
+    avISIs = cell(1,length(sigPeaks{vid}{term}));
     for vid = 1:length(bDataFullTrace)
         for term = 1:length(termList)   
             for tType = 1:length(sigPeaks{vid}{term})
@@ -3189,41 +3189,78 @@ for mouse = 1%:size(fileList,1)
                     end             
                 end 
                 % determine the average ISI across trials 
-                avISIs{(terminals == termList(term))}{tType} = nanmean(ISIs{(terminals == termList(term))}{tType},1);
-                % convert avISIs from frame to seconds 
-                avISIs{(terminals == termList(term))}{tType} = avISIs{(terminals == termList(term))}{tType}/FPSstack;
-                
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                % PLOT ISI PER MOUSE 
-                % PICK UP HERE. I FINISHED CALCULATING THE AV ISI PER
-                % TERMINAL/TRIAL TYPE, NOW I JUST NEED TO PLOT IT PER MOUSE
-                % AND ACROSS MICE 
+                avISIs{tType}(term,:) = nanmean(ISIs{(terminals == termList(term))}{tType},1);                
             end 
         end 
     end 
-                    
+    
+    %plot ISI for all terminals averaged
+    avISI = cell(1,length(sigPeaks{1}{terminals == termList(term)}));
+    for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
+        % replace rows of zeros with NaNs 
+        avISIs{tType}(any(avISIs{tType},2) == 0,:) = NaN;
+        % convert avISIs from frame to seconds and sort into the
+        % same array for averaging across terminals 
+        avISIs{tType} = avISIs{tType}/FPSstack;    
+        avISI{tType} = nanmean(avISIs{tType},1);
+   
+        figure
+        bar(avISI{tType},'k')
+        stimStartF = floor((FPSstack*20)/winFrames);
+        hold all 
+        if tType == 1 || tType == 3 
+            Frames = size(sCeta{BBBroi}{tType},2);        
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+            FrameVals = floor((1:FPSstack:Frames)-1); 
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+            FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
+        elseif tType == 2 || tType == 4 
+            Frames = size(sCeta{BBBroi}{tType},2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+            FrameVals = floor((1:FPSstack:Frames)-1); 
+            FrameVals = FrameVals/length(allTermAvPeakNums{tType});
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+            FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
+        end 
+        if tType == 1 || tType == 2
+%             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+%             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+        end 
+        ind0 = find(sec_TimeVals == 0);
+        ind2 = find(sec_TimeVals == 2);
+        label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';        
+        ylim([0 0.5])
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('Inter-Spike Interval (sec)')
+        label = sprintf('Inter-Spike Interval per %0.2f sec. Mouse %d.',winSec, mouse);
+        sgtitle(label,'FontSize',25);        
+    end                          
+    clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
+end 
 
-    
-    %sigLocs{vid}{ccell}{tType}{trial}
-    
-    
-    
-    
-% WHEN DONE MAKING THE UPDATE ABOVE, RE-ADD THE BELOW CODE 
-%     clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
+%%
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % THEN PLOT AVERAGE ISI BELOW 
-end 
-
-%%
+    
 avQ = input('Input 1 to average PSTHs across mice. ');
 if avQ == 1 
     % calcium peak raster plots and PSTHs (multiple mice) 
