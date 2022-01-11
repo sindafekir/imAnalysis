@@ -2591,7 +2591,7 @@ end
 %% calcium peak raster plots and PSTHs for multiple animals at once 
 % uses ETA .mat file that contains all trials 
 % separates trials based on trial num and ITI length 
-
+%{
 % shere is the ETA data?  
 etaDir = uigetdir('*.*','WHERE IS THE ETA DATA');
 cd(etaDir);
@@ -2602,11 +2602,6 @@ fileList = dir(fullfile(etaDir,'*.mat'));
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot PSTH for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
-
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
@@ -3334,12 +3329,6 @@ for mouse = 1:size(fileList,1)
 
     clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ mean_ISIdiffsWholeExp_maxBin medISI         
 end 
-
-%%
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % THEN PLOT AVERAGE ISI BELOW 
     
 avQ = input('Input 1 to average PSTHs across mice. ');
 if avQ == 1 
