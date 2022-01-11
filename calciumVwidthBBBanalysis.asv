@@ -2607,26 +2607,12 @@ winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs?
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% WHAT THE CODE CURRENTLY DOES:
-% 1) Within each trial window, found where spikes are 
-% 2) Calculated the ISI for spikes within the trial window, binned by 0.5 sec
-% 3) Averaged across axons per mouse 
-% 4) plotted 
-
-% this method ignores trials where only one spike occurs/edge ISIs  
-
-% WHAT I NEED TO TRY NEXT:
-% New method: 
-% 1) determine interspike intervals throughout entire experiment 
-% 2) sort ISI into trials 
-% 3) average across trials and terminals per mouse 
-% 4) plot  
-
-
 
 FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
-totalPeakNums2 = cell(1,size(fileList,1));    
+totalPeakNums2 = cell(1,size(fileList,1));   
+mean_ISIdiffsWholeExp_maxBin = cell(1,size(fileList,1));   
+medISI = cell(1,size(fileList,1));   
 for mouse = 1:size(fileList,1)
     MatFileName = fileList(mouse).name;
     load(MatFileName,'-regexp','^(?!indCaROIplotQ|allCaROIplotQ|winSec|trialQ|ITIq|trialLenThreshTime|histQ|ITIq2|termQ$)\w')
@@ -2635,9 +2621,9 @@ for mouse = 1:size(fileList,1)
     stdTrace = cell(1,length(vidList)); 
     sigPeaks2 = cell(1,length(vidList)); 
     sigLocs2 = cell(1,length(vidList)); 
-    ISIdiffsWholeExp = cell(1,length(vidList)); 
-    medISI = zeros(length(vidList),length(terminals));
+    ISIdiffsWholeExp = cell(1,length(vidList));     
     ISIdiffsWholeExp_0to5sec = cell(1,length(vidList)); 
+    ISIdiffsWholeExp_maxBin = cell(1,length(vidList));     
     for vid = 1:length(vidList)
         for ccell = 1:length(terminals)
             %find the peaks 
@@ -2657,7 +2643,7 @@ for mouse = 1:size(fileList,1)
             % experiment in seconds 
             ISIdiffsWholeExp{vid}{terminals(ccell)} = (diff(sigLocs2{vid}{terminals(ccell)}))/FPSstack;
             % keep only ISIs between 0 and 5 seconds 
-            ISIdiffsWholeExp_0to5sec{vid}{terminals(ccell)} = find(ISIdiffsWholeExp{vid}{terminals(ccell)} > 0 && < 5);
+            ISIdiffsWholeExp_0to5sec{vid}{terminals(ccell)} = ISIdiffsWholeExp{vid}{terminals(ccell)}(find(ISIdiffsWholeExp{vid}{terminals(ccell)} > 0 & ISIdiffsWholeExp{vid}{terminals(ccell)} < 5));
             
 %             % plot ISI distribution per axon 
 %             figure
@@ -2669,15 +2655,36 @@ for mouse = 1:size(fileList,1)
 %             xlabel('Inter-Spike Interval (sec)')
 %             label = sprintf('Distribution of Interspike Intervals. Mouse %d. Axon %d.', mouse,terminals(ccell));
 %             sgtitle(label,'FontSize',25);     
+
+            % plot ISI distribution (of ISIs between 0 and 5 seconds) per axon
+            figure
+            hObj = histogram(ISIdiffsWholeExp_0to5sec{vid}{terminals(ccell)},10,'FaceColor','k');
+            hold all 
+            ax=gca;
+            ax.FontSize = 15;
+            ylabel('Number of Spikes')
+            xlabel('Inter-Spike Interval (sec)')
+            label = sprintf('Distribution of Interspike Intervals. Mouse %d. Axon %d.', mouse,terminals(ccell));
+            sgtitle(label,'FontSize',25);     
+            
+            [M,I] = max(hObj.Values);
+            binEdges = hObj.BinEdges;
+            maxBinEdges = binEdges(I:I+1);
+            % keep only ISIs between maxBinEdges
+            ISIdiffsWholeExp_maxBin{vid}{terminals(ccell)} = ISIdiffsWholeExp{vid}{terminals(ccell)}(find(ISIdiffsWholeExp{vid}{terminals(ccell)} > maxBinEdges(1) & ISIdiffsWholeExp{vid}{terminals(ccell)} < maxBinEdges(2)));
+            % determine mean value of the max bin in the histogram above
+            mean_ISIdiffsWholeExp_maxBin{mouse}(vid,ccell) = mean(ISIdiffsWholeExp_maxBin{vid}{terminals(ccell)});
+            % plot the mean value of the max bin on the histogram above 
+            text(maxBinEdges(1),M-1,{mean_ISIdiffsWholeExp_maxBin{mouse}(vid,ccell)},'FontSize',20);
             
             % determine the median ISI per axon 
-            medISI(vid,ccell) = median(ISIdiffsWholeExp{vid}{terminals(ccell)});
+            medISI{mouse}(vid,ccell) = median(ISIdiffsWholeExp{vid}{terminals(ccell)});           
         end 
     end 
     
 %     % plot median ISI (of each axon) distribution
 %     figure
-%     histogram(medISI,50,'FaceColor','k')
+%     histogram(medISI{mouse},50,'FaceColor','k')
 %     hold all 
 %     ax=gca;
 %     ax.FontSize = 15;
@@ -2685,6 +2692,17 @@ for mouse = 1:size(fileList,1)
 %     xlabel('Median Inter-Spike Interval (sec)')
 %     label = sprintf('Distribution of Median Interspike Intervals. Mouse %d.', mouse);
 %     sgtitle(label,'FontSize',25);     
+% 
+%     % plot mean value of max bin ISI (of each axon) distribution
+%     figure
+%     histogram(mean_ISIdiffsWholeExp_maxBin{mouse},50,'FaceColor','k')
+%     hold all 
+%     ax=gca;
+%     ax.FontSize = 15;
+%     ylabel('Number of Axons')
+%     xlabel('Median Inter-Spike Interval (sec)')
+%     label = sprintf('Distribution of Mean Interspike Interval for Most Common Histogram Bin. Mouse %d.', mouse);
+%     sgtitle(label,'FontSize',25);   
 
     tTypePlotStart = cell(1,length(bDataFullTrace) ); 
     tTypePlotEnd = cell(1,length(bDataFullTrace) );
@@ -3200,11 +3218,9 @@ for mouse = 1:size(fileList,1)
     fullRaster2{mouse} = fullRaster;
     totalPeakNums2{mouse} = totalPeakNums;
     
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % THIS IS MATHMATICALLY DOES NOT DO WHAT I WANT, BUT WORKS PROGRAMATICALLY 
-    
+    % plots ISI distribution per mouse (averaged across trials) 
+    %{
     % determine ISI 
     ISIdiffs = cell(1,length(bDataFullTrace));
     ISIframeMatrix = cell(1,length(termList));
@@ -3256,69 +3272,67 @@ for mouse = 1:size(fileList,1)
         end 
     end 
     
-%     %plot ISI for all terminals averaged
-%     avISI = cell(1,length(sigPeaks{1}{terminals == termList(term)}));
-%     for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
-%         % replace rows of zeros with NaNs 
-%         avISIs{tType}(any(avISIs{tType},2) == 0,:) = NaN;
-%         % convert avISIs from frame to seconds and sort into the
-%         % same array for averaging across terminals 
-%         avISIs{tType} = avISIs{tType}/FPSstack;    
-%         avISI{tType} = nanmean(avISIs{tType},1);
-%    
-%         figure
-%         bar(avISI{tType},'k')
-%         stimStartF = floor((FPSstack*20)/winFrames);
-%         hold all 
-%         if tType == 1 || tType == 3 
-%             Frames = size(sCeta{BBBroi}{tType},2);        
-%             Frames_pre_stim_start = -((Frames-1)/2); 
-%             Frames_post_stim_start = (Frames-1)/2; 
-%             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
-%             FrameVals = floor((1:FPSstack:Frames)-1); 
-% %                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
-%             FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
-%         elseif tType == 2 || tType == 4 
-%             Frames = size(sCeta{BBBroi}{tType},2);
-%             Frames_pre_stim_start = -((Frames-1)/2); 
-%             Frames_post_stim_start = (Frames-1)/2; 
-%             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
-%             FrameVals = floor((1:FPSstack:Frames)-1); 
-%             FrameVals = FrameVals/length(allTermAvPeakNums{tType});
-% %                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
-%             FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
-%         end 
-%         if tType == 1 || tType == 2
-% %             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-% %             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
-%         elseif tType == 3 || tType == 4
-% %             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
-% %             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
-%         end 
-%         ind0 = find(sec_TimeVals == 0);
-%         ind2 = find(sec_TimeVals == 2);
-%         label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
-%         label1.FontSize = 30;
-%         label1.FontName = 'Arial';
-%         label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
-%         label2.FontSize = 30;
-%         label2.FontName = 'Arial';        
-%         ylim([0 0.5])
-%         ax=gca;
-%         axis on 
-%         xticks(FrameVals)
-%         ax.XTickLabel = sec_TimeVals;
-%         ax.FontSize = 15;
-%         xlabel('time (s)')
-%         ylabel('Inter-Spike Interval (sec)')
-%         label = sprintf('Inter-Spike Interval per %0.2f sec. Mouse %d.',winSec, mouse);
-%         sgtitle(label,'FontSize',25);        
-%     end                      
-    
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % WHEN DONE TROUBLESHOOTING THE ABOVE CODE, ADD THE BELOW LINE BACK IN 
-%     clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ
+    %plot ISI for all terminals averaged
+    avISI = cell(1,length(sigPeaks{1}{terminals == termList(term)}));
+    for tType = 1:length(sigPeaks{1}{terminals == termList(term)})
+        % replace rows of zeros with NaNs 
+        avISIs{tType}(any(avISIs{tType},2) == 0,:) = NaN;
+        % convert avISIs from frame to seconds and sort into the
+        % same array for averaging across terminals 
+        avISIs{tType} = avISIs{tType}/FPSstack;    
+        avISI{tType} = nanmean(avISIs{tType},1);
+   
+        figure
+        bar(avISI{tType},'k')
+        stimStartF = floor((FPSstack*20)/winFrames);
+        hold all 
+        if tType == 1 || tType == 3 
+            Frames = size(sCeta{BBBroi}{tType},2);        
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+1);                
+            FrameVals = floor((1:FPSstack:Frames)-1); 
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+            FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.3;
+        elseif tType == 2 || tType == 4 
+            Frames = size(sCeta{BBBroi}{tType},2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack:Frames_post_stim_start)/FPSstack)+10);
+            FrameVals = floor((1:FPSstack:Frames)-1); 
+            FrameVals = FrameVals/length(allTermAvPeakNums{tType});
+%                 FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})+2))+0.5;
+            FrameVals = (FrameVals/(length(allTermAvPeakNums{tType})/3.75))+0.5;
+        end 
+        if tType == 1 || tType == 2
+%             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'b','LineWidth',2)
+        elseif tType == 3 || tType == 4
+%             plot([stimStartF stimStartF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+%             plot([stimStopF stimStopF], [0 size(fullRaster{tType},1)], 'r','LineWidth',2)
+        end 
+        ind0 = find(sec_TimeVals == 0);
+        ind2 = find(sec_TimeVals == 2);
+        label1 = xline(FrameVals(ind0),'-k',{'vibrissal stim'},'LineWidth',2);
+        label1.FontSize = 30;
+        label1.FontName = 'Arial';
+        label2 = xline(FrameVals(ind2),'-k',{'water reward'},'LineWidth',2);
+        label2.FontSize = 30;
+        label2.FontName = 'Arial';        
+        ylim([0 0.5])
+        ax=gca;
+        axis on 
+        xticks(FrameVals)
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 15;
+        xlabel('time (s)')
+        ylabel('Inter-Spike Interval (sec)')
+        label = sprintf('Inter-Spike Interval per %0.2f sec. Mouse %d.',winSec, mouse);
+        sgtitle(label,'FontSize',25);        
+    end                      
+    %}
+
+    clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ mean_ISIdiffsWholeExp_maxBin medISI         
 end 
 
 %%
@@ -3411,6 +3425,22 @@ if avQ == 1
     end 
 end 
 
+ISImedAndModeQ = input('Input 1 to plot the distribution of median and mode ISIs. ');
+if ISImedAndModeQ == 1
+    % put data into the same array 
+    count = 1;
+    mean_ISIdiffsWholeExp_maxBin_array = zeros(1,1);
+    medISI_array = zeros(1,1);
+    for mouse = 1:size(fileList,1)
+        for axon = 1:length(mean_ISIdiffsWholeExp_maxBin{mouse})
+            mean_ISIdiffsWholeExp_maxBin_array(count) = mean_ISIdiffsWholeExp_maxBin{mouse}(axon);
+            medISI_array(count) = medISI{mouse}(axon);
+            count = count + 1;
+        end        
+    end 
+    % plot mean and mode ISI distributions for all mice together 
+    
+end 
 % clearvars
 
 %% overlay the red PSTHs 
