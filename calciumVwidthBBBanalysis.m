@@ -8740,14 +8740,13 @@ end
 %}
 %% run FT on BBB data 
 % takes ETA data files 
-
+%{
 % shere is the ETA data?  
 etaDir = uigetdir('*.*','WHERE IS THE ETA DATA');
 cd(etaDir);
 % list the .mat files in the folder 
 fileList = dir(fullfile(etaDir,'*.mat'));
 
-%%
 Bdata = cell(1,size(fileList,1));
 FPSstack = zeros(1,size(fileList,1));
 for mouse = 1:size(fileList,1)    
