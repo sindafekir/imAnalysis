@@ -2602,7 +2602,9 @@ fileList = dir(fullfile(etaDir,'*.mat'));
 indCaROIplotQ = input('Input 1 if you want to plot raster plots and PSTHs for each Ca ROI independently. ');
 allCaROIplotQ = input('Input 1 if you want to plot PSTH for all Ca ROIs stacked. ');
 winSec = input('How many seconds do you want to bin the calcium peak rate PSTHs? '); 
+relativeToMean = input('Input 1 if you want to plot spike rate relative to mean. Input 0 to plot raw spike rate. ');
 
+%%
 FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
 totalPeakNums2 = cell(1,size(fileList,1));   
@@ -2946,11 +2948,14 @@ for mouse = 1:size(fileList,1)
     for tType = 1:length(sigPeaks{vid}{term})
         for term = 1:length(termList)   
             if isempty(raster2{(terminals == termList(term))}) == 0 
-              % determine the mean peak rate 
-                meanNumPeaks{(terminals == termList(term))}(tType) = nanmean(avTermNumPeaks{(terminals == termList(term))}{tType}); 
-                % divide by the mean peak rate to show the variation in spike
-                % rates from the mean 
-                avTermNumPeaks{(terminals == termList(term))}{tType} = avTermNumPeaks{(terminals == termList(term))}{tType}/meanNumPeaks{(terminals == termList(term))}(tType);
+                if relativeToMean == 1 
+                    % determine the mean peak rate 
+                    meanNumPeaks{(terminals == termList(term))}(tType) = nanmean(avTermNumPeaks{(terminals == termList(term))}{tType}); 
+                    % divide by the mean peak rate to show the variation in spike
+                    % rates from the mean 
+                    avTermNumPeaks{(terminals == termList(term))}{tType} = avTermNumPeaks{(terminals == termList(term))}{tType}/meanNumPeaks{(terminals == termList(term))}(tType);                                  
+                end               
+                % sort data 
                 allTermAvPeakNums{tType}((terminals == termList(term)),:) = avTermNumPeaks{(terminals == termList(term))}{tType};
             end 
         end 
@@ -3327,8 +3332,10 @@ for mouse = 1:size(fileList,1)
     end                      
     %}
 
-    clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ mean_ISIdiffsWholeExp_maxBin medISI         
+    clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ mean_ISIdiffsWholeExp_maxBin medISI relativeToMean         
 end 
+
+%%
     
 avQ = input('Input 1 to average PSTHs across mice. ');
 if avQ == 1 
@@ -3434,7 +3441,7 @@ if ISImedAndModeQ == 1
     hold all 
     ax=gca;
     ax.FontSize = 15;
-    ylabel('Number of Spikes')
+    ylabel('Number of Axons')
     xlabel('Inter-Spike Interval (sec)')
     label = 'Distribution of Highest Probability Interspike Intervals Across Mice';
     sgtitle(label,'FontSize',25);     
@@ -3445,7 +3452,7 @@ if ISImedAndModeQ == 1
     hold all 
     ax=gca;
     ax.FontSize = 15;
-    ylabel('Number of Spikes')
+    ylabel('Number of Axons')
     xlabel('Inter-Spike Interval (sec)')
     label = 'Distribution of Median Interspike Intervals Across Mice';
     sgtitle(label,'FontSize',25);  
@@ -8730,4 +8737,45 @@ for mouse = 1:mouseNum
 %     farCaROI_CaBBBtimeLags{mouse} = maxBBBvalTimePoints{mouse}((minDistsMicrons{mouse} > distCutOff));
 end 
 % clearvars -except closeCaROIs closeCaROIDists closeCaROI_CaBBBtimeLags farCaROIs farCaROIDists farCaROI_CaBBBtimeLags
+%}
+%% run FT on BBB data 
+% takes ETA data files 
+
+% shere is the ETA data?  
+etaDir = uigetdir('*.*','WHERE IS THE ETA DATA');
+cd(etaDir);
+% list the .mat files in the folder 
+fileList = dir(fullfile(etaDir,'*.mat'));
+
+%%
+Bdata = cell(1,size(fileList,1));
+FPSstack = zeros(1,size(fileList,1));
+for mouse = 1:size(fileList,1)    
+    MatFileName = fileList(mouse).name;        
+    Mat = matfile(MatFileName);
+    Bdata{mouse} = Mat.Bdata;
+    FPSstack(mouse) = Mat.FPSstack;
+    for BBBroi = 1:length(Bdata{mouse})
+        % plot single sided FT
+        Fs = FPSstack(mouse);            % Sampling frequency                    
+        T = 1/Fs;             % Sampling period       
+        L = length(Bdata{mouse}{BBBroi})/FPSstack(mouse);             % Length of signal (in ms)
+        t = (0:L-1)*T;        % Time vector
+
+        Y = fft(Bdata{mouse}{BBBroi});
+        P2 = abs(Y/L);
+        P1 = P2(1:L/2+1);
+        P1(2:end-1) = 2*P1(2:end-1);
+        
+        figure 
+        f = Fs*(0:(L/2))/L;
+        plot(f,P1) 
+        title({'Single-Sided Amplitude Spectrum of S(t)';sprintf('Mouse %d BBB ROI %d',mouse,BBBroi)})
+        xlabel('f (Hz)')
+        ylabel('|P1(f)|')
+    end 
+end 
+
+
+
 %}
