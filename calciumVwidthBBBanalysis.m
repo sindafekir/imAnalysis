@@ -8741,39 +8741,140 @@ end
 %% run FT on BBB data 
 % takes ETA data files 
 %{
-% shere is the ETA data?  
+% where is the ETA data?  
 etaDir = uigetdir('*.*','WHERE IS THE ETA DATA');
 cd(etaDir);
 % list the .mat files in the folder 
 fileList = dir(fullfile(etaDir,'*.mat'));
 
+
+%%
+selectData2plot = input('Input 1 to plot BBB data. Input 2 to plot VW data. Input 3 to plot Ca data. ');
+% do Fourier transform 
 Bdata = cell(1,size(fileList,1));
+Vdata = cell(1,size(fileList,1));
+Cdata = cell(1,size(fileList,1));
 FPSstack = zeros(1,size(fileList,1));
+P1 = cell(1,size(fileList,1));
+f = cell(1,size(fileList,1));
+PSlen = zeros(size(fileList,1),1);
+terminals = cell(1,size(fileList,1));
 for mouse = 1:size(fileList,1)    
     MatFileName = fileList(mouse).name;        
     Mat = matfile(MatFileName);
     Bdata{mouse} = Mat.Bdata;
+    Vdata{mouse} = Mat.Vdata;
+    Cdata{mouse} = Mat.CAdata;
+    terminals{mouse} = Mat.terminals;
     FPSstack(mouse) = Mat.FPSstack;
-    for BBBroi = 1:length(Bdata{mouse})
-        % plot single sided FT
-        Fs = FPSstack(mouse);            % Sampling frequency                    
-        T = 1/Fs;             % Sampling period       
-        L = length(Bdata{mouse}{BBBroi})/FPSstack(mouse);             % Length of signal (in ms)
-        t = (0:L-1)*T;        % Time vector
-
-        Y = fft(Bdata{mouse}{BBBroi});
-        P2 = abs(Y/L);
-        P1 = P2(1:L/2+1);
-        P1(2:end-1) = 2*P1(2:end-1);
-        
-        figure 
-        f = Fs*(0:(L/2))/L;
-        plot(f,P1) 
-        title({'Single-Sided Amplitude Spectrum of S(t)';sprintf('Mouse %d BBB ROI %d',mouse,BBBroi)})
-        xlabel('f (Hz)')
-        ylabel('|P1(f)|')
+    if selectData2plot == 1
+        data = Bdata;
+        label = 'BBB data';
+    elseif selectData2plot == 2
+        data = Vdata;
+        label = 'Vessel Width data';
+    elseif selectData2plot == 3
+        data = Cdata;
+        label = 'Calcium data';
+    end 
+    if selectData2plot == 1 || selectData2plot == 2
+        for roi = 1:length(data{mouse})
+            % set paramaters
+            Fs = FPSstack(mouse);            % Sampling frequency                    
+            T = 1/Fs;             % Sampling period       
+            L = length(data{mouse}{roi})/FPSstack(mouse);             % Length of signal (in ms)
+            t = (0:L-1)*T;        % Time vector
+            % do FT 
+            Y = fft(data{mouse}{roi});
+            P2 = abs(Y/L);
+            P1{mouse}{roi} = P2(1:L/2+1);
+            P1{mouse}{roi}(2:end-1) = 2*P1{mouse}{roi}(2:end-1);
+            f{mouse}{roi} = Fs*(0:(L/2))/L;        
+            % determine length of power spectrums 
+            PSlen(mouse,roi) = length(P1{mouse}{roi});
+        end 
+    elseif selectData2plot == 3
+        for roi = 1:length(terminals{mouse})
+            % set paramaters
+            Fs = FPSstack(mouse);            % Sampling frequency                    
+            T = 1/Fs;             % Sampling period       
+            L = length(data{mouse}{terminals{mouse}(roi)})/FPSstack(mouse);             % Length of signal (in ms)
+            t = (0:L-1)*T;        % Time vector
+            % do FT 
+            Y = fft(data{mouse}{terminals{mouse}(roi)});
+            P2 = abs(Y/L);
+            P1{mouse}{terminals{mouse}(roi)} = P2(1:L/2+1);
+            P1{mouse}{terminals{mouse}(roi)}(2:end-1) = 2*P1{mouse}{terminals{mouse}(roi)}(2:end-1);
+            f{mouse}{terminals{mouse}(roi)} = Fs*(0:(L/2))/L;        
+            % determine length of power spectrums 
+            PSlen(mouse,terminals{mouse}(roi)) = length(P1{mouse}{terminals{mouse}(roi)});
+        end         
     end 
 end 
+xlimQ = input('Input 1 if you want to set x axis limits when plotting. ');
+if xlimQ == 1 
+    xLow = input('What is the x axis min? ');
+    xHigh = input('What is the x axis max? ');
+end 
+% determine the non-zero min length of the power spectrums 
+minPSlen = min(min(PSlen(PSlen>0)));
+avQ = input('Input 1 if you want to average the power spectrums across mice. Input 0 otherwise. ');
+% plot power spectrums 
+dataArray = zeros(1,minPSlen);
+fArray = zeros(1,minPSlen);
+count = 1;
+for mouse = 1:size(fileList,1) 
+    if selectData2plot == 1 || selectData2plot == 2
+        for roi = 1:length(data{mouse})
+            if avQ == 0 
+                figure        
+                plot(f{mouse}{roi},P1{mouse}{roi}) 
+                title({'Single-Sided Amplitude Spectrum of S(t)';sprintf('Mouse %d ROI %d',mouse,roi);label})
+                xlabel('f (Hz)')
+                ylabel('|P1(f)|')
+                if xlimQ == 1 
+                    xlim([xLow xHigh])
+                end 
+            elseif avQ == 1
+                dataArray(count,:) = P1{mouse}{roi}(1:minPSlen);
+                fArray(count,:) = f{mouse}{roi}(1:minPSlen);
+                count = count + 1;
+            end 
+        end 
+    elseif selectData2plot == 3 
+        for roi = 1:length(terminals{mouse})
+            if avQ == 0 
+                figure        
+                plot(f{mouse}{terminals{mouse}(roi)},P1{mouse}{terminals{mouse}(roi)}) 
+                title({'Single-Sided Amplitude Spectrum of S(t)';sprintf('Mouse %d ROI %d',mouse,terminals{mouse}(roi));label})
+                xlabel('f (Hz)')
+                ylabel('|P1(f)|')
+                if xlimQ == 1 
+                    xlim([xLow xHigh])
+                end 
+            elseif avQ == 1
+                dataArray(count,:) = P1{mouse}{terminals{mouse}(roi)}(1:minPSlen);
+                fArray(count,:) = f{mouse}{terminals{mouse}(roi)}(1:minPSlen);
+                count = count + 1;
+            end 
+        end         
+    end 
+end 
+% plot averaged data 
+if avQ == 1 
+    avData = nanmean(dataArray);
+    avF = nanmean(fArray);
+    figure        
+    plot(avF,avData) 
+    title({'Single-Sided Amplitude Spectrum of S(t)';sprintf('%s Averaged Across Mice',label)})
+    xlabel('f (Hz)')
+    ylabel('|P1(f)|')
+    if xlimQ == 1 
+        xlim([xLow xHigh])
+    end 
+end 
+
+
 
 
 
