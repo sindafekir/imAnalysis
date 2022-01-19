@@ -1952,52 +1952,70 @@ if ITIq == 1
 end 
 
 %% resort eta data into vids 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE: USE CTRACES TO HELP. THE TRACES ARE BEING SEPARATED INTO VIDS BUT THEY'RE NOT THE RIGHT TRACES (IT KEEPS ON STARTING AT TRACE 
+% # 1 IN CETA AND THE NUMBER OF TRACES DOESN'T ADD UP (THERE ARE MORE
+% TRACES IN C TRACES THAN IN CETA)
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 Ceta2 = cell(1,mouseNum);
 Beta2 = cell(1,mouseNum);
 Veta2 = cell(1,mouseNum);
-for mouse = 1%:mouseNum
-    for tType = 1:tTypeNum
-        if CAQ == 1
-            for CaROI = 1:size(CaROIs{mouse},2)
-                count = 1;
-                for vid = 1:length(state_start_f{mouse}) 
-                    for trace = 1:length(trialLengths{mouse}{vid})
-                        if count <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)
-                            Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(count,:);
-                            count = count + 1;
-                        end 
-                    end 
-                end 
-            end 
-        end 
-        if BBBQ == 1 
-            for BBBroi = 1:size(Beta{mouse},2)  
-                count = 1;
-                for vid = 1:length(state_start_f{mouse}) 
-                    for trace = 1:length(trialLengths{mouse}{vid})
-                        if count <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)
-                            Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(count,:);
-                            count = count + 1;
-                        end 
-                    end 
-                end 
-            end 
-        end 
-        if VWQ == 1
-            for VWroi = 1:size(Veta{mouse},2)
-                count = 1;
-                for vid = 1:length(state_start_f{mouse}) 
-                    for trace = 1:length(trialLengths{mouse}{vid})
-                        if count <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)
-                            Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(count,:);
-                            count = count + 1;
-                        end 
-                    end 
-                end 
-            end 
+count2 = 1;
+count3 = 1;
+if CAQ == 1
+    for mouse = 1%:mouseNum
+        for CaROI = 1:size(CaROIs{mouse},2)
+            
+            for vid = 1:length(state_start_f{mouse}) 
+                for tType = 1:tTypeNum
+                    count1 = 1;
+                     if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0 
+%                          if 
+                            for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})
+                                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                                Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(count1,:);                             
+                                count1 = count1 + 1;
+                                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                            end 
+%                          end 
+                     end 
+                end               
+            end                
         end 
     end 
 end 
+
+
+%         if BBBQ == 1 
+%             for BBBroi = 1:size(Beta{mouse},2)                  
+%                 for vid = 1:length(state_start_f{mouse}) 
+%                     for trace = 1:length(trialLengths{mouse}{vid})
+%                         if count2 <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)
+%                             Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(count2,:);
+%                             count2 = count2 + 1;
+%                         end 
+%                     end 
+%                 end 
+%             end 
+%         end 
+%         if VWQ == 1
+%             for VWroi = 1:size(Veta{mouse},2)                
+%                 for vid = 1:length(state_start_f{mouse}) 
+%                     for trace = 1:length(trialLengths{mouse}{vid})
+%                         if count3 <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)
+%                             Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(count3,:);
+%                             count3 = count3 + 1;
+%                         end 
+%                     end 
+%                 end 
+%             end 
+%         end 
+%     end 
+% end 
 
 %% select specific trials, resample, and plot data 
 snCetaArray = cell(1,tTypeNum);
