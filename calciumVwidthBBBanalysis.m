@@ -370,9 +370,11 @@ end
 
 %% generate the figures and save the data out per mouse 
 
-uniqueLightTypes = cell(1,mouseNum);
-uniqueTrialLengths = cell(1,mouseNum);
-for mouse = 3%1:mouseNum
+
+trialData = cell(1,mouseNum);
+tTypes = cell(1,mouseNum); 
+vidCheck = cell(1,mouseNum); 
+for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
     % determine plotting start and end frames 
     plotStart = cell(1,length(bDataFullTrace{mouse}));
@@ -624,25 +626,54 @@ for mouse = 3%1:mouseNum
     
     % make sure tType index is known for given ttype num 
     if optoQ == 1 
-        % check to see if red or blue opto lights were used         
-        for vid = 1:length(bDataFullTrace{mouse})    
-            uniqueLightTypes{mouse}{vid} = unique(TrialTypes{mouse}{vid}(:,2));
-            uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
-            %if the blue light is on for 2 seconds 
-            if any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
-                %ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse})) == 1
-                tTypes(1) = 1;
+        % check to see if red or blue opto lights were used       
+        for vid = 1:length(TrialTypes{mouse})   
+            % combine trialTypes and trialLengths 
+            trialData{mouse}{vid}(:,1) = TrialTypes{mouse}{vid}(:,2);
+            trialData{mouse}{vid}(:,2) = trialLengths{mouse}{vid};
+            % determine the combination of trialTypes and lengths that
+            % occur per vid 
+            %if the blue light is on for 2 seconds
+            if any(ismember(trialData{mouse}{vid},[1,floor(2*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(1) = 1;              
+            end 
             %if the blue light is on for 20 seconds 
-            elseif any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
-                tTypes(2) = 1;
-            %if the red light is on for 2 seconds  
-            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
-                tTypes(3) = 1;
-            %if the red light is on for 20 seconds  
-            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
-                tTypes(4) = 1;
-            end                                    
+            if any(ismember(trialData{mouse}{vid},[1,floor(20*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(2) = 2;
+            end 
+            %if the red light is on for 2 seconds 
+            if any(ismember(trialData{mouse}{vid},[2,floor(2*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(3) = 3;
+            end 
+            %if the red light is on for 20 seconds    
+            if any(ismember(trialData{mouse}{vid},[2,floor(20*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(4) = 4;
+            end 
+            if any(tTypes{mouse}{vid} == 1)
+                vidCheck{mouse}(vid,1) = 1;
+            end 
+            if any(tTypes{mouse}{vid} == 2)
+                vidCheck{mouse}(vid,2) = 2;
+            end 
+            if any(tTypes{mouse}{vid} == 3)
+                vidCheck{mouse}(vid,3) = 3;
+            end 
+            if any(tTypes{mouse}{vid} == 4)
+                vidCheck{mouse}(vid,4) = 4;
+            end             
         end  
+        if sum(any(vidCheck{mouse} == 1)) > 0  
+            tTypeInds(1) = 1;
+        end 
+        if sum(any(vidCheck{mouse} == 2)) > 0 
+            tTypeInds(2) = 2;
+        end 
+        if sum(any(vidCheck{mouse} == 3)) > 0 
+            tTypeInds(3) = 3;
+        end 
+        if sum(any(vidCheck{mouse} == 4)) > 0 
+            tTypeInds(4) = 4; 
+        end 
     elseif optoQ == 0
         tTypeInds = 1;
     end 
@@ -1646,47 +1677,78 @@ if optoQ == 1
     uniqueLightTypes = cell(1,mouseNum);
     uniqueTrialLengths = cell(1,mouseNum);
     tTypes = cell(1,mouseNum);
+    trialData = cell(1,mouseNum); 
+    vidCheck = cell(1,mouseNum); 
+    mouseCheck = zeros(1,mouseNum); 
     % check to see if red or blue opto lights were used    
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE THE BELOW CODE IS WONKY NEED RELIABLE WAY OF KNOWING
-    % WHAT TTYPES ARE THERE BASED OF UNIQUE TRIAL LENGTHS AND TYPES
-    % TOGETHER 
-    % THEN NEED TO UPDATE THIS PART OF THE CODE FOR THE PREVIOUS ETA
-    % SECTION 
     for mouse = 1:mouseNum
-        for vid = 1:length(TrialTypes{mouse})    
-            uniqueLightTypes{mouse}{vid} = unique(TrialTypes{mouse}{vid}(:,2));
-            uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
-            %if the blue light is on for 2 seconds 
-            if any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
-                %ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
-                tTypes{mouse}{vid}(1) = 1;
+        for vid = 1:length(TrialTypes{mouse})   
+            % combine trialTypes and trialLengths 
+            trialData{mouse}{vid}(:,1) = TrialTypes{mouse}{vid}(:,2);
+            trialData{mouse}{vid}(:,2) = trialLengths{mouse}{vid};
+            % determine the combination of trialTypes and lengths that
+            % occur per vid 
+            %if the blue light is on for 2 seconds
+            if any(ismember(trialData{mouse}{vid},[1,floor(2*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(1) = 1;              
+            end 
             %if the blue light is on for 20 seconds 
-            elseif any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
-                tTypes{mouse}{vid}(2) = 1;
-            %if the red light is on for 2 seconds  
-            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
-                tTypes{mouse}{vid}(3) = 1;
-            %if the red light is on for 20 seconds  
-            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
-                tTypes{mouse}{vid}(4) = 1;
-            end                                    
+            if any(ismember(trialData{mouse}{vid},[1,floor(20*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(2) = 2;
+            end 
+            %if the red light is on for 2 seconds 
+            if any(ismember(trialData{mouse}{vid},[2,floor(2*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(3) = 3;
+            end 
+            %if the red light is on for 20 seconds    
+            if any(ismember(trialData{mouse}{vid},[2,floor(20*FPSstack{mouse})],'rows') == 1)
+                tTypes{mouse}{vid}(4) = 4;
+            end 
+            if any(tTypes{mouse}{vid} == 1)
+                vidCheck{mouse}(vid,1) = 1;
+            end 
+            if any(tTypes{mouse}{vid} == 2)
+                vidCheck{mouse}(vid,2) = 2;
+            end 
+            if any(tTypes{mouse}{vid} == 3)
+                vidCheck{mouse}(vid,3) = 3;
+            end 
+            if any(tTypes{mouse}{vid} == 4)
+                vidCheck{mouse}(vid,4) = 4;
+            end             
         end  
+        if sum(any(vidCheck{mouse} == 1)) > 0  
+            mouseCheck(mouse,1) = 1; 
+        end 
+        if sum(any(vidCheck{mouse} == 2)) > 0 
+            mouseCheck(mouse,2) = 2; 
+        end 
+        if sum(any(vidCheck{mouse} == 3)) > 0 
+            mouseCheck(mouse,3) = 3; 
+        end 
+        if sum(any(vidCheck{mouse} == 4)) > 0 
+            mouseCheck(mouse,4) = 4; 
+        end 
     end 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    if sum(any(mouseCheck == 1)) > 0 
+        tTypeInds(1) = 1;
+    end 
+    if sum(any(mouseCheck == 2)) > 0 
+        tTypeInds(2) = 2;
+    end 
+    if sum(any(mouseCheck == 3)) > 0 
+        tTypeInds(3) = 3;
+    end 
+    if sum(any(mouseCheck == 4)) > 0 
+        tTypeInds(4) = 4;
+    end 
 elseif optoQ == 0
     tTypeInds = 1;
 end 
 % make sure the number of trialTypes in the data matches up with what
 % you think it should
-if sum(tTypes(:) == 1) == tTypeNum
-    % make sure the trial type index is known for the code below 
-    tTypeInds = find(tTypes == 1);
-elseif sum(tTypes(:) == 1) ~= tTypeNum 
+tTnum = nnz(tTypeInds);
+if tTnum ~= tTypeNum
     disp('The number of trial types in the data does not match up with the number of trial types inputed by user!!!');
 end 
 
@@ -1889,11 +1951,11 @@ if ITIq == 1
     end 
 end 
 
-% resort eta data into vids 
+%% resort eta data into vids 
 Ceta2 = cell(1,mouseNum);
 Beta2 = cell(1,mouseNum);
 Veta2 = cell(1,mouseNum);
-for mouse = 1:mouseNum
+for mouse = 1%:mouseNum
     for tType = 1:tTypeNum
         if CAQ == 1
             for CaROI = 1:size(CaROIs{mouse},2)
