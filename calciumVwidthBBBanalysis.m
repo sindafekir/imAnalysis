@@ -335,7 +335,7 @@ if workspaceQ == 0
         for mouse = 1:mouseNum
             dirLabel = sprintf('WHERE IS THE DATA FOR MOUSE #%d? ',mouse);
             dataDir{mouse} = uigetdir('*.*',dirLabel);
-            cd(dataDir); % go to the right directory 
+            cd(dataDir{mouse}); % go to the right directory 
             uiopen('*.mat'); % get data  
             if BBBQ == 1     
                 bDataFullTrace1{mouse} = bDataFullTrace;
@@ -372,7 +372,7 @@ end
 
 uniqueLightTypes = cell(1,mouseNum);
 uniqueTrialLengths = cell(1,mouseNum);
-for mouse = 1:mouseNum
+for mouse = 3%1:mouseNum
     dir1 = dataDir{mouse};   
     % determine plotting start and end frames 
     plotStart = cell(1,length(bDataFullTrace{mouse}));
@@ -629,16 +629,17 @@ for mouse = 1:mouseNum
             uniqueLightTypes{mouse}{vid} = unique(TrialTypes{mouse}{vid}(:,2));
             uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
             %if the blue light is on for 2 seconds 
-            if ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+            if any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
+                %ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse})) == 1
                 tTypes(1) = 1;
             %if the blue light is on for 20 seconds 
-            elseif ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
+            elseif any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
                 tTypes(2) = 1;
             %if the red light is on for 2 seconds  
-            elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
                 tTypes(3) = 1;
             %if the red light is on for 20 seconds  
-            elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
+            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
                 tTypes(4) = 1;
             end                                    
         end  
@@ -1582,7 +1583,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
-%{
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -1644,26 +1645,39 @@ tTypeNum = input('How many different trial types are there? ');
 if optoQ == 1 
     uniqueLightTypes = cell(1,mouseNum);
     uniqueTrialLengths = cell(1,mouseNum);
+    tTypes = cell(1,mouseNum);
     % check to see if red or blue opto lights were used    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % PICK UP HERE THE BELOW CODE IS WONKY NEED RELIABLE WAY OF KNOWING
+    % WHAT TTYPES ARE THERE BASED OF UNIQUE TRIAL LENGTHS AND TYPES
+    % TOGETHER 
+    % THEN NEED TO UPDATE THIS PART OF THE CODE FOR THE PREVIOUS ETA
+    % SECTION 
     for mouse = 1:mouseNum
         for vid = 1:length(TrialTypes{mouse})    
             uniqueLightTypes{mouse}{vid} = unique(TrialTypes{mouse}{vid}(:,2));
             uniqueTrialLengths{mouse}{vid} = unique(trialLengths{mouse}{vid});
             %if the blue light is on for 2 seconds 
-            if ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
-                tTypes(1) = 1;
+            if any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
+                %ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
+                tTypes{mouse}{vid}(1) = 1;
             %if the blue light is on for 20 seconds 
-            elseif ismember(uniqueLightTypes{mouse}{vid},1,'rows') && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
-                tTypes(2) = 1;
+            elseif any(uniqueLightTypes{mouse}{vid} == 1) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
+                tTypes{mouse}{vid}(2) = 1;
             %if the red light is on for 2 seconds  
-            elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(2*FPSstack{mouse}))
-                tTypes(3) = 1;
+            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(2*FPSstack{mouse}))
+                tTypes{mouse}{vid}(3) = 1;
             %if the red light is on for 20 seconds  
-            elseif ismember(uniqueLightTypes{mouse}{vid},2) && ismember(uniqueTrialLengths{mouse}{vid},floor(20*FPSstack{mouse}))
-                tTypes(4) = 1;
+            elseif any(uniqueLightTypes{mouse}{vid} == 2) && any(uniqueTrialLengths{mouse}{vid} == floor(20*FPSstack{mouse}))
+                tTypes{mouse}{vid}(4) = 1;
             end                                    
         end  
     end 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 elseif optoQ == 0
     tTypeInds = 1;
 end 
@@ -1678,48 +1692,49 @@ end
 
 % determine min len for each trial type/length
 if CAQ == 1
-    if ismember(tTypeInds,1) && ismember(tTypeInds,3)
+    if any(tTypeInds == 1) && any(tTypeInds == 3)
+%         ismember(tTypeInds,1) && ismember(tTypeInds,3)
         minLen13 = min([size(Ceta{idx}{CaROIs{idx}(1)}{1},2),size(Ceta{idx}{CaROIs{idx}(1)}{3},2)]);
-    elseif ismember(tTypeInds,1) && ~ismember(tTypeInds,3)
+    elseif any(tTypeInds == 1) && ~any(tTypeInds == 3)
         minLen13 = size(Ceta{idx}{CaROIs{idx}(1)}{1},2);
-    elseif ~ismember(tTypeInds,1) && ismember(tTypeInds,3)
+    elseif ~any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = size(Ceta{idx}{CaROIs{idx}(1)}{3},2);
     end 
-    if ismember(tTypeInds,2) && ismember(tTypeInds,4)
+    if any(tTypeInds == 2) && any(tTypeInds == 4)
         minLen24 = min([size(Ceta{idx}{CaROIs{idx}(1)}{2},2),size(Ceta{idx}{CaROIs{idx}(1)}{4},2)]);
-    elseif ismember(tTypeInds,2) && ~ismember(tTypeInds,4)
+    elseif any(tTypeInds == 2) && ~any(tTypeInds == 4)
         minLen24 = size(Ceta{idx}{CaROIs{idx}(1)}{2},2);
-    elseif ~ismember(tTypeInds,2) && ismember(tTypeInds,4)
+    elseif ~any(tTypeInds == 2) && any(tTypeInds == 4)
         minLen24 = size(Ceta{idx}{CaROIs{idx}(1)}{4},2);
     end 
 elseif CAQ ~= 1 && BBBQ == 1
-    if ismember(tTypeInds,1) && ismember(tTypeInds,3)
+    if any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = min([size(Beta{idx}{1}{1},2),size(Beta{idx}{1}{3},2)]);
-    elseif ismember(tTypeInds,1) && ~ismember(tTypeInds,3)
+    elseif any(tTypeInds == 1) && ~any(tTypeInds == 3)
         minLen13 = size(Beta{idx}{1}{1},2);
-    elseif ~ismember(tTypeInds,1) && ismember(tTypeInds,3)
+    elseif ~any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = size(Beta{idx}{1}{3},2);
     end 
-    if ismember(tTypeInds,2) && ismember(tTypeInds,4)
+    if any(tTypeInds == 2) && any(tTypeInds == 4)
         minLen24 = min([size(Beta{idx}{1}{2},2),size(Beta{idx}{1}{4},2)]);
-    elseif ismember(tTypeInds,2) && ~ismember(tTypeInds,4)
+    elseif any(tTypeInds == 2) && ~any(tTypeInds == 4)
         minLen24 = size(Beta{idx}{1}{2},2);
-    elseif ~ismember(tTypeInds,2) && ismember(tTypeInds,4)
+    elseif ~any(tTypeInds == 2) && any(tTypeInds == 4)
         minLen24 = size(Beta{idx}{1}{4},2);
     end 
 elseif CAQ ~= 1 && VWQ == 1 
-    if ismember(tTypeInds,1) && ismember(tTypeInds,3)
+    if any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = min([size(Veta{idx}{1}{1},2),size(Veta{idx}{1}{3},2)]);
-    elseif ismember(tTypeInds,1) && ~ismember(tTypeInds,3)
+    elseif any(tTypeInds == 1) && ~any(tTypeInds == 3)
         minLen13 = size(Veta{idx}{1}{1},2);
-    elseif ~ismember(tTypeInds,1) && ismember(tTypeInds,3)
+    elseif ~any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = size(Veta{idx}{1}{3},2);
     end 
-    if ismember(tTypeInds,2) && ismember(tTypeInds,4)
+    if any(tTypeInds == 2) && any(tTypeInds == 4)
         minLen24 = min([size(Veta{idx}{1}{2},2),size(Veta{idx}{1}{4},2)]);
-    elseif ismember(tTypeInds,2) && ~ismember(tTypeInds,4)
+    elseif any(tTypeInds == 2) && ~any(tTypeInds == 4)
         minLen24 = size(Veta{idx}{1}{2},2);
-    elseif ~ismember(tTypeInds,2) && ismember(tTypeInds,4)
+    elseif ~any(tTypeInds == 2) && any(tTypeInds == 4)
         minLen24 = size(Veta{idx}{1}{4},2);
     end 
 end 
@@ -1774,6 +1789,10 @@ trials = cell(1,mouseNum);
 tTypeTrials = cell(1,mouseNum);
 for mouse = 1:mouseNum 
     % figure out what trial type each trial got sorted into 
+    count1 = 1;
+    count2 = 1;
+    count3 = 1;
+    count4 = 1;
     for vid = 1:length(TrialTypes{mouse})  
         if trialQ == 1 
             trials{mouse}{vid} = input(sprintf('Input what trials you want to average for mouse %d vid %d. ',mouse,vid));
@@ -1785,19 +1804,23 @@ for mouse = 1:mouseNum
             if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
                 %if it is a 2 sec trial 
                 if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))  
-                    tTypeTrials{mouse}{vid}{1}(trial) = trials{mouse}{vid}(trial);
+                    tTypeTrials{mouse}{vid}{1}(count1) = trials{mouse}{vid}(trial);
+                    count1 = count1 + 1;
                 %if it is a 20 sec trial
                 elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
-                    tTypeTrials{mouse}{vid}{2}(trial) = trials{mouse}{vid}(trial);
+                    tTypeTrials{mouse}{vid}{2}(count2) = trials{mouse}{vid}(trial);
+                    count2 = count2 + 1;
                 end 
             %if the red light is on 
             elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
                 %if it is a 2 sec trial 
                 if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))
-                    tTypeTrials{mouse}{vid}{3}(trial) = trials{mouse}{vid}(trial);
+                    tTypeTrials{mouse}{vid}{3}(count3) = trials{mouse}{vid}(trial);
+                    count3 = count3 + 1;
                 %if it is a 20 sec trial
                 elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
-                    tTypeTrials{mouse}{vid}{4}(trial) = trials{mouse}{vid}(trial);
+                    tTypeTrials{mouse}{vid}{4}(count4) = trials{mouse}{vid}(trial);
+                    count4 = count4 + 1;
                 end 
             end                 
         end 
@@ -1914,7 +1937,7 @@ for mouse = 1:mouseNum
     end 
 end 
 
-% select specific trials, resample, and plot data 
+%% select specific trials, resample, and plot data 
 snCetaArray = cell(1,tTypeNum);
 snBetaArray = cell(1,tTypeNum);
 snVetaArray = cell(1,tTypeNum);
