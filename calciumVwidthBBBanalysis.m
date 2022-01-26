@@ -296,6 +296,13 @@ end
 
 %}
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEED TO EDIT THE WAY THIS CODE SAVES OUT ETA DATA SO IT'S ONE PER MOUSE
+% NOT ALL MICE PER MOUSE 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
 %{
@@ -1614,7 +1621,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
-
+%{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -1951,7 +1958,7 @@ if ITIq == 1
     end 
 end 
 
-% resort eta data into vids 
+% resort eta data into vids
 Ceta2 = cell(1,mouseNum);
 Beta2 = cell(1,mouseNum);
 Veta2 = cell(1,mouseNum);
@@ -1960,15 +1967,17 @@ if CAQ == 1
         for CaROI = 1:size(CaROIs{mouse},2)                         
             for tType = 1:tTypeNum
                 count1 = 1;
-                for vid = 1:length(state_start_f{mouse})                    
+                for vid = 1:length(state_start_f{mouse})  
+                    
                      if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
                             for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})
                                 if count1 <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)
-                                Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(count1,:);                             
-                                count1 = count1 + 1;
+                                    Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(count1,:);                             
+                                    count1 = count1 + 1;
                                 end 
                             end                           
                      end 
+                     
                 end               
             end                
         end 
@@ -2013,8 +2022,7 @@ if VWQ == 1
     end 
 end 
 
-
-%% select specific trials, resample, and plot data 
+% select specific trials, resample, and plot data 
 snCetaArray = cell(1,tTypeNum);
 snBetaArray = cell(1,tTypeNum);
 snVetaArray = cell(1,tTypeNum);
@@ -2029,34 +2037,40 @@ for tType = 1:tTypeNum
         Ccounter1 = 1;
         Bcounter1 = 1; 
         Vcounter1 = 1; 
-        for vid = 1:length(state_start_f{mouse}) 
+        for vid = 1:length(state_start_f{mouse})             
             if tTypeInds(tType) == 1 || tTypeInds(tType) == 3  
                 if CAQ == 1                    
                     for CaROI = 1:size(CaROIs{mouse},2)
-                        for trace = 1:length(Ctraces{mouse}{vid}{tTypeInds(tType)})
-                            if size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1) >= Ctraces{mouse}{vid}{tTypeInds(tType)}(trace)
-                                CetaArray1{mouse}{tTypeInds(tType)}(Ccounter,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:),minLen13,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:),2)); 
-                                Ccounter = Ccounter + 1; 
+                        if vid <= length(Ceta2{mouse}{CaROIs{mouse}(CaROI)}) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}) == 0
+                            if size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid},2) >= tTypeInds(tType) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}) == 0 
+                                for trace = 1:size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1)
+                                    CetaArray1{mouse}{tTypeInds(tType)}(Ccounter,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),2)); 
+                                    Ccounter = Ccounter + 1;  
+                                end 
                             end 
                         end 
                     end 
                 end 
                 if BBBQ == 1                     
-                    for BBBroi = 1:size(Beta{mouse},2)  
-                        for trace = 1:length(Btraces{mouse}{vid}{tTypeInds(tType)})
-                            if size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1) >= Btraces{mouse}{vid}{tTypeInds(tType)}(trace)
-                                BetaArray1{mouse}{tTypeInds(tType)}(Bcounter,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:),minLen13,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
-                                Bcounter = Bcounter + 1; 
+                    for BBBroi = 1:size(Beta{mouse},2)
+                        if vid <= length(Beta2{mouse}{BBBroi}) && isempty(Beta2{mouse}{BBBroi}{vid}) == 0
+                            if size(Beta2{mouse}{BBBroi}{vid},2) >= tTypeInds(tType) && isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0 
+                                for trace = 1:size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1)
+                                    BetaArray1{mouse}{tTypeInds(tType)}(Bcounter,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
+                                    Bcounter = Bcounter + 1; 
+                                end 
                             end 
                         end 
                     end 
                 end 
                 if VWQ == 1                     
                     for VWroi = 1:size(Veta{mouse},2)
-                        for trace = 1:length(Vtraces{mouse}{vid}{tTypeInds(tType)})
-                            if size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1) >= Vtraces{mouse}{vid}{tTypeInds(tType)}(trace)
-                                VetaArray1{mouse}{tTypeInds(tType)}(Vcounter,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:),minLen13,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
-                                Vcounter = Vcounter + 1; 
+                        if vid <= length(Veta2{mouse}{VWroi}) &&  isempty(Veta2{mouse}{VWroi}{vid}) == 0
+                            if size(Veta2{mouse}{VWroi}{vid},2) >= tTypeInds(tType) && isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
+                                for trace = 1:size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1)
+                                    VetaArray1{mouse}{tTypeInds(tType)}(Vcounter,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
+                                    Vcounter = Vcounter + 1; 
+                                end 
                             end 
                         end 
                     end 
@@ -2064,30 +2078,41 @@ for tType = 1:tTypeNum
             elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4
                 if CAQ == 1                    
                     for CaROI = 1:size(CaROIs{mouse},2)
-                        for trace = 1:length(Ctraces{mouse}{vid}{tTypeInds(tType)})
-                            CetaArray1{mouse}{tTypeInds(tType)}(Ccounter1,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:),minLen24,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:),2)); 
-                            Ccounter1 = Ccounter1 + 1; 
+                        if vid <= length(Ceta2{mouse}{CaROIs{mouse}(CaROI)}) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}) == 0
+                            if size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid},2) >= tTypeInds(tType) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}) == 0 
+                                for trace = 1:size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1)
+                                    CetaArray1{mouse}{tTypeInds(tType)}(Ccounter1,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),2)); 
+                                    Ccounter1 = Ccounter1 + 1; 
+                                end 
+                            end 
                         end 
                     end 
                 end 
-                if BBBQ == 1 
-                    
+                if BBBQ == 1                    
                     for BBBroi = 1:size(Beta{mouse},2)  
-                        for trace = 1:length(Btraces{mouse}{vid}{tTypeInds(tType)})
-                            BetaArray1{mouse}{tTypeInds(tType)}(Bcounter1,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:),minLen24,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
-                            Bcounter1 = Bcounter1 + 1; 
+                        if vid <= length(Beta2{mouse}{BBBroi}) && isempty(Beta2{mouse}{BBBroi}{vid}) == 0
+                            if size(Beta2{mouse}{BBBroi}{vid},2) >= tTypeInds(tType) && isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0 
+                                for trace = 1:size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1)
+                                    BetaArray1{mouse}{tTypeInds(tType)}(Bcounter1,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
+                                    Bcounter1 = Bcounter1 + 1; 
+                                end 
+                            end                             
                         end 
                     end 
                 end 
                 if VWQ == 1 
                     for VWroi = 1:size(Veta{mouse},2)
-                        for trace = 1:length(Vtraces{mouse}{vid}{tTypeInds(tType)})
-                            VetaArray1{mouse}{tTypeInds(tType)}(Vcounter1,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:),minLen24,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
-                            Vcounter1 = Vcounter1 + 1; 
+                        if vid <= length(Veta2{mouse}{VWroi}) && isempty(Veta2{mouse}{VWroi}{vid}) == 0
+                            if size(Veta2{mouse}{VWroi}{vid},2) >= tTypeInds(tType) && isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
+                                for trace = 1:size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1)
+                                    VetaArray1{mouse}{tTypeInds(tType)}(Vcounter1,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
+                                    Vcounter1 = Vcounter1 + 1; 
+                                end 
+                            end 
                         end 
                     end 
                 end 
-            end 
+            end            
         end 
     end
     for mouse = 1:mouseNum  
@@ -2249,7 +2274,7 @@ for tType = 1:tTypeNum
         label = append(label,sprintf('  Calcium Signal. N = %d.',mouseNum));        
 %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         if optoQ == 1 % opto data 
-            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Times');
+            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         if optoQ == 0 % behavior data 
             title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
@@ -2314,7 +2339,7 @@ for tType = 1:tTypeNum
         label = append(label,sprintf('BBB Permeabilty. N = %d.',mouseNum));       
 %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
         if optoQ == 1 % opto data 
-            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Times');
+            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         if optoQ == 0 % behavior data 
             title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
@@ -2379,7 +2404,7 @@ for tType = 1:tTypeNum
         label = append(label,sprintf('Vessel width ROIs averaged. N = %d.',mouseNum));
 %         title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Arial');
         if optoQ == 1 % opto data 
-            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Times');
+            title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         if optoQ == 0 % behavior data 
             title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
@@ -2709,10 +2734,13 @@ FPSstack2 = zeros(1,size(fileList,1));
 fullRaster2 = cell(1,size(fileList,1));
 totalPeakNums2 = cell(1,size(fileList,1));   
 mean_ISIdiffsWholeExp_maxBin = cell(1,size(fileList,1));   
-medISI = cell(1,size(fileList,1));   
+medISI = cell(1,size(fileList,1));  
+
 for mouse = 1:size(fileList,1)
+    
     MatFileName = fileList(mouse).name;
     load(MatFileName,'-regexp','^(?!indCaROIplotQ|allCaROIplotQ|winSec|trialQ|ITIq|trialLenThreshTime|histQ|ITIq2|termQ$)\w')
+    
     winFrames = (winSec*FPSstack);
     % find peaks that are significant relative to the entire data set
     stdTrace = cell(1,length(vidList)); 
@@ -3433,6 +3461,7 @@ for mouse = 1:size(fileList,1)
     %}
 
     clearvars -except FPSstack2 fullRaster2 totalPeakNums2 etaDir fileList indCaROIplotQ allCaROIplotQ winSec trialQ ITIq trialLenThreshTime histQ ITIq2 termQ mean_ISIdiffsWholeExp_maxBin medISI relativeToMean         
+
 end 
 
 %%
@@ -5754,9 +5783,10 @@ terminals = CaROIs;
 
 % FPSstack = cell(1,mouseNum);
 % tTypeQ = Mat.tTypeQ;
-% for mouse = 1:mouseNum
+% for mouse = 1:6%mouseNum
 %     FPSstack{mouse} = FPSstack2{mouse};
 % end 
+
 if mouseDistQ == 0 
     saveDir = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE CA ROI DISTANCE DATA FOR MULTIPLE MICE?');
     cd(saveDir);
@@ -5800,139 +5830,145 @@ for mouse = 1:mouseNum
             filtTime = input('How many seconds do you want to smooth your data by? ');
         end             
         SCdataPeaks{mouse} = sortedCdata{mouse};
-        for vid = 1:length(vidList{mouse})
+        for vid = 1:length(vidList2{mouse})
             for ccell = 1:length(terminals{mouse})
-                for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
-                    if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
-                        if BBBQ == 1
-                            for BBBroi = 1:length(sortedBdata{mouse}{vid})
-                                [sB_Data] = MovMeanSmoothData(sortedBdata{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
-                                SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = sB_Data;
-                                %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(any(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
-                            end
-                        end 
-                        if VWQ == 1
-                            for VWroi = 1:length(sortedVdata{mouse}{vid})
-                                [sV_Data] = MovMeanSmoothData(sortedVdata{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
-                                SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = sV_Data;
-                                %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(any(SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per},2),:);
+               if vid <= length(sortedCdata{mouse}) 
+                    for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
+                        if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                            if BBBQ == 1
+                                for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                    [sB_Data] = MovMeanSmoothData(sortedBdata{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
+                                    SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = sB_Data;
+                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                    SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(any(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                                end
                             end 
+                            if VWQ == 1
+                                for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                    [sV_Data] = MovMeanSmoothData(sortedVdata{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per},filtTime,FPSstack{mouse});
+                                    SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = sV_Data;
+                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                    SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(any(SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per},2),:);
+                                end 
+                            end 
+                            %remove rows full of 0s if there are any b = a(any(a,2),:)
+                            SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},2),:);                 
                         end 
-                        %remove rows full of 0s if there are any b = a(any(a,2),:)
-                        SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},2),:);                 
-                    end 
-                end 
+                    end
+               end 
             end 
         end 
     end     
     
     %normalize
-     for vid = 1:length(vidList{mouse})
+     for vid = 1:length(vidList2{mouse})
         for ccell = 1:length(terminals{mouse})
-            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
-                if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
-                    %the data needs to be added to because there are some
-                    %negative gonig points which mess up the normalizing 
-                    if BBBQ == 1
-                        for BBBroi = 1:length(sortedBdata{mouse}{vid})
-                            % determine the minimum value, add space (+100)
-                            minValToAdd = abs(ceil(min(min(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}))))+100;
-                            % add min value 
-                            sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
-                        end
-                    end 
-                    % determine the minimum value, add space (+100)
-                    minValToAdd = abs(ceil(min(min(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}))))+100;
-                    % add min value
-                    sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
-                    if VWQ == 1
-                        for VWroi = 1:length(sortedVdata{mouse}{vid})
-                            % determine the minimum value, add space (+100)
-                            minValToAdd = abs(ceil(min(min(SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}))))+100;
-                            % add min value
-                            sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+            if vid <= length(sortedCdata{mouse}) 
+                for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                    if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                        %the data needs to be added to because there are some
+                        %negative gonig points which mess up the normalizing 
+                        if BBBQ == 1
+                            for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value 
+                                sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                            end
                         end 
-                    end 
-                    
-                    %normalize to baselineTime sec before changePt (calcium peak
-                    %onset) BLstart 
-                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}) == 0
-                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 0
-                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1},2)/2)-4;
-                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2}) == 0
-                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2},2)/2)-4;
-                        end   
-                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}) == 0
-                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 0
-                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1},2)/2)-4;
-                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2}) == 0
-                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2},2)/2)-4;
-                        end  
-                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}) == 0
+                        % determine the minimum value, add space (+100)
+                        minValToAdd = abs(ceil(min(min(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                        % add min value
+                        sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                        if VWQ == 1
+                            for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value
+                                sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                            end 
+                        end 
+
+                        %normalize to baselineTime sec before changePt (calcium peak
+                        %onset) BLstart 
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}) == 0
+                            if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 0
+                                changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                            elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2}) == 0
+                                changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                            end   
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}) == 0
+                            if isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 0
+                                changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1},2)/2)-4;
+                            elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2}) == 0
+                                changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2},2)/2)-4;
+                            end  
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}) == 0
+                            if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                                changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                            elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                                changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                            end   
+                        end 
+
                         if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
                             changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
                         elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
                             changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
                         end   
-                    end 
-                                                                
-                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
-                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
-                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
-                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
-                    end   
-    %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
-                    BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+        %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
+                        BLstart = changePt - floor(baselineTime*FPSstack{mouse});
 
-                    if BBBQ == 1
-                        for BBBroi = 1:length(sortedBdata{mouse}{vid})
-                            if isempty(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0
-                                SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = ((sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                        if BBBQ == 1
+                            for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                if isempty(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0
+                                    SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per} = ((sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedBdata2{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                                end 
                             end 
                         end 
-                    end 
-                    if isempty(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
-                        SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
-                    end 
-                    if VWQ == 1
-                        if isempty(sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}) == 0 
-                            for VWroi = 1:length(sortedVdata{mouse}{vid})
-                                SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = ((sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                        if isempty(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                            SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                        end 
+                        if VWQ == 1
+                            if isempty(sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}) == 0 
+                                for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                    SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per} = ((sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per})./(nanmean(sortedVdata2{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                                end 
                             end 
                         end 
-                    end 
-                end               
+                    end               
+                end
             end 
         end 
      end     
     
     count = 1;
-    for vid = 1:length(vidList{mouse})   
-        for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
-            for ccell = 1:size(CaROIs{mouse},2)
-                if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}) == 0 
-                    if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
-                        for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
-                            if BBBQ == 1
-                                for BBBroi = 1:length(sortedBdata{mouse}{vid})
-                                    allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
-                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                    allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per} = allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(any(allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+    for vid = 1:length(vidList2{mouse})  
+        if vid <= length(sortedCdata{mouse}) 
+            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                for ccell = 1:size(CaROIs{mouse},2)
+                    if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}) == 0 
+                        if isempty(SBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}) == 0 
+                            for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
+                                if BBBQ == 1
+                                    for BBBroi = 1:length(sortedBdata{mouse}{vid})
+                                        allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNBdataPeaks{mouse}{vid}{BBBroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per} = allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per}(any(allBTraces3{mouse}{BBBroi}{terminals{mouse}(ccell)}{per},2),:);
+                                    end 
                                 end 
-                            end 
-                            if VWQ == 1
-                                for VWroi = 1:length(sortedVdata{mouse}{vid})
-                                    allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
-                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
-                                    allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per} = allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(any(allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per},2),:);                                    
+                                if VWQ == 1
+                                    for VWroi = 1:length(sortedVdata{mouse}{vid})
+                                        allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(count,:) = (SNVdataPeaks{mouse}{vid}{VWroi}{terminals{mouse}(ccell)}{per}(peak,:)-100); 
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per} = allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per}(any(allVTraces3{mouse}{VWroi}{terminals{mouse}(ccell)}{per},2),:);                                    
+                                    end 
                                 end 
+                                allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
+                                %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
+                                count = count + 1;
                             end 
-                            allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
-                            %remove rows full of 0s if there are any b = a(any(a,2),:)
-                            allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
-                            count = count + 1;
                         end 
                     end 
                 end 
@@ -6758,19 +6794,21 @@ for mouse = 1:length(mouseNums)
         %resample and sort data
         if BBBQ == 1
             for BBBroi = 1:length(BBBrois{mouse})
-                for trace1 = 1:size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
-                    close_Btraces_allMice{per}(counter1,:) = (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},2)));% * (size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_closeBtraces);                              
-                    counter1 = counter1 + 1;
-                end 
-                for trace1 = 1:size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
-                    far_Btraces_allMice{per}(counter2,:) = resample(farBTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);                     
-                    counter2 = counter2 + 1;
-                end 
-                for trace1 = 1:size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
-                    Btraces_allMice{per}(counter7,:) = resample(BTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
-                    counter7 = counter7 + 1;
-                end 
-            end    
+                if BBBroi <= length(closeBTraceArray{mouseNums(mouse)})
+                    for trace1 = 1:size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
+                        close_Btraces_allMice{per}(counter1,:) = (resample(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(closeBTraceArray{mouseNums(mouse)}{BBBroi}{per},2)));% * (size(closeBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_closeBtraces);                              
+                        counter1 = counter1 + 1;
+                    end 
+                    for trace1 = 1:size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
+                        far_Btraces_allMice{per}(counter2,:) = resample(farBTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(farBTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);                     
+                        counter2 = counter2 + 1;
+                    end 
+                    for trace1 = 1:size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},1)
+                        Btraces_allMice{per}(counter7,:) = resample(BTraceArray{mouseNums(mouse)}{BBBroi}{per}(trace1,:),minLen,size(BTraceArray{mouseNums(mouse)}{BBBroi}{per},2));% * (size(farBTraceArray{mouseNums(mouse)}{BBBroi},1)/totalNum_farBtraces);  
+                        counter7 = counter7 + 1;
+                    end 
+                end    
+            end 
         end 
         for trace2 = 1:size(closeCTraceArray{mouseNums(mouse)}{per},1)
             close_Ctraces_allMice{per}(counter3,:) = (resample(closeCTraceArray{mouseNums(mouse)}{per}(trace2,:),minLen,size(closeCTraceArray{mouseNums(mouse)}{per},2)));% * (size(closeCTraceArray{mouseNums(mouse)},1)/totalNum_closeCtraces);           
@@ -6783,20 +6821,22 @@ for mouse = 1:length(mouseNums)
         for trace2 = 1:size(CTraceArray{mouseNums(mouse)}{per},1)
             Ctraces_allMice{per}(counter8,:) = resample(CTraceArray{mouseNums(mouse)}{per}(trace2,:),minLen,size(CTraceArray{mouseNums(mouse)}{per},2));% * * (size(farCTraceArray{mouseNums(mouse)},1)/totalNum_farCtraces);  
             counter8 = counter8 + 1;
-        end   
+        end 
         if VWQ == 1
             for VWroi = 1:VWroiNum(mouse)
-                for trace3 = 1:size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},1)                  
-                    close_Vtraces_allMice{per}(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},2)));% * * (size(closeVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_closeVtraces);                               
-                    counter5 = counter5 + 1;
-                end 
-                for trace3 = 1:size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},1)                    
-                    far_Vtraces_allMice{per}(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);                    
-                    counter6 = counter6 + 1;
-                end 
-                for trace3 = 1:size(VTraceArray{mouseNums(mouse)}{VWroi}{per},1)
-                    Vtraces_allMice{per}(counter9,:) = resample(VTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(VTraceArray{mouseNums(mouse)}{VWroi}{per},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
-                    counter9 = counter9 + 1;
+                if VWroi <= length(closeVTraceArray{mouseNums(mouse)})
+                    for trace3 = 1:size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},1)                  
+                        close_Vtraces_allMice{per}(counter5,:) = (resample(closeVTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(closeVTraceArray{mouseNums(mouse)}{VWroi}{per},2)));% * * (size(closeVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_closeVtraces);                               
+                        counter5 = counter5 + 1;
+                    end 
+                    for trace3 = 1:size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},1)                    
+                        far_Vtraces_allMice{per}(counter6,:) = resample(farVTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(farVTraceArray{mouseNums(mouse)}{VWroi}{per},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);                    
+                        counter6 = counter6 + 1;
+                    end 
+                    for trace3 = 1:size(VTraceArray{mouseNums(mouse)}{VWroi}{per},1)
+                        Vtraces_allMice{per}(counter9,:) = resample(VTraceArray{mouseNums(mouse)}{VWroi}{per}(trace3,:),minLen,size(VTraceArray{mouseNums(mouse)}{VWroi}{per},2));% * * (size(farVTraceArray{mouseNums(mouse)}{VWroi},1)/totalNum_farVtraces);  
+                        counter9 = counter9 + 1;
+                    end 
                 end 
             end 
         end 
@@ -6843,7 +6883,8 @@ end
 
 realMouseNum = input('How many unique mice are apart of this data set? ');
 CaROIcount1 = zeros(1,mouseNum);
-spikeCount1 = zeros(1,mouseNum);
+spikeCount1 = cell(1,length(allCTraces3{mouse}{CaROIs{mouse}(2)}));
+spikeCount = cell(1,length(allCTraces3{mouse}{CaROIs{mouse}(2)}));
 count = 1;
 for mouse = 1:mouseNum
     CaROIcount1(mouse) = length(CaROIs{mouse});
@@ -6852,17 +6893,18 @@ for mouse = 1:mouseNum
             for ccell = 1:length(closeCTraces{mouse})
                 if isempty(closeCTraces{mouse}{ccell}) == 0 
                     if isempty(allCTraces3{mouse}{terminals{mouse}(ccell)}) == 0
-                        spikeCount1(count) = size(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},1);
+                        spikeCount1{per}(count) = size(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},1);
                         count = count + 1;
                     end 
                 end 
             end 
         end 
+        spikeCount{per} = sum(spikeCount1{per});
     end 
 end 
 CaROIcount = sum(CaROIcount1);
-spikeCount = sum(spikeCount1);
 
+%% plot
 for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
     if isempty(allCTraces3{1}{CaROIs{1}(2)}{per}) == 0 
         %average the data 
@@ -6947,6 +6989,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         Ccolors = [0,0,1;0,0.5,1;0,1,1];
         Vcolors = [0,0,0;0.4,0.4,0.4;0.7,0.7,0.7];
         if dataQ == 0 
+            if per == 1 
+                tTypeQ = input('Input 0 if this is behavior data. Input 1 if this is opto data. ');
+            end 
             if tTypeQ == 0 
                 if per == 1 
                     perLabel = ("Peaks from entire experiment. ");
@@ -7031,8 +7076,8 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ylim([-BBBbelowZero BBBaboveZero])
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);              
-            txt = {sprintf('%d animals',realMouseNum),sprintf('%d sessions',mouseNum),sprintf('%d Ca ROIs',CaROIcount),sprintf('%d Ca spikes',spikeCount)};
-            text(2,-0.5,txt,'FontSize',14)
+            txt = {sprintf('%d animals',realMouseNum),sprintf('%d sessions',mouseNum),sprintf('%d Ca ROIs',CaROIcount),sprintf('%d Ca spikes',spikeCount{per})};
+            text(2,-7,txt,'FontSize',14)
             
             fig = figure;
             ax=gca;
@@ -7062,12 +7107,12 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
             alpha(0.3)
         %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
-            ylabel({'Spike Triggered';'BBB Permeability Percent Change'},'FontName','Arial')
+            ylabel({'BBB Permeability Percent Change'},'FontName','Arial')
         %     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
             set(gca,'YColor',[0 0 0]); 
             ylim([-BBBbelowZero BBBaboveZero])
         %     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
-            text(2,-0.5,txt,'FontSize',14)
+            text(2,-7,txt,'FontSize',14)
         end 
 
         % plot close and far Ca ROI and VW data (all mice averaged) overlaid 
@@ -7134,7 +7179,7 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);  
             ylim([-VWbelowZero VWaboveZero])
-            txt = {sprintf('%d animals',realMouseNum),sprintf('%d sessions',mouseNum),sprintf('%d Ca ROIs',CaROIcount),sprintf('%d Ca spikes',spikeCount)};
+            txt = {sprintf('%d animals',realMouseNum),sprintf('%d sessions',mouseNum),sprintf('%d Ca ROIs',CaROIcount),sprintf('%d Ca spikes',spikeCount{per})};
             text(2,-0.02,txt,'FontSize',14)
 
             fig = figure;
