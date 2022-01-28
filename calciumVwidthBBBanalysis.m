@@ -1651,12 +1651,22 @@ for mouse = 1:mouseNum
     if VWQ == 1 
         Veta{mouse} = Mat.Veta;
     end 
+    if ~iscell(Mat.FPSstack)
+        FPSstack{mouse} = Mat.FPSstack;
+        state_start_f{mouse} = Mat.state_start_f;
+        TrialTypes{mouse} = Mat.TrialTypes;
+        state_end_f{mouse} = Mat.state_end_f;
+        trialLengths{mouse} = Mat.trialLengths;
+    end    
     if mouse == 1 
-        FPSstack = Mat.FPSstack;
-        state_start_f = Mat.state_start_f;
-        TrialTypes = Mat.TrialTypes;
-        state_end_f = Mat.state_end_f;
-        trialLengths = Mat.trialLengths;
+        if iscell(Mat.FPSstack)
+            FPSstack = Mat.FPSstack;
+            state_start_f = Mat.state_start_f;
+            TrialTypes = Mat.TrialTypes;
+            state_end_f = Mat.state_end_f;
+            trialLengths = Mat.trialLengths;
+        end 
+        
         optoQ = Mat.optoQ;
     end 
 end 
@@ -1664,14 +1674,15 @@ end
 %% figure out the size you should resample your data to 
 %the min length names (dependent on length(tTypes))are hard coded in 
 
-FPSstack2 = zeros(1,mouseNum);
-for mouse = 1:mouseNum
-    FPSstack2(mouse) = FPSstack{mouse};
-end 
 % FPSstack2 = zeros(1,mouseNum);
 % for mouse = 1:mouseNum
 %     FPSstack2(mouse) = FPSstack{mouse};
 % end 
+FPSstack2 = zeros(1,mouseNum);
+for mouse = 1:mouseNum
+    FPSstack2(mouse) = FPSstack{mouse};
+end 
+
 
 minFPSstack = FPSstack2 == min(FPSstack2);
 idx = find(minFPSstack ~= 0, 1, 'first');
@@ -2414,11 +2425,10 @@ for tType = 1:tTypeNum
     end 
 end 
 
-%% overlay traces 
-
-pCAQ = input('Input 1 to plot calcium data. ');
-pBBBQ = input('Input 1 to plot BBB data. ');
-pVWQ = input('Input 1 to plot vessel width data. ');
+% overlay traces 
+pCAQ = CAQ; %input('Input 1 to plot calcium data. ');
+pBBBQ = BBBQ; %input('Input 1 to plot BBB data. ');
+pVWQ = VWQ; %input('Input 1 to plot vessel width data. ');
 for tType = 1:tTypeNum
     fig = figure;             
     hold all;
@@ -2428,15 +2438,37 @@ for tType = 1:tTypeNum
     if pCAQ == 1 
         plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)
     end 
+    
+    ax=gca;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;
+    ax.FontSize = 30;
+    ax.FontName = 'Times';
+    xlim([1 length(AVbData{tTypeInds(tType)})])
+    ylim([-0.3 0.4])
+    xlabel('time (s)')
+    ylabel('calcium percent change')
+    % initialize empty string array 
+    label = strings;
+    label = append(label,'  Ca ROIs averaged');
+    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
+    set(fig,'position', [100 100 900 900])          
     if pBBBQ == 1
+        %add right y axis tick marks 
+        yyaxis right 
         plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
         patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+        alpha(0.5) 
+        ylabel('BBB percent change')
+        ylim([-10 20])
+        set(gca,'YColor',[0 0 0]);   
     end 
     if pVWQ == 1 
+        %add right y axis tick marks 
+        yyaxis right
         plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
         patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')     
-    end 
-    
+    end    
     if tTypeInds(tType) == 1 
 %         plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
 %         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
@@ -2463,21 +2495,7 @@ for tType = 1:tTypeNum
         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+10);
         FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
     end
-    ax=gca;
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;
-    ax.FontSize = 30;
-    ax.FontName = 'Times';
-    xlim([1 length(AVbData{tTypeInds(tType)})])
-    ylim([-5 5])
-    xlabel('time (s)')
-    ylabel('percent change')
-    % initialize empty string array 
-    label = strings;
-    label = append(label,'  Ca ROIs averaged');
-    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-    set(fig,'position', [100 100 900 900])
-    alpha(0.5)   
+
 end 
 
 %% combine red light trials and overlay traces 
