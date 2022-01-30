@@ -302,7 +302,7 @@ end
 % NOT ALL MICE PER MOUSE 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%{
+
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
 
@@ -1632,14 +1632,14 @@ for mouse = 1:mouseNum
                     Frames = size(nsCeta{1}{tTypeInds(tType)},2);        
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*1:Frames_post_stim_start)/FPSstack{mouse})+1);
-                    FrameVals = floor((1:FPSstack{mouse}*1:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+1);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4 
                     Frames = size(nsCeta{1}{tTypeInds(tType)},2);
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
-                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*1:Frames_post_stim_start)/FPSstack{mouse})+10);
-                    FrameVals = floor((1:FPSstack{mouse}*1:Frames)-1); 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*2:Frames_post_stim_start)/FPSstack{mouse})+10);
+                    FrameVals = floor((1:FPSstack{mouse}*2:Frames)-1); 
                 end 
                 if CApQ == 1
                     plot(AVcData{1}{tTypeInds(tType)}-100,'b','LineWidth',3)                    
