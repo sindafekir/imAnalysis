@@ -1672,12 +1672,16 @@ for mouse = 1:mouseNum
                 ylabel('calcium percent change')
                 % initialize empty string array 
                 if optoQ == 0 % behavior data 
-                    label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
-                    label1.FontSize = 30;
-                    label1.FontName = 'Arial';
-                    label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
-                    label2.FontSize = 30;
-                    label2.FontName = 'Arial';
+%                     label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+%                     label1.FontSize = 30;
+%                     label1.FontName = 'Arial';
+% %                     label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack{mouse}))*2),'-k',{'water reward'},'LineWidth',2);
+%                     label2.FontSize = 30;
+%                     label2.FontName = 'Arial';
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    plot([round(baselineEndFrame+((FPSstack{mouse})*2))-1 round(baselineEndFrame+((FPSstack{mouse})*2))-1], [-5000 5000], 'k','LineWidth',2)
+                    plot([baselineEndFrame-1 baselineEndFrame-1], [-5000 5000], 'k','LineWidth',2) 
+                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 end 
                 label = strings;
                 label = append(label,sprintf('  Ca ROIs averaged. Mouse #%d.',mouse));
@@ -2257,26 +2261,26 @@ for tType = 1:tTypeNum
     %smooth tType data 
     if smoothQ == 0 
         if CAQ == 1
-            sCetaAvs{tTypeInds(tType)} = CetaArray{tTypeInds(tType)};
+            sCetaAvs{tTypeInds(tType)} = CetaArray{tTypeInds(tType)}+100;
         end 
         if BBBQ == 1
-            sBetaAvs{tTypeInds(tType)} = BetaArray{tTypeInds(tType)};
+            sBetaAvs{tTypeInds(tType)} = BetaArray{tTypeInds(tType)}+100;
         end
         if VWQ == 1
-            sVetaAvs{tTypeInds(tType)} = VetaArray{tTypeInds(tType)};
+            sVetaAvs{tTypeInds(tType)} = VetaArray{tTypeInds(tType)}+100;
         end
     elseif smoothQ == 1 
         if CAQ == 1
             sCetaAv =  MovMeanSmoothData(CetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
-            sCetaAvs{tTypeInds(tType)} = sCetaAv; 
+            sCetaAvs{tTypeInds(tType)} = sCetaAv+100; 
         end 
         if BBBQ == 1
             sBetaAv =  MovMeanSmoothData(BetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
-            sBetaAvs{tTypeInds(tType)} = sBetaAv; 
+            sBetaAvs{tTypeInds(tType)} = sBetaAv+100; 
         end 
         if VWQ == 1
             sVetaAv =  MovMeanSmoothData(VetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
-            sVetaAvs{tTypeInds(tType)} = sVetaAv; 
+            sVetaAvs{tTypeInds(tType)} = sVetaAv+100; 
         end
     end 
     % baseline tType data to average value between 0 sec and -baselineInput sec (0 sec being stim
@@ -2439,8 +2443,8 @@ for tType = 1:tTypeNum
         elseif tTypeInds(tType) == 4 
             plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
-            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
-            FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+10);
+            FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
             label3 = ('20 sec Red Light');
         end
         ax=gca;
@@ -2463,7 +2467,7 @@ for tType = 1:tTypeNum
             title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
         end 
         set(fig,'position', [100 100 900 900])
-        alpha(0.5)      
+        alpha(0.3)      
     end 
     %plot VW data 
     if VWQ == 1
@@ -2532,7 +2536,7 @@ for tType = 1:tTypeNum
     end 
 end 
 
-% overlay traces 
+%% overlay traces 
 pCAQ = CAQ; %input('Input 1 to plot calcium data. ');
 pBBBQ = BBBQ; %input('Input 1 to plot BBB data. ');
 pVWQ = VWQ; %input('Input 1 to plot vessel width data. ');
@@ -2544,32 +2548,81 @@ for tType = 1:tTypeNum
     Frames_post_stim_start = (Frames-1)/2; 
     if pCAQ == 1 
         plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)
+    end          
+    if tTypeInds(tType) == 1 
+        if optoQ == 0
+            plot([ceil(abs(Frames_pre_stim_start)-10) ceil(abs(Frames_pre_stim_start)-10)], [-5000000 5000000], '-k','LineWidth',2)
+            plot([(ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2) (ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2)], [-5000000 5000000], '-k','LineWidth',2)
+            
+%             label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+%             label1.FontSize = 30;
+%             label1.FontName = 'Arial';
+%             label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+%             label2.FontSize = 30;
+%             label3 = ('Behavior Data');
+        elseif optoQ == 1 
+            plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], '-k','LineWidth',2)
+            plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], '-k','LineWidth',2) 
+            label3 = ('2 sec Blue Light');
+        end 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
+        FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
+    elseif tTypeInds(tType) == 3 
+        plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], '-k','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], '-k','LineWidth',2)   
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
+        FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+        label3 = ('2 sec Red Light');
+    elseif tTypeInds(tType) == 2 
+        plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], '-k','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], '-k','LineWidth',2)   
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+        FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+        label3 = ('20 sec Blue Light');
+    elseif tTypeInds(tType) == 4 
+        plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], '-k','LineWidth',2)
+        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], '-k','LineWidth',2) 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+10);
+        FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
+        label3 = ('20 sec Red Light');
+    end
+    if optoQ == 1 % opto data 
+        title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
     end 
-    
+    if optoQ == 0 % behavior data 
+        title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+    end 
     ax=gca;
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;
     ax.FontSize = 30;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     xlim([1 length(AVbData{tTypeInds(tType)})])
-    ylim([-0.3 0.4])
+    ylim([min(AVbData{tTypeInds(tType)}-400) max(AVbData{tTypeInds(tType)})+300])
     xlabel('time (s)')
     ylabel('calcium percent change')
     % initialize empty string array 
     label = strings;
-    label = append(label,'  Ca ROIs averaged');
-    title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Times');
-    set(fig,'position', [100 100 900 900])          
+    label = append(label,sprintf('BBB Permeabilty. N = %d.',mouseNum));       
+%         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
+    if optoQ == 1 % opto data 
+        title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+    end 
+    if optoQ == 0 % behavior data 
+        title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+    end 
     if pBBBQ == 1
         %add right y axis tick marks 
-        yyaxis right 
+%         yyaxis right 
         plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
         x = 1:length(CI_bLow{tTypeInds(tType)});
-        patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+%         patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
         alpha(0.5) 
         ylabel('BBB percent change')
-        ylim([-10 20])
+%         ylim([-10 20])
+        ylim([-0.6 11])
         set(gca,'YColor',[0 0 0]);   
+%         set(gca, 'YScale', 'log')
     end 
     if pVWQ == 1 
         %add right y axis tick marks 
@@ -2577,33 +2630,8 @@ for tType = 1:tTypeNum
         plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
         patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')     
     end    
-    if tTypeInds(tType) == 1 
-%         plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'b','LineWidth',2)
-%         plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2) 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+1);
-        FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
-        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
-        label1.FontSize = 30;
-        label1.FontName = 'Arial';
-        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
-        label2.FontSize = 30;    
-    elseif tTypeInds(tType) == 3 
-        plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000 5000], 'r','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2)   
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+1);
-        FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
-    elseif tTypeInds(tType) == 2 
-        plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'b','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'b','LineWidth',2)   
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+10);
-        FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
-    elseif tTypeInds(tType) == 4 
-        plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000 5000], 'r','LineWidth',2)
-        plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'r','LineWidth',2) 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+10);
-        FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
-    end
-
+    set(fig,'position', [100 100 900 900])
+    alpha(0.3)      
 end 
 
 %% combine red light trials and overlay traces 
@@ -2671,22 +2699,22 @@ Frames = size(AVbData{1},2);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
 if pCAQ == 1 
-    plot(allRedAVcData/100,'b','LineWidth',3)  
+    plot(allRedAVcData-100,'b','LineWidth',3)  
     ylabel('calcium percent change')
 end 
 if pBBBQ == 1
-    yyaxis right 
-    plot(allRedAVbData/100,'r','LineWidth',3)
+%     yyaxis right 
+    plot(allRedAVbData-100,'r','LineWidth',3)
     ylabel('BBB permeability percent change')
-    patch([x fliplr(x)],[CI_bLow/100 fliplr(CI_bHigh/100)],'r','EdgeColor','none')   
-    alpha(0.5)
+%     patch([x fliplr(x)],[CI_bLow-100 fliplr(CI_bHigh-100)],'r','EdgeColor','none')   
+    alpha(0.3)
     set(gca,'YColor',[0 0 0]);
 end 
 if pVWQ == 1 
     plot(allRedAVvData/100,'k','LineWidth',3)
 end 
 % plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
-plot([baselineEndFrame baselineEndFrame], [-5000 5000], 'k:','LineWidth',2)   
+plot([baselineEndFrame baselineEndFrame], [-5000 5000],'--k','LineWidth',2)   
 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+1);
 FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
 ax=gca;
@@ -2695,7 +2723,8 @@ ax.XTickLabel = sec_TimeVals;
 ax.FontSize = 30;
 ax.FontName = 'Arial';
 xlim([1 length(AVbData{1})])
-ylim([-5 5])
+% ylim([-5 5])
+ylim([-0.6 11])
 xlabel('time (s)')
 % initialize empty string array 
 label = strings;
@@ -2704,6 +2733,7 @@ label = append(label,'  Ca ROIs averaged');
 % title({'Optogenetic Stimulation';'of DAT+ VTA Axons'},'FontName','Times');
 % legend('BBB Permeability')
 set(fig,'position', [100 100 900 900]) 
+% set(gca, 'YScale', 'log')
 %}
 %% compare terminal calcium activity - create correlograms
 %{
@@ -3844,14 +3874,24 @@ if workspaceQ == 0
     end 
 end 
 
+% bDataFullTrace = bDataFullTrace{1};
+% cDataFullTrace = cDataFullTrace{1};
+% vDataFullTrace = vDataFullTrace{1};
+% terminals = terminals{1};
+% state_start_f = state_start_f{1};
+% state_end_f = state_end_f{1};
+% trialLengths = trialLengths{1};
+% FPSstack = FPSstack{1};
+% vidList = vidList{1};
 
 %%
-tTypeQ = input('Input 1 to separate data by light condition. Input 0 otherwise. ');
-if tTypeQ == 0 
-    optoQ = input('Input 1 if this is opto data. Input 0 if this is behavior data. ');
+optoQ = input('Input 1 if this is opto data. Input 0 if this is behavior data. ');
+if optoQ == 1
+    tTypeQ = input('Input 1 to separate data by light condition. Input 0 otherwise. ');
 end 
+
 dataSaveQ = input('Input 1 to save the data out. '); 
-for mouse = 1:mouseNum
+for mouse = 1%:mouseNum
     dir1 = dataDir{mouse};   
     % find peaks and then plot where they are in the entire TS 
     stdTrace = cell(1,length(vidList{mouse}));
@@ -5007,7 +5047,7 @@ for mouse = 1:mouseNum
                     Frames_pre_stim_start = -((Frames-1)/2); 
                     Frames_post_stim_start = (Frames-1)/2; 
                     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-                    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                    FrameVals = round((1:FPSstack{mouse}:Frames))+9; 
 
                     %DETERMINE 95% CI
                     if BBBQ == 1
@@ -5095,7 +5135,7 @@ for mouse = 1:mouseNum
 %                             xLimEnd = floor(24*FPSstack{mouse}); 
                             xlim([1 size(AVSNCdataPeaks{per},2)])
                             ylim([min(AVSNCdataPeaks{per}-CaBufferSpace) max(AVSNCdataPeaks{per}+CaBufferSpace)])
-                            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
+%                             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
                             if per == 1 
@@ -5868,7 +5908,7 @@ for mouse = 1:mouseNum
         fileName = 'STAfigData_dataSeparatedByLightCondition.mat';
     end 
     
-    %% average across BBB ROIs 
+    % average across BBB ROIs 
     if BBBroiAVq
         AVSNBdataPeaks4 = cell(1,length(AVSNBdataPeaks3{1}));
         for per = 1:length(AVSNBdataPeaks3{1})
@@ -5927,7 +5967,7 @@ for mouse = 1:mouseNum
             Frames_pre_stim_start = -((Frames-1)/2); 
             Frames_post_stim_start = (Frames-1)/2; 
             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-            FrameVals = round((1:FPSstack{mouse}:Frames)+5); 
+            FrameVals = round((1:FPSstack{mouse}:Frames)+9); 
             ax=gca;
             hold all
             plot(AVSNCdataPeaks{per},'b','LineWidth',4)
@@ -5964,7 +6004,7 @@ for mouse = 1:mouseNum
             end             
         end 
     end
-    %%
+    
     if dataSaveQ == 1 
         save(fullfile(dir1,fileName));
     end     
@@ -7322,9 +7362,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             fig = figure;
             ax=gca;
             hold all
-            plot(avCdata{per},'b','LineWidth',4)
-            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
-            alpha(0.3)
+%             plot(avCdata{per},'b','LineWidth',4)
+%             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+%             alpha(0.3)
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
@@ -7332,27 +7372,23 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             xlabel('time (s)','FontName','Arial')
             ylabel('calcium signal percent change','FontName','Arial')
             xlim([1 minLen])
-        %     ylim([-45 130])
-            ylim([min(avCdata{per}-CaBufferSpace) max(avCdata{per}+CaBufferSpace)])
+%             ylim([min(avCdata{per}-CaBufferSpace) max(avCdata{per}+CaBufferSpace)])
             set(fig,'position', [500 100 900 800])
             alpha(0.3)
             title({'All mice Averaged.';perLabel})
-            %add right y axis tick marks for a specific DOD figure. 
-        %     plot(opto_allRedAVbData_3,'r:','LineWidth',4);
-        %     patch([opto_x_2 fliplr(opto_x_2)],[(opto_CI_bLow_3) (fliplr(opto_CI_bHigh_3))],'r','EdgeColor','none')
-        %     alpha(0.3)
-        %     ylabel({'Optogenetically Triggered';'BBB Permeability Percent Change'},'FontName','Times')
-            yyaxis right 
+%             yyaxis right 
             p(1) = plot(avBdata{per},'r','LineWidth',4);
-            patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
+%             patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
             alpha(0.3)
         %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel({'BBB Permeability Percent Change'},'FontName','Arial')
         %     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
             set(gca,'YColor',[0 0 0]); 
-            ylim([-BBBbelowZero BBBaboveZero])
+%             ylim([-BBBbelowZero BBBaboveZero])
+            ylim([-0.6 11])
         %     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
             text(2,-7,txt,'FontSize',14)
+%             set(gca, 'YScale', 'log')
         end 
 
         % plot close and far Ca ROI and VW data (all mice averaged) overlaid 
