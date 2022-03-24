@@ -1,7 +1,7 @@
-function [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod)
+function [HDFchart,state_start_f,state_end_f,FPS,vel_wheel_data,TrialTypes] = makeHDFchart_redBlueStim(state,framePeriod,vid,mouse)
 
 % parse hdf file      
-[parsedStruct,~]=csParser2;
+[parsedStruct,~]=csParser2(vid,mouse);
 teensyState = parsedStruct.teensyStates; 
 sessionTime = parsedStruct.sessionTime;
 vel_wheel_data=parsedStruct.velocity;

@@ -143,7 +143,7 @@ for mouse = 1:mouseNum
         trialLengths2 = cell(1,length(vidList{mouse}));
         velWheelData = cell(1,length(vidList{mouse}));       
         for vid = 1:length(vidList{mouse})
-            [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod);
+            [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod,vidList{mouse}(vid),mouse);
             state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
             state_end_f2{vid} = floor(stateendf/FPSadjust);
             TrialTypes{mouse}{vid} = trialTypes(1:length(statestartf),:);
@@ -165,8 +165,9 @@ for mouse = 1:mouseNum
             for vid = 1:length(vidList{mouse})
                 for trial = 1:length(state_start_f{mouse}{vid})
     %                 if abs(trialLengths2{vid}(trial) - stimFrameLengths(frameLength)) < 5
-                        state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(frameLength);
-                        trialLengths{mouse}{vid}(trial) = state_end_f{mouse}{vid}(trial)-state_start_f{mouse}{vid}(trial);
+                    [~,c] = min(abs(trialLengths2{vid}(trial)-stimFrameLengths));
+                    trialLengths{mouse}{vid}(trial) = stimFrameLengths(c);
+                    state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(c);
     %                 end 
                 end 
             end 
@@ -197,8 +198,11 @@ for mouse = 1:mouseNum
         for frameLength = 1:length(stimFrameLengths)
             for vid = 1:length(vidList{mouse})
                 for trial = 1:length(state_start_f{mouse}{vid})
-                    state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(frameLength);
-                    trialLengths{mouse}{vid}(trial) = state_end_f{mouse}{vid}(trial)-state_start_f{mouse}{vid}(trial);
+                    % determine the correct length of frames per trial
+                    % (accounts for rounding/discrete time issues 
+                    [~,c] = min(abs(trialLengths2{vid}(trial)-stimFrameLengths));
+                    trialLengths{mouse}{vid}(trial) = stimFrameLengths(c);
+                    state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(c);
                 end 
             end 
         end 
@@ -296,12 +300,24 @@ end
 
 %}
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length
+
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEED TO EDIT THE WAY THIS CODE SAVES OUT ETA DATA SO IT'S ONE PER MOUSE
 % NOT ALL MICE PER MOUSE 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE- I DONT THINK I NEED TO EDIT THE ETA CODE TO SAVE THE DATA
+% OUT BETTER IF I START WITH A NEW BATCH (FROM BEGINNING OF THIS CODE)
+
+% I UPDATED THE BATCH .MAT FOR 56-57-58 RUN THIS NEXT TO SAVE OUT EACH ETA
+% FILE PER MOUSE. THEN CONFIRM THAT THIS DATA LOOKS RIGHT BEFORE UPDATING
+% THE CODE - DO BOOTSTRAPPING AND RANDOM SHUFFLE NEXT 
+
+
 %{
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
@@ -319,7 +335,13 @@ numTtypes = input('How many different trial types are there? ');
 
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
-if workspaceQ == 0 
+if workspaceQ == 1
+    dataDir = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR MOUSE #%d? ',mouse);
+        dataDir{mouse} = uigetdir('*.*',dirLabel);
+    end 
+elseif workspaceQ == 0 
     dataOrgQ = input('Input 1 if the batch processing data is saved in one .mat file. Input 0 if you need to open multiple .mat files (one per animal). ');
     if dataOrgQ == 1 
         dirLabel = 'WHERE IS THE BATCH DATA? ';
@@ -687,10 +709,10 @@ for mouse = 1:mouseNum
     if optoQ == 1 
         % make sure the number of trialTypes in the data matches up with what
         % you think it should
-        if sum(tTypes(:) == 1) == numTtypes 
-            % make sure the trial type index is known for the code below 
-            tTypeInds = find(tTypes == 1);
-        elseif sum(tTypes(:) == 1) ~= numTtypes 
+        if length(nonzeros(unique(vidCheck{mouse}))) == numTtypes 
+            % make sure the trial type index is known for the code below
+            tTypeInds = nonzeros(unique(vidCheck{mouse}));
+        elseif length(nonzeros(unique(vidCheck{mouse}))) ~= numTtypes
             disp('The number of trial types in the data does not match up with the number of trial types inputed by user!!!');
         end 
     end 
@@ -1713,7 +1735,7 @@ for mouse = 1:mouseNum
             end 
         end 
     end 
-    fileName = 'ETAfigData.mat';
+    fileName = sprintf('ETAfigDataMouse%d.mat',mouse);
     if saveDataQ == 1 
         save(fullfile(dir1,fileName));
     end 
@@ -1774,13 +1796,6 @@ for mouse = 1:mouseNum
         optoQ = Mat.optoQ;
     end 
 end 
-
-% FPSstack = FPSstack{3};
-% state_start_f = state_start_f{3};
-% TrialTypes = TrialTypes{3};
-% state_end_f = state_end_f{3};
-% trialLengths = trialLengths{3};
-          
 
 %% figure out the size you should resample your data to 
 %the min length names (dependent on length(tTypes))are hard coded in 
@@ -2081,6 +2096,7 @@ if ITIq == 1
 end 
 
 % resort eta data into vids
+tTypeInds = nonzeros(unique(tTypeInds));
 Ceta2 = cell(1,mouseNum);
 Beta2 = cell(1,mouseNum);
 Veta2 = cell(1,mouseNum);
@@ -2089,8 +2105,7 @@ if CAQ == 1
         for CaROI = 1:size(CaROIs{mouse},2)                         
             for tType = 1:tTypeNum
                 count1 = 1;
-                for vid = 1:length(state_start_f{mouse})  
-                    
+                for vid = 1:length(state_start_f{mouse})                      
                      if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
                             for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})
                                 if count1 <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)
@@ -2098,8 +2113,7 @@ if CAQ == 1
                                     count1 = count1 + 1;
                                 end 
                             end                           
-                     end 
-                     
+                     end                      
                 end               
             end                
         end 
@@ -2144,7 +2158,7 @@ if VWQ == 1
     end 
 end 
 
-% select specific trials, resample, and plot data 
+%% select specific trials, resample, and plot data 
 snCetaArray = cell(1,tTypeNum);
 snBetaArray = cell(1,tTypeNum);
 snVetaArray = cell(1,tTypeNum);
@@ -2473,7 +2487,7 @@ for tType = 1:tTypeNum
     if VWQ == 1
         fig = figure;             
         hold all;
-        Frames = size(AVbData{tTypeInds(tType)},2);        
+        Frames = size(AVvData{tTypeInds(tType)},2);        
         Frames_pre_stim_start = -((Frames-1)/2); 
         Frames_post_stim_start = (Frames-1)/2;   
         plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
@@ -2524,7 +2538,6 @@ for tType = 1:tTypeNum
         % initialize empty string array 
         label = strings;
         label = append(label,sprintf('Vessel width ROIs averaged. N = %d.',mouseNum));
-%         title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Arial');
         if optoQ == 1 % opto data 
             title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
         end 
@@ -2597,8 +2610,8 @@ for tType = 1:tTypeNum
     ax.XTickLabel = sec_TimeVals;
     ax.FontSize = 30;
     ax.FontName = 'Arial';
-    xlim([1 length(AVbData{tTypeInds(tType)})])
-    ylim([min(AVbData{tTypeInds(tType)}-400) max(AVbData{tTypeInds(tType)})+300])
+    xlim([1 length(AVvData{tTypeInds(tType)})])
+    ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
     xlabel('time (s)')
     ylabel('calcium percent change')
     % initialize empty string array 
@@ -2620,13 +2633,14 @@ for tType = 1:tTypeNum
         alpha(0.5) 
         ylabel('BBB percent change')
 %         ylim([-10 20])
-        ylim([-0.6 11])
+        ylim([-0.6 4])
         set(gca,'YColor',[0 0 0]);   
 %         set(gca, 'YScale', 'log')
     end 
     if pVWQ == 1 
         %add right y axis tick marks 
         yyaxis right
+        x = 1:length(CI_vLow{tTypeInds(tType)});
         plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
         patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')     
     end    
@@ -2711,7 +2725,8 @@ if pBBBQ == 1
     set(gca,'YColor',[0 0 0]);
 end 
 if pVWQ == 1 
-    plot(allRedAVvData/100,'k','LineWidth',3)
+    plot(allRedAVvData-100,'k','LineWidth',3)
+    ylabel('vessel width percent change')
 end 
 % plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
 plot([baselineEndFrame baselineEndFrame], [-5000 5000],'--k','LineWidth',2)   
@@ -2722,9 +2737,9 @@ ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;
 ax.FontSize = 30;
 ax.FontName = 'Arial';
-xlim([1 length(AVbData{1})])
+xlim([1 length(AVvData{1})])
 % ylim([-5 5])
-ylim([-0.6 11])
+ylim([-0.6 4])
 xlabel('time (s)')
 % initialize empty string array 
 label = strings;
@@ -3815,6 +3830,14 @@ sgtitle(label,'FontSize',25);
 % based on ca peak location, smooth and normalize to baseline period, and
 % plot calcium spike triggered averages (per mouse - optimized for batch
 % processing, saves the data out per mouse)
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEED TO EDIT THE WAY THIS CODE SAVES OUT ETA DATA SO IT'S ONE PER MOUSE
+% NOT ALL MICE PER MOUSE 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 %{
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
@@ -4836,7 +4859,7 @@ for mouse = 1%:mouseNum
     %                             xLimEnd = floor(24*FPSstack{mouse}); 
                                 xlim([1 size(AVSNCdataPeaks{terms(ccell)}{per},2)])
                                 ylim([min(AVSNCdataPeaks{terms(ccell)}{per}-CaBufferSpace) max(AVSNCdataPeaks{terms(ccell)}{per}+CaBufferSpace)])
-                                patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
+%                                 patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],[0 0 0.5],'EdgeColor','none')            
                                 set(fig,'position', [500 100 900 800])
                                 alpha(0.3)
                                 if per == 1 
@@ -7385,7 +7408,7 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         %     title({'DAT+ Axon Spike Triggered Average';'Red Light'})
             set(gca,'YColor',[0 0 0]); 
 %             ylim([-BBBbelowZero BBBaboveZero])
-            ylim([-0.6 11])
+            ylim([-0.6 4])
         %     legend('STA Red Light','STA Light Off', 'Optogenetic ETA')
             text(2,-7,txt,'FontSize',14)
 %             set(gca, 'YScale', 'log')
@@ -7461,8 +7484,8 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             fig = figure;
             ax=gca;
             hold all
-            plot(avCdata{per},'b','LineWidth',4)
-            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+%             plot(avCdata{per},'b','LineWidth',4)
+%             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
             alpha(0.3)
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
@@ -7475,7 +7498,7 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             set(fig,'position', [500 100 900 800])
             alpha(0.3)
             %add right y axis tick marks for a specific DOD figure. 
-            yyaxis right 
+%             yyaxis right 
             p(1) = plot(avVdata{per},'k','LineWidth',4);
             patch([x fliplr(x)],[(CI_vLow) (fliplr(CI_vHigh))],'k','EdgeColor','none')
             alpha(0.3)
@@ -7483,7 +7506,7 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ylabel('Vessel Width Percent Change','FontName','Arial')
         %     title('Close Terminals. All mice Averaged.')
             title({'All mice Averaged.';perLabel})
-            ylim([-0.1 0.25])
+            ylim([-0.6 1.2])
             alpha(0.3)
             set(gca,'YColor',[0 0 0]);   
             ylim([-VWbelowZero VWaboveZero])

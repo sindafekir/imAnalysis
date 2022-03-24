@@ -1,4 +1,4 @@
-function [parsedStruct,csBehavHDFInfo]=csParser2
+function [parsedStruct,csBehavHDFInfo]=csParser2(vid,mouse)
 
 % csParser2, a function that parses behavior data from csDiscrim/csVisual
 % arguments: "csBehaviorHDFPath" is a path to the hdf file you want to
@@ -12,7 +12,7 @@ function [parsedStruct,csBehavHDFInfo]=csParser2
 
 %% 
 
-[tHDF,tPth]=uigetfile('*.hdf','WHAT HDF?');
+[tHDF,tPth]=uigetfile('*.hdf',sprintf('WHAT HDF FOR MOUSE %d VID %d?',mouse,vid));
 csBehaviorHDFPath=[tPth tHDF];
 
 csBehavHDFInfo=h5info(csBehaviorHDFPath);
