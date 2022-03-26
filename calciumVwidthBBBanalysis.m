@@ -1752,7 +1752,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
-%{
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -1788,18 +1788,82 @@ for mouse = 1:mouseNum
         TrialTypes{mouse} = Mat.TrialTypes;
         state_end_f{mouse} = Mat.state_end_f;
         trialLengths{mouse} = Mat.trialLengths;
-    end    
-    if mouse == 1 
-        if iscell(Mat.FPSstack)
+    elseif iscell(Mat.FPSstack)
+        if mouse == 1 
             FPSstack = Mat.FPSstack;
             state_start_f = Mat.state_start_f;
             TrialTypes = Mat.TrialTypes;
             state_end_f = Mat.state_end_f;
             trialLengths = Mat.trialLengths;
         end 
-        
-        optoQ = Mat.optoQ;
     end 
+    optoQ = Mat.optoQ; 
+end 
+
+dataSetQ = input('Input 1 to load another data set and append to the relevant variables. '); 
+while dataSetQ == 1
+    %get the additional data you need 
+    mouseNum2 = input('How many mice are there? ');
+    FPSstack2 = cell(1,mouseNum2); 
+    Ceta2 = cell(1,mouseNum2); 
+    Beta2 = cell(1,mouseNum2); 
+    Veta2 = cell(1,mouseNum2); 
+    CaROIs2 = cell(1,mouseNum2); 
+    state_start_f2 = cell(1,mouseNum2); 
+    state_end_f2 = cell(1,mouseNum2); 
+    TrialTypes2 = cell(1,mouseNum2);
+    trialLengths2 = cell(1,mouseNum2);
+    for mouse = 1:mouseNum2
+        regImDir = uigetdir('*.*',sprintf('WHERE IS THE ETA DATA FOR MOUSE #%d?',mouse));
+        cd(regImDir);
+        MatFileName = uigetfile('*.*',sprintf('SELECT THE ETA DATA FOR MOUSE #%d',mouse));
+        Mat = matfile(MatFileName);
+        if CAQ == 1 
+            Ceta2{mouse} = Mat.Ceta;
+            CaROIs2{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
+        end 
+        if BBBQ == 1
+            Beta2{mouse} = Mat.Beta;
+        end 
+        if VWQ == 1 
+            Veta2{mouse} = Mat.Veta;
+        end 
+        if ~iscell(Mat.FPSstack)
+            FPSstack2{mouse} = Mat.FPSstack;
+            state_start_f2{mouse} = Mat.state_start_f;
+            TrialTypes2{mouse} = Mat.TrialTypes;
+            state_end_f2{mouse} = Mat.state_end_f;
+            trialLengths2{mouse} = Mat.trialLengths;
+        elseif iscell(Mat.FPSstack)
+            if mouse == 1 
+                FPSstack2 = Mat.FPSstack;
+                state_start_f2 = Mat.state_start_f;
+                TrialTypes2 = Mat.TrialTypes;
+                state_end_f2 = Mat.state_end_f;
+                trialLengths2 = Mat.trialLengths;
+            end 
+        end 
+    end 
+    % append new data to original variables 
+    mouseNum1 = mouseNum; mouseNum = mouseNum + mouseNum2;
+    for mouse = 1:mouseNum2
+        if CAQ == 1 
+            Ceta{mouseNum1+mouse} = Ceta2{mouse};
+            CaROIs{mouseNum1+mouse} = CaROIs2{mouse};
+        end 
+        if BBBQ == 1
+            Beta{mouseNum1+mouse} = Beta2{mouse};
+        end 
+        if VWQ == 1 
+            Veta{mouseNum1+mouse} = Veta2{mouse};
+        end 
+        FPSstack{mouseNum1+mouse} = FPSstack2{mouse};
+        state_start_f{mouseNum1+mouse} = state_start_f2{mouse};
+        TrialTypes{mouseNum1+mouse} = TrialTypes2{mouse};
+        state_end_f{mouseNum1+mouse} = state_end_f2{mouse};
+        trialLengths{mouseNum1+mouse} = trialLengths2{mouse};
+    end
+    dataSetQ = input('Input 1 to load another data set and append to the relevant variables. Input 0 otherwise. '); 
 end 
 
 %% figure out the size you should resample your data to 
@@ -1904,15 +1968,14 @@ end
 % determine min len for each trial type/length
 if CAQ == 1
     if any(tTypeInds == 1) && any(tTypeInds == 3)
-%         ismember(tTypeInds,1) && ismember(tTypeInds,3)
-        minLen13 = min([size(Ceta{idx}{CaROIs{idx}(1)}{1},2),size(Ceta{idx}{CaROIs{idx}(1)}{3},2)]);
+        minLen13 = min(nonzeros([size(Ceta{idx}{CaROIs{idx}(1)}{1},2),size(Ceta{idx}{CaROIs{idx}(1)}{3},2)]));
     elseif any(tTypeInds == 1) && ~any(tTypeInds == 3)
         minLen13 = size(Ceta{idx}{CaROIs{idx}(1)}{1},2);
     elseif ~any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = size(Ceta{idx}{CaROIs{idx}(1)}{3},2);
     end 
     if any(tTypeInds == 2) && any(tTypeInds == 4)
-        minLen24 = min([size(Ceta{idx}{CaROIs{idx}(1)}{2},2),size(Ceta{idx}{CaROIs{idx}(1)}{4},2)]);
+        minLen24 = min(nonzeros([size(Ceta{idx}{CaROIs{idx}(1)}{2},2),size(Ceta{idx}{CaROIs{idx}(1)}{4},2)]));
     elseif any(tTypeInds == 2) && ~any(tTypeInds == 4)
         minLen24 = size(Ceta{idx}{CaROIs{idx}(1)}{2},2);
     elseif ~any(tTypeInds == 2) && any(tTypeInds == 4)
@@ -1920,14 +1983,14 @@ if CAQ == 1
     end 
 elseif CAQ ~= 1 && BBBQ == 1
     if any(tTypeInds == 1) && any(tTypeInds == 3)
-        minLen13 = min([size(Beta{idx}{1}{1},2),size(Beta{idx}{1}{3},2)]);
+        minLen13 = min(nonzeros([size(Beta{idx}{1}{1},2),size(Beta{idx}{1}{3},2)]));
     elseif any(tTypeInds == 1) && ~any(tTypeInds == 3)
         minLen13 = size(Beta{idx}{1}{1},2);
     elseif ~any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = size(Beta{idx}{1}{3},2);
     end 
     if any(tTypeInds == 2) && any(tTypeInds == 4)
-        minLen24 = min([size(Beta{idx}{1}{2},2),size(Beta{idx}{1}{4},2)]);
+        minLen24 = min(nonzeros([size(Beta{idx}{1}{2},2),size(Beta{idx}{1}{4},2)]));
     elseif any(tTypeInds == 2) && ~any(tTypeInds == 4)
         minLen24 = size(Beta{idx}{1}{2},2);
     elseif ~any(tTypeInds == 2) && any(tTypeInds == 4)
@@ -1935,14 +1998,14 @@ elseif CAQ ~= 1 && BBBQ == 1
     end 
 elseif CAQ ~= 1 && VWQ == 1 
     if any(tTypeInds == 1) && any(tTypeInds == 3)
-        minLen13 = min([size(Veta{idx}{1}{1},2),size(Veta{idx}{1}{3},2)]);
+        minLen13 = min(nonzeros([size(Veta{idx}{1}{1},2),size(Veta{idx}{1}{3},2)]));
     elseif any(tTypeInds == 1) && ~any(tTypeInds == 3)
         minLen13 = size(Veta{idx}{1}{1},2);
     elseif ~any(tTypeInds == 1) && any(tTypeInds == 3)
         minLen13 = size(Veta{idx}{1}{3},2);
     end 
     if any(tTypeInds == 2) && any(tTypeInds == 4)
-        minLen24 = min([size(Veta{idx}{1}{2},2),size(Veta{idx}{1}{4},2)]);
+        minLen24 = min(nonzeros([size(Veta{idx}{1}{2},2),size(Veta{idx}{1}{4},2)]));
     elseif any(tTypeInds == 2) && ~any(tTypeInds == 4)
         minLen24 = size(Veta{idx}{1}{2},2);
     elseif ~any(tTypeInds == 2) && any(tTypeInds == 4)
@@ -2168,6 +2231,14 @@ snCetaArray = cell(1,tTypeNum);
 snBetaArray = cell(1,tTypeNum);
 snVetaArray = cell(1,tTypeNum);
 for tType = 1:tTypeNum
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %PICK UP HERE. FOR EACH FOR MOUSE LOOP BELOW, NEED TO ADD IN
+    %CONDITIONAL STATEMENT, BECAUSE NOT ALL MICE HAVE ALL TRIAL TYPES 
+    
+    
     Ccounter2 = 1;
     Bcounter2 = 1;
     Vcounter2 = 1;
@@ -3835,26 +3906,30 @@ sgtitle(label,'FontSize',25);
 % based on ca peak location, smooth and normalize to baseline period, and
 % plot calcium spike triggered averages (per mouse - optimized for batch
 % processing, saves the data out per mouse)
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEED TO EDIT THE WAY THIS CODE SAVES OUT ETA DATA SO IT'S ONE PER MOUSE
-% NOT ALL MICE PER MOUSE 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
+%{
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
-if workspaceQ == 0 
+if workspaceQ == 1 
+    dataDir = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR MOUSE #%d? ',mouse);
+        dataDir{mouse} = uigetdir('*.*',dirLabel);
+    end 
+elseif workspaceQ == 0 
     dataOrgQ = input('Input 1 if the batch processing data is saved in one .mat file. Input 0 if you need to open multiple .mat files (one per animal). ');
     if dataOrgQ == 1 
         dirLabel = 'WHERE IS THE BATCH DATA? ';
-        dataDir = uigetdir('*.*',dirLabel);
-        cd(dataDir); % go to the right directory 
-        uiopen('*.mat'); % get data  
+        dataDir2 = uigetdir('*.*',dirLabel);
+        cd(dataDir2); % go to the right directory 
+        uiopen('*.mat'); % get data          
+        dataDir = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR MOUSE #%d? ',mouse);
+            dataDir{mouse} = uigetdir('*.*',dirLabel);
+        end 
     elseif dataOrgQ == 0
         mouseNum = input('How many mice are there? ');
+        dataDir2 = cell(1,mouseNum);
         dataDir = cell(1,mouseNum);
         bDataFullTrace1 = cell(1,mouseNum);
         cDataFullTrace1 = cell(1,mouseNum);
@@ -3868,8 +3943,8 @@ if workspaceQ == 0
         vidList1 = cell(1,mouseNum);
         for mouse = 1:mouseNum
             dirLabel = sprintf('WHERE IS THE DATA FOR MOUSE #%d? ',mouse);
-            dataDir{mouse} = uigetdir('*.*',dirLabel);
-            cd(dataDir{mouse}); % go to the right directory 
+            dataDir2{mouse} = uigetdir('*.*',dirLabel);
+            cd(dataDir2{mouse}); % go to the right directory 
             uiopen('*.mat'); % get data  
             if BBBQ == 1     
                 bDataFullTrace1{mouse} = bDataFullTrace;
@@ -3886,7 +3961,9 @@ if workspaceQ == 0
             state_end_f1{mouse} = state_end_f;              
             trialLengths1{mouse} = trialLengths;      
             FPSstack1{mouse} = FPSstack;             
-            vidList1{mouse} = vidList; 
+            vidList1{mouse} = vidList;     
+            dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR MOUSE #%d? ',mouse);
+            dataDir{mouse} = uigetdir('*.*',dirLabel);   
         end 
         clear bDataFullTrace cDataFullTrace vDataFullTrace terminals state_start_f TrialTypes state_end_f trialLengths FPSstack vidList
         bDataFullTrace = bDataFullTrace1;
@@ -3902,16 +3979,6 @@ if workspaceQ == 0
     end 
 end 
 
-% bDataFullTrace = bDataFullTrace{1};
-% cDataFullTrace = cDataFullTrace{1};
-% vDataFullTrace = vDataFullTrace{1};
-% terminals = terminals{1};
-% state_start_f = state_start_f{1};
-% state_end_f = state_end_f{1};
-% trialLengths = trialLengths{1};
-% FPSstack = FPSstack{1};
-% vidList = vidList{1};
-
 %%
 optoQ = input('Input 1 if this is opto data. Input 0 if this is behavior data. ');
 if optoQ == 1
@@ -3919,7 +3986,7 @@ if optoQ == 1
 end 
 
 dataSaveQ = input('Input 1 to save the data out. '); 
-for mouse = 1%:mouseNum
+for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
     % find peaks and then plot where they are in the entire TS 
     stdTrace = cell(1,length(vidList{mouse}));
@@ -4449,7 +4516,7 @@ for mouse = 1%:mouseNum
                             for VWroi = 1:length(vDataFullTrace{mouse}{1})
                                 % determine the minimum value, add space (+100)
                                 minValToAdd = abs(ceil(min(min(SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per}))))+100;
-                                % add min value
+                                % add min valuedataDir = cell(1,mouseNum);
                                 sortedVdata2{vid}{VWroi}{terminals{mouse}(ccell)}{per} = SVdataPeaks{vid}{VWroi}{terminals{mouse}(ccell)}{per} + minValToAdd;
                             end 
                         end 
@@ -5931,9 +5998,9 @@ for mouse = 1%:mouseNum
      
     % save the .mat file per mouse
     if tTypeQ == 0 
-        fileName = 'STAfigData_allLightConditions.mat';
+        fileName = sprintf('STAfigData_allLightConditions_%d.mat',mouse);
     elseif tTypeQ == 1 
-        fileName = 'STAfigData_dataSeparatedByLightCondition.mat';
+        fileName = sprintf('STAfigData_dataSeparatedByLightCondition_%d.mat',mouse);
     end 
     
     % average across BBB ROIs 
