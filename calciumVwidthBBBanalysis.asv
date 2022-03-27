@@ -2230,15 +2230,7 @@ end
 snCetaArray = cell(1,tTypeNum);
 snBetaArray = cell(1,tTypeNum);
 snVetaArray = cell(1,tTypeNum);
-for tType = 1:tTypeNum
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %PICK UP HERE. FOR EACH FOR MOUSE and vid LOOP BELOW, NEED TO ADD IN
-    %CONDITIONAL STATEMENT, BECAUSE NOT ALL MICE HAVE ALL TRIAL TYPES 
-    
-    
+for tType = 1:tTypeNum    
     Ccounter2 = 1;
     Bcounter2 = 1;
     Vcounter2 = 1;
@@ -2248,120 +2240,105 @@ for tType = 1:tTypeNum
         Vcounter = 1; 
         Ccounter1 = 1;
         Bcounter1 = 1; 
-        Vcounter1 = 1; 
-        
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % PICK UP HERE. NEED TO REORGANIZE BELOW LOOPS SO THAT THE VID
-        % ITERATION COMMENTED OUT BELOW MAKES SENSE. NEED TO USE CETA2 AS
-        % VID COUNTER IN VID FOR LOOP
-        
-         
-%         for vid = 1:length(Ceta2{mouse}{CaROIs{mouse}(CaROI)})  
-%             if isempty(Ceta2{mouse}{CaROIs{mouse}(1)}{vid}{tTypeInds(tType)}) == 0 
-                if tTypeInds(tType) == 1 || tTypeInds(tType) == 3  
-                  if CAQ == 1                         
-                    for CaROI = 1:size(CaROIs{mouse},2)
-                        for vid = 1:length(Ceta2{mouse}{CaROIs{mouse}(CaROI)})  
-                            if isempty(Ceta2{mouse}{CaROIs{mouse}(1)}{vid}{tTypeInds(tType)}) == 0  
-                                for trace = 1:size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1)
-                                    CetaArray1{mouse}{tTypeInds(tType)}(Ccounter,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),2)); 
-                                    Ccounter = Ccounter + 1;  
-                                end   
-                            end 
-                        end                                 
+        Vcounter1 = 1;        
+        if tTypeInds(tType) == 1 || tTypeInds(tType) == 3  
+          if CAQ == 1                         
+            for CaROI = 1:size(CaROIs{mouse},2)
+                for vid = 1:length(Ceta2{mouse}{CaROIs{mouse}(CaROI)})  
+                    if isempty(Ceta2{mouse}{CaROIs{mouse}(1)}{vid}{tTypeInds(tType)}) == 0  
+                        for trace = 1:size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1)
+                            CetaArray1{mouse}{tTypeInds(tType)}(Ccounter,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),2)); 
+                            Ccounter = Ccounter + 1;  
+                        end   
                     end 
-                  end 
-                    if BBBQ == 1                     
-                        for BBBroi = 1:size(Beta{mouse},2)
-                            for vid = 1:length(Beta2{mouse}{BBBroi})  
-                                if isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0        
-                                    for trace = 1:size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1)
-                                        BetaArray1{mouse}{tTypeInds(tType)}(Bcounter,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
-                                        Bcounter = Bcounter + 1; 
-                                    end                                    
-                                end 
+                end                                 
+            end 
+          end 
+            if BBBQ == 1                     
+                for BBBroi = 1:size(Beta{mouse},2)
+                    for vid = 1:length(Beta2{mouse}{BBBroi})  
+                        if isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0        
+                            for trace = 1:size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1)
+                                BetaArray1{mouse}{tTypeInds(tType)}(Bcounter,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
+                                Bcounter = Bcounter + 1; 
+                            end                                    
+                        end 
+                    end 
+                end 
+            end 
+            if VWQ == 1                     
+                for VWroi = 1:size(Veta{mouse},2)                  
+                    for vid = 1:length(Veta2{mouse}{VWroi})  
+                        if isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
+                            for trace = 1:size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1)
+                                VetaArray1{mouse}{tTypeInds(tType)}(Vcounter,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
+                                Vcounter = Vcounter + 1; 
                             end 
                         end 
                     end 
-                    if VWQ == 1                     
-                        for VWroi = 1:size(Veta{mouse},2)
-                            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                            
-                            if vid <= length(Veta2{mouse}{VWroi}) &&  isempty(Veta2{mouse}{VWroi}{vid}) == 0
-                                if size(Veta2{mouse}{VWroi}{vid},2) >= tTypeInds(tType) && isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
-                                    for trace = 1:size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1)
-                                        VetaArray1{mouse}{tTypeInds(tType)}(Vcounter,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),minLen13,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
-                                        Vcounter = Vcounter + 1; 
-                                    end 
-                                end 
+                end 
+            end        
+        elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4
+            if CAQ == 1                    
+                for CaROI = 1:size(CaROIs{mouse},2)
+                    for vid = 1:length(Ceta2{mouse}{CaROIs{mouse}(CaROI)})  
+                        if tTypeInds(tType) <= length(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}) == 0  
+                            for trace = 1:size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1)
+                                CetaArray1{mouse}{tTypeInds(tType)}(Ccounter1,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),2)); 
+                                Ccounter1 = Ccounter1 + 1; 
                             end 
                         end 
                     end 
-                    
-                    
-                elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4
-                    if CAQ == 1                    
-                        for CaROI = 1:size(CaROIs{mouse},2)
-                            if vid <= length(Ceta2{mouse}{CaROIs{mouse}(CaROI)}) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}) == 0
-                                if size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid},2) >= tTypeInds(tType) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}) == 0 
-                                    for trace = 1:size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)},1)
-                                        CetaArray1{mouse}{tTypeInds(tType)}(Ccounter1,:) =  resample(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:),2)); 
-                                        Ccounter1 = Ccounter1 + 1; 
-                                    end 
-                                end 
+                end 
+            end 
+            if BBBQ == 1                    
+                for BBBroi = 1:size(Beta{mouse},2)  
+                    for vid = 1:length(Beta2{mouse}{BBBroi})  
+                        if tTypeInds(tType) <= length(Beta2{mouse}{BBBroi}{vid}) && isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0    
+                            for trace = 1:size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1)
+                                BetaArray1{mouse}{tTypeInds(tType)}(Bcounter1,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
+                                Bcounter1 = Bcounter1 + 1; 
+                            end 
+                        end                             
+                    end 
+                end 
+            end 
+            if VWQ == 1 
+                for VWroi = 1:size(Veta{mouse},2)
+                    for vid = 1:length(Veta2{mouse}{VWroi})  
+                        if isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
+                            for trace = 1:size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1)
+                                VetaArray1{mouse}{tTypeInds(tType)}(Vcounter1,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
+                                Vcounter1 = Vcounter1 + 1; 
                             end 
                         end 
                     end 
-                    if BBBQ == 1                    
-                        for BBBroi = 1:size(Beta{mouse},2)  
-                            if vid <= length(Beta2{mouse}{BBBroi}) && isempty(Beta2{mouse}{BBBroi}{vid}) == 0
-                                if size(Beta2{mouse}{BBBroi}{vid},2) >= tTypeInds(tType) && isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0 
-                                    for trace = 1:size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)},1)
-                                        BetaArray1{mouse}{tTypeInds(tType)}(Bcounter1,:) =  resample(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
-                                        Bcounter1 = Bcounter1 + 1; 
-                                    end 
-                                end                             
-                            end 
-                        end 
-                    end 
-                    if VWQ == 1 
-                        for VWroi = 1:size(Veta{mouse},2)
-                            if vid <= length(Veta2{mouse}{VWroi}) && isempty(Veta2{mouse}{VWroi}{vid}) == 0
-                                if size(Veta2{mouse}{VWroi}{vid},2) >= tTypeInds(tType) && isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
-                                    for trace = 1:size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)},1)
-                                        VetaArray1{mouse}{tTypeInds(tType)}(Vcounter1,:) = resample(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),minLen24,size(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
-                                        Vcounter1 = Vcounter1 + 1; 
-                                    end 
-                                end 
-                            end 
-                        end 
-                    end 
-                end             
-%             end 
-%         end            
+                end 
+            end 
+        end                     
     end
     
     for mouse = 1:mouseNum  
-        if isempty(CetaArray1{mouse}{tTypeInds(tType)}) == 0 
-            % put all mouse traces together into same array CetaArray{tType}          
-            if CAQ == 1
-                for trace = 1:size(CetaArray1{mouse}{tTypeInds(tType)},1)
-                    CetaArray{tTypeInds(tType)}(Ccounter2,:) = CetaArray1{mouse}{tTypeInds(tType)}(trace,:);
-                    Ccounter2 = Ccounter2 + 1 ; 
-                end 
-            end    
-            if BBBQ == 1
-                for trace = 1:size(BetaArray1{mouse}{tTypeInds(tType)},1)
-                    BetaArray{tTypeInds(tType)}(Bcounter2,:) = BetaArray1{mouse}{tTypeInds(tType)}(trace,:);
-                    Bcounter2 = Bcounter2 + 1 ; 
-                end 
-            end  
-            if VWQ == 1
-                for trace = 1:size(VetaArray1{mouse}{tTypeInds(tType)},1)
-                    VetaArray{tTypeInds(tType)}(Vcounter2,:) = VetaArray1{mouse}{tTypeInds(tType)}(trace,:);
-                    Vcounter2 = Vcounter2 + 1 ; 
+        if isempty(CetaArray1{mouse}) == 0 
+            if isempty(CetaArray1{mouse}{tTypeInds(tType)}) == 0 
+                % put all mouse traces together into same array CetaArray{tType}          
+                if CAQ == 1
+                    for trace = 1:size(CetaArray1{mouse}{tTypeInds(tType)},1)
+                        CetaArray{tTypeInds(tType)}(Ccounter2,:) = CetaArray1{mouse}{tTypeInds(tType)}(trace,:);
+                        Ccounter2 = Ccounter2 + 1 ; 
+                    end 
+                end    
+                if BBBQ == 1
+                    for trace = 1:size(BetaArray1{mouse}{tTypeInds(tType)},1)
+                        BetaArray{tTypeInds(tType)}(Bcounter2,:) = BetaArray1{mouse}{tTypeInds(tType)}(trace,:);
+                        Bcounter2 = Bcounter2 + 1 ; 
+                    end 
+                end  
+                if VWQ == 1
+                    for trace = 1:size(VetaArray1{mouse}{tTypeInds(tType)},1)
+                        VetaArray{tTypeInds(tType)}(Vcounter2,:) = VetaArray1{mouse}{tTypeInds(tType)}(trace,:);
+                        Vcounter2 = Vcounter2 + 1 ; 
+                    end 
                 end 
             end 
         end 
