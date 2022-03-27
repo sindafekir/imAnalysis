@@ -1752,7 +1752,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mouse)
-
+%{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -2842,45 +2842,6 @@ set(fig,'position', [100 100 900 900])
 % Bootstrap the red trial data and replot (this includes baseline shuffle)
 %determine how many bootstrapped samples you need to have 6x the original
 %data set 
-
-%import entire time series data 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-dataSetNumQ = input('How many different data sets are there? ');
-for dataSet = 1:dataSetNumQ
-    
-    regImDir = uigetdir('*.*',sprintf('WHERE IS DATA SET #%d?',dataSet));
-    cd(regImDir);
-    MatFileName = uigetfile('*.*',sprintf('SELECT DATA SET #%d',dataSet));
-    Mat = matfile(MatFileName);
-    if CAQ == 1 
-        Ceta{mouse} = Mat.Ceta;
-        CaROIs{mouse} = input(sprintf('What are the Ca ROIs for mouse #%d? ',mouse));
-    end 
-    if BBBQ == 1
-        Beta{mouse} = Mat.Beta;
-    end 
-    if VWQ == 1 
-        Veta{mouse} = Mat.Veta;
-    end 
-    if ~iscell(Mat.FPSstack)
-        FPSstack{mouse} = Mat.FPSstack;
-        state_start_f{mouse} = Mat.state_start_f;
-        TrialTypes{mouse} = Mat.TrialTypes;
-        state_end_f{mouse} = Mat.state_end_f;
-        trialLengths{mouse} = Mat.trialLengths;
-    
-end 
-
-
-
-
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if pCAQ == 1 
     numBScData = size(sortedCdata,1)*6;
     BScData = zeros(size(sortedCdata,1)*6,size(sortedCdata,2));
@@ -6268,53 +6229,111 @@ end
 %% STA: plot calcium spike triggered average (average across mice. compare close and far terminals.) 
 % optimized for batch processing
 % takes unsmoothed data and asks about smoothing
-%{
+
 %get the data you need 
-mouseDistQ = input('Input 1 if you already have a .mat file containing multiple mouse Ca ROI distances. Input 0 to make this .mat file. ');
+mouseDistQ = input('Input 1 if you already have a .mat file mouse Ca ROI distances (for all data sets). Input 0 to make this .mat file. ');
 if mouseDistQ == 1 
     regImDir = uigetdir('*.*','WHERE IS THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
     cd(regImDir);
     MatFileName = uigetfile('*.*','SELECT THE .MAT FILE THAT CONTAINS INFO ABOUT CA ROI DISTANCES?');
     Mat = matfile(MatFileName);
     closeCaROIs = Mat.closeCaROIs;
-    farCaROIs = Mat.farCaROIs;
-    mouseNum = length(closeCaROIs);
-elseif mouseDistQ == 0 
-    mouseNum = input('How many mice are there? ');  
+    farCaROIs = Mat.farCaROIs; 
+    totalMouseNums = length(farCaROIs);
 end 
-
-CaROIs = cell(1,mouseNum);
-sortedCdata = cell(1,mouseNum);
-sortedVdata = cell(1,mouseNum);
-sortedBdata = cell(1,mouseNum);
-FPSstack2 = cell(1,mouseNum);
-vidList2 = cell(1,mouseNum);
-for mouse = 1:mouseNum
-    regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
-    cd(regImDir);
-    MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
-    Mat = matfile(MatFileName);   
-    sortedCdata{mouse} = Mat.sortedCdata;
-    sortedVdata{mouse} = Mat.sortedVdata;
-    sortedBdata{mouse} = Mat.sortedBdata;
+CaROIs = cell(1,totalMouseNums);
+for mouse = 1:totalMouseNums
     if mouseDistQ == 0
         closeCaROIs{mouse} = input(sprintf('What are the close Ca ROIs for mouse #%d? ',mouse));
         farCaROIs{mouse} = input(sprintf('What are the far Ca ROIs for mouse #%d? ',mouse));
     end 
     CaROIs{mouse} = horzcat(closeCaROIs{mouse},farCaROIs{mouse});
-    FPSstack2{mouse} = Mat.FPSstack;
-    vidList2{mouse} = Mat.vidList;
+end 
+terminals = CaROIs;
+CAQ = input('Input 1 if there is Ca data to plot. ');
+BBBQ = input('Input 1 if there is BBB data to plot. ');
+VWQ = input('Input 1 if there is VW data to plot. ');
+mouseNum = input('How many mice are there? ');  
+sortedCdata = cell(1,mouseNum);
+sortedVdata = cell(1,mouseNum);
+sortedBdata = cell(1,mouseNum);
+FPSstack = cell(1,mouseNum);
+vidList = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+    cd(regImDir);
+    MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+    Mat = matfile(MatFileName);   
+    if CAQ == 1
+        sortedCdata{mouse} = Mat.sortedCdata;
+    end 
+    if VWQ == 1 
+        sortedVdata{mouse} = Mat.sortedVdata;
+    end 
+    if BBBQ == 1
+        sortedBdata{mouse} = Mat.sortedBdata;
+    end 
+    if ~iscell(Mat.FPSstack)
+        FPSstack{mouse} = Mat.FPSstack;
+        vidList{mouse} = Mat.vidList;
+    elseif iscell(Mat.FPSstack)
+        if mouse == 1 
+            FPSstack = Mat.FPSstack;
+            vidList = Mat.vidList;
+        end 
+    end 
 end 
 
-BBBQ = Mat.BBBQ;
-VWQ = Mat.VWQ;
-terminals = CaROIs;
-
-% FPSstack = cell(1,mouseNum);
-% tTypeQ = Mat.tTypeQ;
-% for mouse = 1:6%mouseNum
-%     FPSstack{mouse} = FPSstack2{mouse};
-% end 
+dataSetQ = input('Input 1 to load another data set and append to the relevant variables. '); 
+while dataSetQ == 1
+    %get the additional data you need 
+    mouseNum2 = input('How many mice are there? ');
+    sortedCdata2 = cell(1,mouseNum);
+    sortedVdata2 = cell(1,mouseNum);
+    sortedBdata2 = cell(1,mouseNum);
+    FPSstack2 = cell(1,mouseNum);
+    vidList2 = cell(1,mouseNum);
+    for mouse = 1:mouseNum2
+        regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+        cd(regImDir);
+        MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+        Mat = matfile(MatFileName);   
+        if CAQ == 1
+            sortedCdata2{mouse} = Mat.sortedCdata;
+        end 
+        if VWQ == 1 
+            sortedVdata2{mouse} = Mat.sortedVdata;
+        end 
+        if BBBQ == 1
+            sortedBdata2{mouse} = Mat.sortedBdata;
+        end 
+        if ~iscell(Mat.FPSstack)
+            FPSstack2{mouse} = Mat.FPSstack;
+            vidList2{mouse} = Mat.vidList;
+        elseif iscell(Mat.FPSstack)
+            if mouse == 1 
+                FPSstack2 = Mat.FPSstack;
+                vidList2 = Mat.vidList;
+            end 
+        end 
+    end 
+    % append new data to original variables 
+    mouseNum1 = mouseNum; mouseNum = mouseNum + mouseNum2;
+    for mouse = 1:mouseNum2
+        if CAQ == 1 
+            sortedCdata{mouseNum1+mouse} = sortedCdata2{mouse};
+        end 
+        if BBBQ == 1
+            sortedBdata{mouseNum1+mouse} = sortedBdata2{mouse};
+        end 
+        if VWQ == 1 
+            sortedVdata{mouseNum1+mouse} = sortedVdata2{mouse};
+        end 
+        FPSstack{mouseNum1+mouse} = FPSstack2{mouse};
+        vidList{mouseNum1+mouse} = vidList2{mouse};
+    end
+    dataSetQ = input('Input 1 to load another data set and append to the relevant variables. Input 0 otherwise. '); 
+end
 
 if mouseDistQ == 0 
     saveDir = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE CA ROI DISTANCE DATA FOR MULTIPLE MICE?');
@@ -6322,7 +6341,6 @@ if mouseDistQ == 0
     save('CaROIdistances.mat','closeCaROIs','farCaROIs')
 end 
 
-disp('May need to hand edit/make FPSstack and vidList arrays.');
 %% sort data 
 SCdataPeaks = cell(1,mouseNum);
 SNCdataPeaks = cell(1,mouseNum);
@@ -6359,7 +6377,7 @@ for mouse = 1:mouseNum
             filtTime = input('How many seconds do you want to smooth your data by? ');
         end             
         SCdataPeaks{mouse} = sortedCdata{mouse};
-        for vid = 1:length(vidList2{mouse})
+        for vid = 1:length(vidList{mouse})
             for ccell = 1:length(terminals{mouse})
                if vid <= length(sortedCdata{mouse}) 
                     for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
@@ -6390,7 +6408,7 @@ for mouse = 1:mouseNum
     end     
     
     %normalize
-     for vid = 1:length(vidList2{mouse})
+     for vid = 1:length(vidList{mouse})
         for ccell = 1:length(terminals{mouse})
             if vid <= length(sortedCdata{mouse}) 
                 for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
@@ -6472,7 +6490,7 @@ for mouse = 1:mouseNum
      end     
     
     count = 1;
-    for vid = 1:length(vidList2{mouse})  
+    for vid = 1:length(vidList{mouse})  
         if vid <= length(sortedCdata{mouse}) 
             for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
                 for ccell = 1:size(CaROIs{mouse},2)
@@ -7468,6 +7486,21 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ts_bHigh = tinv(0.975,size(Btraces_allMice{per},1)-1);% T-Score for 95% CI
             CI_bLow = (nanmean(Btraces_allMice{per},1)) + (ts_bLow*SEMb);  % Confidence Intervals
             CI_bHigh = (nanmean(Btraces_allMice{per},1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+            %bootstrap the data then determine 95% CI of bootstrapped data 
+            %determine how many bootstrapped samples you need to have 6x the original
+            %data set 
+            numBSbData = size(Btraces_allMice{per},1)*6;
+            BSbData = zeros(size(Btraces_allMice{per},1)*6,size(Btraces_allMice{per},2));
+            for trace = 1:numBSbData
+                BSbData(trace,:) = Btraces_allMice{per}(randsample(size(Btraces_allMice{per},1),1),:); 
+            end 
+            SEMbbs = (nanstd(BSbData))/(sqrt(size(BSbData,1))); % Standard Error            
+            STDbbs = nanstd(BSbData);
+            ts_bbsLow = tinv(0.025,size(BSbData,1)-1);% T-Score for 95% CI
+            ts_bbsHigh = tinv(0.975,size(BSbData,1)-1);% T-Score for 95% CI
+            CI_bbsLow = (nanmean(BSbData,1)) + (ts_bbsLow*SEMbbs);  % Confidence Intervals
+            CI_bbsHigh = (nanmean(BSbData,1)) + (ts_bbsHigh*SEMbbs);  % Confidence Intervals
+            BSbMean = 
         end 
         close_SEMc = (nanstd(close_Ctraces_allMice{per}))/(sqrt(size(close_Ctraces_allMice{per},1))); % Standard Error            
         close_ts_cLow = tinv(0.025,size(close_Ctraces_allMice{per},1)-1);% T-Score for 95% CI
@@ -7484,6 +7517,20 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         ts_cHigh = tinv(0.975,size(Ctraces_allMice{per},1)-1);% T-Score for 95% CI
         CI_cLow = (nanmean(Ctraces_allMice{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
         CI_cHigh = (nanmean(Ctraces_allMice{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+        %bootstrap the data then determine 95% CI of bootstrapped data 
+        %determine how many bootstrapped samples you need to have 6x the original
+        %data set 
+        numBScData = size(Ctraces_allMice{per},1)*6;
+        BScData = zeros(size(Ctraces_allMice{per},1)*6,size(Ctraces_allMice{per},2));
+        for trace = 1:numBScData
+            BScData(trace,:) = Ctraces_allMice{per}(randsample(size(Ctraces_allMice{per},1),1),:); 
+        end 
+        SEMcbs = (nanstd(BScData))/(sqrt(size(BScData,1))); % Standard Error            
+        STDcbs = nanstd(BScData);
+        ts_cbsLow = tinv(0.025,size(BScData,1)-1);% T-Score for 95% CI
+        ts_cbsHigh = tinv(0.975,size(BScData,1)-1);% T-Score for 95% CI
+        CI_cbsLow = (nanmean(BScData,1)) + (ts_cbsLow*SEMcbs);  % Confidence Intervals
+        CI_cbsHigh = (nanmean(BScData,1)) + (ts_cbsHigh*SEMcbs);  % Confidence Intervals
         if VWQ == 1
             close_SEMv = (nanstd(close_Vtraces_allMice{per}))/(sqrt(size(close_Vtraces_allMice{per},1))); % Standard Error            
             close_ts_vLow = tinv(0.025,size(close_Vtraces_allMice{per},1)-1);% T-Score for 95% CI
@@ -7500,6 +7547,20 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             ts_vHigh = tinv(0.975,size(Vtraces_allMice{per},1)-1);% T-Score for 95% CI
             CI_vLow = (nanmean(Vtraces_allMice{per},1)) + (ts_vLow*SEMv);  % Confidence Intervals
             CI_vHigh = (nanmean(Vtraces_allMice{per},1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+            %bootstrap the data then determine 95% CI of bootstrapped data 
+            %determine how many bootstrapped samples you need to have 6x the original
+            %data set 
+            numBSvData = size(Vtraces_allMice{per},1)*6;
+            BSvData = zeros(size(Vtraces_allMice{per},1)*6,size(Vtraces_allMice{per},2));
+            for trace = 1:numBSvData
+                BSvData(trace,:) = Vtraces_allMice{per}(randsample(size(Vtraces_allMice{per},1),1),:); 
+            end 
+            SEMvbs = (nanstd(BSvData))/(sqrt(size(BSvData,1))); % Standard Error            
+            STDvbs = nanstd(BSvData);
+            ts_vbsLow = tinv(0.025,size(BSvData,1)-1);% T-Score for 95% CI
+            ts_vbsHigh = tinv(0.975,size(BSvData,1)-1);% T-Score for 95% CI
+            CI_vbsLow = (nanmean(BSvData,1)) + (ts_vbsLow*SEMvbs);  % Confidence Intervals
+            CI_vbsHigh = (nanmean(BSvData,1)) + (ts_vbsHigh*SEMvbs);  % Confidence Intervals
         end 
 
         x = 1:length(close_CI_cLow);
@@ -7615,9 +7676,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             fig = figure;
             ax=gca;
             hold all
-%             plot(avCdata{per},'b','LineWidth',4)
-%             patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
-%             alpha(0.3)
+            plot(avCdata{per},'b','LineWidth',4)
+            patch([x fliplr(x)],[CI_cLow fliplr(CI_cHigh)],'b','EdgeColor','none')
+            alpha(0.3)
             ax.XTick = FrameVals;
             ax.XTickLabel = sec_TimeVals;   
             ax.FontSize = 25;
@@ -7629,9 +7690,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             set(fig,'position', [500 100 900 800])
             alpha(0.3)
             title({'All mice Averaged.';perLabel})
-%             yyaxis right 
+            yyaxis right 
             p(1) = plot(avBdata{per},'r','LineWidth',4);
-%             patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
+            patch([x fliplr(x)],[(CI_bLow) (fliplr(CI_bHigh))],'r','EdgeColor','none')
             alpha(0.3)
         %     legend([p(1) p(2)],'Close Terminals','Far Terminals')
             ylabel({'BBB Permeability Percent Change'},'FontName','Arial')
