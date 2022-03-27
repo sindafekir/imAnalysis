@@ -2728,35 +2728,35 @@ end
 pCAQ = input('Input 1 to plot calcium data. ');
 pBBBQ = input('Input 1 to plot BBB data. ');
 pVWQ = input('Input 1 to plot vessel width data. ');
+scaleQ = input('Input 1 to plot data zoomed out. Input 0 otherwise. '); 
 redTrialTtypeInds = [3,4]; %THIS IS CURRENTLY HARD CODED IN, BUT DOESN'T HAVE TO BE. REPLACE EVENTUALLY.
-if pCAQ == 1 
-    allRedAVcData = zeros(1,size(AVcData{1},2));
-    allRedAVcDataArray = zeros(1,size(AVcData{1},2));
-end 
-if pBBBQ == 1 
-    allRedAVbData = zeros(1,size(AVcData{1},2));
-    allRedAVbDataArray = zeros(1,size(AVcData{1},2));
-end 
-if VWQ == 1 
-    allRedAVvData = zeros(1,size(AVcData{1},2));
-    allRedAVvDataArray = zeros(1,size(AVcData{1},2));
-end 
-count = 1;
+countC = 1;
+countB = 1;
+countV = 1;
+sortedBdata = zeros(size(snBetaArray{3},1)+size(snBetaArray{4},1),size(snBetaArray{3},2));
+sortedCdata = zeros(size(snCetaArray{3},1)+size(snCetaArray{4},1),size(snCetaArray{3},2));
+sortedVdata = zeros(size(snVetaArray{3},1)+size(snVetaArray{4},1),size(snVetaArray{3},2));
 for tType = 1:length(redTrialTtypeInds)
     if pCAQ == 1 
-        allRedAVcDataArray(tType,:) = AVcData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
+        for trace = 1:size(snCetaArray{redTrialTtypeInds(tType)},1)
+            sortedCdata(countC,:) = snCetaArray{redTrialTtypeInds(tType)}(trace,1:size(snCetaArray{3},2));
+            countC = countC + 1;
+        end 
+        %determine 95% CI
+        SEMc = (nanstd(sortedCdata))/(sqrt(size(sortedCdata,1))); % Standard Error            
+        STDc = nanstd(sortedCdata);
+        ts_cLow = tinv(0.025,size(sortedCdata,1)-1);% T-Score for 95% CI
+        ts_cHigh = tinv(0.975,size(sortedCdata,1)-1);% T-Score for 95% CI
+        CI_cLow = (nanmean(sortedCdata,1)) + (ts_cLow*SEMc);  % Confidence Intervals
+        CI_cHigh = (nanmean(sortedCdata,1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+        x = 1:length(CI_cLow);
+        allRedAVcData = nanmean(sortedCdata,1); 
     end 
     if pBBBQ == 1 
-        allRedAVbDataArray(tType,:) = AVbData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
-%         for trial = 1:size(snBetaArray{redTrialTtypeInds(tType)},1)
-%             allRedAvbDataArray2(count,:) = snBetaArray{redTrialTtypeInds(tType)}(trial,1:429);
-%             count = count + 1; 
-%         end 
-
         % sort data 
         for trace = 1:size(snBetaArray{redTrialTtypeInds(tType)},1)
-            sortedBdata(count,:) = snBetaArray{redTrialTtypeInds(tType)}(trace,1:size(snBetaArray{3},2));
-            count = count + 1;
+            sortedBdata(countB,:) = snBetaArray{redTrialTtypeInds(tType)}(trace,1:size(snBetaArray{3},2));
+            countB = countB + 1;
         end 
         %determine 95% CI
         SEMb = (nanstd(sortedBdata))/(sqrt(size(sortedBdata,1))); % Standard Error            
@@ -2766,19 +2766,23 @@ for tType = 1:length(redTrialTtypeInds)
         CI_bLow = (nanmean(sortedBdata,1)) + (ts_bLow*SEMb);  % Confidence Intervals
         CI_bHigh = (nanmean(sortedBdata,1)) + (ts_bHigh*SEMb);  % Confidence Intervals
         x = 1:length(CI_bLow);
+        allRedAVbData = nanmean(sortedBdata,1); 
     end 
     if pVWQ == 1 
-        allRedAVvDataArray(tType,:) = AVvData{redTrialTtypeInds(tType)}(1:size(AVcData{1},2)); 
+       for trace = 1:size(snVetaArray{redTrialTtypeInds(tType)},1)
+            sortedVdata(countV,:) = snVetaArray{redTrialTtypeInds(tType)}(trace,1:size(snVetaArray{3},2));
+            countV = countV + 1;
+        end 
+        %determine 95% CI
+        SEMv = (nanstd(sortedVdata))/(sqrt(size(sortedVdata,1))); % Standard Error            
+        STDv = nanstd(sortedVdata);
+        ts_vLow = tinv(0.025,size(sortedVdata,1)-1);% T-Score for 95% CI
+        ts_vHigh = tinv(0.975,size(sortedVdata,1)-1);% T-Score for 95% CI
+        CI_vLow = (nanmean(sortedVdata,1)) + (ts_vLow*SEMv);  % Confidence Intervals
+        CI_vHigh = (nanmean(sortedVdata,1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+        x = 1:length(CI_vLow);
+        allRedAVvData = nanmean(sortedVdata,1); 
     end 
-end 
-if pCAQ == 1 
-    allRedAVcData = nanmean(allRedAVcDataArray,1); 
-end 
-if pBBBQ == 1 
-    allRedAVbData = nanmean(allRedAVbDataArray,1); 
-end 
-if pVWQ == 1 
-    allRedAVvData = nanmean(allRedAVvDataArray,1); 
 end 
 
 fig = figure;             
@@ -2787,25 +2791,35 @@ Frames = size(AVbData{1},2);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
 if pCAQ == 1 
-    plot(allRedAVcData-100,'b','LineWidth',3)  
-    ylabel('calcium percent change')
+    plot(allRedAVcData-100,'b','LineWidth',3) 
+    patch([x fliplr(x)],[CI_cLow-100 fliplr(CI_cHigh-100)],'b','EdgeColor','none')   
+    alpha(0.3)
+    set(gca,'YColor',[0 0 0]);
+%     ylabel('calcium percent change')
 end 
 if pBBBQ == 1
 %     yyaxis right 
     plot(allRedAVbData-100,'r','LineWidth',3)
-    ylabel('BBB permeability percent change')
+%     ylabel('BBB permeability percent change')
     patch([x fliplr(x)],[CI_bLow-100 fliplr(CI_bHigh-100)],'r','EdgeColor','none')   
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);
 end 
 if pVWQ == 1 
     plot(allRedAVvData-100,'k','LineWidth',3)
-    ylabel('vessel width percent change')
+%     ylabel('vessel width percent change')
+    patch([x fliplr(x)],[CI_vLow-100 fliplr(CI_vHigh-100)],'k','EdgeColor','none')   
+    alpha(0.3)
+    set(gca,'YColor',[0 0 0]);
 end 
-% plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000 5000], 'r','LineWidth',2)
 plot([baselineEndFrame baselineEndFrame], [-5000 5000],'--k','LineWidth',2)   
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+1);
-FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
+if scaleQ == 1 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*5:Frames_post_stim_start)/FPSstack2(idx))+1);
+    FrameVals = floor((1:FPSstack2(idx)*5:Frames)-1); 
+elseif scaleQ == 0
+    sec_TimeVals = round(((Frames_pre_stim_start:FPSstack2(idx)*0.5:Frames_post_stim_start)/FPSstack2(idx))+0.9,1);
+    FrameVals = floor((1:FPSstack2(idx)*0.5:Frames)-1); 
+end 
 ax=gca;
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;
@@ -2823,6 +2837,113 @@ label = append(label,'  Ca ROIs averaged');
 % legend('BBB Permeability')
 set(fig,'position', [100 100 900 900]) 
 % set(gca, 'YScale', 'log')
+
+%----------------------------------------------------------
+% Bootstrap the red trial data and replot (this includes baseline shuffle)
+%determine how many bootstrapped samples you need to have 6x the original
+%data set 
+if pCAQ == 1 
+    numBScData = size(sortedCdata,1)*6;
+    BScData = zeros(size(sortedCdata,1)*6,size(sortedCdata,2));
+    for trace = 1:numBScData
+        BScData(trace,:) = sortedCdata(randsample(size(sortedCdata,1),1),:); 
+    end 
+    %determine 95% CI
+    SEMc = (nanstd(BScData))/(sqrt(size(BScData,1))); % Standard Error            
+    STDc = nanstd(BScData);
+    ts_cLow = tinv(0.025,size(BScData,1)-1);% T-Score for 95% CI
+    ts_cHigh = tinv(0.975,size(BScData,1)-1);% T-Score for 95% CI
+    CI_cLow = (nanmean(BScData,1)) + (ts_cLow*SEMc);  % Confidence Intervals
+    CI_cHigh = (nanmean(BScData,1)) + (ts_cHigh*SEMc);  % Confidence Intervals
+    x = 1:length(CI_cLow);
+    allRedAVcData = nanmean(BScData,1); 
+end 
+if pBBBQ == 1 
+    numBSbData = size(sortedBdata,1)*6;
+    BSbData = zeros(size(sortedBdata,1)*6,size(sortedBdata,2));
+    for trace = 1:numBSbData
+        BSbData(trace,:) = sortedBdata(randsample(size(sortedBdata,1),1),:); 
+    end 
+    %determine 95% CI
+    SEMb = (nanstd(BSbData))/(sqrt(size(BSbData,1))); % Standard Error            
+    STDb = nanstd(BSbData);
+    ts_bLow = tinv(0.025,size(BSbData,1)-1);% T-Score for 95% CI
+    ts_bHigh = tinv(0.975,size(BSbData,1)-1);% T-Score for 95% CI
+    CI_bLow = (nanmean(BSbData,1)) + (ts_bLow*SEMb);  % Confidence Intervals
+    CI_bHigh = (nanmean(BSbData,1)) + (ts_bHigh*SEMb);  % Confidence Intervals
+    x = 1:length(CI_bLow);
+    allRedAVbData = nanmean(BSbData,1); 
+end 
+if pVWQ == 1 
+    numBSvData = size(sortedVdata,1)*6;
+    BSvData = zeros(size(sortedVdata,1)*6,size(sortedVdata,2));
+    for trace = 1:numBSvData
+        BSvData(trace,:) = sortedVdata(randsample(size(sortedVdata,1),1),:); 
+    end 
+    %determine 95% CI
+    SEMv = (nanstd(BSvData))/(sqrt(size(BSvData,1))); % Standard Error            
+    STDv = nanstd(BSvData);
+    ts_vLow = tinv(0.025,size(BSvData,1)-1);% T-Score for 95% CI
+    ts_vHigh = tinv(0.975,size(BSvData,1)-1);% T-Score for 95% CI
+    CI_vLow = (nanmean(BSvData,1)) + (ts_vLow*SEMv);  % Confidence Intervals
+    CI_vHigh = (nanmean(BSvData,1)) + (ts_vHigh*SEMv);  % Confidence Intervals
+    x = 1:length(CI_vLow);
+    allRedAVvData = nanmean(BSvData,1); 
+end 
+%plot 
+fig = figure;             
+hold all;
+Frames = size(AVbData{1},2);        
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+if pCAQ == 1 
+    plot(allRedAVcData-100,'b','LineWidth',3) 
+    patch([x fliplr(x)],[CI_cLow-100 fliplr(CI_cHigh-100)],'b','EdgeColor','none')   
+    alpha(0.3)
+    set(gca,'YColor',[0 0 0]);
+%     ylabel('calcium percent change')
+end 
+if pBBBQ == 1
+%     yyaxis right 
+    plot(allRedAVbData-100,'r','LineWidth',3)
+%     ylabel('BBB permeability percent change')
+    patch([x fliplr(x)],[CI_bLow-100 fliplr(CI_bHigh-100)],'r','EdgeColor','none')   
+    alpha(0.3)
+    set(gca,'YColor',[0 0 0]);
+end 
+if pVWQ == 1 
+    plot(allRedAVvData-100,'k','LineWidth',3)
+%     ylabel('vessel width percent change')
+    patch([x fliplr(x)],[CI_vLow-100 fliplr(CI_vHigh-100)],'k','EdgeColor','none')   
+    alpha(0.3)
+    set(gca,'YColor',[0 0 0]);
+end 
+plot([baselineEndFrame baselineEndFrame], [-5000 5000],'--k','LineWidth',2)   
+if scaleQ == 1 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*5:Frames_post_stim_start)/FPSstack2(idx))+1);
+    FrameVals = floor((1:FPSstack2(idx)*5:Frames)-1); 
+elseif scaleQ == 0
+    sec_TimeVals = round(((Frames_pre_stim_start:FPSstack2(idx)*0.5:Frames_post_stim_start)/FPSstack2(idx))+0.9,1);
+    FrameVals = floor((1:FPSstack2(idx)*0.5:Frames)-1); 
+end 
+ax=gca;
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;
+ax.FontSize = 30;
+ax.FontName = 'Arial';
+xlim([1 length(AVvData{1})])
+% ylim([-5 5])
+ylim([-0.6 4])
+xlabel('time (s)')
+% initialize empty string array 
+label = strings;
+label = append(label,'  Ca ROIs averaged');
+% title({'Optogenetic Stimulation';'Event Triggered Averages';label},'FontName','Arial');
+title({'Bootstrapped Data'},'FontName','Arial');
+% legend('BBB Permeability')
+set(fig,'position', [100 100 900 900]) 
+% set(gca, 'YScale', 'log')
+
 %}
 %% compare terminal calcium activity - create correlograms
 %{
