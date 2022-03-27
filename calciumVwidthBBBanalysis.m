@@ -3086,6 +3086,35 @@ for tType = 1:length(nsCeta{terminals(1)})
    end 
 end 
 %}
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%compare terminal calcium activity with BBB and VW data - create
+%correlograms
+%{
+%import entire time series data 
+dataSetNumQ = input('How many different data sets are there? ');
+cData = cell(1,dataSetNumQ);
+bData = cell(1,dataSetNumQ);
+vData = cell(1,dataSetNumQ);
+for dataSet = 1:dataSetNumQ
+    regImDir = uigetdir('*.*',sprintf('WHERE IS DATA SET #%d?',dataSet));
+    cd(regImDir);
+    MatFileName = uigetfile('*.*',sprintf('SELECT DATA SET #%d',dataSet));
+    Mat = matfile(MatFileName);
+    if CAQ == 1 
+        cData{dataSet} = Mat.cDataFullTrace;
+    end 
+    if BBBQ == 1
+        bData{dataSet} = Mat.bDataFullTrace;
+    end 
+    if VWQ == 1 
+        vData{dataSet} = Mat.vDataFullTrace;
+    end     
+end 
+%}
 %% calcium peak raster plots and PSTHs for multiple animals at once 
 % uses ETA .mat file that contains all trials 
 % separates trials based on trial num and ITI length 
