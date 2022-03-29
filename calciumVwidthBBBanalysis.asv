@@ -3250,17 +3250,19 @@ for mouse = 1:length(cDataFullTrace)
             end             
         end 
         % plot correlograms of 0 time lagged data (per vid)
-%         figure;
-%         imagesc(CaCorrs{mouse}{vid})
-%         colorbar 
-%         truesize([700 900])
-%         ax=gca;
-%         ax.FontSize = 20;
-%         ax.XTickLabel = CaROIs{mouse};
-%         ax.YTickLabel = CaROIs{mouse};
-%         xlabel('axon')
-%         ylabel('axon')
-%         title(sprintf('Axon Ca Correlogram. Mouse %d. Vid %d. ',mouse,vid),'FontSize',20);
+        %{
+        figure;
+        imagesc(CaCorrs{mouse}{vid})
+        colorbar 
+        truesize([700 900])
+        ax=gca;
+        ax.FontSize = 20;
+        ax.XTickLabel = CaROIs{mouse};
+        ax.YTickLabel = CaROIs{mouse};
+        xlabel('axon')
+        ylabel('axon')
+        title(sprintf('Axon Ca Correlogram. Mouse %d. Vid %d. ',mouse,vid),'FontSize',20);
+        %}
     end 
     if corrFigQ == 1 
         figure;
@@ -3315,6 +3317,9 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % DO WHAT I DID ABOVE BELOW
 % 1) AVERAGE CORRS ACROSS VIDS 
+% 2) CREATE CORRELOGRAMS ACROSS VIDS AND ASK IF YOU WANT TO SEE THESE
+% 3) DETERMINE MIN AND MAX CORRS ACROSS MICE 
+% 4) LET USER KNOW IF ANY OF THE MAX CORRS ARE SIGNIFICANT 
 
 timeLagQ = input('Input 1 if you want to test the correlation between Ca axon data with time-lagged BBB data. ');
 if timeLagQ == 1
@@ -3330,6 +3335,9 @@ for mouse = 1:length(cDataFullTrace)
                     if length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) ~= length(bDataFullTrace{mouse}{vid}{BBBroi})
                         minLen = min(length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}),length(bDataFullTrace{mouse}{vid}{BBBroi}));
                         CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:minLen),bDataFullTrace{mouse}{vid}{BBBroi}(1:minLen));
+                        
+                        CaCorrs2{mouse}{term1,term2}(vid) = CaCorrs{mouse}{vid}(term1,term2);
+                        
                     elseif length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) == length(bDataFullTrace{mouse}{vid}{BBBroi})
                         CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},bDataFullTrace{mouse}{vid}{BBBroi});
                     end   

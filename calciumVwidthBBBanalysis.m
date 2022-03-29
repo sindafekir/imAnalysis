@@ -3250,17 +3250,19 @@ for mouse = 1:length(cDataFullTrace)
             end             
         end 
         % plot correlograms of 0 time lagged data (per vid)
-%         figure;
-%         imagesc(CaCorrs{mouse}{vid})
-%         colorbar 
-%         truesize([700 900])
-%         ax=gca;
-%         ax.FontSize = 20;
-%         ax.XTickLabel = CaROIs{mouse};
-%         ax.YTickLabel = CaROIs{mouse};
-%         xlabel('axon')
-%         ylabel('axon')
-%         title(sprintf('Axon Ca Correlogram. Mouse %d. Vid %d. ',mouse,vid),'FontSize',20);
+        %{
+        figure;
+        imagesc(CaCorrs{mouse}{vid})
+        colorbar 
+        truesize([700 900])
+        ax=gca;
+        ax.FontSize = 20;
+        ax.XTickLabel = CaROIs{mouse};
+        ax.YTickLabel = CaROIs{mouse};
+        xlabel('axon')
+        ylabel('axon')
+        title(sprintf('Axon Ca Correlogram. Mouse %d. Vid %d. ',mouse,vid),'FontSize',20);
+        %}
     end 
     if corrFigQ == 1 
         figure;
@@ -3314,16 +3316,17 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % DO WHAT I DID ABOVE BELOW
-% 1) AVERAGE CORRS ACROSS VIDS 
-% 2) CREATE CORRELOGRAMS ACROSS VIDS AND ASK IF YOU WANT TO SEE THESE
 % 3) DETERMINE MIN AND MAX CORRS ACROSS MICE 
 % 4) LET USER KNOW IF ANY OF THE MAX CORRS ARE SIGNIFICANT 
 
 timeLagQ = input('Input 1 if you want to test the correlation between Ca axon data with time-lagged BBB data. ');
 if timeLagQ == 1
     timeLag = input('Input time lag (sec). ');
-end 
+end
+corrFigQ = input('Input 1 to display the correlograms per mouse. ');
 CaBBBCorrs = cell(1,length(cDataFullTrace));
+CaBBBCorrs2 = cell(1,length(cDataFullTrace));
+avCaBBBvidCorrs = cell(1,length(cDataFullTrace));
 for mouse = 1:length(cDataFullTrace)
     for vid = 1:length(cDataFullTrace{mouse})
         for term1 = 1:length(CaROIs{mouse})
@@ -3332,18 +3335,25 @@ for mouse = 1:length(cDataFullTrace)
                 if timeLagQ == 0 
                     if length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) ~= length(bDataFullTrace{mouse}{vid}{BBBroi})
                         minLen = min(length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}),length(bDataFullTrace{mouse}{vid}{BBBroi}));
-                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:minLen),bDataFullTrace{mouse}{vid}{BBBroi}(1:minLen));
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:minLen),bDataFullTrace{mouse}{vid}{BBBroi}(1:minLen));                       
+                        CaBBBCorrs2{mouse}{term1,BBBroi}(vid) = CaBBBCorrs{mouse}{vid}(term1,BBBroi);                        
+                        avCaBBBvidCorrs{mouse}(term1,BBBroi) = nanmean(CaBBBCorrs2{mouse}{term1,BBBroi}(vid));                        
                     elseif length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) == length(bDataFullTrace{mouse}{vid}{BBBroi})
                         CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},bDataFullTrace{mouse}{vid}{BBBroi});
+                        CaBBBCorrs2{mouse}{term1,BBBroi}(vid) = CaBBBCorrs{mouse}{vid}(term1,BBBroi);
+                        avCaBBBvidCorrs{mouse}(term1,BBBroi) = nanmean(CaBBBCorrs2{mouse}{term1,BBBroi}(vid));
                     end   
                 elseif timeLagQ == 1
                     timeLagFrames = floor(timeLag*(FPSstack{mouse}));
                     if length(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames) ~= length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)})
                         CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:length(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames)),bDataFullTrace{mouse}{vid}{BBBroi}(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames));
+                        CaBBBCorrs2{mouse}{term1,BBBroi}(vid) = CaBBBCorrs{mouse}{vid}(term1,BBBroi);
+                        avCaBBBvidCorrs{mouse}(term1,BBBroi) = nanmean(CaBBBCorrs2{mouse}{term1,BBBroi}(vid));                        
                     end 
                 end                       
             end             
         end 
+        %{
         % plot correlograms of 0 time lagged data 
         figure;
         imshow(CaBBBCorrs{mouse}{vid},[0,1]);
@@ -3363,13 +3373,52 @@ for mouse = 1:length(cDataFullTrace)
             title(sprintf('Axon Ca-BBB Correlogram. Mouse %d. Vid %d. %.2f sec time lag. ',mouse,vid,timeLag),'FontSize',20);
         end 
         colormap default
+        %}
+    end
+    if corrFigQ == 1 
+        % plot correlograms of 0 time lagged data 
+        figure;
+        imshow(avCaBBBvidCorrs{mouse},[0,1]);
+        ax = gca;
+        ax.FontSize = 20;
+        axis on
+        yticks(1:length(CaROIs{mouse}))
+        yticklabels(CaROIs{mouse})
+        xticks(1:length(bDataFullTrace{mouse}{vid}))
+        colorbar 
+        truesize([700 900])
+        ylabel('axon')
+        xlabel('BBB ROI')
+        if timeLagQ == 0 
+            title(sprintf('Axon Ca-BBB Correlogram. Mouse %d. %.2f sec smoothing. ',mouse,filtTime),'FontSize',20);
+        elseif timeLagQ == 1 
+            title(sprintf('Axon Ca-BBB Correlogram. Mouse %d. %.2f sec time lag.  %.2f sec smoothing.',mouse,timeLag,filtTime),'FontSize',20);
+        end 
+        colormap default    
     end 
 end 
 
 
-
-
-
+% determine what Ca correlations are significant (correlation coefficient of 0.8 or greater)
+minCorr = zeros(1,length(cDataFullTrace));
+maxCorr = zeros(1,length(cDataFullTrace));
+minCorrAxonsBBB = cell(1,length(cDataFullTrace));
+maxCorrAxonsBBB = cell(1,length(cDataFullTrace));
+for mouse = 1:length(cDataFullTrace)
+    % find min and max correlated axons per mouse 
+    minCorr(mouse) = (min(min(avCaBBBvidCorrs{mouse})));
+    maxCorr(mouse) = (max(max(avCaBBBvidCorrs{mouse})));
+    [r,c] = find(avCaBBBvidCorrs{mouse} == minCorr(mouse));
+    minCorrAxonsBBB{1,mouse} = [CaROIs{mouse}(r);c];        
+    minCorrAxonsBBB{2,mouse} = minCorr(mouse);  
+    [r,c] = find(avCaBBBvidCorrs{mouse} == maxCorr(mouse));    
+    maxCorrAxonsBBB{1,mouse} = [CaROIs{mouse}(r);c];
+    maxCorrAxonsBBB{2,mouse} = maxCorr(mouse);
+    % determine if any of the max correlations are significant 
+    if maxCorrAxonsBBB{2,mouse} >= 0.8
+        fprintf('Mouse %d shows significant correlation between axons.',mouse)
+    end 
+end 
 
 %}
 %% calcium peak raster plots and PSTHs for multiple animals at once 
