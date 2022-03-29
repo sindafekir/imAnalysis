@@ -3312,13 +3312,6 @@ end
 
 %% compare Ca data with BBB data 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% DO WHAT I DID ABOVE BELOW
-% 3) DETERMINE MIN AND MAX CORRS ACROSS MICE 
-% 4) LET USER KNOW IF ANY OF THE MAX CORRS ARE SIGNIFICANT 
-
 timeLagQ = input('Input 1 if you want to test the correlation between Ca axon data with time-lagged BBB data. ');
 if timeLagQ == 1
     timeLag = input('Input time lag (sec). ');
@@ -3330,23 +3323,23 @@ avCaBBBvidCorrs = cell(1,length(cDataFullTrace));
 for mouse = 1:length(cDataFullTrace)
     for vid = 1:length(cDataFullTrace{mouse})
         for term1 = 1:length(CaROIs{mouse})
-            for BBBroi = 1:length(bDataFullTrace{mouse}{vid})
+            for BBBroi = 1:length(sbDataFullTrace{mouse}{vid})
 %                 [c{mouse}{vid},lags{mouse}{vid}] = xcorr(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term2)});
                 if timeLagQ == 0 
-                    if length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) ~= length(bDataFullTrace{mouse}{vid}{BBBroi})
-                        minLen = min(length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}),length(bDataFullTrace{mouse}{vid}{BBBroi}));
-                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:minLen),bDataFullTrace{mouse}{vid}{BBBroi}(1:minLen));                       
+                    if length(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) ~= length(sbDataFullTrace{mouse}{vid}{BBBroi})
+                        minLen = min(length(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}),length(sbDataFullTrace{mouse}{vid}{BBBroi}));
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:minLen),sbDataFullTrace{mouse}{vid}{BBBroi}(1:minLen));                       
                         CaBBBCorrs2{mouse}{term1,BBBroi}(vid) = CaBBBCorrs{mouse}{vid}(term1,BBBroi);                        
                         avCaBBBvidCorrs{mouse}(term1,BBBroi) = nanmean(CaBBBCorrs2{mouse}{term1,BBBroi}(vid));                        
-                    elseif length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) == length(bDataFullTrace{mouse}{vid}{BBBroi})
-                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},bDataFullTrace{mouse}{vid}{BBBroi});
+                    elseif length(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) == length(sbDataFullTrace{mouse}{vid}{BBBroi})
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},sbDataFullTrace{mouse}{vid}{BBBroi});
                         CaBBBCorrs2{mouse}{term1,BBBroi}(vid) = CaBBBCorrs{mouse}{vid}(term1,BBBroi);
                         avCaBBBvidCorrs{mouse}(term1,BBBroi) = nanmean(CaBBBCorrs2{mouse}{term1,BBBroi}(vid));
                     end   
                 elseif timeLagQ == 1
                     timeLagFrames = floor(timeLag*(FPSstack{mouse}));
-                    if length(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames) ~= length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)})
-                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:length(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames)),bDataFullTrace{mouse}{vid}{BBBroi}(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames));
+                    if length(timeLagFrames:length(sbDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames) ~= length(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)})
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:length(timeLagFrames:length(sbDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames)),sbDataFullTrace{mouse}{vid}{BBBroi}(timeLagFrames:length(sbDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames));
                         CaBBBCorrs2{mouse}{term1,BBBroi}(vid) = CaBBBCorrs{mouse}{vid}(term1,BBBroi);
                         avCaBBBvidCorrs{mouse}(term1,BBBroi) = nanmean(CaBBBCorrs2{mouse}{term1,BBBroi}(vid));                        
                     end 
@@ -3397,7 +3390,6 @@ for mouse = 1:length(cDataFullTrace)
         colormap default    
     end 
 end 
-
 
 % determine what Ca correlations are significant (correlation coefficient of 0.8 or greater)
 minCorr = zeros(1,length(cDataFullTrace));
