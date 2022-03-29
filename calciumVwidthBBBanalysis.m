@@ -1751,7 +1751,7 @@ end
 % does not take already smooothed/normalized data. Will ask you about
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
-% the trials per mouse)
+% the trials per mous
 %{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
@@ -1877,7 +1877,6 @@ FPSstack2 = zeros(1,mouseNum);
 for mouse = 1:mouseNum
     FPSstack2(mouse) = FPSstack{mouse};
 end 
-
 
 minFPSstack = FPSstack2 == min(FPSstack2);
 idx = find(minFPSstack ~= 0, 1, 'first');
@@ -2176,7 +2175,9 @@ if CAQ == 1
                 for vid = 1:length(state_start_f{mouse})                      
                      if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
                             for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})
+                                
                                 if count1 <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)
+                                    
                                     Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(count1,:);                             
                                     count1 = count1 + 1;
                                 end 
@@ -2230,6 +2231,18 @@ end
 snCetaArray = cell(1,tTypeNum);
 snBetaArray = cell(1,tTypeNum);
 snVetaArray = cell(1,tTypeNum);
+BScData = cell(1,tTypeNum);
+BSbData = cell(1,tTypeNum);
+BSvData = cell(1,tTypeNum);
+avBScData = cell(1,tTypeNum);
+avBSbData = cell(1,tTypeNum);
+avBSvData = cell(1,tTypeNum);
+CI_cbsLow = cell(1,tTypeNum);
+CI_cbsHigh = cell(1,tTypeNum);
+CI_bbsLow = cell(1,tTypeNum);
+CI_bbsHigh = cell(1,tTypeNum);
+CI_vbsLow = cell(1,tTypeNum);
+CI_vbsHigh = cell(1,tTypeNum);
 for tType = 1:tTypeNum    
     Ccounter2 = 1;
     Bcounter2 = 1;
@@ -2405,6 +2418,18 @@ for tType = 1:tTypeNum
             CI_cHigh{tTypeInds(tType)} = (nanmean(snCetaArray{tTypeInds(tType)},1)) + (ts_cHigh*SEMc{tTypeInds(tType)});  % Confidence Intervals
             x = 1:length(CI_cLow{tTypeInds(tType)});
             AVcData{tTypeInds(tType)} = nanmean(snCetaArray{tTypeInds(tType)},1);
+            %bootstrap the data 
+            numBScData = size(snCetaArray{tTypeInds(tType)},1)*6;            
+            for trace = 1:numBScData
+                BScData{tTypeInds(tType)}(trace,:) = snCetaArray{tTypeInds(tType)}(randsample(size(snCetaArray{tTypeInds(tType)},1),1),:); 
+            end 
+            SEMcbs = (nanstd(BScData{tTypeInds(tType)}))/(sqrt(size(BScData{tTypeInds(tType)},1))); % Standard Error            
+            STDcbs = nanstd(BScData{tTypeInds(tType)});
+            ts_cbsLow = tinv(0.025,size(BScData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            ts_cbsHigh = tinv(0.975,size(BScData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            CI_cbsLow{tTypeInds(tType)} = (nanmean(BScData{tTypeInds(tType)},1)) + (ts_cbsLow*SEMcbs);  % Confidence Intervals
+            CI_cbsHigh{tTypeInds(tType)} = (nanmean(BScData{tTypeInds(tType)},1)) + (ts_cbsHigh*SEMcbs);  % Confidence Intervals
+            avBScData{tTypeInds(tType)} = nanmean(BScData{tTypeInds(tType)},1); 
         end 
         if BBBQ == 1
             SEMb{tTypeInds(tType)} = (nanstd(snBetaArray{tTypeInds(tType)}))/(sqrt(size(snBetaArray{tTypeInds(tType)},1))); % Standard Error            
@@ -2415,6 +2440,18 @@ for tType = 1:tTypeNum
             CI_bHigh{tTypeInds(tType)} = (nanmean(snBetaArray{tTypeInds(tType)},1)) + (ts_bHigh*SEMb{tTypeInds(tType)});  % Confidence Intervals
             x = 1:length(CI_bLow{tTypeInds(tType)});
             AVbData{tTypeInds(tType)} = nanmean(snBetaArray{tTypeInds(tType)},1);
+            %bootstrap the data 
+            numBSbData = size(snBetaArray{tTypeInds(tType)},1)*6;            
+            for trace = 1:numBSbData
+                BSbData{tTypeInds(tType)}(trace,:) = snBetaArray{tTypeInds(tType)}(randsample(size(snBetaArray{tTypeInds(tType)},1),1),:); 
+            end 
+            SEMbbs = (nanstd(BSbData{tTypeInds(tType)}))/(sqrt(size(BSbData{tTypeInds(tType)},1))); % Standard Error            
+            STDbbs = nanstd(BSbData{tTypeInds(tType)});
+            ts_bbsLow = tinv(0.025,size(BSbData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            ts_bbsHigh = tinv(0.975,size(BSbData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            CI_bbsLow{tTypeInds(tType)} = (nanmean(BSbData{tTypeInds(tType)},1)) + (ts_bbsLow*SEMbbs);  % Confidence Intervals
+            CI_bbsHigh{tTypeInds(tType)} = (nanmean(BSbData{tTypeInds(tType)},1)) + (ts_bbsHigh*SEMbbs);  % Confidence Intervals
+            avBSbData{tTypeInds(tType)} = nanmean(BSbData{tTypeInds(tType)},1); 
         end 
         if VWQ == 1
             SEMv{tTypeInds(tType)} = (nanstd(snVetaArray{tTypeInds(tType)}))/(sqrt(size(snVetaArray{tTypeInds(tType)},1))); % Standard Error            
@@ -2425,6 +2462,18 @@ for tType = 1:tTypeNum
             CI_vHigh{tTypeInds(tType)} = (nanmean(snVetaArray{tTypeInds(tType)},1)) + (ts_vHigh*SEMv{tTypeInds(tType)});  % Confidence Intervals
             x = 1:length(CI_vLow{tTypeInds(tType)});
             AVvData{tTypeInds(tType)} = nanmean(snVetaArray{tTypeInds(tType)},1);
+            %bootstrap the data 
+            numBSvData = size(snVetaArray{tTypeInds(tType)},1)*6;            
+            for trace = 1:numBSvData
+                BSvData{tTypeInds(tType)}(trace,:) = snVetaArray{tTypeInds(tType)}(randsample(size(snVetaArray{tTypeInds(tType)},1),1),:); 
+            end 
+            SEMvbs = (nanstd(BSvData{tTypeInds(tType)}))/(sqrt(size(BSvData{tTypeInds(tType)},1))); % Standard Error            
+            STDvbs = nanstd(BSvData{tTypeInds(tType)});
+            ts_vbsLow = tinv(0.025,size(BSvData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            ts_vbsHigh = tinv(0.975,size(BSvData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            CI_vbsLow{tTypeInds(tType)} = (nanmean(BSvData{tTypeInds(tType)},1)) + (ts_vbsLow*SEMvbs);  % Confidence Intervals
+            CI_vbsHigh{tTypeInds(tType)} = (nanmean(BSvData{tTypeInds(tType)},1)) + (ts_vbsHigh*SEMvbs);  % Confidence Intervals
+            avBSvData{tTypeInds(tType)} = nanmean(BSvData{tTypeInds(tType)},1);                         
         end 
         % plot Ca data 
         if CAQ == 1 
@@ -2627,6 +2676,7 @@ end
 pCAQ = input('Input 1 to plot calcium data. ');
 pBBBQ = input('Input 1 to plot BBB data. ');
 pVWQ = input('Input 1 to plot vessel width data. ');
+BSQ = input('Input 1 to plot bootstrapped data. Input 0 otherwise. ');
 for tType = 1:tTypeNum
     fig = figure;             
     hold all;
@@ -2634,7 +2684,16 @@ for tType = 1:tTypeNum
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
     if pCAQ == 1 
-        plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)
+        x = 1:length(CI_cLow{tTypeInds(tType)});
+        if BSQ == 0 
+            plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)        
+            patch([x fliplr(x)],[CI_cLow{tTypeInds(tType)}-100 fliplr(CI_cHigh{tTypeInds(tType)}-100)],'b','EdgeColor','none')
+        elseif BSQ == 1
+            plot(avBScData{tTypeInds(tType)}-100,'b','LineWidth',3)        
+            patch([x fliplr(x)],[CI_cbsLow{tTypeInds(tType)}-100 fliplr(CI_cbsHigh{tTypeInds(tType)}-100)],'b','EdgeColor','none')
+        end 
+        alpha(0.5) 
+        ylim([-0.5 1])
     end          
     if tTypeInds(tType) == 1 
         if optoQ == 0
@@ -2685,7 +2744,7 @@ for tType = 1:tTypeNum
     ax.FontSize = 30;
     ax.FontName = 'Arial';
     xlim([1 length(AVvData{tTypeInds(tType)})])
-    ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
+%     ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
     xlabel('time (s)')
     ylabel('calcium percent change')
     % initialize empty string array 
@@ -2700,10 +2759,15 @@ for tType = 1:tTypeNum
     end 
     if pBBBQ == 1
         %add right y axis tick marks 
-%         yyaxis right 
-        plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
+        yyaxis right 
         x = 1:length(CI_bLow{tTypeInds(tType)});
-%         patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+        if BSQ == 0
+            plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)        
+            patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+        elseif BSQ == 1
+            plot(avBSbData{tTypeInds(tType)}-100,'r','LineWidth',3)        
+            patch([x fliplr(x)],[CI_bbsLow{tTypeInds(tType)}-100 fliplr(CI_bbsHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+        end 
         alpha(0.5) 
         ylabel('BBB percent change')
 %         ylim([-10 20])
@@ -2715,8 +2779,19 @@ for tType = 1:tTypeNum
         %add right y axis tick marks 
         yyaxis right
         x = 1:length(CI_vLow{tTypeInds(tType)});
-        plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
-        patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')     
+        if BSQ == 0
+            plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
+            patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')   
+        elseif BSQ == 1
+            plot(avBSvData{tTypeInds(tType)}-100,'k','LineWidth',3)        
+            patch([x fliplr(x)],[CI_vbsLow{tTypeInds(tType)}-100 fliplr(CI_vbsHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')
+        end          
+        alpha(0.5) 
+        ylabel('vessel width percent change')
+%         ylim([-10 20])
+        ylim([-0.6 4])
+        set(gca,'YColor',[0 0 0]);   
+%         set(gca, 'YScale', 'log')
     end    
     set(fig,'position', [100 100 900 900])
     alpha(0.3)      
@@ -3092,28 +3167,210 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %compare terminal calcium activity with BBB and VW data - create
-%correlograms
-%{
+%correlograms and run FT on the data (this just assumes you have Ca, VW, and BBB data
+%for simplicity)
+%newer version - takes c/v/bDataFullTrace from batch .mat files 
+
 %import entire time series data 
-dataSetNumQ = input('How many different data sets are there? ');
-cData = cell(1,dataSetNumQ);
-bData = cell(1,dataSetNumQ);
-vData = cell(1,dataSetNumQ);
-for dataSet = 1:dataSetNumQ
-    regImDir = uigetdir('*.*',sprintf('WHERE IS DATA SET #%d?',dataSet));
+regImDir = uigetdir('*.*','WHERE IS THE (BATCH) DATA?');
+cd(regImDir);
+MatFileName = uigetfile('*.*','SELECT (BATCH) DATA');
+Mat = matfile(MatFileName);
+cDataFullTrace  = Mat.cDataFullTrace;
+CaROIs = Mat.terminals;
+bDataFullTrace = Mat.bDataFullTrace;
+vDataFullTrace = Mat.vDataFullTrace;
+FPSstack = Mat.FPSstack;
+  
+dataSetQ = input('Input 1 to load another data set and append to the relevant variables. '); 
+while dataSetQ == 1
+    regImDir = uigetdir('*.*','WHERE IS THE (BATCH) DATA?');
     cd(regImDir);
-    MatFileName = uigetfile('*.*',sprintf('SELECT DATA SET #%d',dataSet));
+    MatFileName = uigetfile('*.*','SELECT (BATCH) DATA');
     Mat = matfile(MatFileName);
-    if CAQ == 1 
-        cData{dataSet} = Mat.cDataFullTrace;
-    end 
-    if BBBQ == 1
-        bData{dataSet} = Mat.bDataFullTrace;
-    end 
-    if VWQ == 1 
-        vData{dataSet} = Mat.vDataFullTrace;
-    end     
+    cDataFullTrace2  = Mat.cDataFullTrace;
+    CaROIs2 = Mat.terminals;
+    bDataFullTrace2 = Mat.bDataFullTrace;
+    vDataFullTrace2 = Mat.vDataFullTrace;
+    FPSstack2 = Mat.FPSstack;
+    
+    % append new data to original variables 
+    mouseNum = length(cDataFullTrace);
+    mouseNum2 = length(cDataFullTrace2);
+    for mouse = 1:mouseNum2
+        cDataFullTrace{mouseNum+mouse} = cDataFullTrace2{mouse};   
+        CaROIs{mouseNum+mouse} = CaROIs2{mouse}; 
+        bDataFullTrace{mouseNum+mouse} = bDataFullTrace2{mouse};    
+        vDataFullTrace{mouseNum+mouse} = vDataFullTrace2{mouse};  
+        FPSstack{mouseNum+mouse} = FPSstack2{mouse}; 
+    end
+    dataSetQ = input('Input 1 to load another data set and append to the relevant variables. Input 0 otherwise. '); 
 end 
+
+%% smooth the data 
+smoothQ = input('Input 1 to smooth the data. Input 0 otherwise. ');
+if smoothQ == 0 
+    scDataFullTrace = cDataFullTrace;
+    sbDataFullTrace = bDataFullTrace;
+    svDataFullTrace = vDataFullTrace;
+elseif smoothQ == 1
+    filtTime = input('How many seconds do you want to smooth your data by? ');
+    scDataFullTrace = cell(1,length(cDataFullTrace));
+    sbDataFullTrace = cell(1,length(cDataFullTrace));
+    svDataFullTrace = cell(1,length(cDataFullTrace));
+    for mouse = 1:length(cDataFullTrace)
+        for vid = 1:length(cDataFullTrace{mouse})
+            for CAroi = 1:length(CaROIs{mouse})
+                scDataFullTrace{mouse}{vid}{CaROIs{mouse}(CAroi)} =  MovMeanSmoothData(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(CAroi)},filtTime,FPSstack{mouse});
+            end 
+            for BBBroi = 1:length(bDataFullTrace{mouse}{vid})
+                sbDataFullTrace{mouse}{vid}{BBBroi} =  MovMeanSmoothData(bDataFullTrace{mouse}{vid}{BBBroi},filtTime,FPSstack{mouse});
+            end 
+            for VWroi = 1:length(vDataFullTrace{mouse}{vid})
+                svDataFullTrace{mouse}{vid}{VWroi} =  MovMeanSmoothData(vDataFullTrace{mouse}{vid}{VWroi},filtTime,FPSstack{mouse});
+            end 
+        end 
+    end 
+end 
+
+%% xcorr the data per mouse 
+corrFigQ = input('Input 1 to display the correlograms per mouse. ');
+%compare Ca data across axons w/time lag 
+CaCorrs = cell(1,length(cDataFullTrace));
+CaCorrs2 = cell(1,length(cDataFullTrace));
+avVidCorrs = cell(1,length(cDataFullTrace));
+for mouse = 1:length(cDataFullTrace)
+    for vid = 1:length(cDataFullTrace{mouse})
+        for term1 = 1:length(CaROIs{mouse})
+            for term2 = 1:length(CaROIs{mouse})
+%                 [c{mouse}{vid},lags{mouse}{vid}] = xcorr(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term2)});
+                CaCorrs{mouse}{vid}(term1,term2) = corr2(scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},scDataFullTrace{mouse}{vid}{CaROIs{mouse}(term2)});
+                CaCorrs2{mouse}{term1,term2}(vid) = CaCorrs{mouse}{vid}(term1,term2);
+                avVidCorrs{mouse}(term1,term2) = nanmean(CaCorrs2{mouse}{term1,term2}(vid));
+            end             
+        end 
+        % plot correlograms of 0 time lagged data (per vid)
+%         figure;
+%         imagesc(CaCorrs{mouse}{vid})
+%         colorbar 
+%         truesize([700 900])
+%         ax=gca;
+%         ax.FontSize = 20;
+%         ax.XTickLabel = CaROIs{mouse};
+%         ax.YTickLabel = CaROIs{mouse};
+%         xlabel('axon')
+%         ylabel('axon')
+%         title(sprintf('Axon Ca Correlogram. Mouse %d. Vid %d. ',mouse,vid),'FontSize',20);
+    end 
+    if corrFigQ == 1 
+        figure;
+        imagesc(avVidCorrs{mouse})
+        colorbar 
+        truesize([700 900])
+        ax=gca;
+        ax.FontSize = 20;
+        xticks(1:length(CaROIs{mouse}))
+        yticks(1:length(CaROIs{mouse}))
+        ax.XTickLabel = CaROIs{mouse};
+        ax.YTickLabel = CaROIs{mouse};
+        xlabel('axon')
+        ylabel('axon')
+        title(sprintf('Axon Ca Correlogram. Mouse %d. %.2f sec smoothing.',mouse,filtTime),'FontSize',20);
+    end 
+end 
+
+% determine what Ca correlations are significant (correlation coefficient of 0.8 or greater)
+minCorr = zeros(1,length(cDataFullTrace));
+maxCorr = zeros(1,length(cDataFullTrace));
+minCorrAxons = cell(1,length(cDataFullTrace));
+maxCorrAxons = cell(1,length(cDataFullTrace));
+for mouse = 1:length(cDataFullTrace)
+    % convert diagonal values to NANs 
+    for self = 1:length(CaROIs{mouse})
+        avVidCorrs{mouse}(self,self) = NaN; 
+    end 
+    % find min and max correlated axons per mouse 
+    minCorr(mouse) = (min(min(avVidCorrs{mouse})));
+    maxCorr(mouse) = (max(max(avVidCorrs{mouse})));
+    [r,c] = find(avVidCorrs{mouse} == minCorr(mouse));
+    minCorrAxons{1,mouse} = [CaROIs{mouse}(r);CaROIs{mouse}(c)];    
+    [~,idx] = unique(sort(minCorrAxons{1,mouse},2),'rows','stable');
+    minCorrAxons{1,mouse} = minCorrAxons{1,mouse}(idx,:);       
+    minCorrAxons{2,mouse} = minCorr(mouse);
+    [r,c] = find(avVidCorrs{mouse} == maxCorr(mouse));
+    maxCorrAxons{1,mouse} = [CaROIs{mouse}(r);CaROIs{mouse}(c)];
+    [~,idx] = unique(sort(maxCorrAxons{1,mouse},2),'rows','stable');
+    maxCorrAxons{1,mouse} = maxCorrAxons{1,mouse}(idx,:);  
+    maxCorrAxons{2,mouse} = maxCorr(mouse);
+    % determine if any of the max correlations are significant 
+    if maxCorrAxons{2,mouse} >= 0.8
+        fprintf('Mouse %d shows significant correlation between axons.',mouse)
+    end 
+end 
+
+%% compare Ca data with BBB data 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% DO WHAT I DID ABOVE BELOW
+% 1) AVERAGE CORRS ACROSS VIDS 
+% 2) CREATE CORRELOGRAMS ACROSS VIDS AND ASK IF YOU WANT TO SEE THESE
+% 3) DETERMINE MIN AND MAX CORRS ACROSS MICE 
+% 4) LET USER KNOW IF ANY OF THE MAX CORRS ARE SIGNIFICANT 
+
+timeLagQ = input('Input 1 if you want to test the correlation between Ca axon data with time-lagged BBB data. ');
+if timeLagQ == 1
+    timeLag = input('Input time lag (sec). ');
+end 
+CaBBBCorrs = cell(1,length(cDataFullTrace));
+for mouse = 1:length(cDataFullTrace)
+    for vid = 1:length(cDataFullTrace{mouse})
+        for term1 = 1:length(CaROIs{mouse})
+            for BBBroi = 1:length(bDataFullTrace{mouse}{vid})
+%                 [c{mouse}{vid},lags{mouse}{vid}] = xcorr(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term2)});
+                if timeLagQ == 0 
+                    if length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) ~= length(bDataFullTrace{mouse}{vid}{BBBroi})
+                        minLen = min(length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}),length(bDataFullTrace{mouse}{vid}{BBBroi}));
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:minLen),bDataFullTrace{mouse}{vid}{BBBroi}(1:minLen));
+                    elseif length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}) == length(bDataFullTrace{mouse}{vid}{BBBroi})
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)},bDataFullTrace{mouse}{vid}{BBBroi});
+                    end   
+                elseif timeLagQ == 1
+                    timeLagFrames = floor(timeLag*(FPSstack{mouse}));
+                    if length(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames) ~= length(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)})
+                        CaBBBCorrs{mouse}{vid}(term1,BBBroi) = corr2(cDataFullTrace{mouse}{vid}{CaROIs{mouse}(term1)}(1:length(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames)),bDataFullTrace{mouse}{vid}{BBBroi}(timeLagFrames:length(bDataFullTrace{mouse}{vid}{BBBroi})-timeLagFrames));
+                    end 
+                end                       
+            end             
+        end 
+        % plot correlograms of 0 time lagged data 
+        figure;
+        imshow(CaBBBCorrs{mouse}{vid},[0,1]);
+        ax = gca;
+        ax.FontSize = 20;
+        axis on
+        yticks(1:length(CaROIs{mouse}))
+        yticklabels(CaROIs{mouse})
+        xticks(1:length(bDataFullTrace{mouse}{vid}))
+        colorbar 
+        truesize([700 900])
+        ylabel('axon')
+        xlabel('BBB ROI')
+        if timeLagQ == 0 
+            title(sprintf('Axon Ca-BBB Correlogram. Mouse %d. Vid %d. ',mouse,vid),'FontSize',20);
+        elseif timeLagQ == 1 
+            title(sprintf('Axon Ca-BBB Correlogram. Mouse %d. Vid %d. %.2f sec time lag. ',mouse,vid,timeLag),'FontSize',20);
+        end 
+        colormap default
+    end 
+end 
+
+
+
+
+
+
 %}
 %% calcium peak raster plots and PSTHs for multiple animals at once 
 % uses ETA .mat file that contains all trials 
