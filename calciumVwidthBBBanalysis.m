@@ -3161,16 +3161,11 @@ for tType = 1:length(nsCeta{terminals(1)})
    end 
 end 
 %}
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%compare terminal calcium activity with BBB and VW data - create
+%% compare terminal calcium activity with BBB and VW data - create
 %correlograms and run FT on the data (this just assumes you have Ca, VW, and BBB data
 %for simplicity)
 %newer version - takes c/v/bDataFullTrace from batch .mat files 
-
+%{
 %import entire time series data 
 regImDir = uigetdir('*.*','WHERE IS THE (BATCH) DATA?');
 cd(regImDir);
