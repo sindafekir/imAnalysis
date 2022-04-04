@@ -303,17 +303,6 @@ end
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
 %{
-% set initial paramaters 
-dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
-if dataParseType == 0 
-    sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
-    sec_after_stim_end = input("How many seconds after stimulus end do you want to plot? ");
-elseif dataParseType == 1 
-    sec_before_stim_start = 0;
-    sec_after_stim_end = 0; 
-end 
-numTtypes = input('How many different trial types are there? ');
-
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
 if workspaceQ == 1
@@ -386,6 +375,17 @@ elseif workspaceQ == 0
         vidList = vidList1;
     end 
 end 
+
+% set initial paramaters 
+dataParseType = input("What data do you need? Peristimulus epoch = 0. Stimulus epoch = 1. ");
+if dataParseType == 0 
+    sec_before_stim_start = input("How many seconds before the stimulus starts do you want to plot? ");
+    sec_after_stim_end = input("How many seconds after stimulus end do you want to plot? ");
+elseif dataParseType == 1 
+    sec_before_stim_start = 0;
+    sec_after_stim_end = 0; 
+end 
+numTtypes = input('How many different trial types are there? ');
 
 %% generate the figures and save the data out per mouse 
 
@@ -1752,7 +1752,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mous
-%{
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -2243,6 +2243,18 @@ CI_bbsLow = cell(1,tTypeNum);
 CI_bbsHigh = cell(1,tTypeNum);
 CI_vbsLow = cell(1,tTypeNum);
 CI_vbsHigh = cell(1,tTypeNum);
+shuff_snCetaArray = cell(1,tTypeNum);
+shuff_snBetaArray = cell(1,tTypeNum);
+shuff_snVetaArray = cell(1,tTypeNum);
+CI_cshLow = cell(1,tTypeNum);
+CI_cshHigh = cell(1,tTypeNum);
+CI_bshLow = cell(1,tTypeNum);
+CI_bshHigh = cell(1,tTypeNum);
+CI_vshLow = cell(1,tTypeNum);
+CI_vshHigh = cell(1,tTypeNum);
+avSHcData = cell(1,tTypeNum);
+avSHbData = cell(1,tTypeNum);
+avSHvData = cell(1,tTypeNum);
 for tType = 1:tTypeNum    
     Ccounter2 = 1;
     Bcounter2 = 1;
@@ -2361,26 +2373,26 @@ for tType = 1:tTypeNum
         %smooth tType data 
         if smoothQ == 0 
             if CAQ == 1
-                sCetaAvs{tTypeInds(tType)} = CetaArray{tTypeInds(tType)}+500;
+                sCetaAvs{tTypeInds(tType)} = CetaArray{tTypeInds(tType)}+1000;
             end 
             if BBBQ == 1
-                sBetaAvs{tTypeInds(tType)} = BetaArray{tTypeInds(tType)}+500;
+                sBetaAvs{tTypeInds(tType)} = BetaArray{tTypeInds(tType)}+100;
             end
             if VWQ == 1
-                sVetaAvs{tTypeInds(tType)} = VetaArray{tTypeInds(tType)}+500;
+                sVetaAvs{tTypeInds(tType)} = VetaArray{tTypeInds(tType)}+100;
             end
         elseif smoothQ == 1 
             if CAQ == 1
                 sCetaAv =  MovMeanSmoothData(CetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
-                sCetaAvs{tTypeInds(tType)} = sCetaAv+500; 
+                sCetaAvs{tTypeInds(tType)} = sCetaAv+100; 
             end 
             if BBBQ == 1
                 sBetaAv =  MovMeanSmoothData(BetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
-                sBetaAvs{tTypeInds(tType)} = sBetaAv+500; 
+                sBetaAvs{tTypeInds(tType)} = sBetaAv+100; 
             end 
             if VWQ == 1
                 sVetaAv =  MovMeanSmoothData(VetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
-                sVetaAvs{tTypeInds(tType)} = sVetaAv+500; 
+                sVetaAvs{tTypeInds(tType)} = sVetaAv+100; 
             end
         end 
         % baseline tType data to average value between 0 sec and -baselineInput sec (0 sec being stim
@@ -2407,7 +2419,16 @@ for tType = 1:tTypeNum
                 snVetaArray = sVetaAvs;
             end 
         end 
-
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % PICK UP HERE- NEED TO SHUFFLE SN_ARRAYS TO CREATE SHUFFLED
+        % BASELINE TRACE - AND GET 95% CI FOR THIS SHUFFLED BASELINE 
+        
+        
         % determine 95% CI and av data 
         if CAQ == 1
             SEMc{tTypeInds(tType)} = (nanstd(snCetaArray{tTypeInds(tType)}))/(sqrt(size(snCetaArray{tTypeInds(tType)},1))); % Standard Error            
@@ -2418,8 +2439,8 @@ for tType = 1:tTypeNum
             CI_cHigh{tTypeInds(tType)} = (nanmean(snCetaArray{tTypeInds(tType)},1)) + (ts_cHigh*SEMc{tTypeInds(tType)});  % Confidence Intervals
             x = 1:length(CI_cLow{tTypeInds(tType)});
             AVcData{tTypeInds(tType)} = nanmean(snCetaArray{tTypeInds(tType)},1);
-            %bootstrap the data 
-            numBScData = size(snCetaArray{tTypeInds(tType)},1)*6;            
+            % bootstrap the data 
+            numBScData = (10000); %size(snCetaArray{tTypeInds(tType)},1)*6;            
             for trace = 1:numBScData
                 BScData{tTypeInds(tType)}(trace,:) = snCetaArray{tTypeInds(tType)}(randsample(size(snCetaArray{tTypeInds(tType)},1),1),:); 
             end 
@@ -2430,6 +2451,19 @@ for tType = 1:tTypeNum
             CI_cbsLow{tTypeInds(tType)} = (nanmean(BScData{tTypeInds(tType)},1)) + (ts_cbsLow*SEMcbs);  % Confidence Intervals
             CI_cbsHigh{tTypeInds(tType)} = (nanmean(BScData{tTypeInds(tType)},1)) + (ts_cbsHigh*SEMcbs);  % Confidence Intervals
             avBScData{tTypeInds(tType)} = nanmean(BScData{tTypeInds(tType)},1); 
+            % create shuffled trace            
+            [M,N] = size(snCetaArray{tTypeInds(tType)}); % get size of previous arrays            
+            rowIndex = repmat((1:M)',[1 N]); % Preserve the row indices           
+            [~,randomizedColIndex] = sort(rand(M,N),2); % Get randomized column indices by sorting a second random array           
+            newLinearIndex = sub2ind([M,N],rowIndex,randomizedColIndex); % Need to use linear indexing to create B
+            shuff_snCetaArray{tTypeInds(tType)} = snCetaArray{tTypeInds(tType)}(newLinearIndex);
+            SEMcsh = (nanstd(shuff_snCetaArray{tTypeInds(tType)}))/(sqrt(size(shuff_snCetaArray{tTypeInds(tType)},1))); % Standard Error            
+            STDcsh = nanstd(shuff_snCetaArray{tTypeInds(tType)});
+            ts_cshLow = tinv(0.025,size(shuff_snCetaArray{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            ts_cshHigh = tinv(0.975,size(shuff_snCetaArray{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            CI_cshLow{tTypeInds(tType)} = (nanmean(shuff_snCetaArray{tTypeInds(tType)},1)) + (ts_cshLow*SEMcsh);  % Confidence Intervals
+            CI_cshHigh{tTypeInds(tType)} = (nanmean(shuff_snCetaArray{tTypeInds(tType)},1)) + (ts_cshHigh*SEMcsh);  % Confidence Intervals
+            avSHcData{tTypeInds(tType)} = nanmean(shuff_snCetaArray{tTypeInds(tType)},1); 
         end 
         if BBBQ == 1
             SEMb{tTypeInds(tType)} = (nanstd(snBetaArray{tTypeInds(tType)}))/(sqrt(size(snBetaArray{tTypeInds(tType)},1))); % Standard Error            
@@ -2441,7 +2475,7 @@ for tType = 1:tTypeNum
             x = 1:length(CI_bLow{tTypeInds(tType)});
             AVbData{tTypeInds(tType)} = nanmean(snBetaArray{tTypeInds(tType)},1);
             %bootstrap the data 
-            numBSbData = size(snBetaArray{tTypeInds(tType)},1)*6;            
+            numBSbData =  (10000); %size(snBetaArray{tTypeInds(tType)},1)*6;            
             for trace = 1:numBSbData
                 BSbData{tTypeInds(tType)}(trace,:) = snBetaArray{tTypeInds(tType)}(randsample(size(snBetaArray{tTypeInds(tType)},1),1),:); 
             end 
@@ -2452,6 +2486,19 @@ for tType = 1:tTypeNum
             CI_bbsLow{tTypeInds(tType)} = (nanmean(BSbData{tTypeInds(tType)},1)) + (ts_bbsLow*SEMbbs);  % Confidence Intervals
             CI_bbsHigh{tTypeInds(tType)} = (nanmean(BSbData{tTypeInds(tType)},1)) + (ts_bbsHigh*SEMbbs);  % Confidence Intervals
             avBSbData{tTypeInds(tType)} = nanmean(BSbData{tTypeInds(tType)},1); 
+            % create shuffled trace            
+            [M,N] = size(snBetaArray{tTypeInds(tType)}); % get size of previous arrays            
+            rowIndex = repmat((1:M)',[1 N]); % Preserve the row indices           
+            [~,randomizedColIndex] = sort(rand(M,N),2); % Get randomized column indices by sorting a second random array           
+            newLinearIndex = sub2ind([M,N],rowIndex,randomizedColIndex); % Need to use linear indexing to create B
+            shuff_snBetaArray{tTypeInds(tType)} = snBetaArray{tTypeInds(tType)}(newLinearIndex);
+            SEMbsh = (nanstd(shuff_snBetaArray{tTypeInds(tType)}))/(sqrt(size(shuff_snBetaArray{tTypeInds(tType)},1))); % Standard Error            
+            STDbsh = nanstd(shuff_snBetaArray{tTypeInds(tType)});
+            ts_bshLow = tinv(0.025,size(shuff_snBetaArray{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            ts_bshHigh = tinv(0.975,size(shuff_snBetaArray{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            CI_bshLow{tTypeInds(tType)} = (nanmean(shuff_snBetaArray{tTypeInds(tType)},1)) + (ts_bshLow*SEMbsh);  % Confidence Intervals
+            CI_bshHigh{tTypeInds(tType)} = (nanmean(shuff_snBetaArray{tTypeInds(tType)},1)) + (ts_bshHigh*SEMbsh);  % Confidence Intervals
+            avSHbData{tTypeInds(tType)} = nanmean(shuff_snBetaArray{tTypeInds(tType)},1); 
         end 
         if VWQ == 1
             SEMv{tTypeInds(tType)} = (nanstd(snVetaArray{tTypeInds(tType)}))/(sqrt(size(snVetaArray{tTypeInds(tType)},1))); % Standard Error            
@@ -2473,7 +2520,20 @@ for tType = 1:tTypeNum
             ts_vbsHigh = tinv(0.975,size(BSvData{tTypeInds(tType)},1)-1);% T-Score for 95% CI
             CI_vbsLow{tTypeInds(tType)} = (nanmean(BSvData{tTypeInds(tType)},1)) + (ts_vbsLow*SEMvbs);  % Confidence Intervals
             CI_vbsHigh{tTypeInds(tType)} = (nanmean(BSvData{tTypeInds(tType)},1)) + (ts_vbsHigh*SEMvbs);  % Confidence Intervals
-            avBSvData{tTypeInds(tType)} = nanmean(BSvData{tTypeInds(tType)},1);                         
+            avBSvData{tTypeInds(tType)} = nanmean(BSvData{tTypeInds(tType)},1);   
+            % create shuffled trace            
+            [M,N] = size(snVetaArray{tTypeInds(tType)}); % get size of previous arrays            
+            rowIndex = repmat((1:M)',[1 N]); % Preserve the row indices           
+            [~,randomizedColIndex] = sort(rand(M,N),2); % Get randomized column indices by sorting a second random array           
+            newLinearIndex = sub2ind([M,N],rowIndex,randomizedColIndex); % Need to use linear indexing to create B
+            shuff_snVetaArray{tTypeInds(tType)} = snVetaArray{tTypeInds(tType)}(newLinearIndex);
+            SEMvsh = (nanstd(shuff_snVetaArray{tTypeInds(tType)}))/(sqrt(size(shuff_snVetaArray{tTypeInds(tType)},1))); % Standard Error            
+            STDvsh = nanstd(shuff_snVetaArray{tTypeInds(tType)});
+            ts_vshLow = tinv(0.025,size(shuff_snVetaArray{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            ts_vshHigh = tinv(0.975,size(shuff_snVetaArray{tTypeInds(tType)},1)-1);% T-Score for 95% CI
+            CI_vshLow{tTypeInds(tType)} = (nanmean(shuff_snVetaArray{tTypeInds(tType)},1)) + (ts_vshLow*SEMvsh);  % Confidence Intervals
+            CI_vshHigh{tTypeInds(tType)} = (nanmean(shuff_snVetaArray{tTypeInds(tType)},1)) + (ts_vshHigh*SEMvsh);  % Confidence Intervals
+            avSHvData{tTypeInds(tType)} = nanmean(shuff_snVetaArray{tTypeInds(tType)},1);                       
         end 
         % plot Ca data 
         if CAQ == 1 
@@ -2688,9 +2748,13 @@ for tType = 1:tTypeNum
         if BSQ == 0 
             plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)        
             patch([x fliplr(x)],[CI_cLow{tTypeInds(tType)}-100 fliplr(CI_cHigh{tTypeInds(tType)}-100)],'b','EdgeColor','none')
+            plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+            patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],'color',[0.5 0.5 0.5],'EdgeColor','none')
         elseif BSQ == 1
             plot(avBScData{tTypeInds(tType)}-100,'b','LineWidth',3)        
             patch([x fliplr(x)],[CI_cbsLow{tTypeInds(tType)}-100 fliplr(CI_cbsHigh{tTypeInds(tType)}-100)],'b','EdgeColor','none')
+            plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+            patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],'color',[0.5 0.5 0.5],'EdgeColor','none')
         end 
         alpha(0.5) 
         ylim([-0.5 1])
@@ -2700,12 +2764,12 @@ for tType = 1:tTypeNum
             plot([ceil(abs(Frames_pre_stim_start)-10) ceil(abs(Frames_pre_stim_start)-10)], [-5000000 5000000], '-k','LineWidth',2)
             plot([(ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2) (ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2)], [-5000000 5000000], '-k','LineWidth',2)
             
-%             label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
-%             label1.FontSize = 30;
-%             label1.FontName = 'Arial';
-%             label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
-%             label2.FontSize = 30;
-%             label3 = ('Behavior Data');
+            label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+            label1.FontSize = 30;
+            label1.FontName = 'Arial';
+            label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+            label2.FontSize = 30;
+            label3 = ('Behavior Data');
         elseif optoQ == 1 
             plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], '-k','LineWidth',2)
             plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], '-k','LineWidth',2) 
@@ -2764,9 +2828,13 @@ for tType = 1:tTypeNum
         if BSQ == 0
             plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)        
             patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+            plot(avSHbData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+            patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],'color',[0.5 0.5 0.5],'EdgeColor','none')
         elseif BSQ == 1
             plot(avBSbData{tTypeInds(tType)}-100,'r','LineWidth',3)        
             patch([x fliplr(x)],[CI_bbsLow{tTypeInds(tType)}-100 fliplr(CI_bbsHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
+            plot(avSHbData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+            patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],'color',[0.5 0.5 0.5],'EdgeColor','none')
         end 
         alpha(0.5) 
         ylabel('BBB percent change')
@@ -2781,10 +2849,14 @@ for tType = 1:tTypeNum
         x = 1:length(CI_vLow{tTypeInds(tType)});
         if BSQ == 0
             plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
-            patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')   
+            patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')
+            plot(avSHvData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+            patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100 fliplr(CI_vshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         elseif BSQ == 1
             plot(avBSvData{tTypeInds(tType)}-100,'k','LineWidth',3)        
             patch([x fliplr(x)],[CI_vbsLow{tTypeInds(tType)}-100 fliplr(CI_vbsHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')
+            plot(avSHvData{tTypeInds(tType)}-100,[0.5 0.5 0.5],'LineWidth',3)        
+            patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100 fliplr(CI_vshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         end          
         alpha(0.5) 
         ylabel('vessel width percent change')
@@ -3165,7 +3237,7 @@ end
 %correlograms and run FT on the data (this just assumes you have Ca, VW, and BBB data
 %for simplicity)
 %newer version - takes c/v/bDataFullTrace from batch .mat files 
-
+%{
 %import entire time series data 
 regImDir = uigetdir('*.*','WHERE IS THE (BATCH) DATA?');
 cd(regImDir);
@@ -7811,7 +7883,7 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
             %bootstrap the data then determine 95% CI of bootstrapped data 
             %determine how many bootstrapped samples you need to have 6x the original
             %data set 
-            numBSbData = size(Btraces_allMice{per},1)*6;
+            numBSbData = (50000);%size(Btraces_allMice{per},1)*6;
             BSbData = zeros(size(Btraces_allMice{per},1)*6,size(Btraces_allMice{per},2));
             for trace = 1:numBSbData
                 BSbData(trace,:) = Btraces_allMice{per}(randsample(size(Btraces_allMice{per},1),1),:); 
@@ -7842,7 +7914,7 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
         %bootstrap the data then determine 95% CI of bootstrapped data 
         %determine how many bootstrapped samples you need to have 6x the original
         %data set 
-        numBScData = size(Ctraces_allMice{per},1)*6;
+        numBScData = (50000);%size(Ctraces_allMice{per},1)*6;
         BScData = zeros(size(Ctraces_allMice{per},1)*6,size(Ctraces_allMice{per},2));
         for trace = 1:numBScData
             BScData(trace,:) = Ctraces_allMice{per}(randsample(size(Ctraces_allMice{per},1),1),:); 
