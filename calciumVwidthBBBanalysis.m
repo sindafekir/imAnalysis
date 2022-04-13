@@ -1752,7 +1752,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mous
-%{
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -2174,11 +2174,9 @@ if CAQ == 1
                 count1 = 1;
                 for vid = 1:length(state_start_f{mouse})                      
                      if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
-                            for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})
-                                
-                                if count1 <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)
-                                    
-                                    Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(count1,:);                             
+                            for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})                                
+                                if count1 <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)                                    
+                                    Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:);                             
                                     count1 = count1 + 1;
                                 end 
                             end                           
@@ -2197,7 +2195,7 @@ if BBBQ == 1
                     if  tTypeInds(tType) <= length(Btraces{mouse}{vid}) && isempty(Btraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
                         for trace = 1:nnz(Btraces{mouse}{vid}{tTypeInds(tType)})                            
                             if count2 <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)                                
-                                Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(count2,:);
+                                Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
                                 count2 = count2 + 1;
                             end 
                         end 
@@ -2216,7 +2214,7 @@ if VWQ == 1
                     if  tTypeInds(tType) <= length(Vtraces{mouse}{vid}) && isempty(Vtraces{mouse}{vid}{tTypeInds(tType)}) == 0                            
                         for trace = 1:nnz(Vtraces{mouse}{vid}{tTypeInds(tType)})                              
                             if count3 <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)                                
-                                Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(count3,:);
+                                Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
                                 count3 = count3 + 1;
                             end 
                         end 
@@ -2739,13 +2737,13 @@ for tType = 1:tTypeNum
         if BSQ == 0 
             plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)        
             patch([x fliplr(x)],[CI_cLow{tTypeInds(tType)}-100 fliplr(CI_cHigh{tTypeInds(tType)}-100)],'b','EdgeColor','none')
-            plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
-            patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%             plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%             patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         elseif BSQ == 1
             plot(avBScData{tTypeInds(tType)}-100,'b','LineWidth',3)        
             patch([x fliplr(x)],[CI_cbsLow{tTypeInds(tType)}-100 fliplr(CI_cbsHigh{tTypeInds(tType)}-100)],'b','EdgeColor','none')
-            plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
-            patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%             plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%             patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         end 
         alpha(0.5) 
         ylim([-0.5 1])
@@ -2819,13 +2817,13 @@ for tType = 1:tTypeNum
         if BSQ == 0
             plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)        
             patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
-            plot(avSHbData{tTypeInds(tType)}-100,'-','color',[0.5 0.5 0.5],'LineWidth',3)        
-            patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%             plot(avSHbData{tTypeInds(tType)}-100,'-','color',[0.5 0.5 0.5],'LineWidth',3)        
+%             patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         elseif BSQ == 1
             plot(avBSbData{tTypeInds(tType)}-100,'r','LineWidth',3)        
             patch([x fliplr(x)],[CI_bbsLow{tTypeInds(tType)}-100 fliplr(CI_bbsHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
-            plot(avSHbData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
-            patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%             plot(avSHbData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%             patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         end 
         alpha(0.5) 
         ylabel('BBB percent change')
@@ -2841,8 +2839,8 @@ for tType = 1:tTypeNum
         if BSQ == 0
             plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
             patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')
-            plot(avSHvData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
-            patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100 fliplr(CI_vshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%             plot(avSHvData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%             patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100 fliplr(CI_vshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
         elseif BSQ == 1
             plot(avBSvData{tTypeInds(tType)}-100,'k','LineWidth',3)        
             patch([x fliplr(x)],[CI_vbsLow{tTypeInds(tType)}-100 fliplr(CI_vbsHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')

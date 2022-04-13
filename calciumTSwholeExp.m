@@ -163,8 +163,10 @@ FsubSBLs = cell(1,length(ROIinds) );
 %% average across z 
 
 CcellData = cell(1,length(ROIinds));
+nonSLBLsubData = cell(1,length(ROIinds));
  for ccell = 1:length(ROIinds)
        CcellData{ROIinds(ccell)} = nanmean(FsubSBLs{ROIinds(ccell)},1);
+       nonSLBLsubData{ROIinds(ccell)} = nanmean(meanPixIntArray{ROIinds(ccell)},1);
  end 
 
 %% plot calcium traces per Ca ROI to get an idea for what Ca ROIs hit a noise floor 
@@ -172,6 +174,7 @@ CcellData = cell(1,length(ROIinds));
  for ccell = 1:length(ROIinds)
      figure;
      plot(CcellData{ROIinds(ccell)})
+%      plot(nonSLBLsubData{ROIinds(ccell)})
      title(sprintf('Ca ROI %d',ROIinds(ccell)))
  end 
 
