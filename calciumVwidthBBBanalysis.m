@@ -2270,6 +2270,12 @@ VetaArray3 = cell(1,tTypeNum );
 CetaArray4 = cell(1,tTypeNum );
 BetaArray4 = cell(1,tTypeNum );
 VetaArray4 = cell(1,tTypeNum );
+sCetaAvs4 = cell(1,tTypeNum );
+sBetaAvs4 = cell(1,tTypeNum );
+sVetaAvs4 = cell(1,tTypeNum );
+snCetaArray4 = cell(1,tTypeNum );
+snBetaArray4 = cell(1,tTypeNum );
+snVetaArray4 = cell(1,tTypeNum );
 for tType = 1:tTypeNum    
     Ccounter2 = 1;
     Bcounter2 = 1;
@@ -2436,25 +2442,34 @@ for tType = 1:tTypeNum
         if smoothQ == 0 
             if CAQ == 1
                 sCetaAvs{tTypeInds(tType)} = CetaArray{tTypeInds(tType)}+1000;
+                sCetaAvs4{tTypeInds(tType)} = CetaArray4{tTypeInds(tType)}+1000;
             end 
             if BBBQ == 1
                 sBetaAvs{tTypeInds(tType)} = BetaArray{tTypeInds(tType)}+100;
+                sBetaAvs4{tTypeInds(tType)} = BetaArray4{tTypeInds(tType)}+100;
             end
             if VWQ == 1
                 sVetaAvs{tTypeInds(tType)} = VetaArray{tTypeInds(tType)}+100;
+                sVetaAvs4{tTypeInds(tType)} = VetaArray4{tTypeInds(tType)}+100;
             end
         elseif smoothQ == 1 
             if CAQ == 1
                 sCetaAv =  MovMeanSmoothData(CetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
                 sCetaAvs{tTypeInds(tType)} = sCetaAv+100; 
+                sCetaAv4 =  MovMeanSmoothData(CetaArray4{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                sCetaAvs4{tTypeInds(tType)} = sCetaAv4+100; 
             end 
             if BBBQ == 1
                 sBetaAv =  MovMeanSmoothData(BetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
                 sBetaAvs{tTypeInds(tType)} = sBetaAv+100; 
+                sBetaAv4 =  MovMeanSmoothData(BetaArray4{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                sBetaAvs4{tTypeInds(tType)} = sBetaAv4+100; 
             end 
             if VWQ == 1
                 sVetaAv =  MovMeanSmoothData(VetaArray{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
                 sVetaAvs{tTypeInds(tType)} = sVetaAv+100; 
+                sVetaAv4 =  MovMeanSmoothData(VetaArray4{tTypeInds(tType)},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                sVetaAvs4{tTypeInds(tType)} = sVetaAv4+100; 
             end
         end 
         % baseline tType data to average value between 0 sec and -baselineInput sec (0 sec being stim
@@ -2462,23 +2477,29 @@ for tType = 1:tTypeNum
         if dataParseType == 0 %peristimulus data to plot 
             %sec_before_stim_start       
             if CAQ == 1
-                snCetaArray{tTypeInds(tType)} = ((sCetaAvs{tTypeInds(tType)} ./ nanmean(sCetaAvs{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);              
+                snCetaArray{tTypeInds(tType)} = ((sCetaAvs{tTypeInds(tType)} ./ nanmean(sCetaAvs{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);    
+                snCetaArray4{tTypeInds(tType)} = ((sCetaAvs4{tTypeInds(tType)} ./ nanmean(sCetaAvs4{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);              
             end 
             if BBBQ == 1 
-                snBetaArray{tTypeInds(tType)} = ((sBetaAvs{tTypeInds(tType)} ./ nanmean(sBetaAvs{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);              
+                snBetaArray{tTypeInds(tType)} = ((sBetaAvs{tTypeInds(tType)} ./ nanmean(sBetaAvs{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);    
+                snBetaArray4{tTypeInds(tType)} = ((sBetaAvs4{tTypeInds(tType)} ./ nanmean(sBetaAvs4{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);          
             end 
             if VWQ == 1
-                snVetaArray{tTypeInds(tType)} = ((sVetaAvs{tTypeInds(tType)} ./ nanmean(sVetaAvs{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);              
+                snVetaArray{tTypeInds(tType)} = ((sVetaAvs{tTypeInds(tType)} ./ nanmean(sVetaAvs{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100); 
+                snVetaArray4{tTypeInds(tType)} = ((sVetaAvs4{tTypeInds(tType)} ./ nanmean(sVetaAvs4{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);
             end 
         elseif dataParseType == 1 %only stimulus data to plot 
             if CAQ == 1
                 snCetaArray = sCetaAvs; 
+                snCetaArray4 = sCetaAvs4; 
             end 
             if BBBQ == 1 
                 snBetaArray = sBetaAvs;
+                snBetaArray4 = sBetaAvs4;
             end 
             if VWQ == 1
                 snVetaArray = sVetaAvs;
+                snVetaArray4 = sVetaAvs4;
             end 
         end 
                
@@ -2652,9 +2673,10 @@ for tType = 1:tTypeNum
                 plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)
                 patch([x fliplr(x)],[CI_cLow{tTypeInds(tType)}-100 fliplr(CI_cHigh{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none')
             elseif plotAVQ == 0 
-                colorMap = [zeros(size(BetaArray4{tTypeInds(tType)},1),2),linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))'];
+                colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
+%                 colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),2),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))'];
                 for trace = 1:size(CetaArray4{tTypeInds(tType)},1)
-                    plot(CetaArray4{tTypeInds(tType)}(trace,:),'color',colorMap(trace,:));
+                    plot(snCetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end 
             end 
             if tTypeInds(tType) == 1 
@@ -2793,9 +2815,10 @@ for tType = 1:tTypeNum
                 plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
                 patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
             elseif plotAVQ == 0
-                colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)];
+%                 colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)];
+                colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
                 for trace = 1:size(BetaArray4{tTypeInds(tType)},1)
-                    plot(BetaArray4{tTypeInds(tType)}(trace,:),'color',colorMap(trace,:));
+                    plot(snBetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end                 
             end 
             if tTypeInds(tType) == 1 
@@ -2934,9 +2957,10 @@ for tType = 1:tTypeNum
                 plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
                 patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')       
             elseif plotAVQ == 0
-                colorMap = [linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))'];
+%                 colorMap = [linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))'];
+                colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
                 for trace = 1:size(VetaArray4{tTypeInds(tType)},1)
-                    plot(VetaArray4{tTypeInds(tType)}(trace,:),'color',colorMap(trace,:));
+                    plot(snVetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end 
             end     
             if tTypeInds(tType) == 1 
