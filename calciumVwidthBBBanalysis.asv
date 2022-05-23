@@ -1752,7 +1752,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mous
-%{
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -2959,8 +2959,8 @@ for tType = 1:tTypeNum
                 plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
                 patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')       
             elseif plotAVQ == 0
-                colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))']; %black to gray
-%                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
+%                 colorMap = [linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(VetaArray4{tTypeInds(tType)},1))'];
+                colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
                 for trace = 1:size(VetaArray4{tTypeInds(tType)},1)
                     plot(snVetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end 
