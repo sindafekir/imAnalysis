@@ -1763,7 +1763,7 @@ end
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
 % the trials per mous
-%{
+
 %get the data you need 
 mouseNum = input('How many mice are there? ');
 CAQ = input('Input 1 if there is Ca data to plot. ');
@@ -2068,59 +2068,147 @@ if dataParseType == 0 %peristimulus data to plot
 end 
 
 % make it possible to select what trials you want to average per mouse 
-trialQ = input('Input 1 to select what trials to average per mouse. Input 0 otherwise. ');
-trials = cell(1,mouseNum);
-tTypeTrials = cell(1,mouseNum);
-for mouse = 1:mouseNum 
-    % figure out what trial type each trial got sorted into 
-    count1 = 1;
-    count2 = 1;
-    count3 = 1;
-    count4 = 1;
-    for vid = 1:length(TrialTypes{mouse})  
-        if trialQ == 1 
-            trials{mouse}{vid} = input(sprintf('Input what trials you want to average for mouse %d vid %d. ',mouse,vid));
-        elseif trialQ == 0 
-            trials{mouse}{vid} = 1:length(trialLengths{mouse}{vid});
-        end 
-        for trial = 1:length(trials{mouse}{vid})
-            %if the blue light is on
-            if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
-                %if it is a 2 sec trial 
-                if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))  
-                    tTypeTrials{mouse}{vid}{1}(count1) = trials{mouse}{vid}(trial);
-                    count1 = count1 + 1;
-                %if it is a 20 sec trial
-                elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
-                    tTypeTrials{mouse}{vid}{2}(count2) = trials{mouse}{vid}(trial);
-                    count2 = count2 + 1;
+trialAVQ = input('Input 1 if you want to select specific trials to average. Input 0 otherwise. ');
+if trialAVQ == 0   
+    trials = cell(1,mouseNum);
+    tTypeTrials = cell(1,mouseNum);
+    for mouse = 1:mouseNum 
+        % figure out what trial type each trial got sorted into 
+        count1 = 1;
+        count2 = 1;
+        count3 = 1;
+        count4 = 1;
+        for vid = 1:length(TrialTypes{mouse})  
+            trials{mouse}{vid} = 1:length(trialLengths{mouse}{vid});          
+            for trial = 1:length(trials{mouse}{vid})
+                %if the blue light is on
+                if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
+                    %if it is a 2 sec trial 
+                    if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))  
+                        tTypeTrials{mouse}{vid}{1}(count1) = trials{mouse}{vid}(trial);
+                        count1 = count1 + 1;
+                    %if it is a 20 sec trial
+                    elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
+                        tTypeTrials{mouse}{vid}{2}(count2) = trials{mouse}{vid}(trial);
+                        count2 = count2 + 1;
+                    end 
+                %if the red light is on 
+                elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
+                    %if it is a 2 sec trial 
+                    if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))
+                        tTypeTrials{mouse}{vid}{3}(count3) = trials{mouse}{vid}(trial);
+                        count3 = count3 + 1;
+                    %if it is a 20 sec trial
+                    elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
+                        tTypeTrials{mouse}{vid}{4}(count4) = trials{mouse}{vid}(trial);
+                        count4 = count4 + 1;
+                    end 
+                end                 
+            end 
+        end      
+    end 
+    if CAQ == 1          
+        Ctraces= tTypeTrials;            
+    end 
+    if BBBQ == 1 
+        Btraces= tTypeTrials;
+    end 
+    if VWQ == 1 
+        Vtraces= tTypeTrials;            
+    end  
+elseif trialAVQ == 1 
+    trialAVQ2 = input('Input 1 if you want to average multiple groups of trials. Input 0 for one group. '); 
+    if trialAVQ2 == 0 
+        trials = cell(1,mouseNum);
+        tTypeTrials = cell(1,mouseNum);
+        for mouse = 1:mouseNum 
+            % figure out what trial type each trial got sorted into 
+            count1 = 1;
+            count2 = 1;
+            count3 = 1;
+            count4 = 1;
+            for vid = 1:length(TrialTypes{mouse})  
+                trials{mouse}{vid} = input(sprintf('Input what trials you want to average for mouse %d vid %d. ',mouse,vid));
+                for trial = 1:length(trials{mouse}{vid})
+                    %if the blue light is on
+                    if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
+                        %if it is a 2 sec trial 
+                        if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))  
+                            tTypeTrials{mouse}{vid}{1}(count1) = trials{mouse}{vid}(trial);
+                            count1 = count1 + 1;
+                        %if it is a 20 sec trial
+                        elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
+                            tTypeTrials{mouse}{vid}{2}(count2) = trials{mouse}{vid}(trial);
+                            count2 = count2 + 1;
+                        end 
+                    %if the red light is on 
+                    elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
+                        %if it is a 2 sec trial 
+                        if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))
+                            tTypeTrials{mouse}{vid}{3}(count3) = trials{mouse}{vid}(trial);
+                            count3 = count3 + 1;
+                        %if it is a 20 sec trial
+                        elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
+                            tTypeTrials{mouse}{vid}{4}(count4) = trials{mouse}{vid}(trial);
+                            count4 = count4 + 1;
+                        end 
+                    end                 
                 end 
-            %if the red light is on 
-            elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
-                %if it is a 2 sec trial 
-                if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))
-                    tTypeTrials{mouse}{vid}{3}(count3) = trials{mouse}{vid}(trial);
-                    count3 = count3 + 1;
-                %if it is a 20 sec trial
-                elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
-                    tTypeTrials{mouse}{vid}{4}(count4) = trials{mouse}{vid}(trial);
-                    count4 = count4 + 1;
-                end 
-            end                 
+            end      
         end 
-    end      
+        if CAQ == 1          
+            Ctraces= tTypeTrials;            
+        end 
+        if BBBQ == 1 
+            Btraces= tTypeTrials;
+        end 
+        if VWQ == 1 
+            Vtraces= tTypeTrials;            
+        end  
+    elseif trialAVQ2 == 1
+        trialGroupLen = input('How many trials do you want to average together per group? ');
+        trialGroupMaxQ = input('Input 1 if you want to limit how many overall trials you are averaging into groups. Input 0 otherwise. ');
+        if trialGroupMaxQ == 1
+            trialGroupMax = cell(1,mouseNum);
+            for mouse = 1:mouseNum 
+                for vid = 1:length(TrialTypes{mouse})
+                    trialGroupMax{mouse}{vid} = input(sprintf('What is the maximum trial that you want to average into groups for mouse %d vid %d? ',mouse,vid));
+                end 
+            end 
+        elseif trialGroupMaxQ == 0
+            trialGroupMax = cell(1,mouseNum);
+            for mouse = 1:mouseNum 
+                for vid = 1:length(TrialTypes{mouse}) 
+                    trialGroupMax{mouse}{vid} = length(trialLengths{mouse}{vid});   
+                end 
+            end 
+        end 
+        
+    % NEED TO MAKE IT POSSIBLE TO AVERAGE GROUPS OF TRIALS TOGETHER       
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+    % figure out the grouping of trials based on the size of each group and
+    % the maximum number of trials to be grouped for averaging 
+    
+    
+    
+    % AT END NEED TO CREATE CBV TRACES THAT LOOK LIKE THIS: Ctraces{mouse}{vid}{tTypeInds(tType)}
+    end 
 end 
-if CAQ == 1          
-    Ctraces= tTypeTrials;            
-end 
-if BBBQ == 1 
-    Btraces= tTypeTrials;
-end 
-if VWQ == 1 
-    Vtraces= tTypeTrials;            
-end  
 
-% figure out ITI length and sort ITI length into trial type 
+%@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@
+% AT END COMBIND THIS SECTION WITH THE BELOW. JUST SEPARATE NOW FOR
+% TROUBLESHOOTING 
+
+%% figure out ITI length and sort ITI length into trial type 
 ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
 if ITIq == 1
     if CAQ == 1
