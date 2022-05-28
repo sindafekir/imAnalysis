@@ -2183,32 +2183,70 @@ elseif trialAVQ == 1
                 end 
             end 
         end 
-        
-    % NEED TO MAKE IT POSSIBLE TO AVERAGE GROUPS OF TRIALS TOGETHER       
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     
-    % figure out the grouping of trials based on the size of each group and
-    % the maximum number of trials to be grouped for averaging 
-    
-    
-    
-    % AT END NEED TO CREATE CBV TRACES THAT LOOK LIKE THIS: Ctraces{mouse}{vid}{tTypeInds(tType)}
+        % figure out the grouping of trials based on the size of each group and
+        % the maximum number of trials to be grouped for averaging 
+        numGroups = cell(1,mouseNum);
+        sortedGroupTrials = cell(1,mouseNum);
+        trials = cell(1,mouseNum);
+        for mouse = 1:mouseNum 
+            for vid = 1:length(TrialTypes{mouse})
+                % figure out how many groups there are 
+                if floor(trialGroupMax{mouse}{vid}/trialGroupLen) == trialGroupMax{mouse}{vid}/trialGroupLen % if groupMax/groupLen is an integer
+                    numGroups{mouse}{vid} = trialGroupMax{mouse}{vid}/trialGroupLen;
+                elseif floor(trialGroupMax{mouse}{vid}/trialGroupLen) ~= trialGroupMax{mouse}{vid}/trialGroupLen % if groupMax/groupLen is not an integer
+                    numGroups{mouse}{vid} = floor(trialGroupMax{mouse}{vid}/trialGroupLen);
+                end 
+                % figure out what trials go to what groups 
+                trials{mouse}{vid} = 1:length(trialLengths{mouse}{vid});
+                count = 1;
+                for group = 1:numGroups{mouse}{vid}
+                    count1 = 1; count2 = 1; count3 = 1; count4 = 1;
+                    for trial = 1:trialGroupLen                                      
+                        %if the blue light is on
+                        if TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 1
+                            %if it is a 2 sec trial 
+                            if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))  
+                                sortedGroupTrials{mouse}{vid}{1}{group}(count1) = trials{mouse}{vid}(count);  
+                                count1 = count1 + 1;
+                                count = count + 1;                  
+                            %if it is a 20 sec trial
+                            elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
+                                sortedGroupTrials{mouse}{vid}{2}{group}(count2) = trials{mouse}{vid}(count);  
+                                count2 = count2 + 1;
+                                count = count + 1; 
+                            end 
+                        %if the red light is on 
+                        elseif TrialTypes{mouse}{vid}(trials{mouse}{vid}(trial),2) == 2
+                            %if it is a 2 sec trial 
+                            if trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(2*FPSstack2(mouse))
+                                sortedGroupTrials{mouse}{vid}{3}{group}(count3) = trials{mouse}{vid}(count);  
+                                count3 = count3 + 1;
+                                count = count + 1; 
+                            %if it is a 20 sec trial
+                            elseif trialLengths{mouse}{vid}(trials{mouse}{vid}(trial)) == floor(20*FPSstack2(mouse))
+                                sortedGroupTrials{mouse}{vid}{4}{group}(count4) = trials{mouse}{vid}(count);  
+                                count4 = count4 + 1;
+                                count = count + 1; 
+                            end 
+                        end                                   
+                    end 
+                end   
+            end 
+        end 
+        if CAQ == 1          
+            Ctraces2= sortedGroupTrials;            
+        end 
+        if BBBQ == 1 
+            Btraces2= sortedGroupTrials;
+        end 
+        if VWQ == 1 
+            Vtraces2= sortedGroupTrials;            
+        end         
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@
-% AT END COMBIND THIS SECTION WITH THE BELOW. JUST SEPARATE NOW FOR
-% TROUBLESHOOTING 
-
-%% figure out ITI length and sort ITI length into trial type 
+% figure out ITI length and sort ITI length into trial type 
 ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
 if ITIq == 1
     if CAQ == 1
@@ -2266,20 +2304,28 @@ tTypeInds = nonzeros(unique(tTypeInds));
 Ceta2 = cell(1,mouseNum);
 Beta2 = cell(1,mouseNum);
 Veta2 = cell(1,mouseNum);
+Ceta22 = cell(1,mouseNum);
+Beta22 = cell(1,mouseNum);
+Veta22 = cell(1,mouseNum);
 if CAQ == 1
     for mouse = 1:mouseNum
         for CaROI = 1:size(CaROIs{mouse},2)                         
             for tType = 1:tTypeNum
-                count1 = 1;
                 for vid = 1:length(state_start_f{mouse})                      
                      if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
-                            for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})                                
-                                if Ctraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)                                    
-                                    Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:);                             
-                                    count1 = count1 + 1;
-                                end 
-                            end                           
-                     end                      
+                        for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})                                
+                            if Ctraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)                                    
+                                Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:);                             
+                            end 
+                        end    
+                        for group = 1:numGroups{mouse}{vid}
+                            for trace = 1:nnz(Ctraces2{mouse}{vid}{tTypeInds(tType)}{group}) 
+                                if Ctraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace) <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)   
+                                    Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace),:);                             
+                                end                                
+                            end 
+                        end   
+                     end     
                 end               
             end                
         end 
@@ -2288,16 +2334,21 @@ end
 if BBBQ == 1 
     for mouse = 1:mouseNum
         for BBBroi = 1:size(Beta{mouse},2) 
-            for tType = 1:tTypeNum
-                count2 = 1;               
+            for tType = 1:tTypeNum            
                 for vid = 1:length(state_start_f{mouse}) 
                     if  tTypeInds(tType) <= length(Btraces{mouse}{vid}) && isempty(Btraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
                         for trace = 1:nnz(Btraces{mouse}{vid}{tTypeInds(tType)})                            
                             if Btraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)                                
                                 Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
-                                count2 = count2 + 1;
                             end 
                         end 
+                        for group = 1:numGroups{mouse}{vid}
+                            for trace = 1:nnz(Btraces2{mouse}{vid}{tTypeInds(tType)}{group}) 
+                                if Btraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace) <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)    
+                                    Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}{group}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(Btraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace),:);                             
+                                end                                
+                            end 
+                        end   
                     end 
                 end 
             end 
@@ -2316,7 +2367,14 @@ if VWQ == 1
                                 Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
                                 count3 = count3 + 1;
                             end 
-                        end 
+                        end                         
+                        for group = 1:numGroups{mouse}{vid}
+                            for trace = 1:nnz(Vtraces2{mouse}{vid}{tTypeInds(tType)}{group}) 
+                                if Vtraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace) <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)     
+                                    Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}{group}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(Vtraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace),:);                             
+                                end                                
+                            end 
+                        end   
                     end                     
                 end 
             end 
@@ -2325,6 +2383,15 @@ if VWQ == 1
 end 
 
 %% select specific trials, resample, and plot data 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%  PICK UP HERE- NEED TO AVERAGE CBVETA22 TRACES FOR PLOTTING THEN I CAN
+%  PLOT!!!WOOHOO SO CLOSE!
+
+
 % numBS = input('How many trials do you want to bootstrap to? '); 
 % numBScData = numBS; 
 % numBSvData = numBS; 
