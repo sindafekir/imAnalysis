@@ -2568,9 +2568,6 @@ for tType = 1:tTypeNum
         elseif tTypeInds(tType) == 2 || tTypeInds(tType) == 4
             if CAQ == 1                    
                 for CaROI = 1:size(CaROIs{mouse},2)
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
                         for vid = 1:length(Ceta2{mouse}{CaROIs{mouse}(CaROI)})  
                             if tTypeInds(tType) <= length(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}) && isempty(Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}) == 0  
@@ -2583,14 +2580,26 @@ for tType = 1:tTypeNum
                                 end 
                             end 
                         end 
-                    end                     
+                    end  
+                    if trialAVQ == 1 && trialAVQ2 == 1                            
+                        for vid = 1:length(Ceta22{mouse}{CaROIs{mouse}(CaROI)})  
+                            if tTypeInds(tType) <= length(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}) && isempty(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}) == 0  
+                                for group = 1:numGroups{mouse}{vid}
+                                    for trace = 1:size(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group},1)
+                                        CetaArray1{mouse}{tTypeInds(tType)}{group}(Ccounter1,:) =  resample(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group}(trace,:),minLen24,size(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group}(trace,:),2));                                
+                                        CetaArray2{mouse}{tTypeInds(tType)}{group}{trace}(Ccounter,:) =  resample(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group}(trace,:),minLen24,size(Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group}(trace,:),2)); 
+                                        Ccounter = Ccounter + 1;  
+                                        %remove rows with 0's 
+                                        CetaArray2{mouse}{tTypeInds(tType)}{group}{trace} = CetaArray2{mouse}{tTypeInds(tType)}{group}{trace}(any(CetaArray2{mouse}{tTypeInds(tType)}{group}{trace},2),:);
+                                    end 
+                                end 
+                            end 
+                        end                                                 
+                    end 
                 end 
             end 
             if BBBQ == 1                    
                 for BBBroi = 1:size(Beta{mouse},2) 
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
                         for vid = 1:length(Beta2{mouse}{BBBroi})  
                             if tTypeInds(tType) <= length(Beta2{mouse}{BBBroi}{vid}) && isempty(Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0    
@@ -2604,13 +2613,25 @@ for tType = 1:tTypeNum
                             end                             
                         end 
                     end 
+                    if trialAVQ == 1 && trialAVQ2 == 1  
+                        for vid = 1:length(Beta22{mouse}{BBBroi})  
+                            if tTypeInds(tType) <= length(Beta22{mouse}{BBBroi}{vid}) && isempty(Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}) == 0    
+                                for group = 1:numGroups{mouse}{vid}
+                                    for trace = 1:size(Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}{group},1)
+                                        BetaArray1{mouse}{tTypeInds(tType)}{group}(Bcounter1,:) =  resample(Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}{group}(trace,:),minLen24,size(Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}{group}(trace,:),2)); %Beta{mouse}{BBBroi}{tTypeInds(tType)}(trace,:); 
+                                        BetaArray2{mouse}{tTypeInds(tType)}{group}{trace}(Bcounter,:) =  resample(Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}{group}(trace,:),minLen24,size(Beta22{mouse}{BBBroi}{vid}{tTypeInds(tType)}{group}(trace,:),2)); 
+                                        Bcounter = Bcounter + 1;  
+                                        %remove rows with 0's 
+                                        BetaArray2{mouse}{tTypeInds(tType)}{group}{trace} = BetaArray2{mouse}{tTypeInds(tType)}{group}{trace}(any(BetaArray2{mouse}{tTypeInds(tType)}{group}{trace},2),:);
+                                    end 
+                                end 
+                            end                             
+                        end                                                                         
+                    end 
                 end 
             end 
             if VWQ == 1 
                 for VWroi = 1:size(Veta{mouse},2)
-                        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
                         for vid = 1:length(Veta2{mouse}{VWroi})  
                             if tTypeInds(tType) <= length(Veta2{mouse}{VWroi}{vid}) && isempty(Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
@@ -2624,20 +2645,46 @@ for tType = 1:tTypeNum
                             end 
                         end 
                     end 
+                    if trialAVQ == 1 && trialAVQ2 == 1                                                  
+                        for vid = 1:length(Veta22{mouse}{VWroi})  
+                            if tTypeInds(tType) <= length(Veta22{mouse}{VWroi}{vid}) && isempty(Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}) == 0 
+                                for group = 1:numGroups{mouse}{vid}
+                                    for trace = 1:size(Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}{group},1)
+                                        VetaArray1{mouse}{tTypeInds(tType)}{group}(Vcounter1,:) = resample(Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}{group}(trace,:),minLen24,size(Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}{group}(trace,:),2));% Veta{mouse}{VWroi}{tTypeInds(tType)}(trace,:); 
+                                        VetaArray2{mouse}{tTypeInds(tType)}{group}{trace}(Vcounter,:) =  resample(Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}{group}(trace,:),minLen24,size(Veta22{mouse}{VWroi}{vid}{tTypeInds(tType)}{group}(trace,:),2)); 
+                                        Vcounter = Vcounter + 1;  
+                                        %remove rows with 0's 
+                                        VetaArray2{mouse}{tTypeInds(tType)}{group}{trace} = VetaArray2{mouse}{tTypeInds(tType)}{group}{trace}(any(VetaArray2{mouse}{tTypeInds(tType)}{group}{trace},2),:);
+                                    end 
+                                end 
+                            end 
+                        end                                                                        
+                    end 
                 end 
             end 
         end                     
     end
+    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % AT THIS POINT, I STOP ITERATING THROUGH VIDS SO I NEED TO FIGURE OUT
+    % WHAT TO DO WITH NUMGROUPS 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
+    
     Ccount = 1;
     Bcount = 1;
     Vcount = 1;
-    for mouse = 1:mouseNum  
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
-            if isempty(CetaArray1{mouse}) == 0 
-                if tTypeInds(tType) <= length(CetaArray1{mouse}) && isempty(CetaArray1{mouse}{tTypeInds(tType)}) == 0 
+    for mouse = 1:mouseNum         
+        if isempty(CetaArray1{mouse}) == 0 
+            if tTypeInds(tType) <= length(CetaArray1{mouse}) && isempty(CetaArray1{mouse}{tTypeInds(tType)}) == 0 
+                if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)              
                     % put all mouse traces together into same array CetaArray{tType}          
                     if CAQ == 1
                         for trace = 1:size(CetaArray1{mouse}{tTypeInds(tType)},1)
@@ -2685,14 +2732,61 @@ for tType = 1:tTypeNum
                         end                                      
                     end 
                 end 
-            end 
-        end 
+                if trialAVQ == 1 && trialAVQ2 == 1  
+                    for group = 1:numGroups{mouse}{vid}
+                        % put all mouse traces together into same array CetaArray{tType}          
+                        if CAQ == 1
+                            for trace = 1:size(CetaArray1{mouse}{tTypeInds(tType)}{group},1)
+                                CetaArray{tTypeInds(tType)}{group}(Ccounter2,:) = CetaArray1{mouse}{tTypeInds(tType)}{group}(trace,:);
+                                Ccounter2 = Ccounter2 + 1 ; 
+                            end                     
+                            for trial = 1:size(CetaArray2{mouse}{tTypeInds(tType)}{group},2)
+                                for trace = 1:size(CetaArray2{mouse}{tTypeInds(tType)}{group}{trial},1)
+                                    CetaArray3{tTypeInds(tType)}{group}{trial}(Ccount,:) = CetaArray2{mouse}{tTypeInds(tType)}{group}{trial}(trace,:);
+                                    Ccount = Ccount + 1;
+                                end 
+                                % remove rows with zeros 
+                                CetaArray3{tTypeInds(tType)}{group}{trial} = CetaArray3{tTypeInds(tType)}{group}{trial}(any(CetaArray3{tTypeInds(tType)}{group}{trial},2),:);
+                                CetaArray4{tTypeInds(tType)}{group}(trial,:) = nanmean(CetaArray3{tTypeInds(tType)}{group}{trial},1);
+                            end 
+                        end    
+                        if BBBQ == 1
+                            for trace = 1:size(BetaArray1{mouse}{tTypeInds(tType)}{group},1)
+                                BetaArray{tTypeInds(tType)}{group}(Bcounter2,:) = BetaArray1{mouse}{tTypeInds(tType)}{group}(trace,:);
+                                Bcounter2 = Bcounter2 + 1 ; 
+                            end                     
+                            for trial = 1:size(BetaArray2{mouse}{tTypeInds(tType)}{group},2)
+                                for trace = 1:size(BetaArray2{mouse}{tTypeInds(tType)}{group}{trial},1)
+                                    BetaArray3{tTypeInds(tType)}{group}{trial}(Bcount,:) = BetaArray2{mouse}{tTypeInds(tType)}{group}{trial}(trace,:);
+                                    Bcount = Bcount + 1;
+                                end 
+                                % remove rows with zeros 
+                                BetaArray3{tTypeInds(tType)}{group}{trial} = BetaArray3{tTypeInds(tType)}{group}{trial}(any(BetaArray3{tTypeInds(tType)}{group}{trial},2),:);
+                                BetaArray4{tTypeInds(tType)}{group}(trial,:) = nanmean(BetaArray3{tTypeInds(tType)}{group}{trial},1);
+                            end                                         
+                        end  
+                        if VWQ == 1
+                            for trace = 1:size(VetaArray1{mouse}{tTypeInds(tType)}{group},1)
+                                VetaArray{tTypeInds(tType)}{group}(Vcounter2,:) = VetaArray1{mouse}{tTypeInds(tType)}{group}(trace,:);
+                                Vcounter2 = Vcounter2 + 1 ; 
+                            end 
+                            for trial = 1:size(VetaArray2{mouse}{tTypeInds(tType)}{group},2)
+                                for trace = 1:size(VetaArray2{mouse}{tTypeInds(tType)}{group}{trial},1)
+                                    VetaArray3{tTypeInds(tType)}{group}{trial}(Vcount,:) = VetaArray2{mouse}{tTypeInds(tType)}{group}{trial}(trace,:);
+                                    Vcount = Vcount + 1;
+                                end 
+                                % remove rows with zeros 
+                                VetaArray3{tTypeInds(tType)}{group}{trial} = VetaArray3{tTypeInds(tType)}{group}{trial}(any(VetaArray3{tTypeInds(tType)}{group}{trial},2),:);
+                                VetaArray4{tTypeInds(tType)}{group}(trial,:) = nanmean(VetaArray3{tTypeInds(tType)}{group}{trial},1);
+                            end                                      
+                        end                         
+                    end 
+                end  
+            end                       
+        end       
     end 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
-        if isempty(CetaArray{tTypeInds(tType)}) == 0 
+    if isempty(CetaArray{tTypeInds(tType)}) == 0 
+        if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
             %smooth tType data 
             if smoothQ == 0 
                 if CAQ == 1
@@ -3341,6 +3435,293 @@ for tType = 1:tTypeNum
     %             alpha(0.3)                             
             end 
         end 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        if trialAVQ == 1 && trialAVQ2 == 1  
+            for group = 1:numGroups{mouse}{vid}
+                %smooth tType data 
+                if smoothQ == 0 
+                    if CAQ == 1
+                        sCetaAvs{tTypeInds(tType)}{group} = CetaArray{tTypeInds(tType)}{group}+1000;
+                        sCetaAvs4{tTypeInds(tType)}{group} = CetaArray4{tTypeInds(tType)}{group}+1000;
+                    end 
+                    if BBBQ == 1
+                        sBetaAvs{tTypeInds(tType)}{group} = BetaArray{tTypeInds(tType)}{group}+100;
+                        sBetaAvs4{tTypeInds(tType)}{group} = BetaArray4{tTypeInds(tType)}{group}+100;
+                    end
+                    if VWQ == 1
+                        sVetaAvs{tTypeInds(tType)}{group} = VetaArray{tTypeInds(tType)}{group}+100;
+                        sVetaAvs4{tTypeInds(tType)}{group} = VetaArray4{tTypeInds(tType)}{group}+100;
+                    end
+                elseif smoothQ == 1 
+                    if CAQ == 1
+                        sCetaAv =  MovMeanSmoothData(CetaArray{tTypeInds(tType)}{group},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                        sCetaAvs{tTypeInds(tType)}{group} = sCetaAv+100; 
+                        sCetaAv4 =  MovMeanSmoothData(CetaArray4{tTypeInds(tType)}{group},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                        sCetaAvs4{tTypeInds(tType)}{group} = sCetaAv4+100; 
+                    end 
+                    if BBBQ == 1
+                        sBetaAv =  MovMeanSmoothData(BetaArray{tTypeInds(tType)}{group},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                        sBetaAvs{tTypeInds(tType)}{group} = sBetaAv+100; 
+                        sBetaAv4 =  MovMeanSmoothData(BetaArray4{tTypeInds(tType)}{group},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                        sBetaAvs4{tTypeInds(tType)}{group} = sBetaAv4+100; 
+                    end 
+                    if VWQ == 1
+                        sVetaAv =  MovMeanSmoothData(VetaArray{tTypeInds(tType)}{group},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                        sVetaAvs{tTypeInds(tType)}{group} = sVetaAv+100; 
+                        sVetaAv4 =  MovMeanSmoothData(VetaArray4{tTypeInds(tType)}{group},filtTime,FPSstack2(idx)); %CetaAvs{tTypeInds(tType)};
+                        sVetaAvs4{tTypeInds(tType)}{group} = sVetaAv4+100; 
+                    end
+                end 
+                % baseline tType data to average value between 0 sec and -baselineInput sec (0 sec being stim
+                %onset) 
+                if dataParseType == 0 %peristimulus data to plot 
+                    %sec_before_stim_start       
+                    if CAQ == 1
+                        snCetaArray{tTypeInds(tType)}{group} = ((sCetaAvs{tTypeInds(tType)}{group} ./ nanmean(sCetaAvs{tTypeInds(tType)}{group}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);    
+                        snCetaArray4{tTypeInds(tType)}{group} = ((sCetaAvs4{tTypeInds(tType)}{group} ./ nanmean(sCetaAvs4{tTypeInds(tType)}{group}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);              
+                    end 
+                    if BBBQ == 1 
+                        snBetaArray{tTypeInds(tType)}{group} = ((sBetaAvs{tTypeInds(tType)}{group} ./ nanmean(sBetaAvs{tTypeInds(tType)}{group}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);    
+                        snBetaArray4{tTypeInds(tType)}{group} = ((sBetaAvs4{tTypeInds(tType)}{group} ./ nanmean(sBetaAvs4{tTypeInds(tType)}{group}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);          
+                    end 
+                    if VWQ == 1
+                        snVetaArray{tTypeInds(tType)}{group} = ((sVetaAvs{tTypeInds(tType)}{group} ./ nanmean(sVetaAvs{tTypeInds(tType)}{group}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100); 
+                        snVetaArray4{tTypeInds(tType)}{group} = ((sVetaAvs4{tTypeInds(tType)}{group} ./ nanmean(sVetaAvs4{tTypeInds(tType)}{group}(:,floor((sec_before_stim_start-baselineInput)*FPSstack2(idx)):floor(sec_before_stim_start*FPSstack2(idx))),2))*100);
+                    end 
+                elseif dataParseType == 1 %only stimulus data to plot 
+                    if CAQ == 1
+                        snCetaArray = sCetaAvs; 
+                        snCetaArray4 = sCetaAvs4; 
+                    end 
+                    if BBBQ == 1 
+                        snBetaArray = sBetaAvs;
+                        snBetaArray4 = sBetaAvs4;
+                    end 
+                    if VWQ == 1
+                        snVetaArray = sVetaAvs;
+                        snVetaArray4 = sVetaAvs4;
+                    end 
+                end 
+            end 
+        end  
+    end 
+end 
+for tType = 1:tTypeNum
+    if isempty(CetaArray{tTypeInds(tType)}) == 0
+        if trialAVQ == 1 && trialAVQ2 == 1              
+            % plot Ca data 
+            if CAQ == 1 
+                fig = figure;             
+                hold all;
+                Frames = size(CetaArray4{tTypeInds(tType)}{1},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+%                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
+%                 colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),2),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to blue 
+                colorMap = [zeros(size(CetaArray4{tTypeInds(tType)}{group},1),1),linspace(0,1,size(CetaArray4{tTypeInds(tType)}{group},1))',linspace(0,1,size(CetaArray4{tTypeInds(tType)}{group},1))']; % from black to light blue 
+                for trace = 1:size(CetaArray4{tTypeInds(tType)}{group},1)
+                    plot(snCetaArray4{tTypeInds(tType)}{group}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                end 
+                if tTypeInds(tType) == 1 
+                    if optoQ == 0
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1.FontSize = 30;
+                        label1.FontName = 'Arial';
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2.FontSize = 30;
+                        label3 = ('Behavior Data');
+                    elseif optoQ == 1 
+                        plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                        label3 = ('2 sec Blue Light');
+                    end 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
+                    FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
+                elseif tTypeInds(tType) == 3 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('2 sec Red Light');
+                elseif tTypeInds(tType) == 2 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('20 sec Blue Light');
+                elseif tTypeInds(tType) == 4 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('20 sec Red Light');
+                end
+                ax=gca;
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;
+                ax.FontSize = 30;
+                ax.FontName = 'Arial';
+                xlim([1 length(CetaArray4{tTypeInds(tType)}{group})])
+                ylim([min(CetaArray4{tTypeInds(tType)}{group}-400) max(CetaArray4{tTypeInds(tType)}{group})+300])
+                xlabel('time (s)')
+                ylabel('calcium percent change')
+                % initialize empty string array 
+                label = strings;
+                label = append(label,sprintf('  Calcium Signal. N = %d.',mouseNum));        
+        %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
+                if optoQ == 1 % opto data 
+                    title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+                end 
+                if optoQ == 0 % behavior data 
+                    title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+                end 
+                set(fig,'position', [100 100 900 900])
+                alpha(0.3)                                
+            end 
+
+            %plot BBB data 
+            if BBBQ == 1 
+                fig = figure;             
+                hold all;
+                Frames = size(snBetaArray4{tTypeInds(tType)}{1},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2; 
+%                 colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)]; % black to red 
+                colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)}{group},1))', linspace(0,0.5,size(BetaArray4{tTypeInds(tType)}{group},1))',linspace(0,0.5,size(BetaArray4{tTypeInds(tType)}{group},1))']; % black to light red 
+%                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
+                for trace = 1:size(BetaArray4{tTypeInds(tType)}{group},1)
+                    plot(snBetaArray4{tTypeInds(tType)}{group}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                end                               
+                if tTypeInds(tType) == 1 
+                    if optoQ == 0
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1.FontSize = 30;
+                        label1.FontName = 'Arial';
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2.FontSize = 30;
+                        label3 = ('Behavior Data');
+                    elseif optoQ == 1 
+                        plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                        label3 = ('2 sec Blue Light');
+                    end 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
+                    FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
+                elseif tTypeInds(tType) == 3 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('2 sec Red Light');
+                elseif tTypeInds(tType) == 2 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('20 sec Blue Light');
+                elseif tTypeInds(tType) == 4 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*1:Frames_post_stim_start)/FPSstack2(idx))+10);
+                    FrameVals = floor((1:FPSstack2(idx)*1:Frames)-1); 
+                    label3 = ('20 sec Red Light');
+                end
+                ax=gca;
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;
+                ax.FontSize = 30;
+                ax.FontName = 'Arial';
+                xlim([1 length(snBetaArray4{tTypeInds(tType)}{group})])
+                ylim([min(snBetaArray4{tTypeInds(tType)}{group}-400) max(snBetaArray4{tTypeInds(tType)}{group})+300])
+                xlabel('time (s)')
+                ylabel('BBB percent change')
+                % initialize empty string array 
+                label = strings;
+                label = append(label,sprintf('BBB Permeabilty. N = %d.',mouseNum));       
+        %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
+                if optoQ == 1 % opto data 
+                    title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+                end 
+                if optoQ == 0 % behavior data 
+                    title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+                end 
+                set(fig,'position', [100 100 900 900])
+                alpha(0.3)                               
+            end 
+
+            %plot VW data 
+            if VWQ == 1
+                fig = figure;             
+                hold all;
+                Frames = size(snVetaArray4{tTypeInds(tType)}{1},2);        
+                Frames_pre_stim_start = -((Frames-1)/2); 
+                Frames_post_stim_start = (Frames-1)/2;  
+                colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)}{group},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)}{group},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)}{group},1))']; %black to gray
+%                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
+                for trace = 1:size(VetaArray4{tTypeInds(tType)}{group},1)
+                    plot(snVetaArray4{tTypeInds(tType)}{group}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                end              
+                if tTypeInds(tType) == 1 
+                    if optoQ == 0
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1.FontSize = 30;
+                        label1.FontName = 'Arial';
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2.FontSize = 30;
+                        label3 = ('Behavior Data');
+                    elseif optoQ == 1 
+                        plot([round(baselineEndFrame+((FPSstack{idx})*2)) round(baselineEndFrame+((FPSstack{idx})*2))], [-5000000 5000000], 'k','LineWidth',2)
+                        plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                        label3 = ('2 sec Blue Light');
+                    end 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx):Frames_post_stim_start)/FPSstack2(idx))+1);
+                    FrameVals = floor((1:FPSstack2(idx):Frames)-1);            
+                elseif tTypeInds(tType) == 3 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*2)) round(baselineEndFrame+((FPSstack2(idx))*2))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+1);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('2 sec Red Light');
+                elseif tTypeInds(tType) == 2 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2)   
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('20 sec Blue Light');
+                elseif tTypeInds(tType) == 4 
+                    plot([round(baselineEndFrame+((FPSstack2(idx))*20)) round(baselineEndFrame+((FPSstack2(idx))*20))], [-5000000 5000000], 'k','LineWidth',2)
+                    plot([baselineEndFrame baselineEndFrame], [-5000000 5000000], 'k','LineWidth',2) 
+                    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack2(idx)*2:Frames_post_stim_start)/FPSstack2(idx))+10);
+                    FrameVals = floor((1:FPSstack2(idx)*2:Frames)-1); 
+                    label3 = ('20 sec Red Light');
+                end
+                ax=gca;
+                ax.XTick = FrameVals;
+                ax.XTickLabel = sec_TimeVals;
+                ax.FontSize = 30;
+                ax.FontName = 'Arial';
+                xlim([1 length(snVetaArray4{tTypeInds(tType)}{group})])
+                ylim([min(snVetaArray4{tTypeInds(tType)}{group}-400) max(snVetaArray4{tTypeInds(tType)}{group})+300])
+                xlabel('time (s)')
+                ylabel('vessel width percent change')
+                % initialize empty string array 
+                label = strings;
+                label = append(label,sprintf('Vessel width ROIs averaged. N = %d.',mouseNum));
+                if optoQ == 1 % opto data 
+                    title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+                end 
+                if optoQ == 0 % behavior data 
+                    title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+                end 
+                set(fig,'position', [100 100 900 900])
+                alpha(0.3)                              
+            end                  
+        end  
     end 
 end 
 
