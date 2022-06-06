@@ -2396,14 +2396,6 @@ end
 
 %% select specific trials, resample, and plot data 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%  PICK UP HERE- NEED TO AVERAGE CBVETA22 TRACES FOR PLOTTING THEN I CAN
-%  PLOT!!!WOOHOO SO CLOSE!
-
-
 % numBS = input('How many trials do you want to bootstrap to? '); 
 % numBScData = numBS; 
 % numBSvData = numBS; 
@@ -2677,6 +2669,19 @@ for tType = 1:tTypeNum
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
+    if trialAVQ == 1 && trialAVQ2 == 1
+        numGroups2 = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            for vid = 1:length(Veta22{mouse}{VWroi}) 
+                if vid == 1 
+                    numGroups2{mouse} = numGroups{mouse}{vid};
+                elseif vid > 1
+                    numGroups2{mouse} = numGroups{mouse}{vid} + numGroups2{mouse};
+                end                
+            end 
+        end 
+    end 
+    
     
     Ccount = 1;
     Bcount = 1;
@@ -2733,7 +2738,7 @@ for tType = 1:tTypeNum
                     end 
                 end 
                 if trialAVQ == 1 && trialAVQ2 == 1  
-                    for group = 1:numGroups{mouse}{vid}
+                    for group = 1:numGroups2{mouse}
                         % put all mouse traces together into same array CetaArray{tType}          
                         if CAQ == 1
                             for trace = 1:size(CetaArray1{mouse}{tTypeInds(tType)}{group},1)
@@ -3435,14 +3440,8 @@ for tType = 1:tTypeNum
     %             alpha(0.3)                             
             end 
         end 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         if trialAVQ == 1 && trialAVQ2 == 1  
-            for group = 1:numGroups{mouse}{vid}
+            for group = 1:numGroups2{1}
                 %smooth tType data 
                 if smoothQ == 0 
                     if CAQ == 1
@@ -3511,6 +3510,10 @@ for tType = 1:tTypeNum
         end  
     end 
 end 
+
+snCetaArray5 = cell(1,tTypeNum);
+snBetaArray5 = cell(1,tTypeNum);
+snVetaArray5 = cell(1,tTypeNum);
 for tType = 1:tTypeNum
     if isempty(CetaArray{tTypeInds(tType)}) == 0
         if trialAVQ == 1 && trialAVQ2 == 1              
@@ -3523,10 +3526,13 @@ for tType = 1:tTypeNum
                 Frames_post_stim_start = (Frames-1)/2; 
 %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
 %                 colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),2),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to blue 
-                colorMap = [zeros(size(CetaArray4{tTypeInds(tType)}{group},1),1),linspace(0,1,size(CetaArray4{tTypeInds(tType)}{group},1))',linspace(0,1,size(CetaArray4{tTypeInds(tType)}{group},1))']; % from black to light blue 
-                for trace = 1:size(CetaArray4{tTypeInds(tType)}{group},1)
-                    plot(snCetaArray4{tTypeInds(tType)}{group}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                for group = 1:numGroups2{1}                    
+                    snCetaArray5{tTypeInds(tType)}(group,:) = nanmean(snCetaArray4{tTypeInds(tType)}{group},1);                                                          
                 end 
+                colorMap = [zeros(size(snCetaArray5{tTypeInds(tType)},1),1),linspace(0,1,size(snCetaArray5{tTypeInds(tType)},1))',linspace(0,1,size(snCetaArray5{tTypeInds(tType)},1))']; % from black to light blue 
+                for trace = 1:size(snCetaArray5{tTypeInds(tType)},1)
+                    plot(snCetaArray5{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                end                                
                 if tTypeInds(tType) == 1 
                     if optoQ == 0
                         label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
@@ -3566,8 +3572,8 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(CetaArray4{tTypeInds(tType)}{group})])
-                ylim([min(CetaArray4{tTypeInds(tType)}{group}-400) max(CetaArray4{tTypeInds(tType)}{group})+300])
+                xlim([1 length(snCetaArray5{tTypeInds(tType)})])
+                ylim([min(min(snCetaArray5{tTypeInds(tType)}-400)) max(max(snCetaArray5{tTypeInds(tType)}))+300])
                 xlabel('time (s)')
                 ylabel('calcium percent change')
                 % initialize empty string array 
@@ -3591,11 +3597,14 @@ for tType = 1:tTypeNum
                 Frames = size(snBetaArray4{tTypeInds(tType)}{1},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
+                for group = 1:numGroups2{1}                    
+                    snBetaArray5{tTypeInds(tType)}(group,:) = nanmean(snBetaArray4{tTypeInds(tType)}{group},1);                                                          
+                end                 
 %                 colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)]; % black to red 
-                colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)}{group},1))', linspace(0,0.5,size(BetaArray4{tTypeInds(tType)}{group},1))',linspace(0,0.5,size(BetaArray4{tTypeInds(tType)}{group},1))']; % black to light red 
+                colorMap = [linspace(0,1,size(snBetaArray5{tTypeInds(tType)},1))', linspace(0,0.5,size(snBetaArray5{tTypeInds(tType)},1))',linspace(0,0.5,size(snBetaArray5{tTypeInds(tType)},1))']; % black to light red 
 %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
-                for trace = 1:size(BetaArray4{tTypeInds(tType)}{group},1)
-                    plot(snBetaArray4{tTypeInds(tType)}{group}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                for trace = 1:size(snBetaArray5{tTypeInds(tType)},1)
+                    plot(snBetaArray5{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end                               
                 if tTypeInds(tType) == 1 
                     if optoQ == 0
@@ -3636,8 +3645,8 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(snBetaArray4{tTypeInds(tType)}{group})])
-                ylim([min(snBetaArray4{tTypeInds(tType)}{group}-400) max(snBetaArray4{tTypeInds(tType)}{group})+300])
+                xlim([1 length(snBetaArray5{tTypeInds(tType)})])
+                ylim([min(min(snBetaArray5{tTypeInds(tType)}-400)) max(max(snBetaArray5{tTypeInds(tType)}))+300])
                 xlabel('time (s)')
                 ylabel('BBB percent change')
                 % initialize empty string array 
@@ -3660,11 +3669,14 @@ for tType = 1:tTypeNum
                 hold all;
                 Frames = size(snVetaArray4{tTypeInds(tType)}{1},2);        
                 Frames_pre_stim_start = -((Frames-1)/2); 
-                Frames_post_stim_start = (Frames-1)/2;  
-                colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)}{group},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)}{group},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)}{group},1))']; %black to gray
+                Frames_post_stim_start = (Frames-1)/2; 
+                for group = 1:numGroups2{1}                    
+                    snVetaArray5{tTypeInds(tType)}(group,:) = nanmean(snVetaArray4{tTypeInds(tType)}{group},1);                                                          
+                end                                                
+                colorMap = [linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))']; %black to gray
 %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
-                for trace = 1:size(VetaArray4{tTypeInds(tType)}{group},1)
-                    plot(snVetaArray4{tTypeInds(tType)}{group}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
+                for trace = 1:size(snVetaArray5{tTypeInds(tType)},1)
+                    plot(snVetaArray5{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end              
                 if tTypeInds(tType) == 1 
                     if optoQ == 0
@@ -3705,8 +3717,8 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(snVetaArray4{tTypeInds(tType)}{group})])
-                ylim([min(snVetaArray4{tTypeInds(tType)}{group}-400) max(snVetaArray4{tTypeInds(tType)}{group})+300])
+                xlim([1 length(snVetaArray5{tTypeInds(tType)})])
+                ylim([min(min(snVetaArray5{tTypeInds(tType)}-400)) max(max(snVetaArray5{tTypeInds(tType)}))+300])
                 xlabel('time (s)')
                 ylabel('vessel width percent change')
                 % initialize empty string array 
