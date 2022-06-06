@@ -2311,21 +2311,25 @@ if CAQ == 1
     for mouse = 1:mouseNum
         for CaROI = 1:size(CaROIs{mouse},2)                         
             for tType = 1:tTypeNum
-                for vid = 1:length(state_start_f{mouse})                      
-                     if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
-                        for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})                                
-                            if Ctraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)                                    
-                                Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:);                             
-                            end 
-                        end    
+                for vid = 1:length(state_start_f{mouse})  
+                    if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)                                        
+                         if  tTypeInds(tType) <= length(Ctraces{mouse}{vid}) && isempty(Ctraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
+                            for trace = 1:nnz(Ctraces{mouse}{vid}{tTypeInds(tType)})                                
+                                if Ctraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)                                    
+                                    Ceta2{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces{mouse}{vid}{tTypeInds(tType)}(trace),:);                             
+                                end 
+                            end  
+                         end 
+                    end 
+                    if trialAVQ == 1 && trialAVQ2 == 1                        
                         for group = 1:numGroups{mouse}{vid}
                             for trace = 1:nnz(Ctraces2{mouse}{vid}{tTypeInds(tType)}{group}) 
                                 if Ctraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace) <= size(Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)},1)   
                                     Ceta22{mouse}{CaROIs{mouse}(CaROI)}{vid}{tTypeInds(tType)}{group}(trace,:) = Ceta{mouse}{CaROIs{mouse}(CaROI)}{tTypeInds(tType)}(Ctraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace),:);                             
                                 end                                
                             end 
-                        end   
-                     end     
+                        end 
+                    end                                                  
                 end               
             end                
         end 
@@ -2335,13 +2339,17 @@ if BBBQ == 1
     for mouse = 1:mouseNum
         for BBBroi = 1:size(Beta{mouse},2) 
             for tType = 1:tTypeNum            
-                for vid = 1:length(state_start_f{mouse}) 
-                    if  tTypeInds(tType) <= length(Btraces{mouse}{vid}) && isempty(Btraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
-                        for trace = 1:nnz(Btraces{mouse}{vid}{tTypeInds(tType)})                            
-                            if Btraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)                                
-                                Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
+                for vid = 1:length(state_start_f{mouse})
+                    if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)                  
+                        if  tTypeInds(tType) <= length(Btraces{mouse}{vid}) && isempty(Btraces{mouse}{vid}{tTypeInds(tType)}) == 0                          
+                            for trace = 1:nnz(Btraces{mouse}{vid}{tTypeInds(tType)})                            
+                                if Btraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)                                
+                                    Beta2{mouse}{BBBroi}{vid}{tTypeInds(tType)}(trace,:) = Beta{mouse}{BBBroi}{tTypeInds(tType)}(Btraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
+                                end 
                             end 
                         end 
+                    end 
+                    if trialAVQ == 1 && trialAVQ2 == 1 
                         for group = 1:numGroups{mouse}{vid}
                             for trace = 1:nnz(Btraces2{mouse}{vid}{tTypeInds(tType)}{group}) 
                                 if Btraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace) <= size(Beta{mouse}{BBBroi}{tTypeInds(tType)},1)    
@@ -2349,7 +2357,7 @@ if BBBQ == 1
                                 end                                
                             end 
                         end   
-                    end 
+                    end                     
                 end 
             end 
         end 
@@ -2361,13 +2369,17 @@ if VWQ == 1
             for tType = 1:tTypeNum
                 count3 = 1;
                 for vid = 1:length(state_start_f{mouse}) 
-                    if  tTypeInds(tType) <= length(Vtraces{mouse}{vid}) && isempty(Vtraces{mouse}{vid}{tTypeInds(tType)}) == 0                            
-                        for trace = 1:nnz(Vtraces{mouse}{vid}{tTypeInds(tType)})                              
-                            if Vtraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)                                
-                                Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
-                                count3 = count3 + 1;
-                            end 
-                        end                         
+                    if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)    
+                        if  tTypeInds(tType) <= length(Vtraces{mouse}{vid}) && isempty(Vtraces{mouse}{vid}{tTypeInds(tType)}) == 0                            
+                            for trace = 1:nnz(Vtraces{mouse}{vid}{tTypeInds(tType)})                              
+                                if Vtraces{mouse}{vid}{tTypeInds(tType)}(trace) <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)                                
+                                    Veta2{mouse}{VWroi}{vid}{tTypeInds(tType)}(trace,:) = Veta{mouse}{VWroi}{tTypeInds(tType)}(Vtraces{mouse}{vid}{tTypeInds(tType)}(trace),:);
+                                    count3 = count3 + 1;
+                                end 
+                            end            
+                        end 
+                    end 
+                    if trialAVQ == 1 && trialAVQ2 == 1
                         for group = 1:numGroups{mouse}{vid}
                             for trace = 1:nnz(Vtraces2{mouse}{vid}{tTypeInds(tType)}{group}) 
                                 if Vtraces2{mouse}{vid}{tTypeInds(tType)}{group}(trace) <= size(Veta{mouse}{VWroi}{tTypeInds(tType)},1)     
@@ -2375,7 +2387,7 @@ if VWQ == 1
                                 end                                
                             end 
                         end   
-                    end                     
+                    end                                        
                 end 
             end 
         end 
