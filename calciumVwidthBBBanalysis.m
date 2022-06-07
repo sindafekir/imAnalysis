@@ -2170,9 +2170,10 @@ elseif trialAVQ == 1
         trialGroupMaxQ = input('Input 1 if you want to limit how many overall trials you are averaging into groups. Input 0 otherwise. ');
         if trialGroupMaxQ == 1
             trialGroupMax = cell(1,mouseNum);
+            value = input('What is the maximum trial that you want to average into groups? ');
             for mouse = 1:mouseNum 
                 for vid = 1:length(TrialTypes{mouse})
-                    trialGroupMax{mouse}{vid} = input(sprintf('What is the maximum trial that you want to average into groups for mouse %d vid %d? ',mouse,vid));
+                    trialGroupMax{mouse}{vid} = value;
                 end 
             end 
         elseif trialGroupMaxQ == 0
