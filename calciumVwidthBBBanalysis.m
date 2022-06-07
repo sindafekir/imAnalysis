@@ -2247,56 +2247,58 @@ elseif trialAVQ == 1
     end 
 end 
 
-% figure out ITI length and sort ITI length into trial type 
-ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
-if ITIq == 1
-    if CAQ == 1
-        trialList = Ctraces; 
-    elseif CAQ == 0 && BBBQ == 1 
-        trialList = Btraces;
-    elseif CAQ == 0 && VWQ == 1
-        trialList = Vtraces; 
-    end 
-    trialLenFrames = cell(1,mouseNum);
-    trialLenTimes = cell(1,mouseNum); 
-    for mouse = 1:mouseNum 
-        for vid = 1:length(state_start_f{mouse})  
-            for tType = 1:tTypeNum
-                if trialList{mouse}{vid}{tType}(1) > 1                     
-                    trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1)-1);    
-                elseif trialList{mouse}{vid}{tType}(1) == 1 
-                    trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-1;    
+if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
+    % figure out ITI length and sort ITI length into trial type 
+    ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+    if ITIq == 1
+        if CAQ == 1
+            trialList = Ctraces; 
+        elseif CAQ == 0 && BBBQ == 1 
+            trialList = Btraces;
+        elseif CAQ == 0 && VWQ == 1
+            trialList = Vtraces; 
+        end 
+        trialLenFrames = cell(1,mouseNum);
+        trialLenTimes = cell(1,mouseNum); 
+        for mouse = 1:mouseNum 
+            for vid = 1:length(state_start_f{mouse})  
+                for tType = 1:tTypeNum
+                    if trialList{mouse}{vid}{tType}(1) > 1                     
+                        trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1)-1);    
+                    elseif trialList{mouse}{vid}{tType}(1) == 1 
+                        trialLenFrames{mouse}{vid}{tType}(1) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1))-1;    
+                    end 
+                    trialLenFrames{mouse}{vid}{tType}(2:length(trialList{mouse}{vid}{tType})) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(2:end))-state_end_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1:end-1));
+                    trialLenTimes{mouse}{vid}{tType} = trialLenFrames{mouse}{vid}{tType}/FPSstack{mouse};
                 end 
-                trialLenFrames{mouse}{vid}{tType}(2:length(trialList{mouse}{vid}{tType})) = state_start_f{mouse}{vid}(trialList{mouse}{vid}{tType}(2:end))-state_end_f{mouse}{vid}(trialList{mouse}{vid}{tType}(1:end-1));
-                trialLenTimes{mouse}{vid}{tType} = trialLenFrames{mouse}{vid}{tType}/FPSstack{mouse};
             end 
         end 
-    end 
-    trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
-    trialListHigh = cell(1,mouseNum);
-    trialListLow = cell(1,mouseNum); 
-    for mouse = 1:mouseNum 
-        for vid = 1:length(state_start_f{mouse}) 
-            for tType = 1:tTypeNum
-                trialListHigh{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} >= trialLenThreshTime));
-                trialListLow{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} < trialLenThreshTime));
-            end
+        trialLenThreshTime = input('Input the ITI thresh (sec) to separate data by. '); 
+        trialListHigh = cell(1,mouseNum);
+        trialListLow = cell(1,mouseNum); 
+        for mouse = 1:mouseNum 
+            for vid = 1:length(state_start_f{mouse}) 
+                for tType = 1:tTypeNum
+                    trialListHigh{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} >= trialLenThreshTime));
+                    trialListLow{mouse}{vid}{tType} = trialList{mouse}{vid}{tType}((trialLenTimes{mouse}{vid}{tType} < trialLenThreshTime));
+                end
+            end 
         end 
-    end 
-    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
-    if ITIq2 == 0
-        trialList = trialListLow;
-    elseif ITIq2 == 1
-        trialList = trialListHigh;
-    end 
-    if CAQ == 1
-        Ctraces = trialList; 
-    end 
-    if BBBQ == 1
-        Btraces = trialList; 
-    end 
-    if VWQ == 1
-        Vtraces = trialList; 
+        ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+        if ITIq2 == 0
+            trialList = trialListLow;
+        elseif ITIq2 == 1
+            trialList = trialListHigh;
+        end 
+        if CAQ == 1
+            Ctraces = trialList; 
+        end 
+        if BBBQ == 1
+            Btraces = trialList; 
+        end 
+        if VWQ == 1
+            Vtraces = trialList; 
+        end 
     end 
 end 
 
@@ -2657,19 +2659,7 @@ for tType = 1:tTypeNum
             end 
         end                     
     end
-    
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % AT THIS POINT, I STOP ITERATING THROUGH VIDS SO I NEED TO FIGURE OUT
-    % WHAT TO DO WITH NUMGROUPS 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
+      
     if trialAVQ == 1 && trialAVQ2 == 1
         numGroups2 = cell(1,mouseNum);
         for mouse = 1:mouseNum
@@ -3029,8 +3019,8 @@ for tType = 1:tTypeNum
                     patch([x fliplr(x)],[CI_cLow{tTypeInds(tType)}-100 fliplr(CI_cHigh{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none')
                 elseif plotAVQ == 0 
     %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
-    %                 colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),2),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to blue 
-                    colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),1),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to light blue 
+%                     colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),1),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to light blue 
+                    colorMap = [linspace(0,0.7,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,0.7,size(CetaArray4{tTypeInds(tType)},1))',linspace(1,1,size(CetaArray4{tTypeInds(tType)},1))']; % from dark blue to light blue
                     for trace = 1:size(CetaArray4{tTypeInds(tType)},1)
                         plot(snCetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                     end 
@@ -3166,14 +3156,15 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 if plotAVQ == 1
-                    plot(avSHbData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
-                    patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-100 fliplr(CI_bshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')                           
+                    plot(avSHbData{tTypeInds(tType)}-104,'color',[0.5 0.5 0.5],'LineWidth',3)        
+                    patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-104 fliplr(CI_bshHigh{tTypeInds(tType)}-104)],[0.5 0.5 0.5],'EdgeColor','none')                           
                     plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
                     patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
                 elseif plotAVQ == 0
     %                 colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)]; % black to red 
-                    colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))',linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))']; % black to light red 
-    %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
+%                     colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))',linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))']; % black to light red 
+                    colorMap = [linspace(1,1,size(BetaArray4{tTypeInds(tType)},1))', linspace(0,0.6,size(BetaArray4{tTypeInds(tType)},1))',linspace(0,0.6,size(BetaArray4{tTypeInds(tType)},1))']; % dark red to light red 
+  %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
                     for trace = 1:size(BetaArray4{tTypeInds(tType)},1)
                         plot(snBetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                     end                 
@@ -3309,13 +3300,14 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2;  
                 if plotAVQ == 1
-                    plot(avSHvData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)        
-                    patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100 fliplr(CI_vshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')                 
+                    plot(avSHvData{tTypeInds(tType)}-100.1,'color',[0.5 0.5 0.5],'LineWidth',3)        
+                    patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100.1 fliplr(CI_vshHigh{tTypeInds(tType)}-100.1)],[0.5 0.5 0.5],'EdgeColor','none')                 
                     plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
                     patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')       
                 elseif plotAVQ == 0
-                    colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))']; %black to gray
-    %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
+%                     colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))']; %black to gray
+    %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1)); 
+                    colorMap = [linspace(0,0.6,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,0.6,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,0.6,size(CetaArray4{tTypeInds(tType)},1))']; %black to slightly darker gray
                     for trace = 1:size(VetaArray4{tTypeInds(tType)},1)
                         plot(snVetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                     end 
@@ -3526,11 +3518,11 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
 %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
-%                 colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),2),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to blue 
                 for group = 1:numGroups2{1}                    
                     snCetaArray5{tTypeInds(tType)}(group,:) = nanmean(snCetaArray4{tTypeInds(tType)}{group},1);                                                          
                 end 
-                colorMap = [zeros(size(snCetaArray5{tTypeInds(tType)},1),1),linspace(0,1,size(snCetaArray5{tTypeInds(tType)},1))',linspace(0,1,size(snCetaArray5{tTypeInds(tType)},1))']; % from black to light blue 
+%                 colorMap = [zeros(size(snCetaArray5{tTypeInds(tType)},1),1),linspace(0,1,size(snCetaArray5{tTypeInds(tType)},1))',linspace(0,1,size(snCetaArray5{tTypeInds(tType)},1))']; % from black to light blue 
+                colorMap = [linspace(0,0.7,size(snCetaArray5{tTypeInds(tType)},1))',linspace(0,0.7,size(snCetaArray5{tTypeInds(tType)},1))',linspace(1,1,size(snCetaArray5{tTypeInds(tType)},1))']; % from dark blue to light blue 
                 for trace = 1:size(snCetaArray5{tTypeInds(tType)},1)
                     plot(snCetaArray5{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end                                
@@ -3601,9 +3593,9 @@ for tType = 1:tTypeNum
                 for group = 1:numGroups2{1}                    
                     snBetaArray5{tTypeInds(tType)}(group,:) = nanmean(snBetaArray4{tTypeInds(tType)}{group},1);                                                          
                 end                 
-%                 colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)]; % black to red 
-                colorMap = [linspace(0,1,size(snBetaArray5{tTypeInds(tType)},1))', linspace(0,0.5,size(snBetaArray5{tTypeInds(tType)},1))',linspace(0,0.5,size(snBetaArray5{tTypeInds(tType)},1))']; % black to light red 
-%                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
+%                 colorMap = [linspace(0,1,size(snBetaArray5{tTypeInds(tType)},1))', linspace(0,0.5,size(snBetaArray5{tTypeInds(tType)},1))',linspace(0,0.5,size(snBetaArray5{tTypeInds(tType)},1))']; % black to light red 
+                colorMap = [linspace(1,1,size(snBetaArray5{tTypeInds(tType)},1))', linspace(0,0.6,size(snBetaArray5{tTypeInds(tType)},1))',linspace(0,0.6,size(snBetaArray5{tTypeInds(tType)},1))']; % dark red to light red             
+                %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
                 for trace = 1:size(snBetaArray5{tTypeInds(tType)},1)
                     plot(snBetaArray5{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                 end                               
@@ -3674,7 +3666,8 @@ for tType = 1:tTypeNum
                 for group = 1:numGroups2{1}                    
                     snVetaArray5{tTypeInds(tType)}(group,:) = nanmean(snVetaArray4{tTypeInds(tType)}{group},1);                                                          
                 end                                                
-                colorMap = [linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))']; %black to gray
+%                 colorMap = [linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.8,size(snVetaArray5{tTypeInds(tType)},1))']; %black to gray
+                colorMap = [linspace(0,0.6,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.6,size(snVetaArray5{tTypeInds(tType)},1))',linspace(0,0.6,size(snVetaArray5{tTypeInds(tType)},1))']; %black to slightly darker gray
 %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
                 for trace = 1:size(snVetaArray5{tTypeInds(tType)},1)
                     plot(snVetaArray5{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
