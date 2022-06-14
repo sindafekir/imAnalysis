@@ -3020,7 +3020,7 @@ for tType = 1:tTypeNum
                 elseif plotAVQ == 0 
     %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
 %                     colorMap = [zeros(size(CetaArray4{tTypeInds(tType)},1),1),linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,1,size(CetaArray4{tTypeInds(tType)},1))']; % from black to light blue 
-                colorMap = [linspace(0,0.7,size(snCetaArray5{tTypeInds(tType)},1))',linspace(0,0.7,size(snCetaArray5{tTypeInds(tType)},1))',linspace(1,1,size(snCetaArray5{tTypeInds(tType)},1))']; % from dark blue to light blue
+                    colorMap = [linspace(0,0.7,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,0.7,size(CetaArray4{tTypeInds(tType)},1))',linspace(1,1,size(CetaArray4{tTypeInds(tType)},1))']; % from dark blue to light blue
                     for trace = 1:size(CetaArray4{tTypeInds(tType)},1)
                         plot(snCetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                     end 
@@ -3156,14 +3156,15 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 if plotAVQ == 1
-                    plot(avSHbData{tTypeInds(tType)}-104,'color',[0.5 0.5 0.5],'LineWidth',3)        
-                    patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-104 fliplr(CI_bshHigh{tTypeInds(tType)}-104)],[0.5 0.5 0.5],'EdgeColor','none')                           
+%                     plot(avSHbData{tTypeInds(tType)}-104,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%                     patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-104 fliplr(CI_bshHigh{tTypeInds(tType)}-104)],[0.5 0.5 0.5],'EdgeColor','none')                           
                     plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
                     patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
                 elseif plotAVQ == 0
     %                 colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', zeros(size(BetaArray4{tTypeInds(tType)},1),2)]; % black to red 
-                    colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))',linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))']; % black to light red 
-    %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
+%                     colorMap = [linspace(0,1,size(BetaArray4{tTypeInds(tType)},1))', linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))',linspace(0,0.5,size(BetaArray4{tTypeInds(tType)},1))']; % black to light red 
+                    colorMap = [linspace(1,1,size(BetaArray4{tTypeInds(tType)},1))', linspace(0,0.6,size(BetaArray4{tTypeInds(tType)},1))',linspace(0,0.6,size(BetaArray4{tTypeInds(tType)},1))']; % dark red to light red 
+  %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));
                     for trace = 1:size(BetaArray4{tTypeInds(tType)},1)
                         plot(snBetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                     end                 
@@ -3207,8 +3208,10 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVbData{tTypeInds(tType)})])
-                ylim([min(AVbData{tTypeInds(tType)}-400) max(AVbData{tTypeInds(tType)})+300])
+%                 xlim([1 length(AVbData{tTypeInds(tType)})])
+%                 ylim([min(AVbData{tTypeInds(tType)}-400) max(AVbData{tTypeInds(tType)})+300])
+                xlim([(sec_before_stim_start-0.75)*FPSstack{idx} (sec_before_stim_start+6)*FPSstack{idx}])
+                ylim([-10 30])
                 xlabel('time (s)')
                 ylabel('BBB percent change')
                 % initialize empty string array 
@@ -3304,8 +3307,9 @@ for tType = 1:tTypeNum
                     plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
                     patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')       
                 elseif plotAVQ == 0
-                    colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))']; %black to gray
-    %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1));                
+%                     colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))']; %black to gray
+    %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1)); 
+                    colorMap = [linspace(0,0.6,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,0.6,size(CetaArray4{tTypeInds(tType)},1))',linspace(0,0.6,size(CetaArray4{tTypeInds(tType)},1))']; %black to slightly darker gray
                     for trace = 1:size(VetaArray4{tTypeInds(tType)},1)
                         plot(snVetaArray4{tTypeInds(tType)}(trace,:)-100,'color',colorMap(trace,:),'LineWidth',2);
                     end 
@@ -3349,8 +3353,10 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVvData{tTypeInds(tType)})])
-                ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
+%                 xlim([1 length(AVvData{tTypeInds(tType)})])
+%                 ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
+                xlim([(sec_before_stim_start-0.75)*FPSstack (sec_before_stim_start+6)*FPSstack])
+                ylim([-0.3 0.6])
                 xlabel('time (s)')
                 ylabel('vessel width percent change')
                 % initialize empty string array 

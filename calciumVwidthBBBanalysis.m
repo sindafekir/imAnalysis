@@ -3013,8 +3013,11 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 if plotAVQ == 1
-                    plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)      
-                    patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%                     plot(avSHcData{tTypeInds(tType)}-100,'color',[0.5 0.5 0.5],'LineWidth',3)      
+%                     patch([x fliplr(x)],[CI_cshLow{tTypeInds(tType)}-100 fliplr(CI_cshHigh{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')
+%                     AVcData1_40 = AVcData; CI_cLow1_40 = CI_cLow; CI_cHigh1_40 = CI_cHigh;
+%                     plot(AVcData1_40{tTypeInds(tType)}-100,'b','LineWidth',3)
+%                     patch([x fliplr(x)],[CI_cLow1_40{tTypeInds(tType)}-100 fliplr(CI_cHigh1_40{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none')
                     plot(AVcData{tTypeInds(tType)}-100,'b','LineWidth',3)
                     patch([x fliplr(x)],[CI_cLow{tTypeInds(tType)}-100 fliplr(CI_cHigh{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none')
                 elseif plotAVQ == 0 
@@ -3027,10 +3030,10 @@ for tType = 1:tTypeNum
                 end 
                 if tTypeInds(tType) == 1 
                     if optoQ == 0
-                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'CS+'},'LineWidth',2);
                         label1.FontSize = 30;
                         label1.FontName = 'Arial';
-                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'Reward'},'LineWidth',2);
                         label2.FontSize = 30;
                         label3 = ('Behavior Data');
                     elseif optoQ == 1 
@@ -3064,20 +3067,21 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVcData{tTypeInds(tType)})])
-                ylim([min(AVcData{tTypeInds(tType)}-400) max(AVcData{tTypeInds(tType)})+300])
+%                 xlim([1 length(AVcData{tTypeInds(tType)})])
+%                 ylim([min(AVcData{tTypeInds(tType)}-400) max(AVcData{tTypeInds(tType)})+300])
+                xlim([(sec_before_stim_start-0.9)*FPSstack{idx} (sec_before_stim_start+6)*FPSstack{idx}])
+                ylim([-2.7 3])
                 xlabel('time (s)')
                 ylabel('calcium percent change')
                 % initialize empty string array 
                 label = strings;
                 label = append(label,sprintf('  Calcium Signal. N = %d.',mouseNum));        
-        %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
-                if optoQ == 1 % opto data 
-                    title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
-                end 
-                if optoQ == 0 % behavior data 
-                    title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
-                end 
+%                 if optoQ == 1 % opto data 
+%                     title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+%                 end 
+%                 if optoQ == 0 % behavior data 
+%                     title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+%                 end 
                 set(fig,'position', [100 100 900 900])
                 alpha(0.3)        
 
@@ -3156,8 +3160,11 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2; 
                 if plotAVQ == 1
-                    plot(avSHbData{tTypeInds(tType)}-104,'color',[0.5 0.5 0.5],'LineWidth',3)        
-                    patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-104 fliplr(CI_bshHigh{tTypeInds(tType)}-104)],[0.5 0.5 0.5],'EdgeColor','none')                           
+%                     plot(avSHbData{tTypeInds(tType)}-104,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%                     patch([x fliplr(x)],[CI_bshLow{tTypeInds(tType)}-104 fliplr(CI_bshHigh{tTypeInds(tType)}-104)],[0.5 0.5 0.5],'EdgeColor','none') 
+%                     AVbData1_40 = AVbData; CI_bLow1_40 = CI_bLow; CI_bHigh1_40 = CI_bHigh;
+%                     plot(AVbData1_40{tTypeInds(tType)}-100,'Color',[0.7 0.5 0.5],'LineWidth',3)
+%                     patch([x fliplr(x)],[CI_bLow1_40{tTypeInds(tType)}-100 fliplr(CI_bHigh1_40{tTypeInds(tType)}-100)],[0.7 0.5 0.5],'EdgeColor','none')
                     plot(AVbData{tTypeInds(tType)}-100,'r','LineWidth',3)
                     patch([x fliplr(x)],[CI_bLow{tTypeInds(tType)}-100 fliplr(CI_bHigh{tTypeInds(tType)}-100)],[0.5 0 0],'EdgeColor','none')
                 elseif plotAVQ == 0
@@ -3171,10 +3178,10 @@ for tType = 1:tTypeNum
                 end 
                 if tTypeInds(tType) == 1 
                     if optoQ == 0
-                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'CS+'},'LineWidth',2);
                         label1.FontSize = 30;
                         label1.FontName = 'Arial';
-                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'Reward'},'LineWidth',2);
                         label2.FontSize = 30;
                         label3 = ('Behavior Data');
                     elseif optoQ == 1 
@@ -3208,20 +3215,21 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVbData{tTypeInds(tType)})])
-                ylim([min(AVbData{tTypeInds(tType)}-400) max(AVbData{tTypeInds(tType)})+300])
+%                 xlim([1 length(AVbData{tTypeInds(tType)})])
+%                 ylim([min(AVbData{tTypeInds(tType)}-400) max(AVbData{tTypeInds(tType)})+300])
+                xlim([(sec_before_stim_start-0.9)*FPSstack{idx} (sec_before_stim_start+6)*FPSstack{idx}])
+                ylim([-10 30])
                 xlabel('time (s)')
                 ylabel('BBB percent change')
                 % initialize empty string array 
                 label = strings;
                 label = append(label,sprintf('BBB Permeabilty. N = %d.',mouseNum));       
-        %         title({'Optogenetic Stimulation';'Event Triggered Averages (n = 3)';label},'FontName','Arial');
-                if optoQ == 1 % opto data 
-                    title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
-                end 
-                if optoQ == 0 % behavior data 
-                    title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
-                end 
+%                 if optoQ == 1 % opto data 
+%                     title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+%                 end 
+%                 if optoQ == 0 % behavior data 
+%                     title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+%                 end 
                 set(fig,'position', [100 100 900 900])
                 alpha(0.3)   
 
@@ -3300,10 +3308,13 @@ for tType = 1:tTypeNum
                 Frames_pre_stim_start = -((Frames-1)/2); 
                 Frames_post_stim_start = (Frames-1)/2;  
                 if plotAVQ == 1
-                    plot(avSHvData{tTypeInds(tType)}-100.1,'color',[0.5 0.5 0.5],'LineWidth',3)        
-                    patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100.1 fliplr(CI_vshHigh{tTypeInds(tType)}-100.1)],[0.5 0.5 0.5],'EdgeColor','none')                 
+%                     plot(avSHvData{tTypeInds(tType)}-100.1,'color',[0.5 0.5 0.5],'LineWidth',3)        
+%                     patch([x fliplr(x)],[CI_vshLow{tTypeInds(tType)}-100.1 fliplr(CI_vshHigh{tTypeInds(tType)}-100.1)],[0.5 0.5 0.5],'EdgeColor','none') 
+%                     AVvData1_40 = AVvData; CI_vLow1_40 = CI_vLow; CI_vHigh1_40 = CI_vHigh;
+%                     plot(AVvData1_40{tTypeInds(tType)}-100,'Color',[0.5 0.5 0.5],'LineWidth',3)
+%                     patch([x fliplr(x)],[CI_vLow1_40{tTypeInds(tType)}-100 fliplr(CI_vHigh1_40{tTypeInds(tType)}-100)],[0.5 0.5 0.5],'EdgeColor','none')  
                     plot(AVvData{tTypeInds(tType)}-100,'k','LineWidth',3)
-                    patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')       
+                    patch([x fliplr(x)],[CI_vLow{tTypeInds(tType)}-100 fliplr(CI_vHigh{tTypeInds(tType)}-100)],'k','EdgeColor','none')
                 elseif plotAVQ == 0
 %                     colorMap = [linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))',linspace(0,0.8,size(VetaArray4{tTypeInds(tType)},1))']; %black to gray
     %                 colorMap = jet(size(CetaArray4{tTypeInds(tType)},1)); 
@@ -3314,10 +3325,10 @@ for tType = 1:tTypeNum
                 end     
                 if tTypeInds(tType) == 1 
                     if optoQ == 0
-                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
+                        label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'CS+'},'LineWidth',2);
                         label1.FontSize = 30;
                         label1.FontName = 'Arial';
-                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'water reward'},'LineWidth',2);
+                        label2 = xline((ceil(abs(Frames_pre_stim_start)-10)+(round(FPSstack2(idx)))*2),'-k',{'Reward'},'LineWidth',2);
                         label2.FontSize = 30;
                         label3 = ('Behavior Data');
                     elseif optoQ == 1 
@@ -3351,19 +3362,21 @@ for tType = 1:tTypeNum
                 ax.XTickLabel = sec_TimeVals;
                 ax.FontSize = 30;
                 ax.FontName = 'Arial';
-                xlim([1 length(AVvData{tTypeInds(tType)})])
-                ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
+%                 xlim([1 length(AVvData{tTypeInds(tType)})])
+%                 ylim([min(AVvData{tTypeInds(tType)}-400) max(AVvData{tTypeInds(tType)})+300])
+                xlim([(sec_before_stim_start-0.9)*FPSstack{idx} (sec_before_stim_start+6)*FPSstack{idx}])
+                ylim([-0.3 0.6])
                 xlabel('time (s)')
                 ylabel('vessel width percent change')
                 % initialize empty string array 
                 label = strings;
                 label = append(label,sprintf('Vessel width ROIs averaged. N = %d.',mouseNum));
-                if optoQ == 1 % opto data 
-                    title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
-                end 
-                if optoQ == 0 % behavior data 
-                    title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
-                end 
+%                 if optoQ == 1 % opto data 
+%                     title({'Optogenetic Stimulation Event Triggered Averages';label;label3},'FontName','Arial');
+%                 end 
+%                 if optoQ == 0 % behavior data 
+%                     title({'Behavior Event Triggered Averages';label;label3},'FontName','Arial');
+%                 end 
                 set(fig,'position', [100 100 900 900])
                 alpha(0.3)   
 
