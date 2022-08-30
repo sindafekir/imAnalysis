@@ -9,7 +9,15 @@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% get the data you need 
 % includes batch processing (across mice) option for STA/ETA figure generation
-%{
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEED TO ADD IN CODE BELOW TO LOAD STACKS FOR CREATING STACK ETA VIDS NOT
+% STA VIDS THAT ARE BASED ON CALCIUM SPIKES 
+
+
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -288,61 +296,33 @@ if STAstackQ == 1 || ETAstackQ == 1
         greenStacks{vid} = mean(greenStackArray{vid},4);
     end 
 end 
-% get HDF data for making ETA stack averages whether or not opto is done 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% GET THE HDF FILE DATA FOR MAKING ETA STACK VID 
 if ETAstackQ == 1 && optoQ == 1 
     state_end_f2 = cell(1,length(vidList{mouse}));        
-    trialLengths2 = cell(1,length(vidList{mouse}));   
+    trialLengths2 = cell(1,length(vidList{mouse}));      
     for vid = 1:length(vidList{mouse})
-        [~,statestartf,stateendf,~,~,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod,vidList{mouse}(vid),mouse);
+        [~,statestartf,stateendf,~,vel_wheel_data,trialTypes] = makeHDFchart_redBlueStim(state,framePeriod,vidList{mouse}(vid),mouse);
         state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
         state_end_f2{vid} = floor(stateendf/FPSadjust);
         TrialTypes{mouse}{vid} = trialTypes(1:length(statestartf),:);
         trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
     end 
-    % this fixes discrete time rounding errors to ensure the stimuli are
-    % all the correct number of frames long 
-    if mouse == 1 
-        stimTimeLengths = input('How many seconds are the stims on for? ');
-    end 
-    stimFrameLengths = floor(stimTimeLengths*FPSstack{mouse});              
-    for frameLength = 1:length(stimFrameLengths)
-        for vid = 1:length(vidList{mouse})
-            for trial = 1:length(state_start_f{mouse}{vid})
-                [~,c] = min(abs(trialLengths2{vid}(trial)-stimFrameLengths));
-                trialLengths{mouse}{vid}(trial) = stimFrameLengths(c);
-                state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(c);
-            end 
-        end 
-    end      
+    
+    
+    
 elseif ETAstackQ == 1 && optoQ == 0
-    state_end_f2 = cell(1,length(vidList{mouse}));
-    trialLengths2 = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod);
-        state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
-        if isempty(stateendf) == 0
-            state_end_f2{vid} = floor(stateendf/FPSadjust);
-            trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
-        end 
-    end    
-    % this fixes discrete time rounding errors to ensure the stimuli are
-    % all the correct number of frames long 
-    if mouse == 1 
-        stimTimeLengths = input('How many seconds are the stims on for? ');
-    end 
-    stimFrameLengths = floor(stimTimeLengths*FPSstack{mouse});
-    for frameLength = 1:length(stimFrameLengths)
-        for vid = 1:length(vidList{mouse})
-            for trial = 1:length(state_start_f{mouse}{vid})
-                % determine the correct length of frames per trial
-                % (accounts for rounding/discrete time issues 
-                [~,c] = min(abs(trialLengths2{vid}(trial)-stimFrameLengths));
-                trialLengths{mouse}{vid}(trial) = stimFrameLengths(c);
-                state_end_f{mouse}{vid}(trial) = state_start_f{mouse}{vid}(trial) + stimFrameLengths(c);
-            end 
-        end 
-    end 
+    
+    
+    
 end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 if distQ == 1
     % get registered images 
     regImDir = uigetdir('*.*','WHERE ARE THE REGISTERED IMAGES?');
