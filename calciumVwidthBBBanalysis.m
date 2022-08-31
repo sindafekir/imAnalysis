@@ -4208,9 +4208,6 @@ for vid = 1:length(greenStacks)
     end 
 end 
 
-%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
-
 % makes faux trial type array for behavior data so all behavior data trials
 % (based on selected state) get sorted into the same cell 
 % For opto data, the state is either 7 or 8, but there are 4 different
@@ -4230,13 +4227,25 @@ if mouse == 1
     trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
 end 
 if trialQ == 0
-    trialList = cell(1,length(bDataFullTrace{mouse}));
-    for vid = 1:length(bDataFullTrace{mouse})   
+    trialList = cell(1,greenStacks);
+    for vid = 1:length(state_start_f{mouse})   
         trialList{vid} = 1:length(plotStart{vid});
     end 
 elseif trialQ == 1 
-    trialList{vid} = input(sprintf('What trials do you want to average and plot for mouse #%d vid #%d? ',mouse,vid));
+    trialList = cell(1,greenStacks);
+    for vid = 1:length(state_start_f{mouse})   
+        trialList{vid} = input(sprintf('What trials do you want to average and plot for vid #%d? ',vid));
+    end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % figure out ITI length and sort ITI length into trial type 
 if mouse == 1 
