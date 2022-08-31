@@ -460,7 +460,7 @@ end
 numTtypes = input('How many different trial types are there? ');
 
 %% generate the figures and save the data out per mouse 
-
+%{
 saveDataQ = input('Input 1 to save the data out. '); 
 trialData = cell(1,mouseNum);
 tTypes = cell(1,mouseNum); 
@@ -1818,6 +1818,7 @@ for mouse = 1:mouseNum
     end 
 end 
 
+%}
 %}
 %% ETA: average across mice 
 % does not take already smooothed/normalized data. Will ask you about
@@ -4165,6 +4166,499 @@ set(fig,'position', [100 100 900 900])
 % set(gca, 'YScale', 'log')
 
 %}
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% MAKE ETA VID/STACK AVERAGE USE LOGIC IN BELOW CODE (ONE ANIMAL AT A TIME)
+
+% STEPS DONE 
+% 1) DETERMINE PLOTTING START AND END FRAMES 
+
+% STEPS TO DO 
+% 2) SELECT WHAT TRIALS TO AVERAGE 
+% 3) AVERAGE THE TRIALS TO MAKE FINAL VIDEO 
+
+saveDataQ = input('Input 1 to save the data out. '); 
+mouse = 1;
+dataParseType = input("What data do you have? Peristimulus = 0. Stimulus on = 1. ");
+if dataParseType == 0 %peristimulus data to plot 
+    baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
+    sec_before_stim_start = input("How many seconds are there before the stimulus starts? ");
+    sec_after_stim_end = input("How many seconds are there after the stimulus ends? ");
+    baselineEndFrame = floor(sec_before_stim_start*(FPSstack{mouse}));
+end 
+plotStart = cell(1,length(greenStacks));
+plotEnd = cell(1,length(greenStacks));
+% determine plotting start and end frames 
+for vid = 1:length(greenStacks)    
+    for trial = 1:length(state_start_f{mouse}{vid})         
+        if trialLengths{mouse}{vid}(trial) ~= 0             
+            if dataParseType == 0                   
+                if (state_start_f{mouse}{vid}(trial) - floor(sec_before_stim_start*FPSstack{mouse})) > 0 && state_end_f{mouse}{vid}(trial) + floor(sec_after_stim_end*FPSstack{mouse}) < size(greenStacks{vid},3)
+                    
+                    plotStart{vid}(trial) = state_start_f{mouse}{vid}(trial) - floor(sec_before_stim_start*FPSstack{mouse});
+                    plotEnd{vid}(trial) = state_end_f{mouse}{vid}(trial) + floor(sec_after_stim_end*FPSstack{mouse});                    
+                end            
+            elseif dataParseType == 1  
+                plotStart{vid}(trial) = state_start_f{mouse}{vid}(trial);
+                plotEnd{vid}(trial) = state_end_f{mouse}{vid}(trial);                
+            end   
+        end 
+    end 
+end 
+
+%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
+
+% makes faux trial type array for behavior data so all behavior data trials
+% (based on selected state) get sorted into the same cell 
+% For opto data, the state is either 7 or 8, but there are 4 different
+% kinds of trials within those states. 
+% For behavior data, you select whatever state you want, but there is only
+% one trial type 
+if optoQ == 0 
+    TrialTypes{mouse} = cell(1,length(bDataFullTrace{mouse}));
+    for vid = 1:length(bDataFullTrace{mouse})  
+        TrialTypes{mouse}{vid}(1:length(plotStart{vid}),1) = 1:length(plotStart{vid});  
+        TrialTypes{mouse}{vid}(1:length(plotStart{vid}),2) = 1;        
+    end 
+end 
+
+% pick what trials are averaged 
+if mouse == 1 
+    trialQ = input('Input 1 to select what trials to average and plot. Input 0 for all trials. ');
+end 
+if trialQ == 0
+    trialList = cell(1,length(bDataFullTrace{mouse}));
+    for vid = 1:length(bDataFullTrace{mouse})   
+        trialList{vid} = 1:length(plotStart{vid});
+    end 
+elseif trialQ == 1 
+    trialList{vid} = input(sprintf('What trials do you want to average and plot for mouse #%d vid #%d? ',mouse,vid));
+end 
+
+% figure out ITI length and sort ITI length into trial type 
+if mouse == 1 
+    ITIq = input('Input 1 to separate data based on ITI length. Input 0 otherwise. ');
+end 
+if ITIq == 1 
+    trialLenFrames = cell(1,length(bDataFullTrace{mouse}));
+    trialLenTimes = cell(1,length(bDataFullTrace{mouse}));
+    minMaxTrialLenTimes = cell(1,length(bDataFullTrace{mouse}));
+    for vid = 1:length(bDataFullTrace{mouse})  
+        if trialList{vid}(1) > 1 
+            trialLenFrames{vid}(1) = state_start_f{mouse}{vid}(trialList{vid}(1))-state_start_f{mouse}{vid}(trialList{vid}(1)-1);    
+        elseif trialList{vid}(1) == 1 
+            trialLenFrames{vid}(1) = state_start_f{mouse}{vid}(trialList{vid}(1))-1;    
+        end 
+        trialLenFrames{vid}(2:length(trialList{vid})) = state_start_f{mouse}{vid}(trialList{vid}(2:end))-state_end_f{mouse}{vid}(trialList{vid}(1:end-1));
+        trialLenTimes{vid} = trialLenFrames{vid}/FPSstack{mouse};
+        minMaxTrialLenTimes{vid}(1) = min(trialLenTimes{vid});
+        minMaxTrialLenTimes{vid}(2) = max(trialLenTimes{vid});
+        figure; histogram(trialLenTimes{vid})
+        display(minMaxTrialLenTimes{vid})
+    end 
+    trialLenThreshTime = input(sprintf('Input the ITI thresh (sec) to separate data by for mouse #%d vid #%d. ',mouse,vid)); 
+    trialListHigh = cell(1,length(bDataFullTrace{mouse}));
+    trialListLow = cell(1,length(bDataFullTrace{mouse}));
+    for vid = 1:length(bDataFullTrace{mouse}) 
+        trialListHigh{vid} = trialList{vid}((trialLenTimes{vid} >= trialLenThreshTime));
+        trialListLow{vid} = trialList{vid}((trialLenTimes{vid} < trialLenThreshTime));
+    end 
+    ITIq2 = input(sprintf('Input 1 to plot trials with ITIs greater than %d sec. Input 0 for ITIs lower than %d sec. ',trialLenThreshTime,trialLenThreshTime));
+    if ITIq2 == 0
+        trialList = trialListLow;
+    elseif ITIq2 == 1
+        trialList = trialListHigh;
+    end 
+end 
+%sort data 
+for ccell = 1:ccellLen
+    count1 = 1;
+    count2 = 1;
+    count3 = 1;
+    count4 = 1;
+    for vid = 1:length(bDataFullTrace{mouse})    
+        for trial = 1:length(trialList{vid}) 
+            if trialLengths{mouse}{vid}(trialList{vid}(trial)) ~= 0 
+                 if (state_start_f{mouse}{vid}(trialList{vid}(trial)) - floor(sec_before_stim_start*FPSstack{mouse})) > 0 && state_end_f{mouse}{vid}(trialList{vid}(trial)) + floor(sec_after_stim_end*FPSstack{mouse}) < length(bDataFullTrace{mouse}{vid}{1})
+                    %if the blue light is on
+                    if TrialTypes{mouse}{vid}(trialList{vid}(trial),2) == 1
+                        %if it is a 2 sec trial 
+                        if trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(2*FPSstack{mouse})     
+                            if CAQ == 1
+                                Ceta{terminals{mouse}(ccell)}{1}(count1,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if velWheelQ == 1 
+                                Weta{1}(count1,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count1 = count1 + 1;                    
+                        %if it is a 20 sec trial
+                        elseif trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(20*FPSstack{mouse})
+                            if CAQ == 1
+                                Ceta{terminals{mouse}(ccell)}{2}(count2,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if velWheelQ == 1 
+                                Weta{2}(count2,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count2 = count2 + 1;
+                        end 
+                    %if the red light is on 
+                    elseif TrialTypes{mouse}{vid}(trialList{vid}(trial),2) == 2
+                        %if it is a 2 sec trial 
+                        if trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(2*FPSstack{mouse})
+                            if CAQ == 1
+                                Ceta{terminals{mouse}(ccell)}{3}(count3,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end
+                            end 
+                            if velWheelQ == 1 
+                                Weta{3}(count3,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count3 = count3 + 1;                    
+                        %if it is a 20 sec trial
+                        elseif trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(20*FPSstack{mouse})
+                            if CAQ == 1
+                                Ceta{terminals{mouse}(ccell)}{4}(count4,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            if BBBQ == 1 
+                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if VWQ == 1
+                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                                end 
+                            end 
+                            if velWheelQ == 1 
+                                Weta{4}(count4,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                            end 
+                            count4 = count4 + 1;
+                        end             
+                    end 
+                end 
+            end 
+        end         
+    end
+end 
+
+% remove rows that are all 0 and then add buffer value to each trace to avoid
+%negative going values 
+for tType = 1:numTtypes
+    if CAQ == 1
+        for ccell = 1:length(terminals{mouse})    
+            % replace zero values with NaNs
+            nonZeroRowsC = all(Ceta{terminals{mouse}(ccell)}{tType} == 0,2);
+            Ceta{terminals{mouse}(ccell)}{tType}(nonZeroRowsC,:) = NaN;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Ceta{terminals{mouse}(ccell)}{tType}))))+100;
+            % add min value 
+            Ceta{terminals{mouse}(ccell)}{tType} = Ceta{terminals{mouse}(ccell)}{tType} + minValToAdd;                        
+        end 
+    end 
+    if BBBQ == 1 
+        for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+            % replace zero values with NaNs 
+            nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
+            Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Beta{BBBroi}{tType}))))+100;
+            % add min value 
+            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + minValToAdd;
+        end 
+    end 
+    if VWQ == 1
+        for VWroi = 1:length(vDataFullTrace{mouse}{1})
+            % replace zero values with NaNs
+            nonZeroRowsV = all(Veta{VWroi}{tType} == 0,2);
+            Veta{VWroi}{tType}(nonZeroRowsV,:) = NaN;
+            % determine the minimum value, add space (+100)
+            minValToAdd = abs(ceil(min(min(Veta{VWroi}{tType}))))+100;
+            % add min value 
+            Veta{VWroi}{tType} = Veta{VWroi}{tType} + minValToAdd;
+        end 
+    end 
+    if velWheelQ == 1 
+        % replace zero values with NaNs
+        nonZeroRowsW = all(Weta{tType} == 0,2);
+        Weta{tType}(nonZeroRowsW,:) = NaN;
+        % determine the minimum value, add space (+100)
+        minValToAdd = abs(ceil(min(min(Weta{tType}{tType}))))+100;
+        % add min value 
+        Weta{tType}{tType} = Weta{tType}{tType} + minValToAdd;
+    end 
+end
+
+% make sure tType index is known for given ttype num 
+if optoQ == 1 
+    % check to see if red or blue opto lights were used       
+    for vid = 1:length(TrialTypes{mouse})   
+        % combine trialTypes and trialLengths 
+        trialData{mouse}{vid}(:,1) = TrialTypes{mouse}{vid}(:,2);
+        trialData{mouse}{vid}(:,2) = trialLengths{mouse}{vid};
+        % determine the combination of trialTypes and lengths that
+        % occur per vid 
+        %if the blue light is on for 2 seconds
+        if any(ismember(trialData{mouse}{vid},[1,floor(2*FPSstack{mouse})],'rows') == 1)
+            tTypes{mouse}{vid}(1) = 1;              
+        end 
+        %if the blue light is on for 20 seconds 
+        if any(ismember(trialData{mouse}{vid},[1,floor(20*FPSstack{mouse})],'rows') == 1)
+            tTypes{mouse}{vid}(2) = 2;
+        end 
+        %if the red light is on for 2 seconds 
+        if any(ismember(trialData{mouse}{vid},[2,floor(2*FPSstack{mouse})],'rows') == 1)
+            tTypes{mouse}{vid}(3) = 3;
+        end 
+        %if the red light is on for 20 seconds    
+        if any(ismember(trialData{mouse}{vid},[2,floor(20*FPSstack{mouse})],'rows') == 1)
+            tTypes{mouse}{vid}(4) = 4;
+        end 
+        if any(tTypes{mouse}{vid} == 1)
+            vidCheck{mouse}(vid,1) = 1;
+        end 
+        if any(tTypes{mouse}{vid} == 2)
+            vidCheck{mouse}(vid,2) = 2;
+        end 
+        if any(tTypes{mouse}{vid} == 3)
+            vidCheck{mouse}(vid,3) = 3;
+        end 
+        if any(tTypes{mouse}{vid} == 4)
+            vidCheck{mouse}(vid,4) = 4;
+        end             
+    end  
+    if sum(any(vidCheck{mouse} == 1)) > 0  
+        tTypeInds(1) = 1;
+    end 
+    if sum(any(vidCheck{mouse} == 2)) > 0 
+        tTypeInds(2) = 2;
+    end 
+    if sum(any(vidCheck{mouse} == 3)) > 0 
+        tTypeInds(3) = 3;
+    end 
+    if sum(any(vidCheck{mouse} == 4)) > 0 
+        tTypeInds(4) = 4; 
+    end 
+elseif optoQ == 0
+    tTypeInds = 1;
+end 
+if optoQ == 1 
+    % make sure the number of trialTypes in the data matches up with what
+    % you think it should
+    if length(nonzeros(unique(vidCheck{mouse}))) == numTtypes 
+        % make sure the trial type index is known for the code below
+        tTypeInds = nonzeros(unique(vidCheck{mouse}));
+    elseif length(nonzeros(unique(vidCheck{mouse}))) ~= numTtypes
+        disp('The number of trial types in the data does not match up with the number of trial types inputed by user!!!');
+    end 
+end 
+
+% smooth data
+if mouse == 1 
+    smoothQ =  input('Do you want to smooth your data? Yes = 1. No = 0. ');
+end 
+if smoothQ ==  1
+    if mouse == 1             
+        filtTime = input('How many seconds do you want to smooth your data by? ');
+    end 
+    if CAQ == 1
+        sCeta = cell(1,length(cDataFullTrace{mouse}{1}));
+    end 
+    if BBBQ == 1 
+        sBeta = cell(1,length(bDataFullTrace{mouse}{1}));
+    end 
+    if VWQ == 1
+        sVeta = cell(1,length(vDataFullTrace{mouse}{1}));
+    end
+    if velWheelQ == 1 
+        sWeta = cell(1,numTtypes);
+    end 
+    for tType = 1:numTtypes
+        if CAQ == 1
+            for ccell = 1:length(terminals{mouse})
+                for cTrial = 1:size(Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)
+                    [sC_Data] = MovMeanSmoothData(Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:),filtTime,FPSstack{mouse});
+                    sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:) = sC_Data;
+                end 
+            end 
+        end        
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                for bTrial = 1:size(Beta{BBBroi}{tTypeInds(tType)},1)
+                    [sB_Data] = MovMeanSmoothData(Beta{BBBroi}{tTypeInds(tType)}(bTrial,:),filtTime,FPSstack{mouse});
+                    sBeta{BBBroi}{tTypeInds(tType)}(bTrial,:) = sB_Data;
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                for vTrial = 1:size(Veta{VWroi}{tTypeInds(tType)},1)
+                    [sV_Data] = MovMeanSmoothData(Veta{VWroi}{tTypeInds(tType)}(vTrial,:),filtTime,FPSstack{mouse});
+                    sVeta{VWroi}{tTypeInds(tType)}(vTrial,:) = sV_Data;   
+                end 
+            end 
+        end 
+        if velWheelQ == 1 
+            for wTrial = 1:size(Weta{tTypeInds(tType)},1)
+                [sW_Data] = MovMeanSmoothData(Weta{tTypeInds(tType)}(wTrial,:),filtTime,FPSstack{mouse});
+                sWeta{tTypeInds(tType)}(wTrial,:) = sW_Data;   
+            end 
+        end 
+    end 
+elseif smoothQ == 0
+    if CAQ == 1
+        sCeta = cell(1,length(cDataFullTrace{mouse}{1}));
+    end 
+    if BBBQ == 1 
+        sBeta = cell(1,length(bDataFullTrace{mouse}{1}));
+    end 
+    if VWQ == 1
+        sVeta = cell(1,length(vDataFullTrace{mouse}{1}));
+    end
+    if velWheelQ == 1 
+        sWeta = cell(1,numTtypes);
+    end 
+    for tType = 1:numTtypes
+        if CAQ == 1
+            for ccell = 1:length(terminals{mouse})
+                for cTrial = 1:size(Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)},1)
+                    sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:) = Ceta{terminals{mouse}(ccell)}{tTypeInds(tType)}(cTrial,:)-100;
+                end 
+            end 
+        end        
+        if BBBQ == 1 
+            for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                for bTrial = 1:size(Beta{BBBroi}{tTypeInds(tType)},1)
+                    sBeta{BBBroi}{tTypeInds(tType)}(bTrial,:) = Beta{BBBroi}{tTypeInds(tType)}(bTrial,:)-100;
+                end 
+            end 
+        end 
+        if VWQ == 1
+            for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                for vTrial = 1:size(Veta{VWroi}{tTypeInds(tType)},1)
+                    sVeta{VWroi}{tTypeInds(tType)}(vTrial,:) = Veta{VWroi}{tTypeInds(tType)}(vTrial,:)-100;   
+                end 
+            end 
+        end 
+        if velWheelQ == 1 
+            for wTrial = 1:size(Weta{tTypeInds(tType)},1)
+                sWeta{tTypeInds(tType)}(wTrial,:) = Weta{tTypeInds(tType)}(wTrial,:)-100;   
+            end 
+        end 
+    end 
+end 
+
+% baseline data to average value between 0 sec and -baselineInput sec (0 sec being stim
+%onset) 
+if mouse == 1 
+    baselineInput = input('How many seconds before the light turns on do you want to baseline to? ');
+end 
+if CAQ == 1
+    nsCeta = cell(1,length(cDataFullTrace{mouse}{1}));
+end 
+if BBBQ == 1 
+    nsBeta = cell(1,length(bDataFullTrace{mouse}{1}));
+end 
+if VWQ == 1
+    nsVeta = cell(1,length(vDataFullTrace{mouse}{1}));
+end 
+if velWheelQ == 1 
+    nsWeta = cell(1,numTtypes);
+end 
+if dataParseType == 0 %peristimulus data to plot 
+    %sec_before_stim_start
+    for tType = 1:numTtypes
+        if CAQ == 1
+            if isempty(sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}) == 0 
+                for ccell = 1:length(terminals{mouse})
+                    nsCeta{terminals{mouse}(ccell)}{tTypeInds(tType)} = (sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)} ./ nanmean(sCeta{terminals{mouse}(ccell)}{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
+                end 
+            end 
+        end 
+        if BBBQ == 1 
+            if isempty(sBeta{BBBroi}{tTypeInds(tType)}) == 0 
+                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
+                    nsBeta{BBBroi}{tTypeInds(tType)} = (sBeta{BBBroi}{tTypeInds(tType)} ./ nanmean(sBeta{BBBroi}{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
+                end 
+            end 
+        end 
+        if VWQ == 1
+            if isempty(sVeta{VWroi}{tTypeInds(tType)}) == 0 
+                for VWroi = 1:length(vDataFullTrace{mouse}{1})
+                    nsVeta{VWroi}{tTypeInds(tType)} = (sVeta{VWroi}{tTypeInds(tType)} ./ nanmean(sVeta{VWroi}{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100;        
+                end 
+            end 
+        end 
+        if velWheelQ == 1 
+            if isempty(sWeta{tTypeInds(tType)}) == 0 
+                nsWeta{tTypeInds(tType)} = (sWeta{tTypeInds(tType)} ./ nanmean(sWeta{tTypeInds(tType)}(:,floor((sec_before_stim_start-baselineInput)*FPSstack{mouse}):floor(sec_before_stim_start*FPSstack{mouse})),2))*100; 
+
+            end 
+        end 
+    end    
+elseif dataParseType == 1 %only stimulus data to plot 
+    if CAQ == 1
+        nsCeta = sCeta;
+    end 
+    if BBBQ == 1 
+        nsBeta = sBeta;
+    end 
+    if VWQ == 1
+        nsVeta = sVeta;
+    end 
+    if velWheelQ == 1 
+        nsWeta = sWeta; 
+    end 
+end 
+
+
+    
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% edited already ~ 
+if saveDataQ == 1 
+    mouse = input('Input a label for this animal. '); 
+    dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouse);
+    dir1 = uigetdir('*.*',dirLabel);    
+    fileName = sprintf('ETAstackAv_%s.mat',mouse);
+    save(fullfile(dir1,fileName));
+end 
+
+
+%}
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% compare terminal calcium activity - create correlograms
 %{
 AVdata = cell(1,length(nsCeta));
