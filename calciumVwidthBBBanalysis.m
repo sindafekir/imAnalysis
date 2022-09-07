@@ -4275,165 +4275,69 @@ if ITIq == 1
     end 
 end 
 
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-%sort data 
-for ccell = 1:ccellLen
-    count1 = 1;
-    count2 = 1;
-    count3 = 1;
-    count4 = 1;
-    for vid = 1:length(bDataFullTrace{mouse})    
-        for trial = 1:length(trialList{vid}) 
-            if trialLengths{mouse}{vid}(trialList{vid}(trial)) ~= 0 
-                 if (state_start_f{mouse}{vid}(trialList{vid}(trial)) - floor(sec_before_stim_start*FPSstack{mouse})) > 0 && state_end_f{mouse}{vid}(trialList{vid}(trial)) + floor(sec_after_stim_end*FPSstack{mouse}) < length(bDataFullTrace{mouse}{vid}{1})
-                    %if the blue light is on
-                    if TrialTypes{mouse}{vid}(trialList{vid}(trial),2) == 1
-                        %if it is a 2 sec trial 
-                        if trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(2*FPSstack{mouse})     
-                            if CAQ == 1
-                                Ceta{terminals{mouse}(ccell)}{1}(count1,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            if BBBQ == 1 
-                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                                    Beta{BBBroi}{1}(count1,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if VWQ == 1
-                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                                    Veta{VWroi}{1}(count1,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if velWheelQ == 1 
-                                Weta{1}(count1,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count1 = count1 + 1;                    
-                        %if it is a 20 sec trial
-                        elseif trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(20*FPSstack{mouse})
-                            if CAQ == 1
-                                Ceta{terminals{mouse}(ccell)}{2}(count2,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            if BBBQ == 1 
-                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                                    Beta{BBBroi}{2}(count2,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if VWQ == 1
-                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                                    Veta{VWroi}{2}(count2,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if velWheelQ == 1 
-                                Weta{2}(count2,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count2 = count2 + 1;
-                        end 
-                    %if the red light is on 
-                    elseif TrialTypes{mouse}{vid}(trialList{vid}(trial),2) == 2
-                        %if it is a 2 sec trial 
-                        if trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(2*FPSstack{mouse})
-                            if CAQ == 1
-                                Ceta{terminals{mouse}(ccell)}{3}(count3,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            if BBBQ == 1 
-                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                                    Beta{BBBroi}{3}(count3,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if VWQ == 1
-                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                                    Veta{VWroi}{3}(count3,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end
-                            end 
-                            if velWheelQ == 1 
-                                Weta{3}(count3,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count3 = count3 + 1;                    
-                        %if it is a 20 sec trial
-                        elseif trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(20*FPSstack{mouse})
-                            if CAQ == 1
-                                Ceta{terminals{mouse}(ccell)}{4}(count4,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            if BBBQ == 1 
-                                for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-                                    Beta{BBBroi}{4}(count4,:) = bDataFullTrace{mouse}{vid}{BBBroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if VWQ == 1
-                                for VWroi = 1:length(vDataFullTrace{mouse}{1})
-                                    Veta{VWroi}{4}(count4,:) = vDataFullTrace{mouse}{vid}{VWroi}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                                end 
-                            end 
-                            if velWheelQ == 1 
-                                Weta{4}(count4,:) = wDataFullTrace{mouse}{vid}(plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
-                            end 
-                            count4 = count4 + 1;
-                        end             
+% sort data 
+count1 = 1;
+count2 = 1;
+count3 = 1;
+count4 = 1;
+for vid = 1:length(state_start_f{mouse}) 
+    for trial = 1:length(trialList{vid}) 
+        if trialLengths{mouse}{vid}(trialList{vid}(trial)) ~= 0 
+             if (state_start_f{mouse}{vid}(trialList{vid}(trial)) - floor(sec_before_stim_start*FPSstack{mouse})) > 0 && state_end_f{mouse}{vid}(trialList{vid}(trial)) + floor(sec_after_stim_end*FPSstack{mouse}) < size(greenStacks{vid},3)
+                %if the blue light is on
+                if TrialTypes{mouse}{vid}(trialList{vid}(trial),2) == 1
+                    %if it is a 2 sec trial 
+                    if trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(2*FPSstack{mouse})                             
+                        etaGstack{1}(:,:,:,count1) = greenStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                        etaRstack{1}(:,:,:,count1) = redStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                        count1 = count1 + 1;                    
+                    %if it is a 20 sec trial
+                    elseif trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(20*FPSstack{mouse})
+                        etaGstack{2}(:,:,:,count2) = greenStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial))); 
+                        etaRstack{2}(:,:,:,count2) = redStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial))); 
+                        count2 = count2 + 1;
                     end 
+                %if the red light is on 
+                elseif TrialTypes{mouse}{vid}(trialList{vid}(trial),2) == 2
+                    %if it is a 2 sec trial 
+                    if trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(2*FPSstack{mouse})
+                        etaGstack{3}(:,:,:,count3) = greenStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                        etaRstack{3}(:,:,:,count3) = redStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                        count3 = count3 + 1;                    
+                    %if it is a 20 sec trial
+                    elseif trialLengths{mouse}{vid}(trialList{vid}(trial)) == floor(20*FPSstack{mouse})
+                        etaGstack{4}(:,:,:,count4) = greenStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                        etaRstack{4}(:,:,:,count4) = redStacks{vid}(:,:,plotStart{vid}(trialList{vid}(trial)):plotEnd{vid}(trialList{vid}(trial)));
+                        count4 = count4 + 1;
+                    end             
                 end 
             end 
-        end         
-    end
-end 
+        end 
+    end         
+end
 
+numTtypes = input('How many different trial types are there? ');
+% figure out what kind of trial you have based on its location 
+tTypes = find(~cellfun(@isempty,etaGstack));
 % remove rows that are all 0 and then add buffer value to each trace to avoid
 %negative going values 
-for tType = 1:numTtypes
-    if CAQ == 1
-        for ccell = 1:length(terminals{mouse})    
-            % replace zero values with NaNs
-            nonZeroRowsC = all(Ceta{terminals{mouse}(ccell)}{tType} == 0,2);
-            Ceta{terminals{mouse}(ccell)}{tType}(nonZeroRowsC,:) = NaN;
-            % determine the minimum value, add space (+100)
-            minValToAdd = abs(ceil(min(min(Ceta{terminals{mouse}(ccell)}{tType}))))+100;
-            % add min value 
-            Ceta{terminals{mouse}(ccell)}{tType} = Ceta{terminals{mouse}(ccell)}{tType} + minValToAdd;                        
-        end 
-    end 
-    if BBBQ == 1 
-        for BBBroi = 1:length(bDataFullTrace{mouse}{1})
-            % replace zero values with NaNs 
-            nonZeroRowsB = all(Beta{BBBroi}{tType} == 0,2);
-            Beta{BBBroi}{tType}(nonZeroRowsB,:) = NaN;
-            % determine the minimum value, add space (+100)
-            minValToAdd = abs(ceil(min(min(Beta{BBBroi}{tType}))))+100;
-            % add min value 
-            Beta{BBBroi}{tType} = Beta{BBBroi}{tType} + minValToAdd;
-        end 
-    end 
-    if VWQ == 1
-        for VWroi = 1:length(vDataFullTrace{mouse}{1})
-            % replace zero values with NaNs
-            nonZeroRowsV = all(Veta{VWroi}{tType} == 0,2);
-            Veta{VWroi}{tType}(nonZeroRowsV,:) = NaN;
-            % determine the minimum value, add space (+100)
-            minValToAdd = abs(ceil(min(min(Veta{VWroi}{tType}))))+100;
-            % add min value 
-            Veta{VWroi}{tType} = Veta{VWroi}{tType} + minValToAdd;
-        end 
-    end 
-    if velWheelQ == 1 
-        % replace zero values with NaNs
-        nonZeroRowsW = all(Weta{tType} == 0,2);
-        Weta{tType}(nonZeroRowsW,:) = NaN;
-        % determine the minimum value, add space (+100)
-        minValToAdd = abs(ceil(min(min(Weta{tType}{tType}))))+100;
-        % add min value 
-        Weta{tType}{tType} = Weta{tType}{tType} + minValToAdd;
-    end 
+for tType = 1:length(tTypes)              
+    % replace zero values with NaNs
+    nonZeroRowsG = all(etaGstack{tTypes(tType)} == 0,2);     
+    nonZeroRowsR = all(etaRstack{tTypes(tType)} == 0,2);  
+    etaGstack{tTypes(tType)}(nonZeroRowsG,:) = NaN;
+    etaRstack{tTypes(tType)}(nonZeroRowsR,:) = NaN;
+    % determine the minimum value, add space (+100)
+    minValToAddG = abs(ceil(min(min(min(min(etaGstack{tTypes(tType)}))))))+100;
+    minValToAddR = abs(ceil(min(min(min(min(etaRstack{tTypes(tType)}))))))+100;
+    % add min value 
+    etaGstack{tTypes(tType)} = etaGstack{tTypes(tType)} + minValToAddG;    
+    etaRstack{tTypes(tType)} = etaRstack{tTypes(tType)} + minValToAddR; 
 end
 
 % make sure tType index is known for given ttype num 
 if optoQ == 1 
+    tTypes = cell(1);
     % check to see if red or blue opto lights were used       
     for vid = 1:length(TrialTypes{mouse})   
         % combine trialTypes and trialLengths 
@@ -4457,6 +4361,7 @@ if optoQ == 1
         if any(ismember(trialData{mouse}{vid},[2,floor(20*FPSstack{mouse})],'rows') == 1)
             tTypes{mouse}{vid}(4) = 4;
         end 
+        
         if any(tTypes{mouse}{vid} == 1)
             vidCheck{mouse}(vid,1) = 1;
         end 
@@ -4496,25 +4401,216 @@ if optoQ == 1
     end 
 end 
 
+% average ETA aligned stacks 
+tTypes = find(~cellfun(@isempty,etaGstack));
+etaGstackAv = cell(1,length(tTypes));
+etaRstackAv = cell(1,length(tTypes));
+for tType = 1:length(tTypes) 
+    etaGstackAv{tTypes(tType)} = nanmean(etaGstack{tTypes(tType)},4);
+    etaRstackAv{tTypes(tType)} = nanmean(etaRstack{tTypes(tType)},4);
+end 
 
+changePt = floor(length(etaGstackAv{tTypes(1)})/2)-2; 
+secBLnorm = input("How many seconds before stim start do you want to baseline to? ");
+BLstart = changePt - floor(secBLnorm*FPSstack{mouse});
+NgreenStackAv = cell(1,length(etaGstackAv));
+NredStackAv = cell(1,length(etaGstackAv));
+% normalize to baseline period 
+for tType = 1:length(tTypes)
+    NgreenStackAv{tTypes(tType)} = ((etaGstackAv{tTypes(tType)}./ (nanmean(etaGstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100);
+    NredStackAv{tTypes(tType)} = ((etaRstackAv{tTypes(tType)}./ (nanmean(etaRstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100);
+end 
 
-    
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% edited already ~ 
+%temporal smoothing option
+smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
+if smoothQ == 0 
+    SNgreenStackAv = NgreenStackAv;
+    SNredStackAv = NredStackAv;
+elseif smoothQ == 1
+    filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
+    filter_rate = FPSstack{mouse}*filtTime; 
+    tempFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
+    if tempFiltChanQ == 0
+        SNredStackAv = cell(1,length(NgreenStackAv));
+        SNgreenStackAv = cell(1,length(NgreenStackAv));        
+        for tType = 1:length(tTypes)
+            SNredStackAv{tTypes(tType)} = smoothdata(NredStackAv{tTypes(tType)},3,'movmean',filter_rate);
+            SNgreenStackAv{tTypes(tType)} = smoothdata(NgreenStackAv{tTypes(tType)},3,'movmean',filter_rate);
+        end         
+    elseif tempFiltChanQ == 1
+        tempSmoothChanQ = input('Input 0 to temporally smooth green channel. Input 1 for red channel. ');
+        if tempSmoothChanQ == 0
+            SNredStackAv = NredStackAv;
+            SNgreenStackAv = cell(1,length(NgreenStackAv));
+            for tType = 1:length(tTypes)
+                SNgreenStackAv{tTypes(tType)} = smoothdata(NgreenStackAv{tTypes(tType)},3,'movmean',filter_rate);
+            end 
+        elseif tempSmoothChanQ == 1
+            SNredStackAv = cell(1,length(NgreenStackAv));
+            SNgreenStackAv = NgreenStackAv;
+            for tType = 1:length(tTypes)
+                SNredStackAv{tTypes(tType)} = smoothdata(NredStackAv{tTypes(tType)},3,'movmean',filter_rate);               
+            end 
+        end 
+    end 
+end 
+clearvars NgreenStackAv NredStackAv
+
+% spatial smoothing option
+spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
+if spatSmoothQ == 1 
+    spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
+    spatFiltChanQ= input('Input 0 to spatially smooth both channels. Input 1 otherwise. ');
+    if spatFiltChanQ == 0 % if you want to spatially smooth both channels 
+        redIn = SNredStackAv; 
+        greenIn = SNgreenStackAv;
+        clearvars SNredStackAv SNgreenStackAv
+        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');                       
+                for tType = 1:length(tTypes)
+                    SNredStackAv{tTypes(tType)} = imgaussfilt(redIn{tTypes(tType)},sigma);
+                    SNgreenStackAv{tTypes(tType)} = imgaussfilt(greenIn{tTypes(tType)},sigma);
+                end 
+        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
+                for tType = 1:length(tTypes)
+                    SNredStackAv{tTypes(tType)} = convn(redIn{tTypes(tType)},K,'same');
+                    SNgreenStackAv{tTypes(tType)} = convn(greenIn{tTypes(tType)},K,'same');
+                end 
+        end 
+    elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
+        spatSmoothChanQ = input('Input 0 to spatially smooth the green channel. Input 1 for the red channel. ');
+        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
+            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
+                greenIn = SNgreenStackAv;
+                clearvars SNgreenStackAv
+                for tType = 1:length(tTypes)
+                    SNgreenStackAv{tTypes(tType)} = imgaussfilt(greenIn{tTypes(tType)},sigma);
+                end 
+            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
+                redIn = SNredStackAv; 
+                clearvars SNredStackAv 
+                for tType = 1:length(tTypes)
+                    SNredStackAv{tTypes(tType)} = imgaussfilt(redIn{tTypes(tType)},sigma);
+                end 
+            end        
+        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
+            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
+                greenIn = SNgreenStackAv;
+                clearvars SNgreenStackAv
+                for tType = 1:length(tTypes)
+                    SNgreenStackAv{tTypes(tType)} = convn(greenIn{tTypes(tType)},K,'same');
+                end 
+            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
+                redIn = SNredStackAv; 
+                clearvars SNredStackAv 
+                for tType = 1:length(tTypes)
+                    SNredStackAv{tTypes(tType)} = convn(redIn{tTypes(tType)},K,'same');
+                end 
+            end                          
+        end 
+    end 
+end 
+
+cMapQ = input('Input 0 to create a color map that is green for positive % change and red for negative % change. Input 1 to create a colormap for only positive going values. ');
+if cMapQ == 0
+    % Create colormap that is green for positive, red for negative,
+    % and a chunk inthe middle that is black.
+    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+    cMap = [greenColorMap; redColorMap; zeros(1, 256)]';
+elseif cMapQ == 1
+    % Create colormap that is green at max and black at min
+    greenColorMap = linspace(0, 1, 256);
+    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@@@@
+
+% DONE 
+% 1) APPLY COLORMAP 
+% 2) MARK WHEN STIM IS ON
+% 3) SAVE THE DATA OUT 
+
+% TO DO
+% 1) FIX MARK WHEN STIM IS ON, IT'S MARKING MORE FRAMES THAN IT SHOULD
+% 2) SAVE OUT RED CHANNEL STUFF TOO
+% 3) DO Z-SCORING TO FIND ACTIVE PIXELS
+% 4) MAKE MASK OF ACTIVE PIXELS AND CREATE RED CHANNEL STA VIDS BASED ON
+% ACTIVE PIXEL ACTIVITY PEAKS 
+
+%% play and save green channel 
+if exist('SNgreenStackAv','var') == 1
+    for tType = 1:length(tTypes)        
+        %find the upper and lower bounds of your data (per calcium ROI) 
+        maxValueG = max(max(max(max(SNgreenStackAv{tTypes(tType)}))));
+        minValueG = min(min(min(min(SNgreenStackAv{tTypes(tType)}))));  
+        %prepare folder for saving the images out as .pngs 
+        if saveDataQ == 1 
+            mouse = input('Input a label for this animal. '); 
+            dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouse);
+            dir1 = uigetdir('*.*',dirLabel);    
+            dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+            %create a new folder per calcium ROI 
+            newFolder = sprintf('%s_GreenChannelETAav',mouse);
+            mkdir(dir2,newFolder)
+        end                
+        
+        % play images 
+        for frame = 1:size(SNgreenStackAv{tTypes(tType)},3)
+            % create the % change image with the right white and black point
+            % boundaries and colormap 
+            imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[minValueG,maxValueG]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+            % plot markers to indicate when the stim is on
+            if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
+                hold on;
+                %get border coordinates 
+                colLen = size(SNgreenStackAv{tTypes(tType)},2);
+                rowLen = size(SNgreenStackAv{tTypes(tType)},1);
+                edg1_x = repelem(1,rowLen);
+                edg1_y = 1:rowLen;
+                edg2_x = repelem(colLen,rowLen);
+                edg2_y = 1:rowLen;
+                edg3_x = 1:colLen;
+                edg3_y = repelem(1,colLen);
+                edg4_x = 1:colLen;
+                edg4_y = repelem(rowLen,colLen);
+                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                hold on;
+                scatter(edg_x,edg_y,200,'red','filled','square');               
+            end 
+            ax = gca;
+            ax.Visible = 'off';
+            ax.FontSize = 20; 
+            if saveDataQ == 1 
+                %save current figure to file 
+                filename = sprintf('%s/%s_GreenChannelETAav/%s_GreenChannelETAav_frame%d',dir2,mouse,mouse,frame);
+                saveas(gca,[filename '.png'])
+            end 
+        end     
+    end 
+end 
+       
 if saveDataQ == 1 
-    mouse = input('Input a label for this animal. '); 
-    dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouse);
-    dir1 = uigetdir('*.*',dirLabel);    
-    fileName = sprintf('ETAstackAv_%s.mat',mouse);
-    save(fullfile(dir1,fileName));
+    fileName = sprintf('%s_GreenChannelETAav',mouse);
+    save(fullfile(dir1,fileName),"SNgreenStackAv","SNredStackAv","FPSstack");
 end 
 
 
-%}
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% compare terminal calcium activity - create correlograms
 %{
 AVdata = cell(1,length(nsCeta));
@@ -9795,8 +9891,8 @@ NgreenStackAv = cell(1,length(avGreenStack));
 NredStackAv = cell(1,length(avGreenStack));
 % normalize to baseline period 
 for ccell = 1:length(terminals)
-    NgreenStackAv{terminals(ccell)} = ((avGreenStack{terminals(ccell)}./ (nanmean(avGreenStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
-    NredStackAv{terminals(ccell)} = ((avRedStack{terminals(ccell)}./ (nanmean(avRedStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
+    NgreenStackAv{terminals(ccell)} = ((avGreenStack{terminals(ccell)}./ (nanmean(avGreenStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100);
+    NredStackAv{terminals(ccell)} = ((avRedStack{terminals(ccell)}./ (nanmean(avRedStack{terminals(ccell)}(:,:,BLstart:changePt),3)))*100);
 end 
 
 %temporal smoothing option
