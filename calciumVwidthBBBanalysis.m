@@ -4417,8 +4417,8 @@ NgreenStackAv = cell(1,length(etaGstackAv));
 NredStackAv = cell(1,length(etaGstackAv));
 % normalize to baseline period 
 for tType = 1:length(tTypes)
-    NgreenStackAv{tTypes(tType)} = ((etaGstackAv{tTypes(tType)}./ (nanmean(etaGstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100);
-    NredStackAv{tTypes(tType)} = ((etaRstackAv{tTypes(tType)}./ (nanmean(etaRstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100);
+    NgreenStackAv{tTypes(tType)} = ((etaGstackAv{tTypes(tType)}./ (nanmean(etaGstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100)-100;
+    NredStackAv{tTypes(tType)} = ((etaRstackAv{tTypes(tType)}./ (nanmean(etaRstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100)-100;
 end 
 
 %temporal smoothing option
@@ -4524,29 +4524,12 @@ if cMapQ == 0
     % and a chunk inthe middle that is black.
     greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
     redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
-    cMap = [greenColorMap; redColorMap; zeros(1, 256)]';
+    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 elseif cMapQ == 1
     % Create colormap that is green at max and black at min
     greenColorMap = linspace(0, 1, 256);
     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
 end 
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@@@@
-
-% DONE 
-% 1) APPLY COLORMAP 
-% 2) MARK WHEN STIM IS ON
-% 3) SAVE THE DATA OUT 
-
-% TO DO
-% 1) FIX MARK WHEN STIM IS ON, IT'S MARKING MORE FRAMES THAN IT SHOULD
-% 2) SAVE OUT RED CHANNEL STUFF TOO
-% 3) DO Z-SCORING TO FIND ACTIVE PIXELS
-% 4) MAKE MASK OF ACTIVE PIXELS AND CREATE RED CHANNEL STA VIDS BASED ON
-% ACTIVE PIXEL ACTIVITY PEAKS 
 
 %% play and save green channel 
 if exist('SNgreenStackAv','var') == 1
@@ -4556,12 +4539,12 @@ if exist('SNgreenStackAv','var') == 1
         minValueG = min(min(min(min(SNgreenStackAv{tTypes(tType)}))));  
         %prepare folder for saving the images out as .pngs 
         if saveDataQ == 1 
-            mouse = input('Input a label for this animal. '); 
-            dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouse);
+            mouseLabel = input('Input a label for this animal. '); 
+            dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouseLabel);
             dir1 = uigetdir('*.*',dirLabel);    
             dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
-            %create a new folder per calcium ROI 
-            newFolder = sprintf('%s_GreenChannelETAav',mouse);
+            %create a new folder 
+            newFolder = sprintf('%s_GreenChannelETAav',mouseLabel);
             mkdir(dir2,newFolder)
         end                
         
@@ -4572,7 +4555,6 @@ if exist('SNgreenStackAv','var') == 1
             imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[minValueG,maxValueG]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
             % plot markers to indicate when the stim is on
             if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
-                hold on;
                 %get border coordinates 
                 colLen = size(SNgreenStackAv{tTypes(tType)},2);
                 rowLen = size(SNgreenStackAv{tTypes(tType)},1);
@@ -4587,30 +4569,93 @@ if exist('SNgreenStackAv','var') == 1
                 edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
                 edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
                 hold on;
-                scatter(edg_x,edg_y,200,'red','filled','square');               
+                scatter(edg_x,edg_y,15,'red','filled','square'); 
             end 
             ax = gca;
             ax.Visible = 'off';
             ax.FontSize = 20; 
             if saveDataQ == 1 
                 %save current figure to file 
-                filename = sprintf('%s/%s_GreenChannelETAav/%s_GreenChannelETAav_frame%d',dir2,mouse,mouse,frame);
+                filename = sprintf('%s/%s_GreenChannelETAav/%s_GreenChannelETAav_frame%d',dir2,mouseLabel,mouseLabel,frame);
                 saveas(gca,[filename '.png'])
             end 
+            close all
+        end     
+    end 
+end 
+    
+
+%% play and save red channel 
+if exist('SNredStackAv','var') == 1
+    for tType = 1:length(tTypes)        
+        %find the upper and lower bounds of your data (per calcium ROI) 
+        maxValueG = max(max(max(max(SNredStackAv{tTypes(tType)}))));
+        minValueG = min(min(min(min(SNredStackAv{tTypes(tType)}))));  
+        %prepare folder for saving the images out as .pngs 
+        if saveDataQ == 1 
+            %create a new folder 
+            newFolder = sprintf('%s_RedChannelETAav',mouseLabel);
+            mkdir(dir2,newFolder)
+        end                
+        
+        % play images 
+        for frame = 1:size(SNredStackAv{tTypes(tType)},3)
+            % create the % change image with the right white and black point
+            % boundaries and colormap 
+            imagesc(SNredStackAv{tTypes(tType)}(:,:,frame),[minValueG,maxValueG]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+            % plot markers to indicate when the stim is on
+            if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
+                %get border coordinates 
+                colLen = size(SNredStackAv{tTypes(tType)},2);
+                rowLen = size(SNredStackAv{tTypes(tType)},1);
+                edg1_x = repelem(1,rowLen);
+                edg1_y = 1:rowLen;
+                edg2_x = repelem(colLen,rowLen);
+                edg2_y = 1:rowLen;
+                edg3_x = 1:colLen;
+                edg3_y = repelem(1,colLen);
+                edg4_x = 1:colLen;
+                edg4_y = repelem(rowLen,colLen);
+                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                hold on;
+                scatter(edg_x,edg_y,15,'red','filled','square'); 
+            end 
+            ax = gca;
+            ax.Visible = 'off';
+            ax.FontSize = 20; 
+            if saveDataQ == 1 
+                %save current figure to file 
+                filename = sprintf('%s/%s_RedChannelETAav/%s_RedChannelETAav_frame%d',dir2,mouseLabel,mouseLabel,frame);
+                saveas(gca,[filename '.png'])
+            end 
+            close all
         end     
     end 
 end 
        
 if saveDataQ == 1 
-    fileName = sprintf('%s_GreenChannelETAav',mouse);
+    fileName = sprintf('%s_RedandGreenChannelETAav',mouseLabel);
     save(fullfile(dir1,fileName),"SNgreenStackAv","SNredStackAv","FPSstack");
 end 
 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+% TO DO
+% 1) play around with red channel. remove stim artifact. adjust colorbar
+% lims. 
+% 3) DO Z-SCORING TO FIND ACTIVE PIXELS
+% 4) MAKE MASK OF ACTIVE PIXELS AND CREATE RED CHANNEL STA VIDS BASED ON
+% ACTIVE PIXEL ACTIVITY PEAKS 
+
 %% compare terminal calcium activity - create correlograms
 %{
 AVdata = cell(1,length(nsCeta));
