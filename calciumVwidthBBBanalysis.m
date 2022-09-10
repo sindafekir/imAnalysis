@@ -4166,20 +4166,8 @@ set(fig,'position', [100 100 900 900])
 % set(gca, 'YScale', 'log')
 
 %}
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% MAKE ETA VID/STACK AVERAGE USE LOGIC IN BELOW CODE (ONE ANIMAL AT A TIME)
-
-% STEPS DONE 
-% 1) DETERMINE PLOTTING START AND END FRAMES 
-% 2) SELECT WHAT TRIALS TO AVERAGE 
-
-% STEPS TO DO 
-% 3) AVERAGE THE TRIALS TO MAKE FINAL VIDEO 
-% 4) SMOOTH AND NORMALIZE FINAL VIDEO 
-
+%% make ETA VID/STACK avaerage (one animal at a time)
+%{
 saveDataQ = input('Input 1 to save the data out. '); 
 mouse = 1;
 dataParseType = input("What data do you have? Peristimulus = 0. Stimulus on = 1. ");
@@ -4638,7 +4626,7 @@ if saveDataQ == 1
     fileName = sprintf('%s_RedandGreenChannelETAav',mouseLabel);
     save(fullfile(dir1,fileName),"SNgreenStackAv","SNredStackAv","FPSstack");
 end 
-
+%}
 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
