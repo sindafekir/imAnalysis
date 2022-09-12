@@ -29,13 +29,13 @@ end
 % select rows for background subtraction - this code goes through multiple
 % rounds of row selection - make sure to select rows where they do not have
 % blacked out pixels (from the calcium ROI removal) or vessels 
-ROIstacks = cell(1,length(CaROImasks));
-xmins = cell(1,length(CaROImasks));
-ymins = cell(1,length(CaROImasks));
-widths = cell(1,length(CaROImasks));
-heights = cell(1,length(CaROImasks));
-xmaxs = cell(1,length(CaROImasks));
-ymaxs = cell(1,length(CaROImasks));
+ROIstacks = cell(1,length(reg__Stacks));
+xmins = cell(1,length(reg__Stacks));
+ymins = cell(1,length(reg__Stacks));
+widths = cell(1,length(reg__Stacks));
+heights = cell(1,length(reg__Stacks));
+xmaxs = cell(1,length(reg__Stacks));
+ymaxs = cell(1,length(reg__Stacks));
 BG_ROIboundData = cell(2,6);
 BG_ROIboundData{1,1} = 'X min'; 
 BG_ROIboundData{1,2} = 'X max'; 
@@ -43,7 +43,7 @@ BG_ROIboundData{1,3} = 'Y min';
 BG_ROIboundData{1,4} = 'Y max'; 
 BG_ROIboundData{1,5} = 'width'; 
 BG_ROIboundData{1,6} = 'height'; 
-for z = 1:length(CaROImasks)
+for z = 1:length(reg__Stacks)
     figure; 
     fprintf('This is Z plane #%d.  ',z)
     % display prompt so user knows what to do 
@@ -109,8 +109,8 @@ end
 
 % determine average pixel intensity of each frame and row in the control
 % ROIs
-BGpixInt = cell(1,length(CaROImasks));
-for z = 1:length(CaROImasks)
+BGpixInt = cell(1,length(reg__Stacks));
+for z = 1:length(reg__Stacks)
     for i = 1:length(ROIstacks{z})
         BGpixInt{z}{i} = mean(ROIstacks{z}{i}{1},2);
     end 
@@ -118,7 +118,7 @@ end
 
 % ensure the size of the ROI boundaries does not accidentally exceed the
 % size of the FOV
-for z = 1:length(CaROImasks)
+for z = 1:length(reg__Stacks)
     for i = 1:length(ROIstacks{z})
         if BG_ROIboundData{2,4}{z}(i) > size(reg__Stacks{1},1)
             BG_ROIboundData{2,4}{z}(i) = size(reg__Stacks{1},1);
@@ -127,8 +127,8 @@ for z = 1:length(CaROImasks)
 end 
 
 % do background subtraction per row 
-stackOut = cell(1,length(CaROImasks));
-for z = 1:length(CaROImasks)
+stackOut = cell(1,length(reg__Stacks));
+for z = 1:length(reg__Stacks)
     for i = 1:length(ROIstacks{z})        
         for frame = 1:size(ROIstacks{z}{i}{1},3)          
             stackOut{z}(BG_ROIboundData{2,3}{z}(i):BG_ROIboundData{2,4}{z}(i),:,frame) = (reg__Stacks{z}(BG_ROIboundData{2,3}{z}(i):BG_ROIboundData{2,4}{z}(i),:,frame)-BGpixInt{z}{i}(:,:,frame));
