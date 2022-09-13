@@ -4167,7 +4167,7 @@ set(fig,'position', [100 100 900 900])
 
 %}
 %% make ETA VID/STACK avaerage (one animal at a time)
-
+%{
 dataScrambleQ = input("Input 1 if you need to remove frames due to data scramble. "); 
 if dataScrambleQ == 1 
     for vid = 1:length(greenStacks) 
@@ -4276,6 +4276,7 @@ count1 = 1;
 count2 = 1;
 count3 = 1;
 count4 = 1;
+clearvars etaGstack etaRstack
 for vid = 1:length(state_start_f{mouse}) 
     for trial = 1:length(trialList{vid}) 
         if trialLengths{mouse}{vid}(trialList{vid}(trial)) ~= 0 
@@ -4539,6 +4540,8 @@ if exist('SNgreenStackAv','var') == 1
         %find the upper and lower bounds of your data (per calcium ROI) 
         maxValueG = max(max(max(max(SNgreenStackAv{tTypes(tType)}))));
         minValueG = min(min(min(min(SNgreenStackAv{tTypes(tType)}))));  
+        minMaxAbsVals = [abs(minValueG),abs(maxValueG)];
+        maxAbVal = max(minMaxAbsVals);
         %prepare folder for saving the images out as .pngs 
         if saveDataQ == 1 
             mouseLabel = input('Input a label for this animal. '); 
@@ -4554,7 +4557,7 @@ if exist('SNgreenStackAv','var') == 1
         for frame = 1:size(SNgreenStackAv{tTypes(tType)},3)
             % create the % change image with the right white and black point
             % boundaries and colormap 
-            imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[minValueG,maxValueG]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+            imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
             % plot markers to indicate when the stim is on
             if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
                 %get border coordinates 
@@ -4592,7 +4595,9 @@ if exist('SNredStackAv','var') == 1
     for tType = 1:length(tTypes)        
         %find the upper and lower bounds of your data (per calcium ROI) 
         maxValueG = max(max(max(max(SNredStackAv{tTypes(tType)}))));
-        minValueG = min(min(min(min(SNredStackAv{tTypes(tType)}))));  
+        minValueG = min(min(min(min(SNredStackAv{tTypes(tType)}))));
+        minMaxAbsVals = [abs(minValueG),abs(maxValueG)];
+        maxAbVal = max(minMaxAbsVals);
         %prepare folder for saving the images out as .pngs 
         if saveDataQ == 1 
             %create a new folder 
@@ -4604,7 +4609,7 @@ if exist('SNredStackAv','var') == 1
         for frame = 1:size(SNredStackAv{tTypes(tType)},3)
             % create the % change image with the right white and black point
             % boundaries and colormap 
-            imagesc(SNredStackAv{tTypes(tType)}(:,:,frame),[minValueG,maxValueG]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+            imagesc(SNredStackAv{tTypes(tType)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
             % plot markers to indicate when the stim is on
             if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
                 %get border coordinates 
@@ -4641,15 +4646,6 @@ if saveDataQ == 1
     save(fullfile(dir1,fileName),"SNgreenStackAv","SNredStackAv","FPSstack");
 end 
 %}
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@ above is done @@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@ below needs work @@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % TO DO
 % 3) DO Z-SCORING TO FIND ACTIVE PIXELS
