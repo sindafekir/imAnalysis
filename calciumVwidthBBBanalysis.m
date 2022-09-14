@@ -4318,6 +4318,8 @@ numTtypes = input('How many different trial types are there? ');
 tTypes = find(~cellfun(@isempty,etaGstack));
 % remove rows that are all 0 and then add buffer value to each trace to avoid
 %negative going values 
+etaGstack2 = cell(1,length(tTypes));
+etaRstack2 = cell(1,length(tTypes));
 for tType = 1:length(tTypes)              
     % find valid (not empty trials)
     trials = find(~cellfun(@isempty,etaGstack{tTypes(tType)}));
@@ -4525,8 +4527,12 @@ cMapQ = input('Input 0 to create a color map that is green for positive % change
 if cMapQ == 0
     % Create colormap that is green for positive, red for negative,
     % and a chunk inthe middle that is black.
-    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
-    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+    % these colors have more black in them 
+    greenColorMap = [zeros(1, 156), linspace(0, 1, 100)];
+    redColorMap = [linspace(1, 0, 100), zeros(1, 156)];
+    % these are the original colors 
+%     greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+%     redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
     cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 elseif cMapQ == 1
     % Create colormap that is green at max and black at min
