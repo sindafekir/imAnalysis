@@ -4542,6 +4542,47 @@ end
 
 %% play and save green channel 
 if exist('SNgreenStackAv','var') == 1
+    if exist('SNredStackAv','var') == 1
+        redOutlineQ = input("Input 1 if you want to plot a red channel outline. ");
+        if redOutlineQ == 1 
+            redOutlineQ2 = 1;
+        end 
+        while redOutlineQ == 1   
+            %compile red channel images for all videos (to make cleanest
+            %average) 
+            for vid = 1:length(redStacks)
+                if vid == 1
+                    Rstack = redStacks{vid};
+                elseif vid > 1
+                    curLen = size(Rstack,3);
+                    futLen = curLen + size(redStacks{vid},3);
+                    Rstack(:,:,curLen:futLen) = redStacks{vid};
+                end 
+            end   
+            % average the red images 
+            Rav = nanmean(Rstack,3);
+            % outline the vessels     
+            imshow(Rav,[0 50])
+            outline = drawfreehand(gca);  % manually draw vessel outline
+            % get the vessel outline coordinates 
+            Vinds = outline.Position;
+            outLineQ = input(sprintf('Input 1 if you are done drawing the outline '));
+            if outLineQ == 1
+                close all
+            end 
+            % turn outline coordinates into mask 
+            BW = poly2mask(Vinds(:,1),Vinds(:,2),size(Rav,1),size(Rav,2));           
+            % Active contour
+            iterations = 3;
+            BW = activecontour(Rav, BW, iterations, 'Chan-Vese');
+            %get the segmentation boundaries 
+            BW_perim = bwperim(BW);
+            %overlay segmentation boundaries on data
+            overlay = imoverlay(mat2gray(Rav), BW_perim, [.3 1 .3]);
+            imshow(overlay)
+            redOutlineQ = input("Input 0 if the outline is done. "); 
+        end 
+    end 
     for tType = 1:length(tTypes)        
         %find the upper and lower bounds of your data (per calcium ROI) 
         maxValueG = max(max(max(max(SNgreenStackAv{tTypes(tType)}))));
@@ -4558,12 +4599,11 @@ if exist('SNgreenStackAv','var') == 1
             newFolder = sprintf('%s_GreenChannelETAav',mouseLabel);
             mkdir(dir2,newFolder)
         end                
-        
         % play images 
         for frame = 1:size(SNgreenStackAv{tTypes(tType)},3)
             % create the % change image with the right white and black point
             % boundaries and colormap 
-            imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+            imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change                 
             % plot markers to indicate when the stim is on
             if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
                 %get border coordinates 
@@ -4582,6 +4622,13 @@ if exist('SNgreenStackAv','var') == 1
                 hold on;
                 scatter(edg_x,edg_y,15,'red','filled','square'); 
             end 
+            % plot vessel outline 
+            if exist('SNredStackAv','var') == 1
+                if redOutlineQ2 == 1  
+                    hold on; 
+                    scatter(Vinds(:,1),Vinds(:,2),10,'white','filled','square')
+                end 
+            end             
             ax = gca;
             ax.Visible = 'off';
             ax.FontSize = 20; 
