@@ -4711,7 +4711,7 @@ end
 %% make ETA VID/STACKs per trial (one animal at a time)
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % IN PROGRESS
-%{
+
 dataScrambleQ = input("Input 1 if you need to remove frames due to data scramble. "); 
 if dataScrambleQ == 1 
     for vid = 1:length(greenStacks) 
@@ -4827,29 +4827,27 @@ for tType = 1:length(tTypes)
     end 
 end
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% BELOW NEEDS WORK 
-
 clearvars etaGstack etaRstack
 etaGstack = etaGstack2;
 etaRstack = etaRstack2;
-for tType = 1:length(tTypes)     
-    % determine the minimum value, add space (+100)
-    minValToAddG = abs(ceil(min(min(min(min(etaGstack{tTypes(tType)}))))))+100;
-    minValToAddR = abs(ceil(min(min(min(min(etaRstack{tTypes(tType)}))))))+100;
-    % add min value 
-    etaGstack{tTypes(tType)} = etaGstack{tTypes(tType)} + minValToAddG;    
-    etaRstack{tTypes(tType)} = etaRstack{tTypes(tType)} + minValToAddR; 
+minValToAddG = cell(1,length(tTypes));
+minValToAddR = cell(1,length(tTypes));
+for tType = 1:length(tTypes)         
+    for trial = 1:length(etaGstack{tTypes(tType)})
+        % determine the minimum value, add space (+100)
+        minValToAddG{tTypes(tType)}(trials(trial)) = abs(ceil(min(min(min(min(etaGstack{tTypes(tType)}{trials(trial)}))))))+100;
+        minValToAddR{tTypes(tType)}(trials(trial)) = abs(ceil(min(min(min(min(etaRstack{tTypes(tType)}{trials(trial)}))))))+100;
+        % add min value 
+        etaGstack{tTypes(tType)}{trials(trial)} = etaGstack{tTypes(tType)}{trials(trial)} + minValToAddG{tTypes(tType)}(trials(trial));    
+        etaRstack{tTypes(tType)}{trials(trial)} = etaRstack{tTypes(tType)}{trials(trial)} + minValToAddR{tTypes(tType)}(trials(trial)); 
+    end 
 end 
 
 % make sure tType index is known for given ttype num 
 if optoQ == 1 
-    tTypes = cell(1);
+    tTypes2 = cell(1,mouseNum);
+    vidCheck =  cell(1,mouseNum);
+    trialData =  cell(1,mouseNum);
     % check to see if red or blue opto lights were used       
     for vid = 1:length(TrialTypes{mouse})   
         % combine trialTypes and trialLengths 
@@ -4859,31 +4857,31 @@ if optoQ == 1
         % occur per vid 
         %if the blue light is on for 2 seconds
         if any(ismember(trialData{mouse}{vid},[1,floor(2*FPSstack{mouse})],'rows') == 1)
-            tTypes{mouse}{vid}(1) = 1;              
+            tTypes2{mouse}{vid}(1) = 1;              
         end 
         %if the blue light is on for 20 seconds 
         if any(ismember(trialData{mouse}{vid},[1,floor(20*FPSstack{mouse})],'rows') == 1)
-            tTypes{mouse}{vid}(2) = 2;
+            tTypes2{mouse}{vid}(2) = 2;
         end 
         %if the red light is on for 2 seconds 
         if any(ismember(trialData{mouse}{vid},[2,floor(2*FPSstack{mouse})],'rows') == 1)
-            tTypes{mouse}{vid}(3) = 3;
+            tTypes2{mouse}{vid}(3) = 3;
         end 
         %if the red light is on for 20 seconds    
         if any(ismember(trialData{mouse}{vid},[2,floor(20*FPSstack{mouse})],'rows') == 1)
-            tTypes{mouse}{vid}(4) = 4;
+            tTypes2{mouse}{vid}(4) = 4;
         end 
         
-        if any(tTypes{mouse}{vid} == 1)
+        if any(tTypes2{mouse}{vid} == 1)
             vidCheck{mouse}(vid,1) = 1;
         end 
-        if any(tTypes{mouse}{vid} == 2)
+        if any(tTypes2{mouse}{vid} == 2)
             vidCheck{mouse}(vid,2) = 2;
         end 
-        if any(tTypes{mouse}{vid} == 3)
+        if any(tTypes2{mouse}{vid} == 3)
             vidCheck{mouse}(vid,3) = 3;
         end 
-        if any(tTypes{mouse}{vid} == 4)
+        if any(tTypes2{mouse}{vid} == 4)
             vidCheck{mouse}(vid,4) = 4;
         end             
     end  
@@ -4913,27 +4911,20 @@ if optoQ == 1
     end 
 end 
 
-% average ETA aligned stacks 
-tTypes = find(~cellfun(@isempty,etaGstack));
-etaGstackAv = cell(1,length(tTypes));
-etaRstackAv = cell(1,length(tTypes));
-for tType = 1:length(tTypes) 
-    etaGstackAv{tTypes(tType)} = nanmean(etaGstack{tTypes(tType)},4);
-    etaRstackAv{tTypes(tType)} = nanmean(etaRstack{tTypes(tType)},4);
-end 
-
-changePt = floor(length(etaGstackAv{tTypes(1)})/2)-2; 
 secBLnorm = input("How many seconds before stim start do you want to baseline to? ");
-BLstart = changePt - floor(secBLnorm*FPSstack{mouse});
-NgreenStackAv = cell(1,length(etaGstackAv));
-NredStackAv = cell(1,length(etaGstackAv));
+NgreenStackAv = cell(1,length(etaGstack));
+NredStackAv = cell(1,length(etaGstack));
 % normalize to baseline period 
 for tType = 1:length(tTypes)
-    NgreenStackAv{tTypes(tType)} = ((etaGstackAv{tTypes(tType)}./ (nanmean(etaGstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100)-100;
-    NredStackAv{tTypes(tType)} = ((etaRstackAv{tTypes(tType)}./ (nanmean(etaRstackAv{tTypes(tType)}(:,:,BLstart:changePt),3)))*100)-100;
+    changePt = floor(length(etaGstack{tTypes(tType)}{1})/2)-2; 
+    BLstart = changePt - floor(secBLnorm*FPSstack{mouse});    
+    for trial = 1:length(etaGstack{tTypes(tType)})
+        NgreenStackAv{tTypes(tType)}{trial} = ((etaGstack{tTypes(tType)}{trial}./ (nanmean(etaGstack{tTypes(tType)}{trial}(:,:,BLstart:changePt),3)))*100)-100;
+        NredStackAv{tTypes(tType)}{trial} = ((etaRstack{tTypes(tType)}{trial}./ (nanmean(etaRstack{tTypes(tType)}{trial}(:,:,BLstart:changePt),3)))*100)-100;
+    end 
 end 
 
-%temporal smoothing option
+% temporal smoothing option
 smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
 if smoothQ == 0 
     SNgreenStackAv = NgreenStackAv;
@@ -4946,8 +4937,10 @@ elseif smoothQ == 1
         SNredStackAv = cell(1,length(NgreenStackAv));
         SNgreenStackAv = cell(1,length(NgreenStackAv));        
         for tType = 1:length(tTypes)
-            SNredStackAv{tTypes(tType)} = smoothdata(NredStackAv{tTypes(tType)},3,'movmean',filter_rate);
-            SNgreenStackAv{tTypes(tType)} = smoothdata(NgreenStackAv{tTypes(tType)},3,'movmean',filter_rate);
+            for trial = 1:length(etaGstack{tTypes(tType)})
+                SNredStackAv{tTypes(tType)}{trial} = smoothdata(NredStackAv{tTypes(tType)}{trial},3,'movmean',filter_rate);
+                SNgreenStackAv{tTypes(tType)}{trial} = smoothdata(NgreenStackAv{tTypes(tType)}{trial},3,'movmean',filter_rate);
+            end 
         end         
     elseif tempFiltChanQ == 1
         tempSmoothChanQ = input('Input 0 to temporally smooth green channel. Input 1 for red channel. ');
@@ -4955,13 +4948,17 @@ elseif smoothQ == 1
             SNredStackAv = NredStackAv;
             SNgreenStackAv = cell(1,length(NgreenStackAv));
             for tType = 1:length(tTypes)
-                SNgreenStackAv{tTypes(tType)} = smoothdata(NgreenStackAv{tTypes(tType)},3,'movmean',filter_rate);
+                for trial = 1:length(etaGstack{tTypes(tType)})
+                    SNgreenStackAv{tTypes(tType)}{trial} = smoothdata(NgreenStackAv{tTypes(tType)}{trial},3,'movmean',filter_rate);
+                end 
             end 
         elseif tempSmoothChanQ == 1
             SNredStackAv = cell(1,length(NgreenStackAv));
             SNgreenStackAv = NgreenStackAv;
             for tType = 1:length(tTypes)
-                SNredStackAv{tTypes(tType)} = smoothdata(NredStackAv{tTypes(tType)},3,'movmean',filter_rate);               
+                for trial = 1:length(etaGstack{tTypes(tType)})
+                    SNredStackAv{tTypes(tType)}{trial} = smoothdata(NredStackAv{tTypes(tType)}{trial},3,'movmean',filter_rate); 
+                end 
             end 
         end 
     end 
@@ -4980,16 +4977,20 @@ if spatSmoothQ == 1
         if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
             sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');                       
                 for tType = 1:length(tTypes)
-                    SNredStackAv{tTypes(tType)} = imgaussfilt(redIn{tTypes(tType)},sigma);
-                    SNgreenStackAv{tTypes(tType)} = imgaussfilt(greenIn{tTypes(tType)},sigma);
+                    for trial = 1:length(etaGstack{tTypes(tType)})
+                        SNredStackAv{tTypes(tType)}{trial} = imgaussfilt(redIn{tTypes(tType)}{trial},sigma);
+                        SNgreenStackAv{tTypes(tType)}{trial} = imgaussfilt(greenIn{tTypes(tType)}{trial},sigma);
+                    end 
                 end 
         elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
             % create your kernal for smoothing by convolution 
             kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
             K = 0.125*ones(kernalSize);
                 for tType = 1:length(tTypes)
-                    SNredStackAv{tTypes(tType)} = convn(redIn{tTypes(tType)},K,'same');
-                    SNgreenStackAv{tTypes(tType)} = convn(greenIn{tTypes(tType)},K,'same');
+                    for trial = 1:length(etaGstack{tTypes(tType)})
+                        SNredStackAv{tTypes(tType)}{trial} = convn(redIn{tTypes(tType)}{trial},K,'same');
+                        SNgreenStackAv{tTypes(tType)}{trial} = convn(greenIn{tTypes(tType)}{trial},K,'same');
+                    end 
                 end 
         end 
     elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
@@ -5000,13 +5001,17 @@ if spatSmoothQ == 1
                 greenIn = SNgreenStackAv;
                 clearvars SNgreenStackAv
                 for tType = 1:length(tTypes)
-                    SNgreenStackAv{tTypes(tType)} = imgaussfilt(greenIn{tTypes(tType)},sigma);
+                    for trial = 1:length(etaGstack{tTypes(tType)})
+                        SNgreenStackAv{tTypes(tType)}{trial} = imgaussfilt(greenIn{tTypes(tType)}{trial},sigma);
+                    end 
                 end 
             elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
                 redIn = SNredStackAv; 
                 clearvars SNredStackAv 
                 for tType = 1:length(tTypes)
-                    SNredStackAv{tTypes(tType)} = imgaussfilt(redIn{tTypes(tType)},sigma);
+                    for trial = 1:length(etaGstack{tTypes(tType)})
+                        SNredStackAv{tTypes(tType)}{trial} = imgaussfilt(redIn{tTypes(tType)}{trial},sigma);
+                    end 
                 end 
             end        
         elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
@@ -5017,13 +5022,17 @@ if spatSmoothQ == 1
                 greenIn = SNgreenStackAv;
                 clearvars SNgreenStackAv
                 for tType = 1:length(tTypes)
-                    SNgreenStackAv{tTypes(tType)} = convn(greenIn{tTypes(tType)},K,'same');
+                    for trial = 1:length(etaGstack{tTypes(tType)})
+                        SNgreenStackAv{tTypes(tType)}{trial} = convn(greenIn{tTypes(tType)}{trial},K,'same');
+                    end 
                 end 
             elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
                 redIn = SNredStackAv; 
                 clearvars SNredStackAv 
                 for tType = 1:length(tTypes)
-                    SNredStackAv{tTypes(tType)} = convn(redIn{tTypes(tType)},K,'same');
+                    for trial = 1:length(etaGstack{tTypes(tType)})
+                        SNredStackAv{tTypes(tType)}{trial} = convn(redIn{tTypes(tType)}{trial},K,'same');
+                    end 
                 end 
             end                          
         end 
@@ -5035,11 +5044,11 @@ if cMapQ == 0
     % Create colormap that is green for positive, red for negative,
     % and a chunk inthe middle that is black.
     % these colors have more black in them 
-    greenColorMap = [zeros(1, 156), linspace(0, 1, 100)];
-    redColorMap = [linspace(1, 0, 100), zeros(1, 156)];
+%     greenColorMap = [zeros(1, 156), linspace(0, 1, 100)];
+%     redColorMap = [linspace(1, 0, 100), zeros(1, 156)];
     % these are the original colors 
-%     greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
-%     redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
     cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 elseif cMapQ == 1
     % Create colormap that is green at max and black at min
@@ -5055,154 +5064,165 @@ if exist('SNgreenStackAv','var') == 1
             redOutlineQ2 = 1;
         end 
         while redOutlineQ == 1   
-            %compile red channel images for all videos (to make cleanest
-            %average) 
-            for vid = 1:length(redStacks)
-                if vid == 1
-                    Rstack = redStacks{vid};
-                elseif vid > 1
-                    curLen = size(Rstack,3);
-                    futLen = curLen + size(redStacks{vid},3);
-                    Rstack(:,:,curLen:futLen) = redStacks{vid};
+            newOutlineQ = input("Input 1 if you need to make a new vessel outline. Input 0 otherwise. ");
+            if newOutlineQ == 1            
+                %compile red channel images for all videos (to make cleanest
+                %average) 
+                for vid = 1:length(redStacks)
+                    if vid == 1
+                        Rstack = redStacks{vid};
+                    elseif vid > 1
+                        curLen = size(Rstack,3);
+                        futLen = curLen + size(redStacks{vid},3);
+                        Rstack(:,:,curLen:futLen) = redStacks{vid};
+                    end 
+                end   
+                % average the red images 
+                Rav = nanmean(Rstack,3);
+                % outline the vessels     
+                imshow(Rav,[0 50])
+                outline = drawfreehand(gca);  % manually draw vessel outline
+                % get the vessel outline coordinates 
+                Vinds = outline.Position;
+                outLineQ = input(sprintf('Input 1 if you are done drawing the outline '));
+                if outLineQ == 1
+                    close all
                 end 
-            end   
-            % average the red images 
-            Rav = nanmean(Rstack,3);
-            % outline the vessels     
-            imshow(Rav,[0 50])
-            outline = drawfreehand(gca);  % manually draw vessel outline
-            % get the vessel outline coordinates 
-            Vinds = outline.Position;
-            outLineQ = input(sprintf('Input 1 if you are done drawing the outline '));
-            if outLineQ == 1
-                close all
+                % turn outline coordinates into mask 
+                BW = poly2mask(Vinds(:,1),Vinds(:,2),size(Rav,1),size(Rav,2));           
+                % Active contour
+                iterations = 3;
+                BW = activecontour(Rav, BW, iterations, 'Chan-Vese');
+                %get the segmentation boundaries 
+                BW_perim = bwperim(BW);
+                %overlay segmentation boundaries on data
+                overlay = imoverlay(mat2gray(Rav), BW_perim, [.3 1 .3]);
+                imshow(overlay)
+                redOutlineQ = input("Input 0 if the outline is done. "); 
+            elseif newOutlineQ == 0
+                redOutlineQ = 0;                
             end 
-            % turn outline coordinates into mask 
-            BW = poly2mask(Vinds(:,1),Vinds(:,2),size(Rav,1),size(Rav,2));           
-            % Active contour
-            iterations = 3;
-            BW = activecontour(Rav, BW, iterations, 'Chan-Vese');
-            %get the segmentation boundaries 
-            BW_perim = bwperim(BW);
-            %overlay segmentation boundaries on data
-            overlay = imoverlay(mat2gray(Rav), BW_perim, [.3 1 .3]);
-            imshow(overlay)
-            redOutlineQ = input("Input 0 if the outline is done. "); 
         end 
     end 
-    for tType = 1:length(tTypes)        
-        %find the upper and lower bounds of your data (per calcium ROI) 
-        maxValueG = max(max(max(max(SNgreenStackAv{tTypes(tType)}))));
-        minValueG = min(min(min(min(SNgreenStackAv{tTypes(tType)}))));  
-        minMaxAbsVals = [abs(minValueG),abs(maxValueG)];
-        maxAbVal = max(minMaxAbsVals);
-        %prepare folder for saving the images out as .pngs 
-        if saveDataQ == 1 
-            mouseLabel = input('Input a label for this animal. '); 
-            dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouseLabel);
-            dir1 = uigetdir('*.*',dirLabel);    
-            dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
-            %create a new folder 
-            newFolder = sprintf('%s_GreenChannelETAav',mouseLabel);
-            mkdir(dir2,newFolder)
-        end                
-        % play images 
-        for frame = 1:size(SNgreenStackAv{tTypes(tType)},3)
-            % create the % change image with the right white and black point
-            % boundaries and colormap 
-            imagesc(SNgreenStackAv{tTypes(tType)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change                 
-            % plot markers to indicate when the stim is on
-            if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
-                %get border coordinates 
-                colLen = size(SNgreenStackAv{tTypes(tType)},2);
-                rowLen = size(SNgreenStackAv{tTypes(tType)},1);
-                edg1_x = repelem(1,rowLen);
-                edg1_y = 1:rowLen;
-                edg2_x = repelem(colLen,rowLen);
-                edg2_y = 1:rowLen;
-                edg3_x = 1:colLen;
-                edg3_y = repelem(1,colLen);
-                edg4_x = 1:colLen;
-                edg4_y = repelem(rowLen,colLen);
-                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
-                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
-                hold on;
-                scatter(edg_x,edg_y,15,'red','filled','square'); 
-            end 
-            % plot vessel outline 
-            if exist('SNredStackAv','var') == 1
-                if redOutlineQ2 == 1  
-                    hold on; 
-                    scatter(Vinds(:,1),Vinds(:,2),10,'white','filled','square')
-                end 
-            end             
-            ax = gca;
-            ax.Visible = 'off';
-            ax.FontSize = 20; 
+    for tType = 1:length(tTypes)    
+        for trial = 2:length(etaGstack{tTypes(tType)})
+            %find the upper and lower bounds of your data (per calcium ROI) 
+            maxValueG = max(max(max(max(SNgreenStackAv{tTypes(tType)}{trial}))));
+            minValueG = min(min(min(min(SNgreenStackAv{tTypes(tType)}{trial}))));  
+            minMaxAbsVals = [abs(minValueG),abs(maxValueG)];
+            maxAbVal = max(minMaxAbsVals);
+            %prepare folder for saving the images out as .pngs 
             if saveDataQ == 1 
-                %save current figure to file 
-                filename = sprintf('%s/%s_GreenChannelETAav/%s_GreenChannelETAav_frame%d',dir2,mouseLabel,mouseLabel,frame);
-                saveas(gca,[filename '.png'])
-            end 
-            close all
-        end     
+                if trial == 1 
+                    mouseLabel = input('Input a label for this animal. '); 
+                    dirLabel = sprintf('WHERE DO YOU WANT TO SAVE OUT THE DATA FOR %s? ',mouseLabel);
+                    dir1 = uigetdir('*.*',dirLabel);    
+                    dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+                end                 
+                %create a new folder 
+                newFolder = sprintf('%s_GreenChannelETAav_trial%d',mouseLabel,trial);
+                mkdir(dir2,newFolder)
+            end                
+            % play images 
+            for frame = 1:size(SNgreenStackAv{tTypes(tType)}{trial},3)
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                imagesc(SNgreenStackAv{tTypes(tType)}{trial}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change                 
+                % plot markers to indicate when the stim is on
+                if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
+                    %get border coordinates 
+                    colLen = size(SNgreenStackAv{tTypes(tType)}{trial},2);
+                    rowLen = size(SNgreenStackAv{tTypes(tType)}{trial},1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    scatter(edg_x,edg_y,15,'red','filled','square'); 
+                end 
+                % plot vessel outline 
+                if exist('SNredStackAv','var') == 1
+                    if redOutlineQ2 == 1  
+                        hold on; 
+                        scatter(Vinds(:,1),Vinds(:,2),10,'white','filled','square')
+                    end 
+                end             
+                ax = gca;
+                ax.Visible = 'off';
+                ax.FontSize = 20; 
+                if saveDataQ == 1 
+                    %save current figure to file 
+                    filename = sprintf('%s/%s_GreenChannelETAav_trial%d/%s_trial%d_GreenChannelETAav_frame%d',dir2,mouseLabel,trial,mouseLabel,trial,frame);
+                    saveas(gca,[filename '.png'])
+                end 
+                close all
+            end     
+        end 
     end 
 end 
     
 
 %% play and save red channel 
 if exist('SNredStackAv','var') == 1
-    for tType = 1:length(tTypes)        
-        %find the upper and lower bounds of your data (per calcium ROI) 
-        maxValueG = max(max(max(max(SNredStackAv{tTypes(tType)}))));
-        minValueG = min(min(min(min(SNredStackAv{tTypes(tType)}))));
-        minMaxAbsVals = [abs(minValueG),abs(maxValueG)];
-        maxAbVal = max(minMaxAbsVals);
-        %prepare folder for saving the images out as .pngs 
-        if saveDataQ == 1 
-            %create a new folder 
-            newFolder = sprintf('%s_RedChannelETAav',mouseLabel);
-            mkdir(dir2,newFolder)
-        end                
-        
-        % play images 
-        for frame = 1:size(SNredStackAv{tTypes(tType)},3)
-            % create the % change image with the right white and black point
-            % boundaries and colormap 
-            imagesc(SNredStackAv{tTypes(tType)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
-            % plot markers to indicate when the stim is on
-            if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
-                %get border coordinates 
-                colLen = size(SNredStackAv{tTypes(tType)},2);
-                rowLen = size(SNredStackAv{tTypes(tType)},1);
-                edg1_x = repelem(1,rowLen);
-                edg1_y = 1:rowLen;
-                edg2_x = repelem(colLen,rowLen);
-                edg2_y = 1:rowLen;
-                edg3_x = 1:colLen;
-                edg3_y = repelem(1,colLen);
-                edg4_x = 1:colLen;
-                edg4_y = repelem(rowLen,colLen);
-                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
-                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
-                hold on;
-                scatter(edg_x,edg_y,15,'red','filled','square'); 
-            end 
-            ax = gca;
-            ax.Visible = 'off';
-            ax.FontSize = 20; 
+    for tType = 1:length(tTypes)     
+        for trial = 1:length(etaGstack{tTypes(tType)})
+            %find the upper and lower bounds of your data (per calcium ROI) 
+            maxValueG = max(max(max(max(SNredStackAv{tTypes(tType)}{trial}))));
+            minValueG = min(min(min(min(SNredStackAv{tTypes(tType)}{trial}))));
+            minMaxAbsVals = [abs(minValueG),abs(maxValueG)];
+            maxAbVal = max(minMaxAbsVals);
+            %prepare folder for saving the images out as .pngs 
             if saveDataQ == 1 
-                %save current figure to file 
-                filename = sprintf('%s/%s_RedChannelETAav/%s_RedChannelETAav_frame%d',dir2,mouseLabel,mouseLabel,frame);
-                saveas(gca,[filename '.png'])
-            end 
-            close all
-        end     
+                %create a new folder 
+                newFolder = sprintf('%s_RedChannelETAav_trial%d',mouseLabel,trial);
+                mkdir(dir2,newFolder)
+            end                
+
+            % play images 
+            for frame = 1:size(SNredStackAv{tTypes(tType)}{trial},3)
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                imagesc(SNredStackAv{tTypes(tType)}{trial}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar    %this makes the max point the max % change and the min point the inverse of the max % change     
+                % plot markers to indicate when the stim is on
+                if frame >= changePt && frame <= floor(changePt + (FPSstack{1}*2))
+                    %get border coordinates 
+                    colLen = size(SNredStackAv{tTypes(tType)}{trial},2);
+                    rowLen = size(SNredStackAv{tTypes(tType)}{trial},1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    scatter(edg_x,edg_y,15,'red','filled','square'); 
+                end 
+                ax = gca;
+                ax.Visible = 'off';
+                ax.FontSize = 20; 
+                if saveDataQ == 1 
+                    %save current figure to file 
+                    filename = sprintf('%s/%s_RedChannelETAav_trial%d/%s_trial%d_RedChannelETAav_frame%d',dir2,mouseLabel,trial,mouseLabel,trial,frame);
+                    saveas(gca,[filename '.png'])
+                end 
+                close all
+            end     
+        end 
     end 
 end 
        
 if saveDataQ == 1 
-    fileName = sprintf('%s_RedandGreenChannelETAav',mouseLabel);
+    fileName = sprintf('%s_RedandGreenChannelETAsingleTrial',mouseLabel);
     save(fullfile(dir1,fileName),"SNgreenStackAv","SNredStackAv","FPSstack");
 end 
 %}
