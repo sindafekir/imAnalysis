@@ -463,7 +463,7 @@ end
 numTtypes = input('How many different trial types are there? ');
 
 %% generate the figures and save the data out per mouse 
-%{
+
 saveDataQ = input('Input 1 to save the data out. '); 
 trialData = cell(1,mouseNum);
 tTypes = cell(1,mouseNum); 
@@ -1725,6 +1725,7 @@ for mouse = 1:mouseNum
                 end 
             end 
         end    
+        %%
         if overlayQ == 1
             baselineEndFrame = sec_before_stim_start*FPSstack{mouse};            
             for tType = tTypeList                        
@@ -1747,6 +1748,7 @@ for mouse = 1:mouseNum
                     plot(AVcData{1}{tTypeInds(tType)}-100,'b','LineWidth',3)                    
 %                     patch([x fliplr(x)],[CI_cLow{1}{tTypeInds(tType)}-100 fliplr(CI_cHigh{1}{tTypeInds(tType)}-100)],[0 0 0.5],'EdgeColor','none')
                     alpha(0.5)
+                    ylabel('calcium percent change')
                 end 
                 if optoQ == 1 
                     if tTypeInds(tType) == 1 
@@ -1771,7 +1773,7 @@ for mouse = 1:mouseNum
                 xlim([1 length(AVcData{1}{tTypeInds(tType)})])
 %                 ylim([min(AVcData{1}{tTypeInds(tType)}-400) max(AVcData{1}{tTypeInds(tType)})+300])
                 xlabel('time (s)')
-                ylabel('calcium percent change')
+                
                 % initialize empty string array 
                 if optoQ == 0 % behavior data 
 %                     label1 = xline(ceil(abs(Frames_pre_stim_start)-10),'-k',{'vibrissal stim'},'LineWidth',2);
@@ -1804,9 +1806,9 @@ for mouse = 1:mouseNum
                     alpha(0.5)
                 end 
                 if VWpQ == 1
-                    yyaxis right 
+                    yyaxis left 
                     plot(AVvData{1}{tTypeInds(tType)}-100,'k','LineWidth',3)
-                    patch([x fliplr(x)],[CI_vLow{1}{tTypeInds(tType)}-100 fliplr(CI_vHigh{1}{tTypeInds(tType)}-100)],'k','EdgeColor','none')  
+%                     patch([x fliplr(x)],[CI_vLow{1}{tTypeInds(tType)}-100 fliplr(CI_vHigh{1}{tTypeInds(tType)}-100)],'k','EdgeColor','none')  
                     ylabel('VW percent change')
                     set(gca,'YColor',[0 0 0]);   
                     alpha(0.5)
@@ -1827,7 +1829,7 @@ end
 % does not take already smooothed/normalized data. Will ask you about
 % smoothing/normalizing below 
 % will separate data based on trial number and ITI length (so give it all
-% the trials per mous
+% the trials per mouse
 %{
 %get the data you need 
 mouseNum = input('How many mice are there? ');
@@ -1960,6 +1962,7 @@ idx = find(minFPSstack ~= 0, 1, 'first');
 %sort data
 tTypeNum = input('How many different trial types are there? '); 
 
+clearvars tTypeInds
 % make sure tType index is known for given ttype num 
 if optoQ == 1 
     uniqueLightTypes = cell(1,mouseNum);
@@ -2365,6 +2368,44 @@ if trialAVQ == 0 || (trialAVQ == 1 && trialAVQ2 == 0)
             Vtraces = trialList; 
         end 
     end 
+end 
+
+% remove 0s b = a(any(a,2),:)
+if CAQ == 1 
+    trialList = Ctraces;
+elseif CAQ ~= 1 && BBBQ == 1 
+    trialList = Btraces;
+elseif CAQ ~= 1 && BBBQ ~= 1 && VWQ == 1
+    trialList = Vtraces;
+elseif CAQ ~= 1 && VWQ ~= 1 && BBB == 1
+    trialList = Btraces;
+elseif CAQ ~= 1 && VWQ == 1 && BBB == 1
+    trialList = Btraces;
+end 
+if length(nonzeros(tTypeInds))~= tTypeNum
+    disp("The number of trial types does not match up with input! ");
+elseif length(nonzeros(tTypeInds))== tTypeNum
+    tTypeInds2 = nonzeros(tTypeInds);
+    tTypeInds = tTypeInds2;
+end 
+trials2 = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    for vid = 1:length(state_start_f{mouse}) 
+        for tType = 1:tTypeNum
+            if length(trialList{mouse}{vid}) >= tTypeInds(tType) && isempty(trialList{mouse}{vid}{tTypeInds(tType)}) == 0 
+                trials2{mouse}{vid}{tTypeInds(tType)} = nonzeros(trialList{mouse}{vid}{tTypeInds(tType)});
+            end 
+        end 
+    end 
+end 
+if CAQ == 1
+    Ctraces = trials2;
+end 
+if BBBQ == 1
+    Btraces = trials2;
+end 
+if VWQ == 1
+    Vtraces = trials2;
 end 
 
 % resort eta data into vids
@@ -4016,7 +4057,7 @@ Frames_pre_stim_start = -((Frames-1)/2);
 Frames_post_stim_start = (Frames-1)/2; 
 if pCAQ == 1 
     plot(allRedAVcData-100,'b','LineWidth',3) 
-    patch([x fliplr(x)],[CI_cLow-100 fliplr(CI_cHigh-100)],'b','EdgeColor','none')   
+%     patch([x fliplr(x)],[CI_cLow-100 fliplr(CI_cHigh-100)],'b','EdgeColor','none')   
     alpha(0.3)
     set(gca,'YColor',[0 0 0]);
 %     ylabel('calcium percent change')
@@ -4709,8 +4750,7 @@ end
 % ACTIVE PIXEL ACTIVITY PEAKS 
 
 %% make ETA VID/STACKs per trial (one animal at a time)
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% IN PROGRESS
+%{
 
 dataScrambleQ = input("Input 1 if you need to remove frames due to data scramble. "); 
 if dataScrambleQ == 1 
@@ -6799,11 +6839,16 @@ for mouse = 1:mouseNum
             elseif optoQ == 1
                 bPerQ = 0;
             end 
-        end         
+        end 
+
         if trialQ == 1
-            trials = input(sprintf('Input what trials you want to plot spikes from for mouse #%d. ',mouse));
+            for vid = 1:length(vidList{mouse})
+                trials{mouse}{vid} = input(sprintf('Input what trials you want to plot spikes from for mouse #%d vid #%d. ',mouse,vid));
+            end 
         elseif trialQ == 0
-            trials = 1:length(state_start_f{mouse}{vid});
+            for vid = 1:length(vidList{mouse})
+                trials{mouse}{vid} = 1:length(state_start_f{mouse}{vid});
+            end 
         end 
         if bPerQ == 1
             if mouse == 1 
@@ -6814,9 +6859,9 @@ for mouse = 1:mouseNum
             stimFrames2 = cell(1,length(vidList{mouse}));
             rewFrames2 = cell(1,length(vidList{mouse}));
             for vid = 1:length(vidList{mouse})
-                for trial = 1:length(trials)
-                    stimFrames2{vid}{trials(trial)} = state_start_f{mouse}{vid}(trials(trial)):state_end_f{mouse}{vid}(trials(trial));
-                    rewFrames2{vid}{trials(trial)} = state_end_f{mouse}{vid}(trials(trial))+1:state_end_f{mouse}{vid}(trials(trial))+rewPerFlen+1;
+                for trial = 1:length(trials{mouse}{vid})
+                    stimFrames2{vid}{trials{mouse}{vid}(trial)} = state_start_f{mouse}{vid}(trials{mouse}{vid}(trial)):state_end_f{mouse}{vid}(trials{mouse}{vid}(trial));
+                    rewFrames2{vid}{trials{mouse}{vid}(trial)} = state_end_f{mouse}{vid}(trials{mouse}{vid}(trial))+1:state_end_f{mouse}{vid}(trials{mouse}{vid}(trial))+rewPerFlen+1;
                 end 
                 stimFrames = arrayfun(@(row) horzcat(stimFrames2{vid}{row, :}), 1:size(stimFrames2{vid}, 1), 'UniformOutput', false);
                 rewFrames = arrayfun(@(row) horzcat(rewFrames2{vid}{row, :}), 1:size(rewFrames2{vid}, 1), 'UniformOutput', false);
@@ -6857,7 +6902,7 @@ for mouse = 1:mouseNum
                                         end 
                                     end 
                                 elseif trialQ == 1 
-                                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials(end))
+                                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials{mouse}{vid}(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials{mouse}{vid}(end))
                                         if bPerQ == 0 
                                             sortedBdata{vid}{BBBroi}{terminals{mouse}(ccell)}{1}(peak,:) = bDataFullTrace{mouse}{vid}{BBBroi}(start:stop);
                                         elseif bPerQ == 1    
@@ -6900,7 +6945,7 @@ for mouse = 1:mouseNum
                                 end 
                             end 
                         elseif trialQ == 1
-                            if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials(end))
+                            if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials{mouse}{vid}(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials{mouse}{vid}(end))
                                 if bPerQ == 0 
                                     sortedCdata{vid}{terminals{mouse}(ccell)}{1}(peak,:) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(start:stop);
                                 elseif bPerQ == 1    
@@ -6943,7 +6988,7 @@ for mouse = 1:mouseNum
                                         end 
                                     end 
                                 elseif trialQ == 1
-                                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials(end))
+                                    if sigLocs{vid}{terminals{mouse}(ccell)}(peak) > state_start_f{mouse}{vid}(trials{mouse}{vid}(1)) && sigLocs{vid}{terminals{mouse}(ccell)}(peak) < state_end_f{mouse}{vid}(trials{mouse}{vid}(end))
                                         if bPerQ == 0 
                                             sortedVdata{vid}{VWroi}{terminals{mouse}(ccell)}{1}(peak,:) = vDataFullTrace{mouse}{vid}{VWroi}(start:stop);
                                         elseif bPerQ == 1    
@@ -7027,7 +7072,7 @@ for mouse = 1:mouseNum
     end     
 
     % STA: smooth and normalize to baseline period
-    baselineTime = 5;
+    baselineTime = input('How many seconds (pre-spike) do you want to normalize to? '); % baselineTime used to = 5;
     if tTypeQ == 0     
         %find the BBB traces that increase after calcium peak onset (changePt) 
         % THIS CODE LIKELY NEEDS TO BE PUT AFTER THE SMOOTHING AND
@@ -10765,7 +10810,7 @@ if AVQ == 0
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
     %                     [BW,~] = segmentImageVesselFOV_SF58(vesChan{terminals(ccell)}(:,:,frame));
 %                     [BW,~] = segmentImageVesselFOV(vesChan{terminals{mouse}(ccell)}(:,:,frame));
-                    [BW,~] = segmentImage57_20220921(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage57_20220930(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -10797,7 +10842,12 @@ if cMapQ == 0
     cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
 elseif cMapQ == 1
     % Create colormap that is green at max and black at min
-    greenColorMap = linspace(0, 1, 256);
+    % this is the original green colorbar 
+%     greenColorMap = linspace(0, 1, 256);
+    % green colorbar with less green
+%     greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
+    % steeper green colorbar 
+    greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
 end 
 
@@ -10831,7 +10881,7 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 1:length(terminals{mouse})
+        for ccell = 1%:length(terminals{mouse})
             %black out pixels that belong to vessels         
             RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;
             %find the upper and lower bounds of your data (per calcium ROI) 
@@ -10853,12 +10903,14 @@ if CaFrameQ == 1
                 figure('Visible','off');     
                 % create the % change image with the right white and black point
                 % boundaries and colormap 
-                imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+%                 imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[0,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
                 % get the x-y coordinates of the vessel outline
                 [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.     
                 % plot the vessel outline over the % change image 
                 hold on;
                 scatter(x,y,'white','.');
+                scatter(CAx,CAy,100,[0.5 0.5 0.5],'filled','square');
                 % plot the GCaMP signal marker in the right frame 
                 if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
                     hold on;
@@ -10877,8 +10929,7 @@ if CaFrameQ == 1
                     edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
                     edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
                     hold on;
-                    scatter(edg_x,edg_y,100,'blue','filled','square');
-                    
+%                     scatter(edg_x,edg_y,100,'blue','filled','square');                    
                 end 
                 ax = gca;
                 ax.Visible = 'off';

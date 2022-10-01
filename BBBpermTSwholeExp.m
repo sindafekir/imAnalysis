@@ -160,7 +160,7 @@ while segQ == 1
 %         BWstacks = cell(1,numROIs);
 %         BW_perim = cell(1,numROIs);
 %         segOverlays = cell(1,numROIs);         
-        for VROI = 2%1:length(BBBROIsToSegment)                    
+        for VROI = 1:length(BBBROIsToSegment)                    
             for frame = 1:size(ROIstacks{BBBROIsToSegment(VROI)},3)
                 [BW,~] = segmentImageBBB(ROIstacks{BBBROIsToSegment(VROI)}(:,:,frame));
                 BWstacks{BBBROIsToSegment(VROI)}(:,:,frame) = BW; 
