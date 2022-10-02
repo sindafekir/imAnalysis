@@ -10943,22 +10943,9 @@ if CaFrameQ == 1
 %                     xf = y(xfInd);
                     yfInd = find(x > rect(1) & x <= rect(2)+rect(4));
 %                     yf = x(yfInd);
-
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     % determine indices that meet both x and y crop
                     % limitations 
                     minLen = min(length(xfInd),length(yfInd));
-                    if length(xfInd) == minLen
-                        overLapInd = ismember(yfInd,xfInd);
-                    elseif length(yfInd) == minLen
-                        overLapInd = ismember(xfInd,yfInd);
-                    end 
-                    
-                    % PICK UP HERE~~~~ OVERLAPIND IS CORRECT NOW NEED TO
-                    % USE IT TO INDEX CORRECT X Y COORDINATES 
-                    
-                    
                 elseif cropQ == 0
                     xf = x; yf = y; 
                 end                                        
