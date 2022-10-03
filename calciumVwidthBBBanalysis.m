@@ -10446,7 +10446,7 @@ end
 
 %}
 %% create red and green channel stack averages around calcium peak location (STA stacks - one animal at a time) 
-
+%{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
