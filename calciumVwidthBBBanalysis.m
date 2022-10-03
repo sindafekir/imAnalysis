@@ -10884,152 +10884,368 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 1%:length(terminals{mouse})            
-            %black out pixels that belong to vessels         
-            RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
-            %find the upper and lower bounds of your data (per calcium ROI) 
-            maxValue = max(max(max(max(RightChan{terminals{mouse}(ccell)}))));
-            minValue = min(min(min(min(RightChan{terminals{mouse}(ccell)}))));
-            minMaxAbsVals = [abs(minValue),abs(maxValue)];
-            maxAbVal = max(minMaxAbsVals);
-            % ask user where to crop image
-            if ccell == 1                   
-                if cropQ == 1 
-                    [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
-                end 
-                BBBtraceQ = input("Input 1 if you want to plot BBB STA traces.");
-                if BBBtraceQ == 1 
-                    BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
-                end                 
-            end            
-            %create a new folder per calcium ROI 
-            newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
-            mkdir(dir2,newFolder)
-            %overlay segmentation boundaries on the % change image stack and save
-            %images
-            for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
-                % get the x-y coordinates of the Ca ROI         
-                % find the pixels that are over 20 in value 
-                clearvars CAy CAx
-                [CAy, CAx] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
-                figure('Visible','off');  
-                % crop if necessary 
-                if cropQ == 1 
-                    cropdIm = imcrop(RightChan{terminals{mouse}(ccell)}(:,:,frame),rect);
-                    finalIm = cropdIm;
-                elseif cropQ == 0
-                    finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-                end      
-%                 if BBBtraceQ == 1
-%                     if ccell == 1 
-%                         if frame == 1
-%                             ROIboundDatas = cell(1,BBBtraceNumQ);
-%                             ROIstacks = cell(1,length(terminals{mouse}));
-%                             for BBBroi = 1:BBBtraceNumQ
-%                                 % create BBB ROIs 
-%                                 disp('Create your ROI for BBB perm analysis');
-%                                 [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,finalIm);
-%                                 ROIboundData{1} = xmins;
-%                                 ROIboundData{2} = ymins;
-%                                 ROIboundData{3} = widths;
-%                                 ROIboundData{4} = heights;
-%                                 ROIboundDatas{BBBroi} = ROIboundData;                          
-%                             end 
-%                         end 
-%                     end 
-%                     for BBBroi = 1:BBBtraceNumQ
-%                         %use the ROI boundaries to generate ROIstacks 
-%                         xmins = ROIboundDatas{BBBroi}{1};
-%                         ymins = ROIboundDatas{BBBroi}{2};
-%                         widths = ROIboundDatas{BBBroi}{3};
-%                         heights = ROIboundDatas{BBBroi}{4};
-%                         [ROI_stacks] = make_ROIs_notfirst_time(finalIm,xmins,ymins,widths,heights);
-%                         ROIstacks{terminals{mouse}(ccell)}{BBBroi} = ROI_stacks{1};
-%                     end 
-%                 end 
-                % create the % change image with the right white and black point
-                % boundaries and colormap 
-%                 imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
-                imagesc(finalIm,[0,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1%              
-                % get the x-y coordinates of the vessel outline
-                [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                 
-                % determine x-y coordinates of vessel outline in cropped im         
-                if cropQ == 1 
-                    xfInd = find(x > rect(1) & x <= rect(1)+rect(3));
-                    yfInd = find(y > rect(2) & y <= rect(2)+rect(4));
-                    xfIndCA = find(CAx > rect(1) & CAx <= rect(1)+rect(3));
-                    yfIndCA = find(CAy > rect(2) & CAy <= rect(2)+rect(4));
-                    % determine indices that meet both x and y crop
-                    % limitations 
-                    minLen = min(length(xfInd),length(yfInd));
-                    if length(xfInd) == minLen
-                        overLapInd = ismember(yfInd,xfInd);
-                        xfInd2 = yfInd(overLapInd);
-                        xf = x(xfInd2);  xf = xf-rect(1);
-                        yf = y(xfInd2);  yf = yf-rect(2);  
-                        
-                        overLapIndCA = ismember(yfIndCA,xfIndCA);
-                        xfInd2CA = yfIndCA(overLapIndCA);
-                        CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
-                        CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2);                                                  
-                    elseif length(yfInd) == minLen
-                        overLapInd = ismember(xfInd,yfInd);
-                        xfInd2 = xfInd(overLapInd);
-                        xf = x(xfInd2);  xf = xf-rect(1);
-                        yf = y(xfInd2);  yf = yf-rect(2); 
-                        
-                        overLapIndCA = ismember(xfIndCA,yfIndCA);
-                        xfInd2CA = xfIndCA(overLapIndCA);
-                        CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
-                        CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2); 
-                    end                    
-                elseif cropQ == 0
-                    xf = x; yf = y; 
-                    CAxf = CAx; CAyf = CAy; 
-                end                                   
-                % plot the vessel outline over the % change image 
-                hold on;
-                scatter(xf,yf,'white','.');
-                if cropQ == 1
-                    axonPixSize = 500;
-                elseif cropQ == 0
-                    axonPixSize = 100;
-                end 
-                scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
-                % plot the GCaMP signal marker in the right frame 
-                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+        for ccell = 1%:length(terminals{mouse})  
+            genImQ = input("Input 1 if you need to generate the images. ");
+            if genImQ == 1 
+                %black out pixels that belong to vessels         
+                RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
+                %find the upper and lower bounds of your data (per calcium ROI) 
+                maxValue = max(max(max(max(RightChan{terminals{mouse}(ccell)}))));
+                minValue = min(min(min(min(RightChan{terminals{mouse}(ccell)}))));
+                minMaxAbsVals = [abs(minValue),abs(maxValue)];
+                maxAbVal = max(minMaxAbsVals);
+                % ask user where to crop image
+                if ccell == 1                   
+                    if cropQ == 1 
+                        hold off 
+                        [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
+                    end 
+                    BBBtraceQ = input("Input 1 if you want to plot BBB STA traces.");
+                    if BBBtraceQ == 1 
+                        BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
+                    end                 
+                end            
+                %create a new folder per calcium ROI 
+                newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
+                mkdir(dir2,newFolder)
+                %overlay segmentation boundaries on the % change image stack and save
+                %images
+                for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
+                    % get the x-y coordinates of the Ca ROI         
+                    % find the pixels that are over 20 in value 
+                    clearvars CAy CAx
+                    [CAy, CAx] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+                    figure('Visible','off');  
+                    % crop if necessary 
+                    if cropQ == 1 
+                        cropdIm = imcrop(RightChan{terminals{mouse}(ccell)}(:,:,frame),rect);
+                        finalIm = cropdIm;
+                    elseif cropQ == 0
+                        finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
+                    end      
+                    if BBBtraceQ == 1
+                        if ccell == 1 
+                            if frame == 1
+                                ROIboundDatas = cell(1,BBBtraceNumQ);
+                                ROIstacks = cell(1,length(terminals{mouse}));
+                                for BBBroi = 1:BBBtraceNumQ
+                                    % create BBB ROIs 
+                                    disp('Create your ROI for BBB perm analysis');
+                                    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,finalIm);
+                                    ROIboundData{1} = xmins;
+                                    ROIboundData{2} = ymins;
+                                    ROIboundData{3} = widths;
+                                    ROIboundData{4} = heights;
+                                    ROIboundDatas{BBBroi} = ROIboundData;                          
+                                end 
+                            end 
+                        end 
+                        for BBBroi = 1:BBBtraceNumQ
+                            %use the ROI boundaries to generate ROIstacks 
+                            xmins = ROIboundDatas{BBBroi}{1};
+                            ymins = ROIboundDatas{BBBroi}{2};
+                            widths = ROIboundDatas{BBBroi}{3};
+                            heights = ROIboundDatas{BBBroi}{4};
+                            [ROI_stacks] = make_ROIs_notfirst_time(finalIm,xmins,ymins,widths,heights);
+                            ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame) = ROI_stacks{1};
+                        end 
+                    end 
+                    % create the % change image with the right white and black point
+                    % boundaries and colormap 
+    %                 imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    imagesc(finalIm,[0,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1%              
+                    % get the x-y coordinates of the vessel outline
+                    [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                 
+                    % determine x-y coordinates of vessel outline in cropped im         
+                    if cropQ == 1 
+                        xfInd = find(x > rect(1) & x <= rect(1)+rect(3));
+                        yfInd = find(y > rect(2) & y <= rect(2)+rect(4));
+                        xfIndCA = find(CAx > rect(1) & CAx <= rect(1)+rect(3));
+                        yfIndCA = find(CAy > rect(2) & CAy <= rect(2)+rect(4));
+                        % determine indices that meet both x and y crop
+                        % limitations 
+                        minLen = min(length(xfInd),length(yfInd));
+                        if length(xfInd) == minLen
+                            overLapInd = ismember(yfInd,xfInd);
+                            xfInd2 = yfInd(overLapInd);
+                            xf = x(xfInd2);  xf = xf-rect(1);
+                            yf = y(xfInd2);  yf = yf-rect(2);  
+
+                            overLapIndCA = ismember(yfIndCA,xfIndCA);
+                            xfInd2CA = yfIndCA(overLapIndCA);
+                            CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
+                            CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2);                                                  
+                        elseif length(yfInd) == minLen
+                            overLapInd = ismember(xfInd,yfInd);
+                            xfInd2 = xfInd(overLapInd);
+                            xf = x(xfInd2);  xf = xf-rect(1);
+                            yf = y(xfInd2);  yf = yf-rect(2); 
+
+                            overLapIndCA = ismember(xfIndCA,yfIndCA);
+                            xfInd2CA = xfIndCA(overLapIndCA);
+                            CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
+                            CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2); 
+                        end                    
+                    elseif cropQ == 0
+                        xf = x; yf = y; 
+                        CAxf = CAx; CAyf = CAy; 
+                    end                                   
+                    % plot the vessel outline over the % change image 
                     hold on;
-                    scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
-                    %get border coordinates 
-                    colLen = size(RightChan{terminals{mouse}(ccell)},2);
-                    rowLen = size(RightChan{terminals{mouse}(ccell)},1);
-                    edg1_x = repelem(1,rowLen);
-                    edg1_y = 1:rowLen;
-                    edg2_x = repelem(colLen,rowLen);
-                    edg2_y = 1:rowLen;
-                    edg3_x = 1:colLen;
-                    edg3_y = repelem(1,colLen);
-                    edg4_x = 1:colLen;
-                    edg4_y = repelem(rowLen,colLen);
-                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
-                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
-                    hold on;
-%                     scatter(edg_x,edg_y,100,'blue','filled','square');                    
+                    scatter(xf,yf,'white','.');
+                    if cropQ == 1
+                        axonPixSize = 500;
+                    elseif cropQ == 0
+                        axonPixSize = 100;
+                    end 
+                    scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
+                    % plot the GCaMP signal marker in the right frame 
+                    if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                        hold on;
+                        scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
+                        %get border coordinates 
+                        colLen = size(RightChan{terminals{mouse}(ccell)},2);
+                        rowLen = size(RightChan{terminals{mouse}(ccell)},1);
+                        edg1_x = repelem(1,rowLen);
+                        edg1_y = 1:rowLen;
+                        edg2_x = repelem(colLen,rowLen);
+                        edg2_y = 1:rowLen;
+                        edg3_x = 1:colLen;
+                        edg3_y = repelem(1,colLen);
+                        edg4_x = 1:colLen;
+                        edg4_y = repelem(rowLen,colLen);
+                        edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                        edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                        hold on;
+    %                     scatter(edg_x,edg_y,100,'blue','filled','square');                    
+                    end 
+                    ax = gca;
+                    ax.Visible = 'off';
+                    ax.FontSize = 20;
+                    %save current figure to file 
+                    filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+                    saveas(gca,[filename '.png'])
                 end 
-                ax = gca;
-                ax.Visible = 'off';
-                ax.FontSize = 20;
-                %save current figure to file 
-                filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
-                saveas(gca,[filename '.png'])
-                
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                % select ROIs for looking at change in BBB trace 
-                
-                
-            end     
-        end 
+            end 
+            
+            % Plot BBB STA trace per axon and BBB roi 
+            staQ = input("Input 1 if you want to create STA traces. ");
+            if staQ == 1 
+                regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+                cd(regImDir);
+                MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+                Mat = matfile(MatFileName);   
+                sortedCdata = cell(1,mouseNum);
+                sortedCdata{mouse} = Mat.sortedCdata;               
+
+                % sort data 
+                SCdataPeaks = cell(1,mouseNum);
+                SNCdataPeaks = cell(1,mouseNum);
+                sortedCdata2 = cell(1,mouseNum);
+                allCTraces3 = cell(1,mouseNum);            
+                baselineTime = normTime;
+
+                %smoothing option               
+                if smoothQ == 0 
+                    SCdataPeaks{mouse} = sortedCdata{mouse};
+                elseif smoothQ == 1           
+                    SCdataPeaks{mouse} = sortedCdata{mouse};
+                    for vid = 1:length(vidList{mouse})                    
+                       if vid <= length(sortedCdata{mouse}) 
+                            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
+                                if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                    SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},2),:);                 
+                                end 
+                            end
+                       end                         
+                    end 
+                end     
+
+                %normalize
+                 for vid = 1:length(vidList{mouse})
+                    if vid <= length(sortedCdata{mouse}) 
+                        for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                            if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                %the data needs to be added to because there are some
+                                %negative gonig points which mess up the normalizing 
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value
+                                sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                                %normalize to baselineTime sec before changePt (calcium peak
+                                %onset) BLstart 
+                                if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}) == 0
+                                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                                    end   
+                                elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}) == 0
+                                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1},2)/2)-4;
+                                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2},2)/2)-4;
+                                    end  
+                                elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}) == 0
+                                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                                    end   
+                                end 
+
+                                if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                                    changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                                elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                                    changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                                end   
+                %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
+                                BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+
+                                if isempty(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                    SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                                end 
+                            end               
+                        end
+                    end                   
+                 end     
+
+                count = 1;
+                for vid = 1:length(vidList{mouse})  
+                    if vid <= length(sortedCdata{mouse}) 
+                        for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                            if isempty(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}) == 0 %{mouse}{vid}{terminals{mouse}(ccell)}{per}
+                                if isempty(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                    for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
+                                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
+                                        count = count + 1;
+                                    end 
+                                end 
+                            end                            
+                        end 
+                    end 
+                end           
+                %put all similar trials together 
+                allCTraces = allCTraces3;
+                CaROIs = terminals;
+                CTraces{mouse} = allCTraces{mouse}(CaROIs{mouse});                                      
+                %remove empty cells if there are any b = a(any(a,2),:)
+                CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));
+                               
+                % create colors for plotting 
+                Bcolors = [1,0,0;1,0.5,0;1,1,0];
+                Ccolors = [0,0,1;0,0.5,1;0,1,1];
+
+                % resort data: concatenate all CaROI data 
+                % output = CaArray{mouse}{per}(concatenated caRoi data)
+                % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)               
+                CI_cLow = cell(1,mouseNum);
+                CI_cHigh = cell(1,mouseNum);
+                for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
+                    if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
+                        if isempty(CTraces{mouse}{ccell}) == 0 
+                            if ccell == 1 
+                                CTraceArray{mouse}{per} = CTraces{mouse}{ccell}{per};                              
+                            elseif ccell > 1 
+                                CTraceArray{mouse}{per} = vertcat(CTraceArray{mouse}{per},CTraces{mouse}{ccell}{per});                             
+                            end
+                        end 
+                     
+                        %DETERMINE 95% CI                       
+                        SEMc = (nanstd(CTraceArray{mouse}{per}))/(sqrt(size(CTraceArray{mouse}{per},1))); % Standard Error            
+                        ts_cLow = tinv(0.025,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+                        ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+                        CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+                        CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
+                        
+                        %get averages
+                        AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);                    
+
+                        % plot data                                                                           
+                        for BBBroi = 1:BBBtraceNumQ
+                            %determine range of data Ca data
+                            CaDataRange = max(AVSNCdataPeaks{mouse}{per})-min(AVSNCdataPeaks{mouse}{per});
+                            %determine plotting buffer space for Ca data 
+                            CaBufferSpace = CaDataRange;
+                            %determine first set of plotting min and max values for Ca data
+                            CaPlotMin = min(AVSNCdataPeaks{mouse}{per})-CaBufferSpace;
+                            CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
+                            %determine Ca 0 ratio/location 
+                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+                                                       
+                            %determine range of BBB data 
+                            BBBdataRange = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})));                                       
+                            %determine plotting buffer space for BBB data 
+                            BBBbufferSpace = BBBdataRange;
+                            %determine first set of plotting min and max values for BBB data
+                            BBBplotMin = min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-BBBbufferSpace;
+                            BBBplotMax = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))+BBBbufferSpace;
+                            %determine BBB 0 ratio/location
+                            BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+                            %determine how much to shift the BBB axis so that the zeros align 
+                            BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+                            BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+                            % replace zeros with NaNs 
+                            ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
+                            for frame = 1:size(ROIstacks{terminals{mouse}(ccell)}{BBBroi},3)                                
+                                % convert BBB ROI frames to TS values
+                                BBBdata{terminals{mouse}(ccell)}{BBBroi}(frame) = nanmean(nanmean(ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame)));
+                            end 
+                            x = 1:length(BBBdata{terminals{mouse}(ccell)}{1});
+%                             %DETERMINE 95% CI                       
+%                             SEMb = (nanstd(BBBdata{terminals{mouse}(ccell)}{BBBroi}))/(sqrt(size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1))); % Standard Error            
+%                             ts_bLow = tinv(0.025,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
+%                             ts_bHigh = tinv(0.975,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
+%                             CI_bLow{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+%                             CI_bHigh{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals 
+%                             %get average
+%                             AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
+                            
+                            
+                            fig = figure;
+                            Frames = size(x,2);
+                            Frames_pre_stim_start = -((Frames-1)/2); 
+                            Frames_post_stim_start = (Frames-1)/2; 
+                            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                            FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                            ax=gca;
+                            hold all
+                            Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
+                            plot(Cdata,'blue','LineWidth',4)
+                            CdataCIlow = CI_cLow{mouse}{per}(100:152);
+                            CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
+                            patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
+                            changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+                            ax.XTick = FrameVals;
+                            ax.XTickLabel = sec_TimeVals;   
+                            ax.FontSize = 25;
+                            ax.FontName = 'Times';
+                            xlabel('time (s)','FontName','Times')
+                            ylabel('calcium signal percent change','FontName','Times')
+                            xLimStart = floor(10*FPSstack{mouse});
+                            xLimEnd = floor(24*FPSstack{mouse}); 
+%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
+                            ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+                            set(fig,'position', [500 100 900 800])
+                            alpha(0.3)
+                            %add right y axis tick marks for a specific DOD figure. 
+                            yyaxis right 
+                            p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'red','LineWidth',4);
+%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+                            ylabel('BBB permeability percent change','FontName','Times')
+                            title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+                            alpha(0.3)
+%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+                            set(gca,'YColor',[0 0 0]);   
+                            ylim([-BBBbelowZero BBBaboveZero])
+                        end                                       
+                    end 
+                end                
+            end 
+        end       
     elseif AVQ == 1
         termsToAv = input('Input what terminal STA videos you want to average. '); 
         STAterms = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3),length(termsToAv));
