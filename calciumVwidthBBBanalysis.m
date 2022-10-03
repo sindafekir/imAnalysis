@@ -10445,8 +10445,9 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
 end 
 
 %}
-%% sort red and green channel stacks based on ca peak location 
+%% create red and green channel stack averages around calcium peak location (STA stacks - one animal at a time) 
 
+% sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
     % find peaks and then plot where they are in the entire TS 
@@ -10581,8 +10582,6 @@ elseif tTypeQ == 1
         end 
     end   
 end 
-%}
-%% create red and green channel stack averages around calcium peak location (STA stacks - one animal at a time) 
 
 % average calcium peak aligned traces across videos 
 mouse = 1; 
@@ -10876,17 +10875,6 @@ end
 
 %% conditional statement that ensures you checked the other channel
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%DEBUGGING PICK UP HERE 
-% TEST: rerun above and check RightChan (it's cropped below for w/e reason and
-% shouldn't be)
-
-% OUTCOME: RightChan from above code is correct. It's getting cropped wierd
-% below. 
-
-% NOTE: I saved RightChan as SavedRightChan for debugging convenience 
-
-
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
@@ -10896,22 +10884,23 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 1%:length(terminals{mouse})
-            if cropQ == 0 
-                %black out pixels that belong to vessels         
-                RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;
-            end 
+        for ccell = 1%:length(terminals{mouse})            
+            %black out pixels that belong to vessels         
+            RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
             %find the upper and lower bounds of your data (per calcium ROI) 
             maxValue = max(max(max(max(RightChan{terminals{mouse}(ccell)}))));
             minValue = min(min(min(min(RightChan{terminals{mouse}(ccell)}))));
             minMaxAbsVals = [abs(minValue),abs(maxValue)];
             maxAbVal = max(minMaxAbsVals);
-            % ask user about cropping 
-            if ccell == 1 
-                % ask user where to crop image  
+            % ask user where to crop image
+            if ccell == 1                   
                 if cropQ == 1 
                     [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
                 end 
+                BBBtraceQ = input("Input 1 if you want to plot BBB STA traces.");
+                if BBBtraceQ == 1 
+                    BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
+                end                 
             end            
             %create a new folder per calcium ROI 
             newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
@@ -10930,7 +10919,34 @@ if CaFrameQ == 1
                     finalIm = cropdIm;
                 elseif cropQ == 0
                     finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-                end                
+                end      
+%                 if BBBtraceQ == 1
+%                     if ccell == 1 
+%                         if frame == 1
+%                             ROIboundDatas = cell(1,BBBtraceNumQ);
+%                             ROIstacks = cell(1,length(terminals{mouse}));
+%                             for BBBroi = 1:BBBtraceNumQ
+%                                 % create BBB ROIs 
+%                                 disp('Create your ROI for BBB perm analysis');
+%                                 [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,finalIm);
+%                                 ROIboundData{1} = xmins;
+%                                 ROIboundData{2} = ymins;
+%                                 ROIboundData{3} = widths;
+%                                 ROIboundData{4} = heights;
+%                                 ROIboundDatas{BBBroi} = ROIboundData;                          
+%                             end 
+%                         end 
+%                     end 
+%                     for BBBroi = 1:BBBtraceNumQ
+%                         %use the ROI boundaries to generate ROIstacks 
+%                         xmins = ROIboundDatas{BBBroi}{1};
+%                         ymins = ROIboundDatas{BBBroi}{2};
+%                         widths = ROIboundDatas{BBBroi}{3};
+%                         heights = ROIboundDatas{BBBroi}{4};
+%                         [ROI_stacks] = make_ROIs_notfirst_time(finalIm,xmins,ymins,widths,heights);
+%                         ROIstacks{terminals{mouse}(ccell)}{BBBroi} = ROI_stacks{1};
+%                     end 
+%                 end 
                 % create the % change image with the right white and black point
                 % boundaries and colormap 
 %                 imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
@@ -10939,37 +10955,51 @@ if CaFrameQ == 1
                 [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                 
                 % determine x-y coordinates of vessel outline in cropped im         
                 if cropQ == 1 
-                    xfInd = find(y > rect(1) & y <= rect(1)+rect(3));
-%                     xf = y(xfInd);
-                    yfInd = find(x > rect(1) & x <= rect(2)+rect(4));
-%                     yf = x(yfInd);
-
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    xfInd = find(x > rect(1) & x <= rect(1)+rect(3));
+                    yfInd = find(y > rect(2) & y <= rect(2)+rect(4));
+                    xfIndCA = find(CAx > rect(1) & CAx <= rect(1)+rect(3));
+                    yfIndCA = find(CAy > rect(2) & CAy <= rect(2)+rect(4));
                     % determine indices that meet both x and y crop
                     % limitations 
                     minLen = min(length(xfInd),length(yfInd));
                     if length(xfInd) == minLen
                         overLapInd = ismember(yfInd,xfInd);
+                        xfInd2 = yfInd(overLapInd);
+                        xf = x(xfInd2);  xf = xf-rect(1);
+                        yf = y(xfInd2);  yf = yf-rect(2);  
+                        
+                        overLapIndCA = ismember(yfIndCA,xfIndCA);
+                        xfInd2CA = yfIndCA(overLapIndCA);
+                        CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
+                        CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2);                                                  
                     elseif length(yfInd) == minLen
                         overLapInd = ismember(xfInd,yfInd);
-                    end 
-                    
-                    % PICK UP HERE~~~~ OVERLAPIND IS CORRECT NOW NEED TO
-                    % USE IT TO INDEX CORRECT X Y COORDINATES 
-                    
-                    
+                        xfInd2 = xfInd(overLapInd);
+                        xf = x(xfInd2);  xf = xf-rect(1);
+                        yf = y(xfInd2);  yf = yf-rect(2); 
+                        
+                        overLapIndCA = ismember(xfIndCA,yfIndCA);
+                        xfInd2CA = xfIndCA(overLapIndCA);
+                        CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
+                        CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2); 
+                    end                    
                 elseif cropQ == 0
                     xf = x; yf = y; 
-                end                                        
+                    CAxf = CAx; CAyf = CAy; 
+                end                                   
                 % plot the vessel outline over the % change image 
                 hold on;
                 scatter(xf,yf,'white','.');
-                scatter(CAx,CAy,100,[0.5 0.5 0.5],'filled','square');
+                if cropQ == 1
+                    axonPixSize = 500;
+                elseif cropQ == 0
+                    axonPixSize = 100;
+                end 
+                scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
                 % plot the GCaMP signal marker in the right frame 
                 if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
                     hold on;
-                    scatter(CAx,CAy,100,'blue','filled','square');
+                    scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
                     %get border coordinates 
                     colLen = size(RightChan{terminals{mouse}(ccell)},2);
                     rowLen = size(RightChan{terminals{mouse}(ccell)},1);
@@ -10992,6 +11022,12 @@ if CaFrameQ == 1
                 %save current figure to file 
                 filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
                 saveas(gca,[filename '.png'])
+                
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                % select ROIs for looking at change in BBB trace 
+                
+                
             end     
         end 
     elseif AVQ == 1
