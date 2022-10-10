@@ -10446,7 +10446,7 @@ end
 
 %}
 %% create red and green channel stack averages around calcium peak location (STA stacks - one animal at a time) 
-
+%{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
@@ -10886,7 +10886,7 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 1:length(terminals{mouse})  
+        for ccell = 9:length(terminals{mouse})  
             if ccell == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
             end             
