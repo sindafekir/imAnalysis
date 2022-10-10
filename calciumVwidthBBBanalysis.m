@@ -10843,16 +10843,16 @@ if cMapQ == 0
 elseif cMapQ == 1
     % Create colormap that is green at max and black at min
     % this is the original green colorbar 
-%     greenColorMap = linspace(0, 1, 256);
+    greenColorMap = linspace(0, 1, 256);
     % green colorbar with less green
 %     greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
 %     % steeper green colorbar (SF-57)
 %     greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
-%     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
 
-    % steeper green colorbar (SF-56)
-    greenColorMap = [linspace(0, 1, 110),ones(1,146)];
-    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
+%     % steeper green colorbar (SF-56)
+%     greenColorMap = [linspace(0, 1, 110),ones(1,146)];
+%     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
 end 
 
 % save the other channel first to ensure that all Ca ROIs show an average
@@ -10956,8 +10956,8 @@ if CaFrameQ == 1
                     end 
                     % create the % change image with the right white and black point
                     % boundaries and colormap 
-    %                 imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
-                    imagesc(finalIm,[0,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1%              
+                    imagesc(finalIm,[0,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1%       
+%                     imagesc(finalIm,[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
                     % get the x-y coordinates of the vessel outline
                     [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                 
                     % determine x-y coordinates of vessel outline in cropped im         
