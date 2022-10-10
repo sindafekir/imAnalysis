@@ -10446,7 +10446,7 @@ end
 
 %}
 %% create red and green channel stack averages around calcium peak location (STA stacks - one animal at a time) 
-%{
+
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
@@ -10809,9 +10809,7 @@ if cropQ == 0
                 segOverlays = cell(1,length(vesChan));    
                 for ccell = 1:length(terminals{mouse})
                     for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-        %                     [BW,~] = segmentImageVesselFOV_SF58(vesChan{terminals(ccell)}(:,:,frame));
-    %                     [BW,~] = segmentImageVesselFOV(vesChan{terminals{mouse}(ccell)}(:,:,frame));
-                        [BW,~] = segmentImage57_20220930(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                        [BW,~] = segmentImage56_STAvid_20221010(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                         BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                         %get the segmentation boundaries 
                         BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -10848,9 +10846,13 @@ elseif cMapQ == 1
 %     greenColorMap = linspace(0, 1, 256);
     % green colorbar with less green
 %     greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
-    % steeper green colorbar 
-    greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
-    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+%     % steeper green colorbar (SF-57)
+%     greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
+%     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+
+    % steeper green colorbar (SF-56)
+    greenColorMap = [linspace(0, 1, 110),ones(1,146)];
+    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
 end 
 
 % save the other channel first to ensure that all Ca ROIs show an average
@@ -10884,8 +10886,10 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 1%:length(terminals{mouse})  
-            genImQ = input("Input 1 if you need to generate the images. ");
+        for ccell = 1:length(terminals{mouse})  
+            if ccell == 1
+                genImQ = input("Input 1 if you need to generate the images. ");
+            end             
             if genImQ == 1 
                 %black out pixels that belong to vessels         
                 RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
@@ -11029,8 +11033,7 @@ if CaFrameQ == 1
             end 
             
             % Plot BBB STA trace per axon and BBB roi 
-            staQ = input("Input 1 if you want to create STA traces. ");
-            if staQ == 1 
+            if BBBtraceQ == 1 
                 regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
                 cd(regImDir);
                 MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
@@ -11233,7 +11236,7 @@ if CaFrameQ == 1
                             alpha(0.3)
                             %add right y axis tick marks for a specific DOD figure. 
                             yyaxis right 
-                            p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'red','LineWidth',4);
+                            p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
 %                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
                             ylabel('BBB permeability percent change','FontName','Times')
                             title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))

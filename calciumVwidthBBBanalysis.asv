@@ -10809,9 +10809,7 @@ if cropQ == 0
                 segOverlays = cell(1,length(vesChan));    
                 for ccell = 1:length(terminals{mouse})
                     for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-        %                     [BW,~] = segmentImageVesselFOV_SF58(vesChan{terminals(ccell)}(:,:,frame));
-    %                     [BW,~] = segmentImageVesselFOV(vesChan{terminals{mouse}(ccell)}(:,:,frame));
-                        [BW,~] = segmentImage57_20220930(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                        [BW,~] = segmentImage56_STAvid_20221010(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                         BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                         %get the segmentation boundaries 
                         BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -10848,9 +10846,13 @@ elseif cMapQ == 1
 %     greenColorMap = linspace(0, 1, 256);
     % green colorbar with less green
 %     greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
-    % steeper green colorbar 
-    greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
-    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+%     % steeper green colorbar (SF-57)
+%     greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
+%     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+
+    % steeper green colorbar (SF-56)
+    greenColorMap = [zeros(1, 60), linspace(0, 1, 150),ones(1,46)];
+    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
 end 
 
 % save the other channel first to ensure that all Ca ROIs show an average
@@ -10884,8 +10886,10 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 1%:length(terminals{mouse})  
-            genImQ = input("Input 1 if you need to generate the images. ");
+        for ccell = 1:length(terminals{mouse})  
+            if ccell == 1
+                genImQ = input("Input 1 if you need to generate the images. ");
+            end             
             if genImQ == 1 
                 %black out pixels that belong to vessels         
                 RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
@@ -11029,8 +11033,7 @@ if CaFrameQ == 1
             end 
             
             % Plot BBB STA trace per axon and BBB roi 
-            staQ = input("Input 1 if you want to create STA traces. ");
-            if staQ == 1 
+            if BBBtraceQ == 1 
                 regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
                 cd(regImDir);
                 MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
@@ -11144,8 +11147,8 @@ if CaFrameQ == 1
                 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)               
                 CI_cLow = cell(1,mouseNum);
                 CI_cHigh = cell(1,mouseNum);
-                for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(2)})
-                    if isempty(allCTraces3{mouse}{CaROIs{mouse}(2)}{per}) == 0                                                                                               
+                for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
+                    if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
                         if isempty(CTraces{mouse}{ccell}) == 0 
                             if ccell == 1 
                                 CTraceArray{mouse}{per} = CTraces{mouse}{ccell}{per};                              
@@ -11160,7 +11163,7 @@ if CaFrameQ == 1
                         ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
                         CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
                         CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
-                        x = 1:length(CI_cLow{mouse}{per});
+                        
                         %get averages
                         AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);                    
 
@@ -11194,7 +11197,7 @@ if CaFrameQ == 1
                                 % convert BBB ROI frames to TS values
                                 BBBdata{terminals{mouse}(ccell)}{BBBroi}(frame) = nanmean(nanmean(ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame)));
                             end 
-                            
+                            x = 1:length(BBBdata{terminals{mouse}(ccell)}{1});
 %                             %DETERMINE 95% CI                       
 %                             SEMb = (nanstd(BBBdata{terminals{mouse}(ccell)}{BBBroi}))/(sqrt(size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1))); % Standard Error            
 %                             ts_bLow = tinv(0.025,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
@@ -11206,17 +11209,18 @@ if CaFrameQ == 1
                             
                             
                             fig = figure;
-                            Frames = size(closeCTraceArray{mouse}{per},2);
+                            Frames = size(x,2);
                             Frames_pre_stim_start = -((Frames-1)/2); 
                             Frames_post_stim_start = (Frames-1)/2; 
                             sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
                             FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
                             ax=gca;
                             hold all
-                            plot(close_AVSNCdataPeaks{mouse}{per},'Color',Ccolors(1,:),'LineWidth',4)
-                            patch([x fliplr(x)],[close_CI_cLow{mouse}{per} fliplr(close_CI_cHigh{mouse}{per})],Ccolors(1,:),'EdgeColor','none')
-                            plot(far_AVSNCdataPeaks{mouse}{per},'Color',Ccolors(2,:),'LineWidth',4)
-                            patch([x fliplr(x)],[far_CI_cLow{mouse}{per} fliplr(far_CI_cHigh{mouse}{per})],Ccolors(2,:),'EdgeColor','none')
+                            Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
+                            plot(Cdata,'blue','LineWidth',4)
+                            CdataCIlow = CI_cLow{mouse}{per}(100:152);
+                            CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
+                            patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
                             changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
                             ax.XTick = FrameVals;
                             ax.XTickLabel = sec_TimeVals;   
@@ -11226,29 +11230,24 @@ if CaFrameQ == 1
                             ylabel('calcium signal percent change','FontName','Times')
                             xLimStart = floor(10*FPSstack{mouse});
                             xLimEnd = floor(24*FPSstack{mouse}); 
-                            xlim([1 size(close_AVSNCdataPeaks{mouse}{per},2)])
-                            ylim([min(close_AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(close_AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
+                            ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
                             set(fig,'position', [500 100 900 800])
                             alpha(0.3)
                             %add right y axis tick marks for a specific DOD figure. 
                             yyaxis right 
-                            p(1) = plot(close_AVSNBdataPeaks{mouse}{BBBroi}{per},'Color',Bcolors(1,:),'LineWidth',4);
-                            patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
-                            p(2) = plot(far_AVSNBdataPeaks{mouse}{BBBroi}{per},'-','Color',Bcolors(2,:),'LineWidth',4);
-                            patch([x fliplr(x)],[(far_CI_bLow{mouse}{BBBroi}{per}) (fliplr(far_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(2,:),'EdgeColor','none')
+                            p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
+%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
                             ylabel('BBB permeability percent change','FontName','Times')
                             title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
                             alpha(0.3)
-                            legend([p(1) p(2)],'Close Terminals','Far Terminals')
+%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
                             set(gca,'YColor',[0 0 0]);   
                             ylim([-BBBbelowZero BBBaboveZero])
                         end                                       
                     end 
                 end                
             end 
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         end       
     elseif AVQ == 1
         termsToAv = input('Input what terminal STA videos you want to average. '); 
