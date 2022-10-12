@@ -10809,7 +10809,7 @@ if cropQ == 0
                 segOverlays = cell(1,length(vesChan));    
                 for ccell = 1:length(terminals{mouse})
                     for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                        [BW,~] = segmentImage56_STAvid_20221010(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                        [BW,~] = segmentImage58_STAvid_20221012(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                         BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                         %get the segmentation boundaries 
                         BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -10867,7 +10867,9 @@ if CaROItimingCheckQ == 1
         mkdir(dir2,newFolder)
          for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)    
             figure('Visible','off');     
-            imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame),[3,5])
+            % the color lims below work great for 56 and 57, but not 58
+            %imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame),[3,5]) 
+            imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame))
             %save current figure to file 
             filename = sprintf('%s/CaROI_%d_calciumSignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
             saveas(gca,[filename '.png'])
@@ -10886,7 +10888,7 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
-        for ccell = 9:length(terminals{mouse})  
+        for ccell = 1:length(terminals{mouse})  
             if ccell == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
             end             
@@ -10956,8 +10958,11 @@ if CaFrameQ == 1
                     end 
                     % create the % change image with the right white and black point
                     % boundaries and colormap 
-                    imagesc(finalIm,[0,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1%       
-%                     imagesc(finalIm,[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    if cMapQ == 0
+                        imagesc(finalIm,[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    elseif cMapQ == 1 
+                        imagesc(finalIm,[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    end                                    
                     % get the x-y coordinates of the vessel outline
                     [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                 
                     % determine x-y coordinates of vessel outline in cropped im         
