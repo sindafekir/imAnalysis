@@ -10445,13 +10445,13 @@ for per = 1:length(allCTraces3{1}{CaROIs{1}(2)})
 end 
 
 %}
-%% create red and green channel stack averages around calcium peak location (STA stacks - one animal at a time) 
+%% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
 %{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
     % find peaks and then plot where they are in the entire TS 
-    stdTrace = cell(1,length(vidList{mouse}));
+    stdTrace = cell(1,length(vidList{mouse})); 
     sigPeaks = cell(1,length(vidList{mouse}));
     sigLocs = cell(1,length(vidList{mouse}));
     for vid = 1:length(vidList{mouse})
@@ -10469,8 +10469,8 @@ for mouse = 1:mouseNum
                     %if the peaks fall within the time windows used for the BBB
                     %trace examples in the DOD figure 
     %                 if locs(loc) > 197*FPSstack{mouse} && locs(loc) < 206.5*FPSstack{mouse} || locs(loc) > 256*FPSstack{mouse} && locs(loc) < 265.5*FPSstack{mouse} || locs(loc) > 509*FPSstack{mouse} && locs(loc) < 518.5*FPSstack{mouse}
-                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
-                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
+                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = gpuArray(peaks(loc));
+                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = gpuArray(locs(loc));
     %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
                         count = count + 1;
     %                 end 
@@ -10535,6 +10535,15 @@ for mouse = 1:mouseNum
         end 
     end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% AFTER NEW RAM STICKS COME IN-UPDATE THE BELOW CODE WITH GPUARRAY TO MAKE
+% THIS AS EFFICIENT AS POSSIBLE 
 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 % terminals = terminals{1};
@@ -10777,6 +10786,15 @@ if blackOutCaROIQ == 1
     for ccell = 1:length(terminals{mouse})
         RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
     end 
+elseif blackOutCaROIQ == 0      
+    rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+    if rightChan == 0     
+        RightChan = SNgreenStackAv;
+        otherChan = SNredStackAv;
+    elseif rightChan == 1
+        RightChan = SNredStackAv;
+        otherChan = SNgreenStackAv;
+    end   
 end 
 clearvars SNgreenStackAv SNredStackAv
 
