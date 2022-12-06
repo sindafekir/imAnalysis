@@ -10705,6 +10705,7 @@ elseif smoothQ == 1
     end 
 end 
 clearvars NgreenStackAv NredStackAv
+
 %spatial smoothing option
 spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
 if spatSmoothQ == 1 
@@ -10767,9 +10768,10 @@ if spatSmoothQ == 1
     end 
 end 
 clearvars redIn greenIn 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-
-%% @@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
+%@@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % black out the pixels that are part of calcium ROIs 
@@ -10782,18 +10784,14 @@ if blackOutCaROIQ == 1
     CaROImasks = CaROImaskMat.CaROImasks; 
     % combine Ca ROIs from different planes in Z into one plane 
     numZplanes = input('How many planes in Z are there? ');
-    if numZplanes > 1 
-        combo = cell(1,numZplanes-1);
-        for it = 1:numZplanes-1
-            if it == 1 
-                combo{it} = or(CaROImasks{1},CaROImasks{2});
-            elseif it > 1
-                combo{it} = or(combo{it-1},CaROImasks{it+1});
-            end 
-        end      
-    elseif numZplanes == 1 
-        combo{1} = CaROImasks{1};
-    end 
+    combo = cell(1,numZplanes-1);
+    for it = 1:numZplanes-1
+        if it == 1 
+            combo{it} = or(CaROImasks{1},CaROImasks{2});
+        elseif it > 1
+            combo{it} = or(combo{it-1},CaROImasks{it+1});
+        end 
+    end         
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
     ind = length(combo);
@@ -10807,17 +10805,8 @@ if blackOutCaROIQ == 1
         RightChan = SNredStackAv;
         otherChan = SNgreenStackAv;
     end     
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE THREEDCAMASK ISN'T BEING APPLIED PROPERLY 
-    % MIGHT TRY FRAME BY FRAME ITERATION TO BLACK OUT THE PIXELS 
-    % OH! THIS MAY BE DUE TO DATA TYPE CHANGES SINGLE-DOUBLE 
     for ccell = 1:length(terminals{mouse})
-%         for frame = 1:size(RightChan{terminals{mouse}(ccell)},3)
-%             curFrame = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-%             
-%         end 
-        RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;        
+        RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
     end 
 elseif blackOutCaROIQ == 0      
     rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
@@ -10830,9 +10819,6 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%%
 
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
