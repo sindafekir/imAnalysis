@@ -10767,11 +10767,6 @@ if spatSmoothQ == 1
     end 
 end 
 clearvars redIn greenIn 
-
-
-%% @@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
 if blackOutCaROIQ == 1         
@@ -10797,7 +10792,7 @@ if blackOutCaROIQ == 1
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
     ind = length(combo);
-    ThreeDCaMask = repmat(combo{ind},1,1,size(SNredStackAv{terminals{mouse}(ccell)},3));
+    ThreeDCaMask = logical(repmat(combo{ind},1,1,size(SNredStackAv{terminals{mouse}(ccell)},3)));
     %apply new mask to the right channel 
     rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
     if rightChan == 0     
@@ -10807,16 +10802,7 @@ if blackOutCaROIQ == 1
         RightChan = SNredStackAv;
         otherChan = SNgreenStackAv;
     end     
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE THREEDCAMASK ISN'T BEING APPLIED PROPERLY 
-    % MIGHT TRY FRAME BY FRAME ITERATION TO BLACK OUT THE PIXELS 
-    % OH! THIS MAY BE DUE TO DATA TYPE CHANGES SINGLE-DOUBLE 
     for ccell = 1:length(terminals{mouse})
-%         for frame = 1:size(RightChan{terminals{mouse}(ccell)},3)
-%             curFrame = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-%             
-%         end 
         RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;        
     end 
 elseif blackOutCaROIQ == 0      
@@ -10830,10 +10816,14 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%%
 
+
+
+%% @@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE - NEED TO REPLACE AVGREENREDSTACK WITH RIGHT/OTHERCHAN MADE
+% ABOVE 
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
 if cropQ == 0 
@@ -10878,12 +10868,15 @@ if cropQ == 0
             %ask about segmentation quality 
             segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
             if segmentVessel == 1
-                clear BWthreshold BWopenRadius BW se boundaries
+                clearvars BWthreshold BWopenRadius BW se boundaries
             end 
         end
     end
 end 
-
+clearvars BW_perim segOverlays 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%%
 cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
 if cMapQ == 0
     % Create colormap that is green for positive, red for negative,
