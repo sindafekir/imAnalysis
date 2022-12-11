@@ -10670,6 +10670,13 @@ for ccell = 1:length(terminals{mouse})
     NgreenStackAv{terminals{mouse}(ccell)} = ((avGreenStack{terminals{mouse}(ccell)}./ (nanmean(avGreenStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
     NredStackAv{terminals{mouse}(ccell)} = ((avRedStack{terminals{mouse}(ccell)}./ (nanmean(avRedStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
 end 
+rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+%select the correct channel for vessel segmentation  
+if rightChan == 0     
+    vesChan = avGreenStack;
+elseif rightChan == 1
+    vesChan = avRedStack;
+end    
 clearvars avGreenStack avRedStack 
 %temporal smoothing option
 smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
@@ -10794,7 +10801,7 @@ if blackOutCaROIQ == 1
     ind = length(combo);
     ThreeDCaMask = logical(repmat(combo{ind},1,1,size(SNredStackAv{terminals{mouse}(ccell)},3)));
     %apply new mask to the right channel 
-    rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+    % this is defined above: rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
     if rightChan == 0     
         RightChan = SNgreenStackAv;
         otherChan = SNredStackAv;
@@ -10816,14 +10823,6 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
-
-
-
-%% @@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - NEED TO REPLACE AVGREENREDSTACK WITH RIGHT/OTHERCHAN MADE
-% ABOVE 
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
 if cropQ == 0 
@@ -10831,13 +10830,6 @@ if cropQ == 0
         % create outline of vessel to overlay the %change BBB perm stack 
         segmentVessel = 1;
         while segmentVessel == 1 
-            %select the correct channel for vessel segmentation  
-            vesChan = rightChan;
-            if rightChan == 0     
-                vesChan = avGreenStack;
-            elseif rightChan == 1
-                vesChan = avRedStack;
-            end     
             % apply Ca ROI mask to the appropriate channel to black out these
             % pixels 
             for ccell = 1:length(terminals{mouse})
@@ -10874,9 +10866,6 @@ if cropQ == 0
     end
 end 
 clearvars BW_perim segOverlays 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%%
 cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
 if cMapQ == 0
     % Create colormap that is green for positive, red for negative,
@@ -10901,7 +10890,6 @@ elseif cMapQ == 1
 %     greenColorMap = [linspace(0, 1, 110),ones(1,146)];
 %     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
 end 
-
 % save the other channel first to ensure that all Ca ROIs show an average
 %peak in the same frame 
 dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
@@ -10925,6 +10913,12 @@ if CaROItimingCheckQ == 1
 end 
 
 %% conditional statement that ensures you checked the other channel
+
+%@@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
