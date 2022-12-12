@@ -10782,19 +10782,24 @@ if blackOutCaROIQ == 1
     CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
     CaROImaskMat = matfile(CaROImaskFileName); 
     CaROImasks = CaROImaskMat.CaROImasks; 
+    ROIorders = CaROImaskMat.ROIorders; 
     % combine Ca ROIs from different planes in Z into one plane 
     numZplanes = input('How many planes in Z are there? ');
     if numZplanes > 1 
         combo = cell(1,numZplanes-1);
+        combo2 = cell(1,numZplanes-1);
         for it = 1:numZplanes-1
             if it == 1 
                 combo{it} = or(CaROImasks{1},CaROImasks{2});
+                combo2{it} = or(ROIorders{1},ROIorders{2});
             elseif it > 1
                 combo{it} = or(combo{it-1},CaROImasks{it+1});
+                combo2{it} = or(combo2{it-1},ROIorders{it+1});
             end 
         end      
+        ROIorders = combo2;
     elseif numZplanes == 1 
-        combo{1} = CaROImasks{1};
+        combo = CaROImasks;       
     end 
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
@@ -10967,7 +10972,7 @@ if CaFrameQ == 1
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
                     % get the x-y coordinates of the Ca ROI         
                     clearvars CAy CAx
-                    [CAy, CAx] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+                    [CAy, CAx] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
                     figure('Visible','off');  
                     % crop if necessary 
                     if cropQ == 1 
