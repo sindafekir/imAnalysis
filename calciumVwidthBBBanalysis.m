@@ -10534,6 +10534,48 @@ for mouse = 1:mouseNum
     end 
 end 
 clearvars peaks locs 
+% crop the imaging data if you want to; better to do this up here to
+% maximize computational speed ~ 
+rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
+% ask user where to crop image     
+if cropQ == 1 
+    %select the correct channel to view for cropping 
+    if rightChan == 0     
+        hold off;
+        cropIm = nanmean(greenStacks{1},3);
+    elseif rightChan == 1
+        hold off; 
+        cropIm = nanmean(redStacks{1},3);
+    end         
+    [~, rect] = imcrop(cropIm);
+end  
+% crop if necessary  
+greenStacks2 = cell(1,length(vidList));
+redStacks2 = cell(1,length(vidList));
+if cropQ == 1 
+    for vid = 1:length(vidList)
+        for frame = 1:size(greenStacks{vid},3)
+            cropdIm = imcrop(greenStacks{vid}(:,:,frame),rect);
+            greenStacks2{vid}(:,:,frame) = cropdIm;
+        end 
+    end 
+    
+    for vid = 1:length(vidList)
+        for frame = 1:size(greenStacks{vid},3)
+            cropdIm = imcrop(redStacks{vid}(:,:,frame),rect);
+            redStacks2{vid}(:,:,frame) = cropdIm;
+        end 
+    end 
+elseif cropQ == 0
+    greenStacks2 = greenStacks;
+    redStacks2 = redStacks;
+end  
+clearvars greenStacks redStacks
+greenStacks = greenStacks2;
+redStacks = redStacks2;
+clearvars greenStacks2 redStacks2
+%sort data 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 % terminals = terminals{1};
 if tTypeQ == 0 
@@ -10670,7 +10712,6 @@ for ccell = 1:length(terminals{mouse})
     NgreenStackAv{terminals{mouse}(ccell)} = ((avGreenStack{terminals{mouse}(ccell)}./ (nanmean(avGreenStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
     NredStackAv{terminals{mouse}(ccell)} = ((avRedStack{terminals{mouse}(ccell)}./ (nanmean(avRedStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
 end 
-rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
 %select the correct channel for vessel segmentation  
 if rightChan == 0     
     vesChan = avGreenStack;
@@ -10817,8 +10858,7 @@ if blackOutCaROIQ == 1
     for ccell = 1:length(terminals{mouse})
         RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;        
     end 
-elseif blackOutCaROIQ == 0      
-    rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+elseif blackOutCaROIQ == 0          
     if rightChan == 0     
         RightChan = SNgreenStackAv;
         otherChan = SNredStackAv;
@@ -10829,7 +10869,6 @@ elseif blackOutCaROIQ == 0
 end 
 clearvars SNgreenStackAv SNredStackAv
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
-cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
 if AVQ == 0 
     % create outline of vessel to overlay the %change BBB perm stack 
     segmentVessel = 1;
@@ -10918,6 +10957,10 @@ end
 
 %% conditional statement that ensures you checked the other channel
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% MOVE CROP CODE TO EARLIER 
+
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
@@ -10954,12 +10997,13 @@ if CaFrameQ == 1
                 minMaxAbsVals = [abs(minValue),abs(maxValue)];
                 maxAbVal = max(minMaxAbsVals);
                 % ask user where to crop image
-                if ccell == 1                   
-                    if cropQ == 1 
-                        hold off 
-                        [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
-                    end 
-                    
+                if ccell == 1   
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                    
+%                     if cropQ == 1 
+%                         hold off 
+%                         [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
+%                     end                
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if BBBtraceQ == 1 
                         BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
                     end                 
@@ -10974,13 +11018,15 @@ if CaFrameQ == 1
                     clearvars CAy CAx
                     [CAy, CAx] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
                     figure('Visible','off');  
-                    % crop if necessary 
-                    if cropQ == 1 
-                        cropdIm = imcrop(RightChan{terminals{mouse}(ccell)}(:,:,frame),rect);
-                        finalIm = cropdIm;
-                    elseif cropQ == 0
-                        finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-                    end      
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                    
+%                     % crop if necessary 
+%                     if cropQ == 1 
+%                         cropdIm = imcrop(RightChan{terminals{mouse}(ccell)}(:,:,frame),rect);
+%                         finalIm = cropdIm;
+%                     elseif cropQ == 0
+%                         finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
+%                     end      
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if BBBtraceQ == 1
                         if ccell == 1 
                             if frame == 1
