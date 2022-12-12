@@ -10825,47 +10825,46 @@ end
 clearvars SNgreenStackAv SNredStackAv
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
-if cropQ == 0 
-    if AVQ == 0 
-        % create outline of vessel to overlay the %change BBB perm stack 
-        segmentVessel = 1;
-        while segmentVessel == 1 
-            % apply Ca ROI mask to the appropriate channel to black out these
-            % pixels 
+if AVQ == 0 
+    % create outline of vessel to overlay the %change BBB perm stack 
+    segmentVessel = 1;
+    while segmentVessel == 1 
+        % apply Ca ROI mask to the appropriate channel to black out these
+        % pixels 
+        for ccell = 1:length(terminals{mouse})
+            vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
+        end 
+        %segment the vessel (small sample of the data) 
+        CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
+        imageSegmenter(mean(vesChan{CaROI},3))
+        continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        while continu == 1 
+            BWstacks = cell(1,length(vesChan));
+            BW_perim = cell(1,length(vesChan));
+            segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
-                vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
+                for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
+                    [BW,~] = segmentImage58_STAvid_20221012(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
+                    %get the segmentation boundaries 
+                    BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
+                    %overlay segmentation boundaries on data
+                    segOverlays{terminals{mouse}(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals{mouse}(ccell)}(:,:,frame)), BW_perim{terminals{mouse}(ccell)}(:,:,frame), [.3 1 .3]);   
+                end   
             end 
-            %segment the vessel (small sample of the data) 
-            CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
-            imageSegmenter(mean(vesChan{CaROI},3))
-            continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
-            while continu == 1 
-                BWstacks = cell(1,length(vesChan));
-                BW_perim = cell(1,length(vesChan));
-                segOverlays = cell(1,length(vesChan));    
-                for ccell = 1:length(terminals{mouse})
-                    for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                        [BW,~] = segmentImage58_STAvid_20221012(vesChan{terminals{mouse}(ccell)}(:,:,frame));
-                        BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
-                        %get the segmentation boundaries 
-                        BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
-                        %overlay segmentation boundaries on data
-                        segOverlays{terminals{mouse}(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals{mouse}(ccell)}(:,:,frame)), BW_perim{terminals{mouse}(ccell)}(:,:,frame), [.3 1 .3]);   
-                    end   
-                end 
-                continu = 0;
-            end 
-            %play segmentation boundaries over images 
-            implay(segOverlays{CaROI})
-            %ask about segmentation quality 
-            segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-            if segmentVessel == 1
-                clearvars BWthreshold BWopenRadius BW se boundaries
-            end 
-        end
+            continu = 0;
+        end 
+        %play segmentation boundaries over images 
+        implay(segOverlays{CaROI})
+        %ask about segmentation quality 
+        segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+        if segmentVessel == 1
+            clearvars BWthreshold BWopenRadius BW se boundaries
+        end 
     end
-end 
-clearvars BW_perim segOverlays 
+end
+
+clearvars segOverlays 
 cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
 if cMapQ == 0
     % Create colormap that is green for positive, red for negative,
@@ -10914,12 +10913,6 @@ end
 
 %% conditional statement that ensures you checked the other channel
 
-%@@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
@@ -10929,6 +10922,20 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
+        BBBtraceQ = input("Input 1 if you want to plot BBB STA traces.");
+        if BBBtraceQ == 1 
+            CTraces = cell(1,mouseNum); 
+            CI_cLow = cell(1,mouseNum);
+            CI_cHigh = cell(1,mouseNum);
+            CTraceArray = cell(1,mouseNum);
+            AVSNCdataPeaks = cell(1,mouseNum);
+            SCdataPeaks = cell(1,mouseNum);
+            SNCdataPeaks = cell(1,mouseNum);
+            sortedCdata2 = cell(1,mouseNum);
+            allCTraces3 = cell(1,mouseNum);  
+            sortedCdata = cell(1,mouseNum);
+            BBBdata = cell(1,mouseNum);
+        end 
         for ccell = 1:length(terminals{mouse})  
             if ccell == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
@@ -10947,7 +10954,7 @@ if CaFrameQ == 1
                         hold off 
                         [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
                     end 
-                    BBBtraceQ = input("Input 1 if you want to plot BBB STA traces.");
+                    
                     if BBBtraceQ == 1 
                         BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
                     end                 
@@ -10959,7 +10966,6 @@ if CaFrameQ == 1
                 %images
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
                     % get the x-y coordinates of the Ca ROI         
-                    % find the pixels that are over 20 in value 
                     clearvars CAy CAx
                     [CAy, CAx] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
                     figure('Visible','off');  
@@ -11076,24 +11082,16 @@ if CaFrameQ == 1
                     filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
                     saveas(gca,[filename '.png'])
                 end 
-            end 
-            
+            end            
             % Plot BBB STA trace per axon and BBB roi 
             if BBBtraceQ == 1 
                 regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
                 cd(regImDir);
                 MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
-                Mat = matfile(MatFileName);   
-                sortedCdata = cell(1,mouseNum);
+                Mat = matfile(MatFileName);                  
                 sortedCdata{mouse} = Mat.sortedCdata;               
-
-                % sort data 
-                SCdataPeaks = cell(1,mouseNum);
-                SNCdataPeaks = cell(1,mouseNum);
-                sortedCdata2 = cell(1,mouseNum);
-                allCTraces3 = cell(1,mouseNum);            
+                % sort data         
                 baselineTime = normTime;
-
                 %smoothing option               
                 if smoothQ == 0 
                     SCdataPeaks{mouse} = sortedCdata{mouse};
@@ -11110,7 +11108,6 @@ if CaFrameQ == 1
                        end                         
                     end 
                 end     
-
                 %normalize
                  for vid = 1:length(vidList{mouse})
                     if vid <= length(sortedCdata{mouse}) 
@@ -11159,7 +11156,6 @@ if CaFrameQ == 1
                         end
                     end                   
                  end     
-
                 count = 1;
                 for vid = 1:length(vidList{mouse})  
                     if vid <= length(sortedCdata{mouse}) 
@@ -11182,17 +11178,13 @@ if CaFrameQ == 1
                 CaROIs = terminals;
                 CTraces{mouse} = allCTraces{mouse}(CaROIs{mouse});                                      
                 %remove empty cells if there are any b = a(any(a,2),:)
-                CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));
-                               
+                CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));                               
                 % create colors for plotting 
                 Bcolors = [1,0,0;1,0.5,0;1,1,0];
                 Ccolors = [0,0,1;0,0.5,1;0,1,1];
-
                 % resort data: concatenate all CaROI data 
                 % output = CaArray{mouse}{per}(concatenated caRoi data)
                 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)               
-                CI_cLow = cell(1,mouseNum);
-                CI_cHigh = cell(1,mouseNum);
                 for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
                     if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
                         if isempty(CTraces{mouse}{ccell}) == 0 
@@ -11252,8 +11244,7 @@ if CaFrameQ == 1
 %                             CI_bHigh{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals 
 %                             %get average
 %                             AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
-                            
-                            
+                                                       
                             fig = figure;
                             Frames = size(x,2);
                             Frames_pre_stim_start = -((Frames-1)/2); 
@@ -11294,7 +11285,10 @@ if CaFrameQ == 1
                     end 
                 end                
             end 
-        end       
+        end
+        if BBBtraceQ == 1 
+            clearvars sortedCdata SCdataPeaks SNCdataPeaks sortedCdata2 allCTraces3 CTraces CI_cLow CI_cHigh CTraceArray AVSNCdataPeaks BBBdata
+        end 
     elseif AVQ == 1
         termsToAv = input('Input what terminal STA videos you want to average. '); 
         STAterms = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3),length(termsToAv));
@@ -11308,7 +11302,7 @@ if CaFrameQ == 1
         STAav = mean(STAterms,4);
         STAavVesVid = mean(STAtermsVesChans,4);
         
-        clear BW BWstacks BW_perim segOverlays
+        clearvars BW BWstacks BW_perim segOverlays
         BWstacks = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3));
         BW_perim = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3));
         for frame = 1:size(STAavVesVid,3)
@@ -11373,6 +11367,7 @@ if CaFrameQ == 1
                 saveas(gca,[filename '.png'])
             end 
         end 
+        clearvars STAterms STAtermsVesChans STAav STAavVesVid BWstacks BW_perim segOverlays
     end 
 end 
 %}

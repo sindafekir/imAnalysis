@@ -10890,13 +10890,6 @@ elseif cMapQ == 1
 %     greenColorMap = [linspace(0, 1, 110),ones(1,146)];
 %     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
 end 
-
-
-%@@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
 % save the other channel first to ensure that all Ca ROIs show an average
 %peak in the same frame 
 dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
@@ -10930,6 +10923,15 @@ if CaFrameQ == 1
         %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
         %the vessel is (because they're distracting), and save these images to a
         %folder of your choosing (there will be subFolders per calcium ROI)
+        if BBBtraceQ == 1 
+            CI_cLow = cell(1,mouseNum);
+            CI_cHigh = cell(1,mouseNum);
+            CTraceArray = cell(1,mouseNum);
+            AVSNCdataPeaks = cell(1,mouseNum);
+            SCdataPeaks = cell(1,mouseNum);
+            SNCdataPeaks = cell(1,mouseNum);
+            sortedCdata2 = cell(1,mouseNum);
+            allCTraces3 = cell(1,mouseNum);    
         for ccell = 1:length(terminals{mouse})  
             if ccell == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
@@ -10960,7 +10962,6 @@ if CaFrameQ == 1
                 %images
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
                     % get the x-y coordinates of the Ca ROI         
-                    % find the pixels that are over 20 in value 
                     clearvars CAy CAx
                     [CAy, CAx] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
                     figure('Visible','off');  
@@ -11079,6 +11080,13 @@ if CaFrameQ == 1
                 end 
             end 
             
+%@@@@@@@@@ CLEAR UNECESSARY MATRICES, ADD IN GPU ARRAYS, AND CHANGE DOUBLES TO SINGLES @@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+% CLEAR sortedCdata
+            
             % Plot BBB STA trace per axon and BBB roi 
             if BBBtraceQ == 1 
                 regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
@@ -11087,14 +11095,8 @@ if CaFrameQ == 1
                 Mat = matfile(MatFileName);   
                 sortedCdata = cell(1,mouseNum);
                 sortedCdata{mouse} = Mat.sortedCdata;               
-
-                % sort data 
-                SCdataPeaks = cell(1,mouseNum);
-                SNCdataPeaks = cell(1,mouseNum);
-                sortedCdata2 = cell(1,mouseNum);
-                allCTraces3 = cell(1,mouseNum);            
+                % sort data         
                 baselineTime = normTime;
-
                 %smoothing option               
                 if smoothQ == 0 
                     SCdataPeaks{mouse} = sortedCdata{mouse};
@@ -11111,7 +11113,6 @@ if CaFrameQ == 1
                        end                         
                     end 
                 end     
-
                 %normalize
                  for vid = 1:length(vidList{mouse})
                     if vid <= length(sortedCdata{mouse}) 
@@ -11160,7 +11161,6 @@ if CaFrameQ == 1
                         end
                     end                   
                  end     
-
                 count = 1;
                 for vid = 1:length(vidList{mouse})  
                     if vid <= length(sortedCdata{mouse}) 
@@ -11181,19 +11181,15 @@ if CaFrameQ == 1
                 %put all similar trials together 
                 allCTraces = allCTraces3;
                 CaROIs = terminals;
-                CTraces{mouse} = allCTraces{mouse}(CaROIs{mouse});                                      
+                CTraces = cell(1,mouseNum); CTraces{mouse} = allCTraces{mouse}(CaROIs{mouse});                                      
                 %remove empty cells if there are any b = a(any(a,2),:)
-                CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));
-                               
+                CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));                               
                 % create colors for plotting 
                 Bcolors = [1,0,0;1,0.5,0;1,1,0];
                 Ccolors = [0,0,1;0,0.5,1;0,1,1];
-
                 % resort data: concatenate all CaROI data 
                 % output = CaArray{mouse}{per}(concatenated caRoi data)
                 % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)               
-                CI_cLow = cell(1,mouseNum);
-                CI_cHigh = cell(1,mouseNum);
                 for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
                     if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
                         if isempty(CTraces{mouse}{ccell}) == 0 
@@ -11295,7 +11291,21 @@ if CaFrameQ == 1
                     end 
                 end                
             end 
-        end       
+        end
+        
+        
+        clearvars sortedCdata SCdataPeaks SNCdataPeaks sortedCdata2 allCTraces3
+        
+        
+        
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     elseif AVQ == 1
         termsToAv = input('Input what terminal STA videos you want to average. '); 
         STAterms = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3),length(termsToAv));
@@ -11309,7 +11319,7 @@ if CaFrameQ == 1
         STAav = mean(STAterms,4);
         STAavVesVid = mean(STAtermsVesChans,4);
         
-        clear BW BWstacks BW_perim segOverlays
+        clearvars BW BWstacks BW_perim segOverlays
         BWstacks = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3));
         BW_perim = zeros(size(RightChan{termsToAv(1)},1),size(RightChan{termsToAv(1)},2),size(RightChan{termsToAv(1)},3));
         for frame = 1:size(STAavVesVid,3)
@@ -11322,6 +11332,7 @@ if CaFrameQ == 1
         end 
         %play segmentation boundaries over images 
         implay(segOverlays)
+        
         
         segQ = input('Input 1 if the segmentation was good. ');
         if segQ == 1
