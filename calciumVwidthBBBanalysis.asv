@@ -10534,10 +10534,6 @@ for mouse = 1:mouseNum
     end 
 end 
 clearvars peaks locs 
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % crop the imaging data if you want to; better to do this up here to
 % maximize computational speed ~ 
 rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
@@ -10546,44 +10542,40 @@ cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
 if cropQ == 1 
     %select the correct channel to view for cropping 
     if rightChan == 0     
+        hold off;
         cropIm = nanmean(greenStacks{1},3);
     elseif rightChan == 1
+        hold off; 
         cropIm = nanmean(redStacks{1},3);
     end         
     [~, rect] = imcrop(cropIm);
 end  
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % crop if necessary  
+greenStacks2 = cell(1,length(vidList));
+redStacks2 = cell(1,length(vidList));
 if cropQ == 1 
     for vid = 1:length(vidList)
-        cropdIm = imcrop(greenStacks{vid},rect);
-        finalIm = cropdIm;
+        for frame = 1:size(greenStacks{vid},3)
+            cropdIm = imcrop(greenStacks{vid}(:,:,frame),rect);
+            greenStacks2{vid}(:,:,frame) = cropdIm;
+        end 
     end 
     
+    for vid = 1:length(vidList)
+        for frame = 1:size(greenStacks{vid},3)
+            cropdIm = imcrop(redStacks{vid}(:,:,frame),rect);
+            redStacks2{vid}(:,:,frame) = cropdIm;
+        end 
+    end 
 elseif cropQ == 0
-    finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
+    greenStacks2 = greenStacks;
+    redStacks2 = redStacks;
 end  
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
+clearvars greenStacks redStacks
+greenStacks = greenStacks2;
+redStacks = redStacks2;
+clearvars greenStacks2 redStacks2
+%sort data 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 % terminals = terminals{1};
 if tTypeQ == 0 
@@ -10823,7 +10815,7 @@ if spatSmoothQ == 1
     end 
 end 
 clearvars redIn greenIn 
-% black out the pixels that are part of calcium ROIs 
+%% black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
 if blackOutCaROIQ == 1         
     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
@@ -10832,6 +10824,37 @@ if blackOutCaROIQ == 1
     CaROImaskMat = matfile(CaROImaskFileName); 
     CaROImasks = CaROImaskMat.CaROImasks; 
     ROIorders = CaROImaskMat.ROIorders; 
+    % crop ROIorders if necessary 
+    if crop
+    for z = 1:length(ROIorders)
+    end 
+    
+
+    % crop if necessary  
+    greenStacks2 = cell(1,length(vidList));
+    redStacks2 = cell(1,length(vidList));
+    if cropQ == 1 
+        for vid = 1:length(vidList)
+            for frame = 1:size(greenStacks{vid},3)
+                cropdIm = imcrop(greenStacks{vid}(:,:,frame),rect);
+                greenStacks2{vid}(:,:,frame) = cropdIm;
+            end 
+        end 
+
+        for vid = 1:length(vidList)
+            for frame = 1:size(greenStacks{vid},3)
+                cropdIm = imcrop(redStacks{vid}(:,:,frame),rect);
+                redStacks2{vid}(:,:,frame) = cropdIm;
+            end 
+        end 
+    elseif cropQ == 0
+        greenStacks2 = greenStacks;
+        redStacks2 = redStacks;
+    end  
+
+
+    
+    
     % combine Ca ROIs from different planes in Z into one plane 
     numZplanes = input('How many planes in Z are there? ');
     if numZplanes > 1 
@@ -10876,6 +10899,7 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
+%%
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 if AVQ == 0 
     % create outline of vessel to overlay the %change BBB perm stack 

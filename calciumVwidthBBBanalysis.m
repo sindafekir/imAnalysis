@@ -10444,7 +10444,7 @@ end
 
 %}
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
-
+%{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
@@ -10824,6 +10824,20 @@ if blackOutCaROIQ == 1
     CaROImaskMat = matfile(CaROImaskFileName); 
     CaROImasks = CaROImaskMat.CaROImasks; 
     ROIorders = CaROImaskMat.ROIorders; 
+    % crop ROIorders if necessary 
+    if cropQ == 1 
+        ROIorders2 = cell(1,length(ROIorders));
+        for z = 1:length(ROIorders)
+            cropdIm = imcrop(ROIorders{z},rect);
+            ROIorders2{z} = cropdIm;
+        end         
+        CaROImasks2 = cell(1,length(ROIorders));
+        for z = 1:length(ROIorders)
+            cropdIm = imcrop(CaROImasks{z},rect);
+            CaROImasks2{z} = cropdIm;
+        end              
+        clearvars CaROImasks ROIorders; CaROImasks = CaROImasks2; ROIorders = ROIorders2; clearvars CaROImasks2 ROIorders2
+    end 
     % combine Ca ROIs from different planes in Z into one plane 
     numZplanes = input('How many planes in Z are there? ');
     if numZplanes > 1 
@@ -10957,10 +10971,6 @@ end
 
 %% conditional statement that ensures you checked the other channel
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% MOVE CROP CODE TO EARLIER 
-
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
@@ -10998,12 +11008,6 @@ if CaFrameQ == 1
                 maxAbVal = max(minMaxAbsVals);
                 % ask user where to crop image
                 if ccell == 1   
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                    
-%                     if cropQ == 1 
-%                         hold off 
-%                         [~, rect] = imcrop(nanmean(RightChan{terminals{mouse}(ccell)},3));
-%                     end                
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if BBBtraceQ == 1 
                         BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
                     end                 
@@ -11016,17 +11020,8 @@ if CaFrameQ == 1
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
                     % get the x-y coordinates of the Ca ROI         
                     clearvars CAy CAx
-                    [CAy, CAx] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+                    [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
                     figure('Visible','off');  
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                    
-%                     % crop if necessary 
-%                     if cropQ == 1 
-%                         cropdIm = imcrop(RightChan{terminals{mouse}(ccell)}(:,:,frame),rect);
-%                         finalIm = cropdIm;
-%                     elseif cropQ == 0
-%                         finalIm = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-%                     end      
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     if BBBtraceQ == 1
                         if ccell == 1 
                             if frame == 1
@@ -11035,7 +11030,7 @@ if CaFrameQ == 1
                                 for BBBroi = 1:BBBtraceNumQ
                                     % create BBB ROIs 
                                     disp('Create your ROI for BBB perm analysis');
-                                    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,finalIm);
+                                    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,RightChan{terminals{mouse}(ccell)}(:,:,frame));
                                     ROIboundData{1} = xmins;
                                     ROIboundData{2} = ymins;
                                     ROIboundData{3} = widths;
@@ -11050,53 +11045,19 @@ if CaFrameQ == 1
                             ymins = ROIboundDatas{BBBroi}{2};
                             widths = ROIboundDatas{BBBroi}{3};
                             heights = ROIboundDatas{BBBroi}{4};
-                            [ROI_stacks] = make_ROIs_notfirst_time(finalIm,xmins,ymins,widths,heights);
+                            [ROI_stacks] = make_ROIs_notfirst_time(RightChan{terminals{mouse}(ccell)}(:,:,frame),xmins,ymins,widths,heights);
                             ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame) = ROI_stacks{1};
                         end 
                     end 
                     % create the % change image with the right white and black point
                     % boundaries and colormap 
                     if cMapQ == 0
-                        imagesc(finalIm,[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                        imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
                     elseif cMapQ == 1 
-                        imagesc(finalIm,[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                        imagesc(RightChan{terminals{mouse}(ccell)}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
                     end                                    
                     % get the x-y coordinates of the vessel outline
-                    [y, x] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                 
-                    % determine x-y coordinates of vessel outline in cropped im         
-                    if cropQ == 1 
-                        xfInd = find(x > rect(1) & x <= rect(1)+rect(3));
-                        yfInd = find(y > rect(2) & y <= rect(2)+rect(4));
-                        xfIndCA = find(CAx > rect(1) & CAx <= rect(1)+rect(3));
-                        yfIndCA = find(CAy > rect(2) & CAy <= rect(2)+rect(4));
-                        % determine indices that meet both x and y crop
-                        % limitations 
-                        minLen = min(length(xfInd),length(yfInd));
-                        if length(xfInd) == minLen
-                            overLapInd = ismember(yfInd,xfInd);
-                            xfInd2 = yfInd(overLapInd);
-                            xf = x(xfInd2);  xf = xf-rect(1);
-                            yf = y(xfInd2);  yf = yf-rect(2);  
-
-                            overLapIndCA = ismember(yfIndCA,xfIndCA);
-                            xfInd2CA = yfIndCA(overLapIndCA);
-                            CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
-                            CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2);                                                  
-                        elseif length(yfInd) == minLen
-                            overLapInd = ismember(xfInd,yfInd);
-                            xfInd2 = xfInd(overLapInd);
-                            xf = x(xfInd2);  xf = xf-rect(1);
-                            yf = y(xfInd2);  yf = yf-rect(2); 
-
-                            overLapIndCA = ismember(xfIndCA,yfIndCA);
-                            xfInd2CA = xfIndCA(overLapIndCA);
-                            CAxf = CAx(xfInd2CA);  CAxf = CAxf-rect(1);
-                            CAyf = CAy(xfInd2CA);  CAyf = CAyf-rect(2); 
-                        end                    
-                    elseif cropQ == 0
-                        xf = x; yf = y; 
-                        CAxf = CAx; CAyf = CAy; 
-                    end                                   
+                    [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
                     % plot the vessel outline over the % change image 
                     hold on;
                     scatter(xf,yf,'white','.');
