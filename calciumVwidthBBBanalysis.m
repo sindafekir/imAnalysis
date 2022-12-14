@@ -10902,7 +10902,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage58_STAvid_20221012(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage110_STAvid_20221214(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -10921,7 +10921,6 @@ if AVQ == 0
         end 
     end
 end
-
 clearvars segOverlays 
 cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
 if cMapQ == 0
@@ -11085,7 +11084,9 @@ if CaFrameQ == 1
                         edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
                         edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
                         hold on;
-    %                     scatter(edg_x,edg_y,100,'blue','filled','square');                    
+                        if cropQ == 1 
+                            scatter(edg_x,edg_y,100,'blue','filled','square');    
+                        end 
                     end 
                     ax = gca;
                     ax.Visible = 'off';
@@ -11383,6 +11384,35 @@ if CaFrameQ == 1
     end 
 end 
 %}
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% Find BBB plumes and their spread (one animal at a time) 
+
+% use 
+% RightChan{terminals{mouse}(ccell)}
+% BW_perim{terminals{mouse}(ccell)}(:,:,frame)
+
+for mouse = 1:mouseNum
+    for ccell = 1:length(terminals{mouse})       
+        for frame = 2:size(RightChan{terminals{mouse}(ccell)},3)
+            % find positive % increase around vessel outline
+            
+        end 
+        
+        % figure out if it spreads by looking at surrounding pixels 
+    end     
+end 
+
+
+
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 %% average 3 frames (of STA videos) around a specific time point
 %{
 %specify what time point you want to see 
