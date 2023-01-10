@@ -146,9 +146,9 @@ elseif vidNumQ == 1
 end 
 
 %% segment the vessels, get vessel width, and check segmentation
+
 segmentVessel = 1;
 while segmentVessel == 1 
-
     %segment the vessel (small sample of the data) 
     VROI = input("What vessel width ROI do you want to use to make segmentation algorithm? ");
     imageSegmenter(mean(ROIstacks{VROI},3))
@@ -169,7 +169,7 @@ while segmentVessel == 1
         end        
         continu = 0;
     end 
-    
+
     %check segmentation 
     if numROIs == 1 
         VROI = 1;

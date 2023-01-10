@@ -11405,7 +11405,18 @@ for mouse = 1:mouseNum
     end     
 end 
 
+% use PCA to find vessel outline 
+for VROI = 1%:numROIs 
+    for frame = 1%:500
+        I = ROIstacks{VROI}(:,:,frame);
+        X = reshape(I,size(I,1)*size(I,2),1); 
+        coeff = pca(X);            
+        Itransformed = X*coeff;
+        Ipc1 = reshape(Itransformed(:,1),size(I,1),size(I,2));
+        figure, imshow(Ipc1,[]);%this image looks exactly the same as original I because there's only one component 
 
+    end 
+end 
 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
