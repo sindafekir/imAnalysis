@@ -11411,23 +11411,17 @@ for mouse = 1:mouseNum
             zeroVals = find(val == 0);
             val(zeroVals) = []; rMask(zeroVals) = []; cMask(zeroVals) = [];             
             valPrevFrame = zeros(1,length(rMask));
-            incC = zeros(1,length(rMask));
-            incR = zeros(1,length(rMask));
             for pix = 1:length(rMask)
                 % figure out what the vals were in the previous frame
                 valPrevFrame(pix) = RightChan{terminals{mouse}(ccell)}(rMask(pix),cMask(pix),frame-1);
                 % find positive % increase around vessel outline   
                 if val(pix)-valPrevFrame(pix) > 0 
-                    incC(pix) = cMask(pix);
-                    incR(pix) = rMask(pix);
+                    incC(pix) = ;
+                    incR(pix) = ;
                 end                 
-            end        
-            % remove 0s in incCR 
-             incC(incC==0) = []; incR(incR==0) = [];
+            end             
               
-            % BEFORE MOVING FORWARD NEED TO CREATE MULTIDIMENSIONAL ARRAY
-            % FOR KEEPING INCCR ACROSS FRAMES 
-            
+
             % figure out if it spreads by looking at surrounding pixels 
         end                 
     end     
