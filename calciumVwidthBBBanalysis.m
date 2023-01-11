@@ -11394,7 +11394,12 @@ end
 % RightChan{terminals{mouse}(ccell)}(:,:,frame) % the % change vid 
 % BW_perim{terminals{mouse}(ccell)}(:,:,frame) % the outline made from the
 % % change vid 
-
+incC = cell(1,length(terminals{mouse}));
+incR = cell(1,length(terminals{mouse}));
+surValCurFrame = cell(1,length(terminals{mouse}));
+surValNexFrame = cell(1,length(terminals{mouse}));
+surValIncR = cell(1,length(terminals{mouse}));
+surValIncC = cell(1,length(terminals{mouse}));
 for mouse = 1:mouseNum
     for ccell = 1:length(terminals{mouse})       
         for frame = 2:size(RightChan{terminals{mouse}(ccell)},3)
@@ -11411,27 +11416,48 @@ for mouse = 1:mouseNum
             zeroVals = find(val == 0);
             val(zeroVals) = []; rMask(zeroVals) = []; cMask(zeroVals) = [];             
             valPrevFrame = zeros(1,length(rMask));
-            incC = zeros(1,length(rMask));
-            incR = zeros(1,length(rMask));
             for pix = 1:length(rMask)
                 % figure out what the vals were in the previous frame
                 valPrevFrame(pix) = RightChan{terminals{mouse}(ccell)}(rMask(pix),cMask(pix),frame-1);
                 % find positive % increase around vessel outline   
                 if val(pix)-valPrevFrame(pix) > 0 
-                    incC(pix) = cMask(pix);
-                    incR(pix) = rMask(pix);
+                    incC{ccell}{frame}(pix) = cMask(pix);
+                    incR{ccell}{frame}(pix) = rMask(pix);
                 end                 
             end        
             % remove 0s in incCR 
-             incC(incC==0) = []; incR(incR==0) = [];
-              
-            % BEFORE MOVING FORWARD NEED TO CREATE MULTIDIMENSIONAL ARRAY
-            % FOR KEEPING INCCR ACROSS FRAMES 
-            
-            % figure out if it spreads by looking at surrounding pixels 
+             incC{ccell}{frame}(incC{ccell}{frame}==0) = []; incR{ccell}{frame}(incR{ccell}{frame}==0) = [];            
+            if frame < size(RightChan{terminals{mouse}(ccell)},3)               
+                for pix = 1:length(incC{ccell}{frame})
+                    % determine the indices of surrounding pixels 
+                    surPixC = incC{ccell}{frame}(pix)-1:incC{ccell}{frame}(pix)+1;
+                    surPixR = incR{ccell}{frame}(pix)-1:incR{ccell}{frame}(pix)+1;                    
+                    % determine the values of surrounding pixels in the
+                    % next frame 
+                    count = 1;
+                    for r = 1:length(surPixR) 
+                        for c = 1:length(surPixC)
+                            if c ~= incC{ccell}{frame}(pix)
+                                surValCurFrame{ccell}{frame}(pix,count) = RightChan{terminals{mouse}(ccell)}(surPixR(r),surPixC(c),frame);
+                                surValNexFrame{ccell}{frame}(pix,count) = RightChan{terminals{mouse}(ccell)}(surPixR(r),surPixC(c),frame+1);
+                                count = count + 1;
+                            end                            
+                        end                        
+                    end                                         
+                end 
+                % replace 0s with NaNs in surVals 
+                surValCurFrame{ccell}{frame}(surValCurFrame{ccell}{frame}==0) = NaN;
+                surValNexFrame{ccell}{frame}(surValNexFrame{ccell}{frame}==0) = NaN;
+                % figure out if it spreads by looking at surrounding pixels 
+                [surValIncR2,surValIncC2] = find((surValNexFrame{ccell}{frame} - surValCurFrame{ccell}{frame}) > 0); 
+                surValIncR{ccell}{frame} = surValIncR2; surValIncC{ccell}{frame} = surValIncC2;
+            end 
         end                 
     end     
 end 
+
+%NEXT: NEED TO FIGURE OUT HOW TO ITERATIVELY KEEP LOOKING FOR GROWTH IN THE
+%PLUME 
 
 % % use PCA to find vessel outline 
 % for mouse = 1%:mouseNum
