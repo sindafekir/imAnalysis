@@ -10823,20 +10823,29 @@ if blackOutCaROIQ == 1
     CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
     CaROImaskMat = matfile(CaROImaskFileName); 
     CaROImasks = CaROImaskMat.CaROImasks; 
-    ROIorders = CaROImaskMat.ROIorders; 
-    % crop ROIorders if necessary 
+    % check to see if ROIorders exists in the matfile 
+    variableInfo = who(CaROImaskMat);
+    if ismember("ROIorders", variableInfo) == 1 % returns true 
+        ROIorders = CaROImaskMat.ROIorders;                
+    end   
+    % crop if necessary 
     if cropQ == 1 
-        ROIorders2 = cell(1,length(ROIorders));
-        for z = 1:length(ROIorders)
-            cropdIm = imcrop(ROIorders{z},rect);
-            ROIorders2{z} = cropdIm;
-        end         
-        CaROImasks2 = cell(1,length(ROIorders));
-        for z = 1:length(ROIorders)
+        if ismember("ROIorders", variableInfo) == 1 % returns true 
+            ROIorders2 = cell(1,length(ROIorders));
+            for z = 1:length(ROIorders)
+                cropdIm = imcrop(ROIorders{z},rect);
+                ROIorders2{z} = cropdIm;
+            end     
+        end 
+        CaROImasks2 = cell(1,length(CaROImasks));
+        for z = 1:length(CaROImasks)
             cropdIm = imcrop(CaROImasks{z},rect);
             CaROImasks2{z} = cropdIm;
         end              
-        clearvars CaROImasks ROIorders; CaROImasks = CaROImasks2; ROIorders = ROIorders2; clearvars CaROImasks2 ROIorders2
+        clearvars CaROImasks; CaROImasks = CaROImasks2; clearvars CaROImasks2 
+        if ismember("ROIorders", variableInfo) == 1 % returns true 
+            clearvars ROIorders; ROIorders = ROIorders2; clearvars ROIorders2
+        end 
     end 
     % combine Ca ROIs from different planes in Z into one plane 
     numZplanes = input('How many planes in Z are there? ');
@@ -10846,16 +10855,20 @@ if blackOutCaROIQ == 1
         for it = 1:numZplanes-1
             if it == 1 
                 combo{it} = or(CaROImasks{1},CaROImasks{2});
-                combo2{it} = or(ROIorders{1},ROIorders{2});
+                if ismember("ROIorders", variableInfo) == 1 % returns true
+                    combo2{it} = or(ROIorders{1},ROIorders{2});
+                end 
             elseif it > 1
                 combo{it} = or(combo{it-1},CaROImasks{it+1});
-                combo2{it} = or(combo2{it-1},ROIorders{it+1});
+                if ismember("ROIorders", variableInfo) == 1 % returns true
+                    combo2{it} = or(combo2{it-1},ROIorders{it+1});
+                end 
             end 
         end      
         ROIorders = combo2;
     elseif numZplanes == 1 
         combo = CaROImasks;       
-    end 
+    end    
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
     ind = length(combo);
@@ -10902,7 +10915,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage110_STAvid_20221214(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage57_STAvid_20220930(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -10993,7 +11006,7 @@ if CaFrameQ == 1
             sortedCdata = cell(1,mouseNum);
             BBBdata = cell(1,mouseNum);
         end 
-        for ccell = 1:length(terminals{mouse})  
+        for ccell = 1%:length(terminals{mouse})  
             if ccell == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
             end             
@@ -11389,7 +11402,8 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % Find BBB plumes and their spread (one animal at a time) 
-
+% THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
+%{
 % use 
 % RightChan{terminals{mouse}(ccell)}(:,:,frame) % the % change vid 
 % BW_perim{terminals{mouse}(ccell)}(:,:,frame) % the outline made from the
@@ -11478,7 +11492,7 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+%}
 %% average 3 frames (of STA videos) around a specific time point
 %{
 %specify what time point you want to see 
