@@ -11537,15 +11537,16 @@ clearvars greenStacks redStacks
 greenStacks = greenStacks2;
 redStacks = redStacks2;
 clearvars greenStacks2 redStacks2
-% combine the vids to get z score of whole experiment
-frameLens = zeros(1,length(vidList{mouseNum}));
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% z score the videos 
 for vid = 1:length(vidList{mouseNum})
     if vid == 1 
         frameLen = size(greenStacks{vid},3);
     elseif vid > 1 
         frameLen = frameLen + size(greenStacks{vid},3);
     end 
-    frameLens(vid) = size(greenStacks{vid},3);
 end 
 combGreenStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
 combRedStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
@@ -11553,40 +11554,21 @@ for vid = 1:length(vidList{mouseNum})
     if vid == 1 
         count = size(greenStacks{vid},3);
     end 
-    for frame = 1:size(greenStacks{vid},3) 
+    for frame = 1:size(greenStacks{vid},3)
+        % combine the vids to get z score of whole experiment 
         if vid == 1 
             combGreenStack(:,:,frame) = greenStacks{vid}(:,:,frame);
             combRedStack(:,:,frame) = redStacks{vid}(:,:,frame);
         elseif vid > 1 
             combGreenStack(:,:,count+1) = greenStacks{vid}(:,:,frame);
-            combRedStack(:,:,count+1) = redStacks{vid}(:,:,frame);
+            combRedStack(:,:,count+1) = greenStacks{vid}(:,:,frame);
             count = count + 1;
         end 
     end     
 end 
-% z score the videos 
-zGreenStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
-zRedStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
-for frame = 1:frameLen
-    zGreenStack(:,:,frame) = zscore(combGreenStack(:,:,frame));
-end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE- THE VIDEOS ARE STATIC- ZGREENSTACK IS GOOD 
-% resort videos
-szGreenStack = cell(1,length(vidList{mouseNum}));
-szRedStack = cell(1,length(vidList{mouseNum}));
-for vid = 1:length(vidList{mouseNum})
-    for frame = 1:frameLens(vid)
-        count = 1;
-        szGreenStack{vid}(:,:,frame) = zGreenStack(:,:,count); 
-        count = count + 1;
-    end 
-end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % sort data 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
