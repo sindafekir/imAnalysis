@@ -11403,9 +11403,9 @@ end
 %}
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
 % z scores the entire stack before sorting into windows for averaging 
-
+% option to high pass filter the video 
+%{
 % TO DO LIST 
-% 2) make high pass filtered videos 
 % 3) make videos divided by total stack mean/median 
 
 
@@ -11539,6 +11539,24 @@ clearvars greenStacks redStacks
 greenStacks = greenStacks2;
 redStacks = redStacks2;
 clearvars greenStacks2 redStacks2
+% high pass filter the videos if you want 
+highPassQ = input("Input 1 if you want to high pass filter the videos. Input 0 otherwise. ");
+if highPassQ == 1 
+    hpfGreen = cell(1,length(vidList{mouse}));
+    hpfRed = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        %get sliding baseline 
+        [greenSlidingBL]=slidingBaselineVid(greenStacks{vid},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value    
+        [redSlidingBL]=slidingBaselineVid(redStacks{vid},floor((FPS)*10),0.5);
+        %subtract sliding baseline from F
+        hpfGreen{vid} = greenStacks{vid}-greenSlidingBL;
+        hpfRed{vid} = redStacks{vid}-redSlidingBL;       
+    end 
+    clearvars greenSlidingBL redSlidingBL
+elseif highPassQ == 0 
+    hpfGreen = greenStacks;
+    hpfRed = redStacks;
+end 
 % combine the vids to get z score of whole experiment
 frameLens = zeros(1,length(vidList{mouse}));
 for vid = 1:length(vidList{mouse})
@@ -11557,30 +11575,19 @@ for vid = 1:length(vidList{mouse})
     end 
     for frame = 1:size(greenStacks{vid},3) 
         if vid == 1 
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % HIGH PASS FILTER THE VIDEOS BEFORE COMBINING IF YOU WANT 
-            
-            combGreenStack(:,:,frame) = greenStacks{vid}(:,:,frame);
-            combRedStack(:,:,frame) = redStacks{vid}(:,:,frame);
+            combGreenStack(:,:,frame) = hpfGreen{vid}(:,:,frame);
+            combRedStack(:,:,frame) = hpfRed{vid}(:,:,frame);
         elseif vid > 1 
-            combGreenStack(:,:,count+1) = greenStacks{vid}(:,:,frame);
-            combRedStack(:,:,count+1) = redStacks{vid}(:,:,frame);
-            count = count + 1;
-            
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@            
-            
+            combGreenStack(:,:,count+1) = hpfGreen{vid}(:,:,frame);
+            combRedStack(:,:,count+1) = hpfRed{vid}(:,:,frame);
+            count = count + 1;                                      
         end 
     end     
 end 
 % z score the videos 
 zGreenStack = zscore(combGreenStack,0,3);
 zRedStack = zscore(combRedStack,0,3);
+clearvars combGreenStack combRedStack
 % resort videos
 szGreenStack = cell(1,length(vidList{mouse}));
 szRedStack = cell(1,length(vidList{mouse}));
@@ -11592,6 +11599,7 @@ for vid = 1:length(vidList{mouse})
         count = count + 1;
     end 
 end 
+clearvars zGreenStack zRedStack
 % sort data 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 % terminals = terminals{1};
