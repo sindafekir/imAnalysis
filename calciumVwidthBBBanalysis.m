@@ -11405,10 +11405,6 @@ end
 % z scores the entire stack before sorting into windows for averaging 
 % option to high pass filter the video 
 %{
-% TO DO LIST 
-% 3) make videos divided by total stack mean/median 
-
-
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
@@ -12469,11 +12465,75 @@ if CaFrameQ == 1
     end 
 end 
 %}
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% Find BBB plumes and their spread (one animal at a time) 
+%% use PCA to find BBB plumes (compatible with STA stack code) 
+
+
+for mouse = 1:mouseNum
+    for ccell = 1%:length(terminals{mouse})  
+        I = RightChan{terminals{mouse}(ccell)}(:,:,1:27); % 
+%         I = redStacks{1}(:,:,1:20); % 
+%         X = reshape(I,size(I,1)*size(I,2)*size(I,3),1); 
+%         testMean = nanmean(X);
+%         X = X - testMean;
+%         X = reshape(X, 37*63,20); % this does the same as the loop below
+%         use this instead later~
+        
+%         X = X.';
+
+        % reshape data so that each row = observations = frames and col =
+        % components = pixels 
+        
+        
+        X = zeros(size(RightChan{terminals{mouse}(ccell)},3),size(I,1)*size(I,2));
+        for frame = 1:27 %size(RightChan{terminals{mouse}(ccell)},3)
+            X(frame,:) = reshape(I(:,:,frame),size(I,1)*size(I,2),1);
+        end 
+
+% 
+        X = X'; % in this orientation, the coeff looks more interesting 
+        %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % NEED CLARITY ON ORIENTATION OF X FOR PCA 
+        
+        
+        % do the pca 
+        [coeff, score, latent, tsquared, explained,~] = pca(X,'Economy',false);  
+        
+        % calculate eigenvalues and eigenvectors of the covariance
+        % matrix 
+%         covarianceMatrix = cov(X);
+%         [V,D] = eig(covarianceMatrix);       
+        % "coeff" are the principal component vectors.
+        % These are the eigenvectors of the covariance matrix.
+        % Compare "coeff" and "V". Notice that they are the same,
+        % except for column ordering and an unimportant overall sign.
+               
+        % Multiply the original data by the principal component vectors to get the
+        % projections of the original data on the principal component vector space.
+        Itransformed = X*coeff;
+        Ipc1 = cell(1,length(RightChan));
+        for frame = 1:27%size(RightChan{terminals{mouse}(ccell)},3)
+            Ipc1{terminals{mouse}(ccell)}(:,:,frame) = reshape(Itransformed(:,frame),size(I,1),size(I,2));
+        end
+        
+        
+        for frame = 1:27
+            Ipc1(:,:,frame) = reshape(Itransformed(:,frame),size(I,1),size(I,2));
+        end 
+%         figure, imshow(Ipc1{terminals{mouse}(ccell)}(:,:,1),[]);
+%         clearvars I X coeff Itransformed Ipc1 
+        fig3 = Ipc1(:,:,3);
+        % normalize
+        fig3Max = max(max(Ipc1(:,:,3)));
+        norm3 = fig3./fig3Max;
+        % multiply I by fig1 filter 
+        fig3Mask = repmat(norm3,1,1,27);
+        fig3filter = fig3Mask.*I;
+        
+        
+    end 
+end 
+%}
+%%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
 %{
 % use 
@@ -12545,25 +12605,6 @@ end
 %NEXT: NEED TO FIGURE OUT HOW TO ITERATIVELY KEEP LOOKING FOR GROWTH IN THE
 %PLUME 
 
-% % use PCA to find vessel outline 
-% for mouse = 1%:mouseNum
-%     for ccell = 1%:length(terminals{mouse})       
-%         for frame = 1%:size(RightChan{terminals{mouse}(ccell)},3)
-%             I = RightChan{terminals{mouse}(ccell)}(:,:,frame);
-%             X = reshape(I,size(I,1)*size(I,2),1); 
-%             coeff = pca(X);            
-%             Itransformed = X*coeff;
-%             Ipc1 = reshape(Itransformed(:,1),size(I,1),size(I,2));
-%             figure, imshow(Ipc1,[]);%this image looks exactly the same as original I because there's only one component 
-%         end 
-%     end 
-% end 
-
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %}
 %% average 3 frames (of STA videos) around a specific time point
 %{
