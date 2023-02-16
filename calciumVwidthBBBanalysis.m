@@ -12469,9 +12469,11 @@ end
 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % TO DO 
-% Don't black out z scored vessels (in future, to black out vessel - inverse first component) 
-% edit STA code so that it saves the vessel outline for overlaying over PCA
+% 1) Don't black out z scored vessels (in future, to black out vessel - inverse first component) 
+% 2) edit STA code so that it saves the vessel outline for overlaying over PCA
 % filtered vids 
+% 3) automate looking at different PCA filters per axon 
+
 
 for mouse = 1:mouseNum
     for ccell = 1%:length(terminals{mouse})  
