@@ -12470,8 +12470,7 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % TO DO 
 % Don't black out z scored vessels (in future, to black out vessel - inverse first component) 
-% edit STA code so that it saves the vessel outline for overlaying over PCA
-% filtered vids 
+% edit STA code so that it saves the vessel outline for overlaying over 
 
 for mouse = 1:mouseNum
     for ccell = 1%:length(terminals{mouse})  
