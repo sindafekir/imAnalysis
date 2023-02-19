@@ -12468,7 +12468,7 @@ end
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
 % z scores the entire stack before sorting into windows for averaging 
 % option to high pass filter the video 
-% this does not save the videos out, for BBB PCA code 
+% this saves out PCA filtered data  
 
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
@@ -13095,8 +13095,8 @@ elseif cMapQ == 1
 end 
 % save the other channel first to ensure that all Ca ROIs show an average
 %peak in the same frame 
-% dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
-% dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
+dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
 % CaROItimingCheckQ = input('Do you need to save the Ca data? Input 1 for yes. 0 for no. ');
 % if CaROItimingCheckQ == 1 
 %     for ccell = 1:length(terminals{mouse})
@@ -13117,14 +13117,21 @@ end
 %}
 %% use PCA to find BBB plumes (compatible with STA stack code) 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% TO DO 
-% save out the videos with vessel outlined because I can't see with implay 
-
+CaEventFrame = input('What frame did the Ca events happen in? ');
 for mouse = 1:mouseNum
-    for ccell = 1%:length(terminals{mouse})  
-%         I = RightChan{terminals{mouse}(ccell)}(:,:,1:27); % 
-        I = SNvesChan{terminals{mouse}(ccell)}(:,:,1:27); % 
+    for ccell = 1:length(terminals{mouse})  
+        % get the x-y coordinates of the Ca ROI         
+        clearvars CAy CAx
+        if ismember("ROIorders", variableInfo) == 1 % returns true
+            [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+        elseif ismember("ROIorders", variableInfo) == 0 % returns true
+            [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+        end         
+        % do the pca and filter the data using PCA filters 
+        I = RightChan{terminals{mouse}(ccell)}; % 
+%         I = SNvesChan{terminals{mouse}(ccell)}; % I tried to
+%         look at the non-z scored, but smoothed raw data and that wasn't
+%         easy to see anyways. best bet is the z-scored data alone 
         % reshape data so that each row = observations = frames and col =
         % components = pixels 
         X = reshape(I,size(I,1)*size(I,2),size(I,3));
@@ -13134,7 +13141,7 @@ for mouse = 1:mouseNum
         % projections of the original data on the principal component vector space.
         Itransformed = X*coeff;
         Ipc = reshape(Itransformed,size(I,1),size(I,2),size(I,3));
-%         outlinedVid = zeros(size(I,1),size(I,2),3,size(I,3));
+        figfilter = cell(1,5);
         for filt = 1:5
             fig = Ipc(:,:,filt);
             % normalize
@@ -13142,16 +13149,72 @@ for mouse = 1:mouseNum
             norm = fig./figMax;
             % multiply I by fig1 filter 
             figMask = repmat(norm,1,1,size(I,3));
-            figfilter = figMask.*I;
-            %overlay vessel outline on pca filtered vid 
-            for frame = 1:size(I,3)
-                outlinedVid(:,:,:,frame) = imoverlay(mat2gray(figfilter(:,:,frame)), BW_perim{terminals{mouse}(ccell)}(:,:,frame), [.3 1 .3]);   
-            end 
-            implay(figfilter)
-        end 
-        
+            figfilter{filt} = figMask.*I;
+            %create a new folder per calcium ROI and filter 
+            newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
+            mkdir(dir2,newFolder)
+            dir3 = append(dir2,'/',newFolder);
+            newFolder2 = sprintf('PCAfilter_%d',filt);
+            mkdir(dir3,newFolder2)
+            %find the upper and lower bounds of your data (per calcium ROI and filter ) 
+            maxValue = max(max(max(max(figfilter{filt}))));
+            minValue = min(min(min(min(figfilter{filt}))));
+            minMaxAbsVals = [abs(minValue),abs(maxValue)];
+            maxAbVal = max(minMaxAbsVals);
+            for frame = 1:size(figfilter{filt},3)
+                figure('Visible','off');                                  
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                if cMapQ == 0
+                    imagesc(figfilter{filt}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                elseif cMapQ == 1 
+                    imagesc(figfilter{filt}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                end     
+                % get the x-y coordinates of the vessel outline
+                [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
+                % plot the vessel outline over the % change image 
+                hold on;
+                scatter(xf,yf,'white','.');
+                if cropQ == 1
+                    axonPixSize = 500;
+                elseif cropQ == 0
+                    axonPixSize = 100;
+                end 
+                % plot where the axon is located in gray 
+                scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
+                % plot the GCaMP signal marker in the right frame 
+                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                    hold on;
+                    scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
+                    %get border coordinates 
+                    colLen = size(RightChan{terminals{mouse}(ccell)},2);
+                    rowLen = size(RightChan{terminals{mouse}(ccell)},1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    if cropQ == 1 
+                        scatter(edg_x,edg_y,100,'blue','filled','square');    
+                    end 
+                end 
+                ax = gca;
+                ax.Visible = 'off';
+                ax.FontSize = 20;
+                %save current figure to file 
+                filename = sprintf('%s/CaROI_%d_BBBsignal/PCAfilter_%d/CaROI_%d_PCAfilter_%d_frame%d',dir2,terminals{mouse}(ccell),filt,terminals{mouse}(ccell),filt,frame);
+                saveas(gca,[filename '.png'])
+            end             
+        end                           
     end 
-end 
+end         
+
 %}
 %%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
