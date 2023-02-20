@@ -12469,7 +12469,7 @@ end
 % z scores the entire stack before sorting into windows for averaging 
 % option to high pass filter the video 
 % this saves out PCA filtered data  
-
+%{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
     dir1 = dataDir{mouse};   
@@ -13114,12 +13114,12 @@ dir2 = strrep(dir1,'\','/'); % change the direction of the slashes
 %          end 
 %     end 
 % end 
-%}
+
 %% use PCA to find BBB plumes (compatible with STA stack code) 
 
 CaEventFrame = input('What frame did the Ca events happen in? ');
 for mouse = 1:mouseNum
-    for ccell = 1:length(terminals{mouse})  
+    for ccell = 6:length(terminals{mouse})  
         % get the x-y coordinates of the Ca ROI         
         clearvars CAy CAx
         if ismember("ROIorders", variableInfo) == 1 % returns true
@@ -13216,6 +13216,45 @@ for mouse = 1:mouseNum
 end         
 
 %}
+%% STA stack compatible optical flow 
+
+
+mouse = 1;
+vectorMask = cell(1,length(BWstacks));
+opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
+I = cell(1,length(BWstacks));
+for ccell = 1:length(terminals{mouse})
+    I{terminals{mouse}(ccell)} = RightChan{terminals{mouse}(ccell)};
+    for frame = 1:size(BWstacks{terminals{mouse}(ccell)},3)
+        % to only get optical flow vessels near vessel, make vessel outline mask
+        % larger 
+        radius = 4;
+        decomposition = 0;
+        se = strel('disk', radius, decomposition);               
+        vectorMask{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
+    end 
+    % apply mask to orignal image to only get vectors of interest 
+    I{terminals{mouse}(ccell)}(~vectorMask{terminals{mouse}(ccell)}) = 0;
+end         
+
+for ccell = 1%:length(terminals{mouse})
+    for frame = 1%:size(BWstacks{terminals{mouse}(ccell)},3)-1      
+        % determine optical flow  
+        im1 = I{terminals{mouse}(ccell)}(:,:,frame);
+        im2 = I{terminals{mouse}(ccell)}(:,:,frame+1);
+        opflow{ccell,frame} = opticalFlow(im1,im2);
+        h = figure;
+        movegui(h);
+        hViewPanel = uipanel(h,'Position',[0 0 1 1],'Title','Plot of Optical Flow Vectors');
+        hPlot = axes(hViewPanel);
+        imshow(I{terminals{mouse}(ccell)}(:,:,frame))
+        hold on
+        plot(opflow{ccell,frame},'DecimationFactor',[3 3],'ScaleFactor',60,'Parent',hPlot);
+        hold off     
+    end 
+end 
+
+
 %%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
 %{
