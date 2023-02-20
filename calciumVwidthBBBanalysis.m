@@ -12468,7 +12468,7 @@ end
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
 % z scores the entire stack before sorting into windows for averaging 
 % option to high pass filter the video 
-% this saves out PCA filtered data  
+% this saves out PCA filtered data with optical flow pixel vectors plotted 
 %{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
@@ -13115,11 +13115,15 @@ dir2 = strrep(dir1,'\','/'); % change the direction of the slashes
 %     end 
 % end 
 
-%% use PCA to find BBB plumes (compatible with STA stack code) 
+%% use PCA to find BBB plumes (compatible with STA stack code) also plots pixel vectors 
 
 CaEventFrame = input('What frame did the Ca events happen in? ');
+vectorMask = cell(1,length(BWstacks));
+opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
+I2 = cell(1,length(BWstacks));
 for mouse = 1:mouseNum
-    for ccell = 6:length(terminals{mouse})  
+    figfilter = cell(1,length(BWstacks));
+    for ccell = 8:length(terminals{mouse})  
         % get the x-y coordinates of the Ca ROI         
         clearvars CAy CAx
         if ismember("ROIorders", variableInfo) == 1 % returns true
@@ -13140,8 +13144,7 @@ for mouse = 1:mouseNum
         % Multiply the original data by the principal component vectors to get the
         % projections of the original data on the principal component vector space.
         Itransformed = X*coeff;
-        Ipc = reshape(Itransformed,size(I,1),size(I,2),size(I,3));
-        figfilter = cell(1,5);
+        Ipc = reshape(Itransformed,size(I,1),size(I,2),size(I,3));        
         for filt = 1:5
             fig = Ipc(:,:,filt);
             % normalize
@@ -13149,7 +13152,25 @@ for mouse = 1:mouseNum
             norm = fig./figMax;
             % multiply I by fig1 filter 
             figMask = repmat(norm,1,1,size(I,3));
-            figfilter{filt} = figMask.*I;
+            figfilter{terminals{mouse}(ccell)}{filt} = figMask.*I; 
+        
+            I2{terminals{mouse}(ccell)}{filt} = figfilter{terminals{mouse}(ccell)}{filt};
+            for frame = 1:size(I2{terminals{mouse}(ccell)}{filt},3)
+                % to only get optical flow vessels near vessel, make vessel outline mask
+                % larger 
+                radius = 4;
+                decomposition = 0;
+                se = strel('disk', radius, decomposition);               
+                vectorMask{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
+            end 
+            % apply mask to orignal image to only get vectors of interest 
+            I2{terminals{mouse}(ccell)}{filt}(~vectorMask{terminals{mouse}(ccell)}) = 0;
+        end                
+    end 
+end 
+for mouse = 1:mouseNum
+    for ccell = 8:length(terminals{mouse})  
+        for filt = 1:5
             %create a new folder per calcium ROI and filter 
             newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
             mkdir(dir2,newFolder)
@@ -13157,18 +13178,28 @@ for mouse = 1:mouseNum
             newFolder2 = sprintf('PCAfilter_%d',filt);
             mkdir(dir3,newFolder2)
             %find the upper and lower bounds of your data (per calcium ROI and filter ) 
-            maxValue = max(max(max(max(figfilter{filt}))));
-            minValue = min(min(min(min(figfilter{filt}))));
+            maxValue = max(max(max(max(figfilter{terminals{mouse}(ccell)}{filt}))));
+            minValue = min(min(min(min(figfilter{terminals{mouse}(ccell)}{filt}))));
             minMaxAbsVals = [abs(minValue),abs(maxValue)];
             maxAbVal = max(minMaxAbsVals);
-            for frame = 1:size(figfilter{filt},3)
-                figure('Visible','off');                                  
+            for frame = 1:size(figfilter{terminals{mouse}(ccell)}{filt},3)
+                % determine optical flow  
+                if frame < size(figfilter{terminals{mouse}(ccell)}{filt},3)
+                    im1 = I2{terminals{mouse}(ccell)}{filt}(:,:,frame);
+                    im2 = I2{terminals{mouse}(ccell)}{filt}(:,:,frame+1);
+                    opflow{ccell,frame} = opticalFlow(im1,im2);    
+                end 
+                % plotting code                 
+                h = figure('Visible','off');    
+                movegui(h);
+                hViewPanel = uipanel(h,'Position',[0 0 1 1],'Title','Plot of Optical Flow Vectors');
+                hPlot = axes(hViewPanel);
                 % create the % change image with the right white and black point
                 % boundaries and colormap 
                 if cMapQ == 0
-                    imagesc(figfilter{filt}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    imagesc(figfilter{terminals{mouse}(ccell)}{filt}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
                 elseif cMapQ == 1 
-                    imagesc(figfilter{filt}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    imagesc(figfilter{terminals{mouse}(ccell)}{filt}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
                 end     
                 % get the x-y coordinates of the vessel outline
                 [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
@@ -13205,6 +13236,10 @@ for mouse = 1:mouseNum
                     end 
                 end 
                 ax = gca;
+                hold on
+                if frame > 1 
+                    plot(opflow{ccell,frame-1},'DecimationFactor',[4 4],'ScaleFactor',60,'Parent',hPlot);
+                end                                
                 ax.Visible = 'off';
                 ax.FontSize = 20;
                 %save current figure to file 
@@ -13216,15 +13251,16 @@ for mouse = 1:mouseNum
 end         
 
 %}
-%% STA stack compatible optical flow 
-
-
+%% STA stack compatible optical flow (works with non-PCA filtered STA stacks)
+%{
 mouse = 1;
 vectorMask = cell(1,length(BWstacks));
 opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
 I = cell(1,length(BWstacks));
+I2 = cell(1,length(BWstacks));
 for ccell = 1:length(terminals{mouse})
     I{terminals{mouse}(ccell)} = RightChan{terminals{mouse}(ccell)};
+    I2{terminals{mouse}(ccell)} = RightChan{terminals{mouse}(ccell)}; 
     for frame = 1:size(BWstacks{terminals{mouse}(ccell)},3)
         % to only get optical flow vessels near vessel, make vessel outline mask
         % larger 
@@ -13236,25 +13272,87 @@ for ccell = 1:length(terminals{mouse})
     % apply mask to orignal image to only get vectors of interest 
     I{terminals{mouse}(ccell)}(~vectorMask{terminals{mouse}(ccell)}) = 0;
 end         
-
-for ccell = 1%:length(terminals{mouse})
-    for frame = 1%:size(BWstacks{terminals{mouse}(ccell)},3)-1      
+for ccell = 1:length(terminals{mouse})
+    % get the x-y coordinates of the Ca ROI         
+    clearvars CAy CAx
+    if ismember("ROIorders", variableInfo) == 1 % returns true
+        [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+    elseif ismember("ROIorders", variableInfo) == 0 % returns true
+        [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+    end        
+    %create a new folder per calcium ROI
+    newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
+    mkdir(dir2,newFolder)
+    %find the upper and lower bounds of your data (per calcium ROI and filter ) 
+    maxValue = max(max(max(max(I{terminals{mouse}(ccell)}))));
+    minValue = min(min(min(min(I{terminals{mouse}(ccell)}))));
+    minMaxAbsVals = [abs(minValue),abs(maxValue)];
+    maxAbVal = max(minMaxAbsVals);           
+    for frame = 1:size(BWstacks{terminals{mouse}(ccell)},3)-1  
         % determine optical flow  
         im1 = I{terminals{mouse}(ccell)}(:,:,frame);
         im2 = I{terminals{mouse}(ccell)}(:,:,frame+1);
         opflow{ccell,frame} = opticalFlow(im1,im2);
-        h = figure;
+        % plotting code 
+        h = figure('Visible','off');  
         movegui(h);
         hViewPanel = uipanel(h,'Position',[0 0 1 1],'Title','Plot of Optical Flow Vectors');
         hPlot = axes(hViewPanel);
-        imshow(I{terminals{mouse}(ccell)}(:,:,frame))
+        % create the % change image with the right white and black point
+        % boundaries and colormap 
+        if cMapQ == 0
+            imagesc(I2{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+        elseif cMapQ == 1 
+            imagesc(I2{terminals{mouse}(ccell)}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+        end     
+        % get the x-y coordinates of the vessel outline
+        [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
+        % plot the vessel outline over the % change image 
+        hold on;
+        scatter(xf,yf,'white','.');
+        if cropQ == 1
+            axonPixSize = 500;
+        elseif cropQ == 0
+            axonPixSize = 100;
+        end 
+        % plot where the axon is located in gray 
+        scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
+        % plot the GCaMP signal marker in the right frame 
+        if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+            hold on;
+            scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
+            %get border coordinates 
+            colLen = size(I{terminals{mouse}(ccell)},2);
+            rowLen = size(I{terminals{mouse}(ccell)},1);
+            edg1_x = repelem(1,rowLen);
+            edg1_y = 1:rowLen;
+            edg2_x = repelem(colLen,rowLen);
+            edg2_y = 1:rowLen;
+            edg3_x = 1:colLen;
+            edg3_y = repelem(1,colLen);
+            edg4_x = 1:colLen;
+            edg4_y = repelem(rowLen,colLen);
+            edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+            edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+            hold on;
+            if cropQ == 1 
+                scatter(edg_x,edg_y,100,'blue','filled','square');    
+            end 
+        end 
+        ax = gca;
         hold on
-        plot(opflow{ccell,frame},'DecimationFactor',[3 3],'ScaleFactor',60,'Parent',hPlot);
-        hold off     
+        if frame > 1 
+            plot(opflow{ccell,frame-1},'DecimationFactor',[4 4],'ScaleFactor',60,'Parent',hPlot);
+        end 
+        hold off  
+        ax.Visible = 'off';
+        ax.FontSize = 20;
+        %save current figure to file 
+        filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+        saveas(gca,[filename '.png'])        
     end 
 end 
-
-
+%}
 %%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
 %{
