@@ -10444,7 +10444,7 @@ end
 
 %}
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
-% original code 
+% original code - does % change 
 %{
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
@@ -12465,794 +12465,9 @@ if CaFrameQ == 1
     end 
 end 
 %}
-%% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
-% z scores the entire stack before sorting into windows for averaging 
-% option to high pass filter the video 
-% this saves out PCA filtered data with optical flow pixel vectors plotted 
+%% saves out STA stack compatible optical flow 
 %{
-% sort red and green channel stacks based on ca peak location 
-for mouse = 1:mouseNum
-    dir1 = dataDir{mouse};   
-    % find peaks and then plot where they are in the entire TS 
-    stdTrace = cell(1,length(vidList{mouse})); 
-    sigPeaks = cell(1,length(vidList{mouse}));
-    sigLocs = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        for ccell = 1:length(terminals{mouse})
-            %find the peaks 
-    %         figure;
-    %         ax=gca;
-    %         hold all
-            [peaks, locs] = findpeaks(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
-            %find the sig peaks (peaks above 2 standard deviations from mean) 
-            stdTrace{vid}{terminals{mouse}(ccell)} = std(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});  
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
-                    %if the peaks fall within the time windows used for the BBB
-                    %trace examples in the DOD figure 
-    %                 if locs(loc) > 197*FPSstack{mouse} && locs(loc) < 206.5*FPSstack{mouse} || locs(loc) > 256*FPSstack{mouse} && locs(loc) < 265.5*FPSstack{mouse} || locs(loc) > 509*FPSstack{mouse} && locs(loc) < 518.5*FPSstack{mouse}
-                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = gpuArray(peaks(loc));
-                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = gpuArray(locs(loc));
-    %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-                        count = count + 1;
-    %                 end 
-                end 
-            end 
-            % below is plotting code 
-            %{
-            Frames = size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-    %         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*50:Frames_post_stim_start)/FPSstack{mouse})+51);
-            sec_TimeVals = floor(((0:2:(Frames/FPSstack{mouse}))));
-            min_TimeVals = round(sec_TimeVals/60,2)+7.03;
-            FrameVals = floor((0:(FPSstack{mouse}*2):Frames)); 
-
-            %smooth the calcium data 
-            [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals{mouse}(ccell)},(2/FPSstack{mouse}),FPSstack{mouse});
-
-    %         plot((cDataFullTrace{vid}{terminals{mouse}(ccell)})+150,'b','LineWidth',3)
-    %         plot(ScDataFullTrace+150,'b','LineWidth',3)
-            plot(bDataFullTrace{vid},'r','LineWidth',3)
-
-    %         for trial = 1:size(state_start_f{mouse}{vid},1)
-    %             if TrialTypes{mouse}{vid}(trial,2) == 1
-    %                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-    %                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-    %             elseif TrialTypes{mouse}{vid}(trial,2) == 2
-    %                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-    %                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-    %             end 
-    %         end 
-
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
-                    sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
-                    sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
-                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-                    count = count + 1;
-                end 
-            end 
-
-    %         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
-
-    % 
-            ax.XTick = FrameVals;
-            ax.XTickLabel = sec_TimeVals;
-            ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xLimStart = 256*FPSstack{mouse};
-            xLimEnd = 266.5*FPSstack{mouse}; 
-            xlim([0 size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2)])
-            xlim([xLimStart xLimEnd])
-            ylim([-23 80])
-            xlabel('time (sec)','FontName','Times')
-    %         if smoothQ ==  1
-    %             title({sprintf('terminal #%d data',terminals{mouse}(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
-    %         elseif smoothQ == 0 
-    %             title(sprintf('terminal #%d raw data',terminals{mouse}(ccell)))
-    %         end    
-               %}
-        end 
-    end 
-end 
-clearvars peaks locs 
-% crop the imaging data if you want to; better to do this up here to
-% maximize computational speed ~ 
-rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
-cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
-% ask user where to crop image     
-if cropQ == 1 
-    %select the correct channel to view for cropping 
-    if rightChan == 0     
-        hold off;
-        cropIm = nanmean(greenStacks{1},3);
-    elseif rightChan == 1
-        hold off; 
-        cropIm = nanmean(redStacks{1},3);
-    end         
-    [~, rect] = imcrop(cropIm);
-end  
-% crop if necessary  
-greenStacks2 = cell(1,length(vidList{mouse}));
-redStacks2 = cell(1,length(vidList{mouse}));
-if cropQ == 1 
-    for vid = 1:length(vidList{mouse})
-        for frame = 1:size(greenStacks{vid},3)
-            cropdIm = imcrop(greenStacks{vid}(:,:,frame),rect);
-            greenStacks2{vid}(:,:,frame) = cropdIm;
-        end 
-    end 
-    
-    for vid = 1:length(vidList{mouse})
-        for frame = 1:size(greenStacks{vid},3)
-            cropdIm = imcrop(redStacks{vid}(:,:,frame),rect);
-            redStacks2{vid}(:,:,frame) = cropdIm;
-        end 
-    end 
-elseif cropQ == 0
-    greenStacks2 = greenStacks;
-    redStacks2 = redStacks;
-end  
-clearvars greenStacks redStacks
-greenStacks = greenStacks2;
-redStacks = redStacks2;
-clearvars greenStacks2 redStacks2
-% high pass filter the videos if you want 
-highPassQ = input("Input 1 if you want to high pass filter the videos. Input 0 otherwise. ");
-if highPassQ == 1 
-    hpfGreen = cell(1,length(vidList{mouse}));
-    hpfRed = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        %get sliding baseline 
-        [greenSlidingBL]=slidingBaselineVid(greenStacks{vid},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value    
-        [redSlidingBL]=slidingBaselineVid(redStacks{vid},floor((FPS)*10),0.5);
-        %subtract sliding baseline from F
-        hpfGreen{vid} = greenStacks{vid}-greenSlidingBL;
-        hpfRed{vid} = redStacks{vid}-redSlidingBL;       
-    end 
-    clearvars greenSlidingBL redSlidingBL
-elseif highPassQ == 0 
-    hpfGreen = greenStacks;
-    hpfRed = redStacks;
-end 
-% combine the vids to get z score of whole experiment
-frameLens = zeros(1,length(vidList{mouse}));
-for vid = 1:length(vidList{mouse})
-    if vid == 1 
-        frameLen = size(greenStacks{vid},3);
-    elseif vid > 1 
-        frameLen = frameLen + size(greenStacks{vid},3);
-    end 
-    frameLens(vid) = size(greenStacks{vid},3);
-end 
-combGreenStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
-combRedStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
-for vid = 1:length(vidList{mouse})
-    if vid == 1 
-        count = size(greenStacks{vid},3);
-    end 
-    for frame = 1:size(greenStacks{vid},3) 
-        if vid == 1 
-            combGreenStack(:,:,frame) = hpfGreen{vid}(:,:,frame);
-            combRedStack(:,:,frame) = hpfRed{vid}(:,:,frame);
-        elseif vid > 1 
-            combGreenStack(:,:,count+1) = hpfGreen{vid}(:,:,frame);
-            combRedStack(:,:,count+1) = hpfRed{vid}(:,:,frame);
-            count = count + 1;                                      
-        end 
-    end     
-end 
-% z score the videos 
-zGreenStack = zscore(combGreenStack,0,3);
-zRedStack = zscore(combRedStack,0,3);
-clearvars combGreenStack combRedStack
-% resort videos
-szGreenStack = cell(1,length(vidList{mouse}));
-szRedStack = cell(1,length(vidList{mouse}));
-count = 1;
-for vid = 1:length(vidList{mouse})
-    for frame = 1:frameLens(vid)       
-        szGreenStack{vid}(:,:,frame) = zGreenStack(:,:,count); 
-        szRedStack{vid}(:,:,frame) = zRedStack(:,:,count); 
-        count = count + 1;
-    end 
-end 
-clearvars zGreenStack zRedStack
-% sort data 
-windSize = input('How big should the window be around Ca peak in seconds? '); %24
-% terminals = terminals{1};
-if tTypeQ == 0 
-    sortedGreenStacks = cell(1,length(vidList{mouse}));
-    sortedRedStacks = cell(1,length(vidList{mouse}));
-    if rightChan == 0     
-        VesSortedGreenStacks = cell(1,length(vidList{mouse}));
-    elseif rightChan == 1
-        VesSortedRedStacks = cell(1,length(vidList{mouse}));
-    end    
-    for vid = 1:length(vidList{mouse})
-        for ccell = 1:length(terminals{mouse})
-            for peak = 1:length(sigLocs{vid}{terminals{mouse}(ccell)})            
-                if sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
-                    start = sigLocs{vid}{terminals{mouse}(ccell)}(peak)-floor((windSize/2)*FPSstack{mouse});
-                    stop = sigLocs{vid}{terminals{mouse}(ccell)}(peak)+floor((windSize/2)*FPSstack{mouse});                
-                    if start == 0 
-                        start = 1 ;
-                        stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                    end                
-                    sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = szGreenStack{vid}(:,:,start:stop);
-                    sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = szRedStack{vid}(:,:,start:stop);
-                    if rightChan == 0     
-                        VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = greenStacks{vid}(:,:,start:stop);
-                    elseif rightChan == 1
-                        VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = redStacks{vid}(:,:,start:stop);
-                    end    
-                end 
-            end 
-        end 
-    end 
-elseif tTypeQ == 1
-    %tTypeSigLocs{vid}{CaROI}{1} = blue light
-    %tTypeSigLocs{vid}{CaROI}{2} = red light
-    %tTypeSigLocs{vid}{CaROI}{3} = ISI
-    sortedGreenStacks = cell(1,length(vidList{mouse}));
-    sortedRedStacks = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})  
-        for ccell = 1:length(terminals{mouse})   
-            for per = 1:3 
-                for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                    
-                    if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                                     
-                        start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
-                        stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}); 
-                        if start == 0 
-                            start = 1 ;
-                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                        end                
-                        sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szGreenStack{vid}(:,:,start:stop);
-                        sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szRedStack{vid}(:,:,start:stop);
-                    end 
-                end 
-            end 
-        end 
-    end   
-end 
-clearvars greenStacks redStacks start stop sigLocs sigPeaks 
-% average calcium peak aligned traces across videos 
-if tTypeQ == 0 
-    greenStackArray2 = cell(1,length(vidList{mouse}));
-    avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
-    avGreenStack = cell(1,length(sortedGreenStacks{1}));
-    if rightChan == 0     
-        VesGreenStackArray2 = cell(1,length(vidList{mouse})); 
-        VesAvGreenStack2 = cell(1,length(vidList{mouse})); 
-        VesAvGreenStack = cell(1,length(vidList{mouse}));
-    end  
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            count = 1;
-            for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)},2)  
-                if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                    greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
-                    if rightChan == 0
-                        VesGreenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
-                    end           
-                    count = count + 1;
-                end 
-            end
-        end 
-    end 
-    clearvars sortedGreenStacks VesSortedGreenStacks
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
-            if rightChan == 0
-                VesAvGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(VesGreenStackArray2{vid}{terminals{mouse}(ccell)},4);
-            end 
-        end 
-    end 
-    clearvars greenStackArray2 VesGreenStackArray2
-    for ccell = 1:length(terminals{mouse})
-        avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
-        if rightChan == 0
-            VesAvGreenStack{terminals{mouse}(ccell)} = nanmean(VesAvGreenStack2{terminals{mouse}(ccell)},4);
-        end 
-    end 
-    clearvars avGreenStack2 VesAvGreenStack2
-    redStackArray2 = cell(1,length(vidList{mouse}));
-    avRedStack2 = cell(1,length(sortedRedStacks{1}));
-    avRedStack = cell(1,length(sortedRedStacks{1}));
-    if rightChan == 1     
-        VesRedStackArray2 = cell(1,length(vidList{mouse})); 
-        VesAvRedStack2 = cell(1,length(vidList{mouse})); 
-        VesAvRedStack = cell(1,length(vidList{mouse}));
-    end  
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            count = 1;
-            for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
-                if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                    redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                    if rightChan == 1
-                        VesRedStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                    end 
-                    count = count + 1;
-                end 
-            end
-        end 
-    end   
-    clearvars sortedRedStacks VesSortedRedStacks
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
-            if rightChan == 1
-                VesAvRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(VesRedStackArray2{vid}{terminals{mouse}(ccell)},4);
-            end 
-        end 
-    end       
-    clearvars redStackArray2 VesRedStackArray2
-    for ccell = 1:length(terminals{mouse})
-        avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
-        if rightChan == 1
-            VesAvRedStack{terminals{mouse}(ccell)} = nanmean(VesAvRedStack2{terminals{mouse}(ccell)},4);
-        end 
-    end       
-    clearvars avRedStack2 VesAvRedStack2    
-elseif tTypeQ == 1
-    per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
-    greenStackArray2 = cell(1,length(vidList{mouse}));
-    redStackArray2 = cell(1,length(vidList{mouse}));
-    avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
-    avRedStack2 = cell(1,length(sortedGreenStacks{1}));
-    avGreenStack = cell(1,length(sortedGreenStacks{1}));
-    avRedStack = cell(1,length(sortedGreenStacks{1}));
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            count = 1;
-            for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per},2)  
-                if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak}) == 0
-                    greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
-                    redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
-                    count = count + 1;
-                end 
-            end
-            avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
-            avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
-        end 
-        avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
-        avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
-    end 
-%     clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
-end 
-% don't normalize because it's z-scored 
-NgreenStackAv = avGreenStack;
-NredStackAv = avRedStack; 
-%{
-% normalize to some baseline point 
-changePt = floor(size(avGreenStack{terminals{mouse}(ccell)},3)/2)-2; 
-normTime = input("How many seconds before the calcium peak do you want to baseline to? ");
-BLstart = changePt - floor(normTime*FPSstack{mouse});
-NgreenStackAv = cell(1,length(avGreenStack));
-NredStackAv = cell(1,length(avGreenStack));
-% normalize to baseline period 
-for ccell = 1:length(terminals{mouse})
-    NgreenStackAv{terminals{mouse}(ccell)} = ((avGreenStack{terminals{mouse}(ccell)}./ (nanmean(avGreenStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
-    NredStackAv{terminals{mouse}(ccell)} = ((avRedStack{terminals{mouse}(ccell)}./ (nanmean(avRedStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
-end 
-%}
-%select the correct channel for vessel segmentation  
-if rightChan == 0     
-    vesChan = VesAvGreenStack;
-elseif rightChan == 1
-    vesChan = VesAvRedStack;
-end    
-clearvars avGreenStack avRedStack VesAvGreenStack 
-%temporal smoothing option
-smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
-if smoothQ == 0 
-    SNgreenStackAv = NgreenStackAv;
-    SNredStackAv = NredStackAv;
-    SNvesChan = vesChan; 
-elseif smoothQ == 1
-    filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
-    filter_rate = FPSstack{mouse}*filtTime; 
-    tempFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
-    if tempFiltChanQ == 0
-        SNredStackAv = cell(1,length(NgreenStackAv));
-        SNgreenStackAv = cell(1,length(NgreenStackAv));
-%         SNvesChan = cell(1,length(NgreenStackAv)); 
-        for ccell = 1:length(terminals{mouse})
-            SNredStackAv{terminals{mouse}(ccell)} = smoothdata(NredStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
-            SNgreenStackAv{terminals{mouse}(ccell)} = smoothdata(NgreenStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
-%             SNvesChan{terminals{mouse}(ccell)} = smoothdata(vesChan{terminals{mouse}(ccell)},3,'movmean',filter_rate);
-        end 
-    elseif tempFiltChanQ == 1
-        tempSmoothChanQ = input('Input 0 to temporally smooth green channel. Input 1 for red channel. ');
-        if tempSmoothChanQ == 0
-            SNredStackAv = NredStackAv;
-            SNgreenStackAv = cell(1,length(NgreenStackAv));
-            for ccell = 1:length(terminals{mouse})
-                SNgreenStackAv{terminals{mouse}(ccell)} = smoothdata(NgreenStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
-            end 
-        elseif tempSmoothChanQ == 1
-            SNredStackAv = cell(1,length(NgreenStackAv));
-            SNgreenStackAv = NgreenStackAv;
-            for ccell = 1:length(terminals{mouse})
-                SNredStackAv{terminals{mouse}(ccell)} = smoothdata(NredStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);               
-            end 
-        end 
-    end 
-end 
-clearvars NgreenStackAv NredStackAv
-%spatial smoothing option
-spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
-if spatSmoothQ == 1 
-    spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
-    spatFiltChanQ= input('Input 0 to spatially smooth both channels. Input 1 otherwise. ');
-    if spatFiltChanQ == 0 % if you want to spatially smooth both channels 
-        redIn = SNredStackAv; 
-        greenIn = SNgreenStackAv;
-%         ves = SNvesChan;
-        clearvars SNredStackAv SNgreenStackAv SNvesChan
-        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
-            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
-                for ccell = 1:length(terminals{mouse})
-                    SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
-                    SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
-%                     SNvesChan{terminals{mouse}(ccell)} = imgaussfilt(ves{terminals{mouse}(ccell)},sigma);
-                end 
-        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
-            % create your kernal for smoothing by convolution 
-            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
-            K = 0.125*ones(kernalSize);
-                for ccell = 1:length(terminals{mouse})
-                    SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
-                    SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
-                end 
-        end 
-    elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
-        spatSmoothChanQ = input('Input 0 to spatially smooth the green channel. Input 1 for the red channel. ');
-        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
-            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
-            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
-                greenIn = SNgreenStackAv;
-                clearvars SNgreenStackAv
-                for ccell = 1:length(terminals{mouse})
-                    SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
-                end 
-            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
-                redIn = SNredStackAv; 
-                clearvars SNredStackAv 
-                for ccell = 1:length(terminals{mouse})
-                    SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
-                end 
-            end        
-        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
-            % create your kernal for smoothing by convolution 
-            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
-            K = 0.125*ones(kernalSize);
-            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
-                greenIn = SNgreenStackAv;
-                clearvars SNgreenStackAv
-                for ccell = 1:length(terminals{mouse})
-                    SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
-                end 
-            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
-                redIn = SNredStackAv; 
-                clearvars SNredStackAv 
-                for ccell = 1:length(terminals{mouse})
-                    SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
-                end 
-            end                          
-        end 
-    end 
-end 
-clearvars redIn greenIn ves
-% black out the pixels that are part of calcium ROIs 
-blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
-if blackOutCaROIQ == 1         
-    CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
-    cd(CaROImaskDir);
-    CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
-    CaROImaskMat = matfile(CaROImaskFileName); 
-    CaROImasks = CaROImaskMat.CaROImasks; 
-    % check to see if ROIorders exists in the matfile 
-    variableInfo = who(CaROImaskMat);
-    if ismember("ROIorders", variableInfo) == 1 % returns true 
-        ROIorders = CaROImaskMat.ROIorders;                
-    end   
-    % crop if necessary 
-    if cropQ == 1 
-        if ismember("ROIorders", variableInfo) == 1 % returns true 
-            ROIorders2 = cell(1,length(ROIorders));
-            for z = 1:length(ROIorders)
-                cropdIm = imcrop(ROIorders{z},rect);
-                ROIorders2{z} = cropdIm;
-            end     
-        end 
-        CaROImasks2 = cell(1,length(CaROImasks));
-        for z = 1:length(CaROImasks)
-            cropdIm = imcrop(CaROImasks{z},rect);
-            CaROImasks2{z} = cropdIm;
-        end              
-        clearvars CaROImasks; CaROImasks = CaROImasks2; clearvars CaROImasks2 
-        if ismember("ROIorders", variableInfo) == 1 % returns true 
-            clearvars ROIorders; ROIorders = ROIorders2; clearvars ROIorders2
-        end 
-    end 
-    % combine Ca ROIs from different planes in Z into one plane 
-    numZplanes = input('How many planes in Z are there? ');
-    if numZplanes > 1 
-        combo = cell(1,numZplanes-1);
-        combo2 = cell(1,numZplanes-1);
-        for it = 1:numZplanes-1
-            if it == 1 
-                combo{it} = or(CaROImasks{1},CaROImasks{2});
-                if ismember("ROIorders", variableInfo) == 1 % returns true
-                    combo2{it} = or(ROIorders{1},ROIorders{2});
-                end 
-            elseif it > 1
-                combo{it} = or(combo{it-1},CaROImasks{it+1});
-                if ismember("ROIorders", variableInfo) == 1 % returns true
-                    combo2{it} = or(combo2{it-1},ROIorders{it+1});
-                end 
-            end 
-        end      
-        ROIorders = combo2;
-    elseif numZplanes == 1 
-        combo = CaROImasks;       
-    end    
-    %make your combined Ca ROI mask the right size for applying to a 3D
-    %arrray 
-    ind = length(combo);
-    ThreeDCaMask = logical(repmat(combo{ind},1,1,size(SNredStackAv{terminals{mouse}(ccell)},3)));
-    %apply new mask to the right channel 
-    % this is defined above: rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
-    if rightChan == 0     
-        RightChan = SNgreenStackAv;
-        otherChan = SNredStackAv;
-    elseif rightChan == 1
-        RightChan = SNredStackAv;
-        otherChan = SNgreenStackAv;
-    end     
-    for ccell = 1:length(terminals{mouse})
-        RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;        
-    end 
-elseif blackOutCaROIQ == 0          
-    if rightChan == 0     
-        RightChan = SNgreenStackAv;
-        otherChan = SNredStackAv;
-    elseif rightChan == 1
-        RightChan = SNredStackAv;
-        otherChan = SNgreenStackAv;
-    end   
-end 
-clearvars SNgreenStackAv SNredStackAv
-AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
-if AVQ == 0 
-    % create outline of vessel to overlay the %change BBB perm stack 
-    segmentVessel = 1;
-    while segmentVessel == 1 
-        % apply Ca ROI mask to the appropriate channel to black out these
-        % pixels 
-%         for ccell = 1:length(terminals{mouse})
-%             vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
-%         end 
-        %segment the vessel (small sample of the data) 
-        CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
-        imageSegmenter(mean(vesChan{CaROI},3))
-        continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
-        while continu == 1 
-            BWstacks = cell(1,length(vesChan));
-            BW_perim = cell(1,length(vesChan));
-            segOverlays = cell(1,length(vesChan));    
-            for ccell = 1:length(terminals{mouse})
-                for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
-                    BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
-                    %get the segmentation boundaries 
-                    BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
-                    %overlay segmentation boundaries on data
-                    segOverlays{terminals{mouse}(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals{mouse}(ccell)}(:,:,frame)), BW_perim{terminals{mouse}(ccell)}(:,:,frame), [.3 1 .3]);   
-                end   
-            end 
-            continu = 0;
-        end 
-        %play segmentation boundaries over images 
-        implay(segOverlays{CaROI})
-        %ask about segmentation quality 
-        segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-        if segmentVessel == 1
-            clearvars BWthreshold BWopenRadius BW se boundaries
-        end 
-    end
-end
-clearvars segOverlays 
-cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
-if cMapQ == 0
-    % Create colormap that is green for positive, red for negative,
-    % and a chunk inthe middle that is black.
-%     greenColorMap = [zeros(1, 156), linspace(0, 1, 100)];
-%     redColorMap = [linspace(1, 0, 100), zeros(1, 156)];
-    % these are the original colors 
-    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
-    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
-    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
-elseif cMapQ == 1
-    % Create colormap that is green at max and black at min
-    % this is the original green colorbar 
-%     greenColorMap = linspace(0, 1, 256);
-    % green colorbar with less green
-    greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
-%     % steeper green colorbar (SF-57)
-%     greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
-    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
-
-%     % steeper green colorbar (SF-56)
-%     greenColorMap = [linspace(0, 1, 110),ones(1,146)];
-%     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
-end 
-% save the other channel first to ensure that all Ca ROIs show an average
-%peak in the same frame 
-dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
-dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
-% CaROItimingCheckQ = input('Do you need to save the Ca data? Input 1 for yes. 0 for no. ');
-% if CaROItimingCheckQ == 1 
-%     for ccell = 1:length(terminals{mouse})
-%         %create a new folder per calcium ROI 
-%         newFolder = sprintf('CaROI_%d_calciumSignal',terminals{mouse}(ccell));
-%         mkdir(dir2,newFolder)
-%          for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)    
-%             figure('Visible','off');     
-%             % the color lims below work great for 56 and 57, but not 58
-%             %imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame),[3,5]) 
-%             imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame))
-%             %save current figure to file 
-%             filename = sprintf('%s/CaROI_%d_calciumSignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
-%             saveas(gca,[filename '.png'])
-%          end 
-%     end 
-% end 
-
-%% use PCA to find BBB plumes (compatible with STA stack code) also plots pixel vectors 
-
 CaEventFrame = input('What frame did the Ca events happen in? ');
-vectorMask = cell(1,length(BWstacks));
-opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
-I2 = cell(1,length(BWstacks));
-for mouse = 1:mouseNum
-    figfilter = cell(1,length(BWstacks));
-    for ccell = 8:length(terminals{mouse})  
-        % get the x-y coordinates of the Ca ROI         
-        clearvars CAy CAx
-        if ismember("ROIorders", variableInfo) == 1 % returns true
-            [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
-        elseif ismember("ROIorders", variableInfo) == 0 % returns true
-            [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
-        end         
-        % do the pca and filter the data using PCA filters 
-        I = RightChan{terminals{mouse}(ccell)}; % 
-%         I = SNvesChan{terminals{mouse}(ccell)}; % I tried to
-%         look at the non-z scored, but smoothed raw data and that wasn't
-%         easy to see anyways. best bet is the z-scored data alone 
-        % reshape data so that each row = observations = frames and col =
-        % components = pixels 
-        X = reshape(I,size(I,1)*size(I,2),size(I,3));
-        % do the pca 
-        [coeff, score, latent, tsquared, explained,~] = pca(X,'Economy',false);                         
-        % Multiply the original data by the principal component vectors to get the
-        % projections of the original data on the principal component vector space.
-        Itransformed = X*coeff;
-        Ipc = reshape(Itransformed,size(I,1),size(I,2),size(I,3));        
-        for filt = 1:5
-            fig = Ipc(:,:,filt);
-            % normalize
-            figMax = max(max(Ipc(:,:,filt)));
-            norm = fig./figMax;
-            % multiply I by fig1 filter 
-            figMask = repmat(norm,1,1,size(I,3));
-            figfilter{terminals{mouse}(ccell)}{filt} = figMask.*I; 
-        
-            I2{terminals{mouse}(ccell)}{filt} = figfilter{terminals{mouse}(ccell)}{filt};
-            for frame = 1:size(I2{terminals{mouse}(ccell)}{filt},3)
-                % to only get optical flow vessels near vessel, make vessel outline mask
-                % larger 
-                radius = 4;
-                decomposition = 0;
-                se = strel('disk', radius, decomposition);               
-                vectorMask{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
-            end 
-            % apply mask to orignal image to only get vectors of interest 
-            I2{terminals{mouse}(ccell)}{filt}(~vectorMask{terminals{mouse}(ccell)}) = 0;
-        end                
-    end 
-end 
-for mouse = 1:mouseNum
-    for ccell = 8:length(terminals{mouse})  
-        for filt = 1:5
-            %create a new folder per calcium ROI and filter 
-            newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
-            mkdir(dir2,newFolder)
-            dir3 = append(dir2,'/',newFolder);
-            newFolder2 = sprintf('PCAfilter_%d',filt);
-            mkdir(dir3,newFolder2)
-            %find the upper and lower bounds of your data (per calcium ROI and filter ) 
-            maxValue = max(max(max(max(figfilter{terminals{mouse}(ccell)}{filt}))));
-            minValue = min(min(min(min(figfilter{terminals{mouse}(ccell)}{filt}))));
-            minMaxAbsVals = [abs(minValue),abs(maxValue)];
-            maxAbVal = max(minMaxAbsVals);
-            for frame = 1:size(figfilter{terminals{mouse}(ccell)}{filt},3)
-                % determine optical flow  
-                if frame < size(figfilter{terminals{mouse}(ccell)}{filt},3)
-                    im1 = I2{terminals{mouse}(ccell)}{filt}(:,:,frame);
-                    im2 = I2{terminals{mouse}(ccell)}{filt}(:,:,frame+1);
-                    opflow{ccell,frame} = opticalFlow(im1,im2);    
-                end 
-                % plotting code                 
-                h = figure('Visible','off');    
-                movegui(h);
-                hViewPanel = uipanel(h,'Position',[0 0 1 1],'Title','Plot of Optical Flow Vectors');
-                hPlot = axes(hViewPanel);
-                % create the % change image with the right white and black point
-                % boundaries and colormap 
-                if cMapQ == 0
-                    imagesc(figfilter{terminals{mouse}(ccell)}{filt}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
-                elseif cMapQ == 1 
-                    imagesc(figfilter{terminals{mouse}(ccell)}{filt}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
-                end     
-                % get the x-y coordinates of the vessel outline
-                [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
-                % plot the vessel outline over the % change image 
-                hold on;
-                scatter(xf,yf,'white','.');
-                if cropQ == 1
-                    axonPixSize = 500;
-                elseif cropQ == 0
-                    axonPixSize = 100;
-                end 
-                % plot where the axon is located in gray 
-                scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
-                % plot the GCaMP signal marker in the right frame 
-                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
-                    hold on;
-                    scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
-                    %get border coordinates 
-                    colLen = size(RightChan{terminals{mouse}(ccell)},2);
-                    rowLen = size(RightChan{terminals{mouse}(ccell)},1);
-                    edg1_x = repelem(1,rowLen);
-                    edg1_y = 1:rowLen;
-                    edg2_x = repelem(colLen,rowLen);
-                    edg2_y = 1:rowLen;
-                    edg3_x = 1:colLen;
-                    edg3_y = repelem(1,colLen);
-                    edg4_x = 1:colLen;
-                    edg4_y = repelem(rowLen,colLen);
-                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
-                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
-                    hold on;
-                    if cropQ == 1 
-                        scatter(edg_x,edg_y,100,'blue','filled','square');    
-                    end 
-                end 
-                ax = gca;
-                hold on
-                if frame > 1 
-                    plot(opflow{ccell,frame-1},'DecimationFactor',[4 4],'ScaleFactor',60,'Parent',hPlot);
-                end                                
-                ax.Visible = 'off';
-                ax.FontSize = 20;
-                %save current figure to file 
-                filename = sprintf('%s/CaROI_%d_BBBsignal/PCAfilter_%d/CaROI_%d_PCAfilter_%d_frame%d',dir2,terminals{mouse}(ccell),filt,terminals{mouse}(ccell),filt,frame);
-                saveas(gca,[filename '.png'])
-            end             
-        end                           
-    end 
-end         
-
-%}
-%% STA stack compatible optical flow (works with non-PCA filtered STA stacks)
-%{
 mouse = 1;
 vectorMask = cell(1,length(BWstacks));
 opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
@@ -13352,6 +12567,142 @@ for ccell = 1:length(terminals{mouse})
         saveas(gca,[filename '.png'])        
     end 
 end 
+%}
+%% saves out STA stack compatible optical flow with PCA filtering 
+
+CaEventFrame = input('What frame did the Ca events happen in? ');
+vectorMask = cell(1,length(BWstacks));
+opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
+I2 = cell(1,length(BWstacks));
+for mouse = 1:mouseNum
+    figfilter = cell(1,length(BWstacks));
+    for ccell = 1:length(terminals{mouse})         
+        % do the pca and filter the data using PCA filters 
+        I = RightChan{terminals{mouse}(ccell)}; % 
+%         I = SNvesChan{terminals{mouse}(ccell)}; % I tried to
+%         look at the non-z scored, but smoothed raw data and that wasn't
+%         easy to see anyways. best bet is the z-scored data alone 
+        % reshape data so that each row = observations = frames and col =
+        % components = pixels 
+        X = reshape(I,size(I,1)*size(I,2),size(I,3));
+        % do the pca 
+        [coeff, score, latent, tsquared, explained,~] = pca(X,'Economy',false);                         
+        % Multiply the original data by the principal component vectors to get the
+        % projections of the original data on the principal component vector space.
+        Itransformed = X*coeff;
+        Ipc = reshape(Itransformed,size(I,1),size(I,2),size(I,3));        
+        for filt = 1:5
+            fig = Ipc(:,:,filt);
+            % normalize
+            figMax = max(max(Ipc(:,:,filt)));
+            norm = fig./figMax;
+            % multiply I by fig1 filter 
+            figMask = repmat(norm,1,1,size(I,3));
+            figfilter{terminals{mouse}(ccell)}{filt} = figMask.*I; 
+        
+            I2{terminals{mouse}(ccell)}{filt} = figfilter{terminals{mouse}(ccell)}{filt};
+            for frame = 1:size(I2{terminals{mouse}(ccell)}{filt},3)
+                % to only get optical flow vessels near vessel, make vessel outline mask
+                % larger 
+                radius = 4;
+                decomposition = 0;
+                se = strel('disk', radius, decomposition);               
+                vectorMask{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
+            end 
+            % apply mask to orignal image to only get vectors of interest 
+            I2{terminals{mouse}(ccell)}{filt}(~vectorMask{terminals{mouse}(ccell)}) = 0;
+        end                
+    end 
+end 
+for mouse = 1:mouseNum
+    for ccell = 1:length(terminals{mouse})  
+        % get the x-y coordinates of the Ca ROI         
+        clearvars CAy CAx
+        if ismember("ROIorders", variableInfo) == 1 % returns true
+            [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+        elseif ismember("ROIorders", variableInfo) == 0 % returns true
+            [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+        end  
+        for filt = 1:5
+            %create a new folder per calcium ROI and filter 
+            newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
+            mkdir(dir2,newFolder)
+            dir3 = append(dir2,'/',newFolder);
+            newFolder2 = sprintf('PCAfilter_%d',filt);
+            mkdir(dir3,newFolder2)
+            %find the upper and lower bounds of your data (per calcium ROI and filter ) 
+            maxValue = max(max(max(max(figfilter{terminals{mouse}(ccell)}{filt}))));
+            minValue = min(min(min(min(figfilter{terminals{mouse}(ccell)}{filt}))));
+            minMaxAbsVals = [abs(minValue),abs(maxValue)];
+            maxAbVal = max(minMaxAbsVals);
+            for frame = 1:size(figfilter{terminals{mouse}(ccell)}{filt},3)
+                % determine optical flow  
+                if frame < size(figfilter{terminals{mouse}(ccell)}{filt},3)
+                    im1 = I2{terminals{mouse}(ccell)}{filt}(:,:,frame);
+                    im2 = I2{terminals{mouse}(ccell)}{filt}(:,:,frame+1);
+                    opflow{ccell,frame} = opticalFlow(im1,im2);    
+                end 
+                % plotting code                 
+                h = figure('Visible','off');    
+                movegui(h);
+                hViewPanel = uipanel(h,'Position',[0 0 1 1],'Title','Plot of Optical Flow Vectors');
+                hPlot = axes(hViewPanel);
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                if cMapQ == 0
+                    imagesc(figfilter{terminals{mouse}(ccell)}{filt}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                elseif cMapQ == 1 
+                    imagesc(figfilter{terminals{mouse}(ccell)}{filt}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                end     
+                % get the x-y coordinates of the vessel outline
+                [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
+                % plot the vessel outline over the % change image 
+                hold on;
+                scatter(xf,yf,'white','.');
+                if cropQ == 1
+                    axonPixSize = 500;
+                elseif cropQ == 0
+                    axonPixSize = 100;
+                end 
+                % plot where the axon is located in gray 
+                scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
+                % plot the GCaMP signal marker in the right frame 
+                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                    hold on;
+                    scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
+                    %get border coordinates 
+                    colLen = size(RightChan{terminals{mouse}(ccell)},2);
+                    rowLen = size(RightChan{terminals{mouse}(ccell)},1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    if cropQ == 1 
+                        scatter(edg_x,edg_y,100,'blue','filled','square');    
+                    end 
+                end 
+                ax = gca;
+                hold on
+                if frame > 1 
+                    plot(opflow{ccell,frame-1},'DecimationFactor',[4 4],'ScaleFactor',60,'Parent',hPlot);
+                end                                
+                ax.Visible = 'off';
+                ax.FontSize = 20;
+                %save current figure to file 
+                filename = sprintf('%s/CaROI_%d_BBBsignal/PCAfilter_%d/CaROI_%d_PCAfilter_%d_frame%d',dir2,terminals{mouse}(ccell),filt,terminals{mouse}(ccell),filt,frame);
+                saveas(gca,[filename '.png'])
+            end             
+        end                           
+    end 
+end         
+
 %}
 %%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
