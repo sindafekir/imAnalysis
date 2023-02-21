@@ -12569,14 +12569,14 @@ for ccell = 1:length(terminals{mouse})
 end 
 %}
 %% saves out STA stack compatible optical flow with PCA filtering 
-
+%{
 CaEventFrame = input('What frame did the Ca events happen in? ');
 vectorMask = cell(1,length(BWstacks));
 opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
 I2 = cell(1,length(BWstacks));
 for mouse = 1:mouseNum
     figfilter = cell(1,length(BWstacks));
-    for ccell = 1:length(terminals{mouse})         
+    for ccell = 5:length(terminals{mouse})         
         % do the pca and filter the data using PCA filters 
         I = RightChan{terminals{mouse}(ccell)}; % 
 %         I = SNvesChan{terminals{mouse}(ccell)}; % I tried to
@@ -12615,7 +12615,7 @@ for mouse = 1:mouseNum
     end 
 end 
 for mouse = 1:mouseNum
-    for ccell = 1:length(terminals{mouse})  
+    for ccell = 5:length(terminals{mouse})  
         % get the x-y coordinates of the Ca ROI         
         clearvars CAy CAx
         if ismember("ROIorders", variableInfo) == 1 % returns true
