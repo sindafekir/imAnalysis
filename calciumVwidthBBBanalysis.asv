@@ -12930,30 +12930,31 @@ for ccell = 1:length(terminals{mouse})
                 greenSum(ccell,frame) = sum(Vid{terminals{mouse}(ccell)}(Vid{terminals{mouse}(ccell)}>0));
                 redSum(ccell,frame) = abs(sum(Vid{terminals{mouse}(ccell)}(Vid{terminals{mouse}(ccell)}<0)));
             end 
+            
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
             %determine range of color amp data  
             greenMax = max(greenSum(ccell,:)); redMax = max(redSum(ccell,:)); 
             maxVals = [greenMax,redMax]; maxVal = max(maxVals);
             greenMin = min(greenSum(ccell,:)); redMin = min(redSum(ccell,:)); 
             minVals = [greenMin,redMin]; minVal = min(minVals);
             colorRange = maxVal - minVal;                        
-            %determine plotting buffer space for color data 
+            %determine plotting buffer space for BBB data 
             colorBufferSpace = colorRange;            
-            %determine first set of plotting min and max values for color data
-            colorPlotMin = minVal - colorBufferSpace;
-            colorPlotMax = maxVal + colorBufferSpace;             
-            %determine color 0 ratio/location
-            colorZeroRatio = abs(colorPlotMin)/(colorPlotMax-colorPlotMin);            
-            %determine how much to shift the color axis so that the zeros align 
-            colorBelowZero = (colorPlotMax-colorPlotMin)*CaZeroRatio;
-            colorAboveZero = (colorPlotMax-colorPlotMin)-colorBelowZero;
+            %determine first set of plotting min and max values for BBB data
+            colorPlo
             
-       
+            BBBplotMin = min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-BBBbufferSpace;
+            BBBplotMax = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))+BBBbufferSpace;
+            %determine BBB 0 ratio/location
+            BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+            %determine how much to shift the BBB axis so that the zeros align 
+            BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+            BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+            
             %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % PICK UP HERE. FINISH PLOTTING COLOR AMPS THEN DO VELOCITY
-            % AMPS PER AXON AND AVERAGED WITH SEM 
 
 %             % replace zeros with NaNs 
 %             ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
