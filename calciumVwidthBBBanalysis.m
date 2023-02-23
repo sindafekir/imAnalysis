@@ -12783,13 +12783,15 @@ end
 %}
 %% creates STA stack compatiple (not-PCA filtered) STA plots for 
 % green and red pixel amp 
+% vector amplitude 
+%{
 Vid = RightChan; 
 regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
 cd(regImDir);
 MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
 Mat = matfile(MatFileName);                  
 sortedCdata{mouse} = Mat.sortedCdata;               
-% sort data         
+%% green and red pixel amp         
 baselineTime = normTime;  
 allCTraces3 = cell(1,mouseNum);
 sortedCdata2 = cell(1,mouseNum);
@@ -12800,10 +12802,15 @@ CTraceArray = cell(1,mouseNum);
 CI_cLow = cell(1,mouseNum);
 CI_cHigh = cell(1,mouseNum);
 AVSNCdataPeaks = cell(1,mouseNum);
-reshVid = cell(1,mouseNum);
 greenSum = zeros(length(terminals{mouse}),53);
 redSum = zeros(length(terminals{mouse}),53);
+vectorMask = cell(1,mouseNum);
 mouse = 1;
+vidQ = input('Input 0 to look at red and green sums of entire vid. Input 1 to look just near vessel. ');
+vidQ2 = input('Input 1 to black out pixels inside of the vessel. ');
+if vidQ2 == 1     
+    vidQ3 = input('Input 1 to black out out pixels that are far from the axon. ');
+end 
 % plots figure per calcium ROI 
 for ccell = 1:length(terminals{mouse}) 
     %smoothing option
@@ -12924,53 +12931,69 @@ for ccell = 1:length(terminals{mouse})
             CaPlotMin = min(AVSNCdataPeaks{mouse}{per})-CaBufferSpace;
             CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
             %determine Ca 0 ratio/location 
-            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
-            % determine green and red amplitudes per vid 
-            for frame = 1:size(Vid{terminals{mouse}(ccell)},3)               
-                greenSum(ccell,frame) = sum(Vid{terminals{mouse}(ccell)}(Vid{terminals{mouse}(ccell)}>0));
-                redSum(ccell,frame) = abs(sum(Vid{terminals{mouse}(ccell)}(Vid{terminals{mouse}(ccell)}<0)));
+            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);            
+            for frame = 1:size(I2{terminals{mouse}(ccell)},3)
+                % to only get optical flow vessels near vessel, make vessel outline mask
+                % larger 
+                radius = 4;
+                decomposition = 0;
+                se = strel('disk', radius, decomposition);               
+                vectorMask{mouse}{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
             end 
-            %determine range of color amp data  
+            % apply mask to orignal image to only get vectors of interest 
+            Vid2 = Vid;
+            Vid2{terminals{mouse}(ccell)}(~vectorMask{mouse}{terminals{mouse}(ccell)}) = 0;    
+            if vidQ == 0 
+                sumVid = Vid;
+            elseif vidQ == 1 
+                sumVid = Vid2;
+            end 
+            %black out pixels inside of vessel  
+            if vidQ2 == 1 
+                sumVid{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;
+                % black out pixels that are far from the axon 
+                if vidQ3 == 1                    
+                    if ismember("ROIorders", variableInfo) == 1 
+                        caLoc = ROIorders{1};
+                    elseif ismember("ROIorders", variableInfo) == 0 
+                        caLoc = CaROImasks{1};
+                    end
+                    caLoc(caLoc ~= terminals{mouse}(ccell)) = 0;
+                    caLoc(caLoc == terminals{mouse}(ccell)) = 1;
+                    caLoc = logical(caLoc);
+                    % make vessel outline mask
+                    radius = 6;
+                    decomposition = 0;
+                    se = strel('disk', radius, decomposition);               
+                    caLocMask = imdilate(caLoc,se);       
+                    caLocMasks = repmat(caLocMask,1,1,size(Vid{terminals{mouse}(ccell)},3));
+                    % black out pixels that are far from vessel 
+                    sumVid{terminals{mouse}(ccell)}(~caLocMasks) = 0;
+                end 
+            end 
+            % get green and red amp data 
+            for frame = 1:size(sumVid{terminals{mouse}(ccell)},3)      
+                curFrame = sumVid{terminals{mouse}(ccell)}(:,:,frame);
+                greenSum(ccell,frame) = sum(curFrame(curFrame>0));
+                redSum(ccell,frame) = abs(sum(curFrame(curFrame<0)));
+            end       
+            % determine range of color amp data  
             greenMax = max(greenSum(ccell,:)); redMax = max(redSum(ccell,:)); 
             maxVals = [greenMax,redMax]; maxVal = max(maxVals);
             greenMin = min(greenSum(ccell,:)); redMin = min(redSum(ccell,:)); 
             minVals = [greenMin,redMin]; minVal = min(minVals);
             colorRange = maxVal - minVal;                        
-            %determine plotting buffer space for color data 
+            % determine plotting buffer space for color data 
             colorBufferSpace = colorRange;            
-            %determine first set of plotting min and max values for color data
+            % determine first set of plotting min and max values for color data
             colorPlotMin = minVal - colorBufferSpace;
             colorPlotMax = maxVal + colorBufferSpace;             
-            %determine color 0 ratio/location
+            % determine color 0 ratio/location
             colorZeroRatio = abs(colorPlotMin)/(colorPlotMax-colorPlotMin);            
-            %determine how much to shift the color axis so that the zeros align 
+            % determine how much to shift the color axis so that the zeros align 
             colorBelowZero = (colorPlotMax-colorPlotMin)*CaZeroRatio;
-            colorAboveZero = (colorPlotMax-colorPlotMin)-colorBelowZero;
-            
-       
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % PICK UP HERE. FINISH PLOTTING COLOR AMPS THEN DO VELOCITY
-            % AMPS PER AXON AND AVERAGED WITH SEM 
-
-%             % replace zeros with NaNs 
-%             ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
-%             for frame = 1:size(ROIstacks{terminals{mouse}(ccell)}{BBBroi},3)                                
-%                 % convert BBB ROI frames to TS values
-%                 BBBdata{terminals{mouse}(ccell)}{BBBroi}(frame) = nanmean(nanmean(ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame)));
-%             end 
-%             
-%                             %DETERMINE 95% CI                       
-%                             SEMb = (nanstd(BBBdata{terminals{mouse}(ccell)}{BBBroi}))/(sqrt(size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1))); % Standard Error            
-%                             ts_bLow = tinv(0.025,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
-%                             ts_bHigh = tinv(0.975,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
-%                             CI_bLow{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-%                             CI_bHigh{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals 
-%                             %get average
-%                             AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
-
+            colorAboveZero = (colorPlotMax-colorPlotMin)-colorBelowZero;                  
+            % plot 
             fig = figure;
             Frames = size(x,2);
             Frames_pre_stim_start = -((Frames-1)/2); 
@@ -12997,33 +13020,443 @@ for ccell = 1:length(terminals{mouse})
             ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
             set(fig,'position', [500 100 900 800])
             alpha(0.3)
-            %add right y axis tick marks for a specific DOD figure. 
+            % add right y axis tick marks for a specific DOD figure. 
             yyaxis right 
-%             p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
+            p(1) = plot(greenSum(ccell,:),'green','LineWidth',4);
+            p(1) = plot(redSum(ccell,:),'red','LineWidth',4,'LineStyle','-');
 %                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
-            ylabel('BBB permeability percent change','FontName','Times')
-%             title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+            if vidQ == 0 
+                ylabel('Red and Green Amplitude Whole Vid','FontName','Times')
+            elseif vidQ == 1 
+                ylabel('Red and Green Amplitude Near Vessel','FontName','Times')
+            end 
+            title(sprintf('Axon %d',terminals{mouse}(ccell)))
             alpha(0.3)
 %                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
             set(gca,'YColor',[0 0 0]);   
-%                 ylim([-BBBbelowZero BBBaboveZero])                                                
+            ylim([-colorBelowZero colorAboveZero])   
+            xlim([1 53])
+            % save the plots out 
+            if vidQ == 0
+                label = sprintf('%s/Axon%d_wholeVid_redGreenAmp.tif',dir2,terminals{mouse}(ccell));
+            elseif vidQ == 1 
+                label = sprintf('%s/Axon%d_nearVessel_redGreenAmp.tif',dir2,terminals{mouse}(ccell));
+            end 
+            export_fig(label)                        
         end 
     end       
 end 
-% clearvars sortedCdata SCdataPeaks SNCdataPeaks sortedCdata2 allCTraces3 CTraces CI_cLow CI_cHigh CTraceArray AVSNCdataPeaks BBBdata
-
 % plots av figure of all calcium ROI 
-% USE CTRACEARRAY TO GET AVERAGE OF ALL CA ROIS 
+mouse = 1; 
+per = 1; 
+%DETERMINE 95% CI                       
+SEMc = (nanstd(CTraceArray{mouse}{per}))/(sqrt(size(CTraceArray{mouse}{per},1))); % Standard Error            
+ts_cLow = tinv(0.025,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
+x = 1:53;
+%get averages
+AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
+%DETERMINE 95% of green and red amps and average (across axons)                      
+SEMg = (nanstd(greenSum))/(sqrt(size(greenSum,1))); % Standard Error                 
+ts_gLow = tinv(0.025,size(greenSum,1)-1);% T-Score for 95% CI           
+ts_gHigh = tinv(0.975,size(greenSum,1)-1);% T-Score for 95% CI           
+CI_gLow = (nanmean(greenSum,1)) + (ts_gLow*SEMg);  % Confidence Intervals
+CI_gHigh = (nanmean(greenSum,1)) + (ts_gHigh*SEMg);  % Confidence Intervals 
+%get average
+AVSNGdataPeaks = nanmean(greenSum,1);  
+SEMr = (nanstd(redSum))/(sqrt(size(redSum,1))); % Standard Error                 
+ts_rLow = tinv(0.025,size(redSum,1)-1);% T-Score for 95% CI           
+ts_rHigh = tinv(0.975,size(redSum,1)-1);% T-Score for 95% CI           
+CI_rLow = (nanmean(redSum,1)) + (ts_rLow*SEMr);  % Confidence Intervals
+CI_rHigh = (nanmean(redSum,1)) + (ts_rHigh*SEMr);  % Confidence Intervals 
+%get average
+AVSNRdataPeaks = nanmean(redSum,1);  
 
+% plot 
+fig = figure;
+Frames = size(x,2);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax=gca;
+hold all
+Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
+plot(Cdata,'blue','LineWidth',4)
+CdataCIlow = CI_cLow{mouse}{per}(100:152);
+CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
+patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
+changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;   
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('time (s)','FontName','Times')
+ylabel('calcium signal percent change','FontName','Times')
+xLimStart = floor(10*FPSstack{mouse});
+xLimEnd = floor(24*FPSstack{mouse}); 
+%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
+ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+set(fig,'position', [500 100 900 800])
+alpha(0.3)
+% add right y axis tick marks for a specific DOD figure. 
+yyaxis right 
+p(1) = plot(AVSNGdataPeaks,'green','LineWidth',4);
+patch([x fliplr(x)],[CI_gLow fliplr(CI_gHigh)],'green','EdgeColor','none')
+p(1) = plot(AVSNRdataPeaks,'red','LineWidth',4,'LineStyle','-');
+patch([x fliplr(x)],[CI_rLow fliplr(CI_rHigh)],'red','EdgeColor','none')
+%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+if vidQ == 0 
+    ylabel('Red and Green Amplitude Whole Vid','FontName','Times')
+elseif vidQ == 1 
+    ylabel('Red and Green Amplitude Near Vessel','FontName','Times')
+end 
+title(sprintf('Axons Averaged'))
+alpha(0.3)
+%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+set(gca,'YColor',[0 0 0]);   
+ylim([-colorBelowZero colorAboveZero])   
+xlim([1 53])
+% save the plots out 
+if vidQ == 0
+    label = sprintf('%s/AxonAverage_wholeVid_redGreenAmp.tif',dir2);
+elseif vidQ == 1 
+    label = sprintf('%s/AxonAverage_nearVessel_redGreenAmp.tif',dir2);
+end 
+export_fig(label)     
 
+%% vector amplitude         
+baselineTime = normTime;  
+allCTraces3 = cell(1,mouseNum);
+sortedCdata2 = cell(1,mouseNum);
+SNCdataPeaks = cell(1,mouseNum);
+SCdataPeaks = cell(1,mouseNum);
+CTraces = cell(1,mouseNum);
+CTraceArray = cell(1,mouseNum);
+CI_cLow = cell(1,mouseNum);
+CI_cHigh = cell(1,mouseNum);
+AVSNCdataPeaks = cell(1,mouseNum);
+greenSum = zeros(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3));
+redSum = zeros(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3));
+vectorMask = cell(1,mouseNum);
+opflow = cell(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3)-1);
+sumVel = zeros(length(terminals{mouse}),size(BWstacks{terminals{mouse}(1)},3));
+mouse = 1;
+vidQ = input('Input 0 to look at red and green sums of entire vid. Input 1 to look just near vessel. ');
+vidQ2 = input('Input 1 to black out pixels inside of the vessel. ');
+if vidQ2 == 1     
+    vidQ3 = input('Input 1 to black out out pixels that are far from the axon. ');
+end 
+% plots figure per calcium ROI 
+for ccell = 1:length(terminals{mouse}) 
+    %smoothing option
+    if smoothQ == 0 
+        SCdataPeaks{mouse} = sortedCdata{mouse};
+    elseif smoothQ == 1           
+        SCdataPeaks{mouse} = sortedCdata{mouse};
+        for vid = 1:length(vidList{mouse})                    
+           if vid <= length(sortedCdata{mouse}) 
+                for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
+                    if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                        SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},2),:);                 
+                    end 
+                end
+           end                         
+        end 
+    end     
+    %normalize
+     for vid = 1:length(vidList{mouse})
+        if vid <= length(sortedCdata{mouse}) 
+            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                    %the data needs to be added to because there are some
+                    %negative gonig points which mess up the normalizing 
+                    % determine the minimum value, add space (+100)
+                    minValToAdd = abs(ceil(min(min(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                    % add min value
+                    sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                    %normalize to baselineTime sec before changePt (calcium peak
+                    %onset) BLstart 
+                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}) == 0
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                        end   
+                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}) == 0
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2},2)/2)-4;
+                        end  
+                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}) == 0
+                        if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                        elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                            changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                        end   
+                    end 
+                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                    end   
+    %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
+                    BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+                    if isempty(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                        SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                    end 
+                end               
+            end
+        end                   
+     end  
+    count = 1;
+    for vid = 1:length(vidList{mouse})  
+        if vid <= length(sortedCdata{mouse}) 
+            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                if isempty(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}) == 0 %{mouse}{vid}{terminals{mouse}(ccell)}{per}
+                    if isempty(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                        for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
+                            allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
+                            %remove rows full of 0s if there are any b = a(any(a,2),:)
+                            allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
+                            count = count + 1;
+                        end 
+                    end 
+                end                            
+            end 
+        end 
+    end   
+    %put all similar trials together 
+    allCTraces = allCTraces3;
+    CaROIs = terminals;
+    CTraces{mouse} = allCTraces{mouse}(CaROIs{mouse}(ccell));                                      
+    %remove empty cells if there are any b = a(any(a,2),:)
+    CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));                               
+    % create colors for plotting 
+    Bcolors = [1,0,0;1,0.5,0;1,1,0];
+    Ccolors = [0,0,1;0,0.5,1;0,1,1];
+    % resort data: concatenate all CaROI data 
+    % output = CaArray{mouse}{per}(concatenated caRoi data)
+    % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)  
+    for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
+        if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
+            if isempty(CTraces{mouse}{per}) == 0 
+                if ccell == 1 
+                    CTraceArray{mouse}{per} = CTraces{mouse}{per}{1};                              
+                elseif ccell > 1 
+                    CTraceArray{mouse}{per} = vertcat(CTraceArray{mouse}{per},CTraces{mouse}{per}{1});                             
+                end
+            end 
+            %DETERMINE 95% CI                       
+            SEMc = (nanstd(CTraces{mouse}{per}{1}))/(sqrt(size(CTraces{mouse}{per}{1},1))); % Standard Error            
+            ts_cLow = tinv(0.025,size(CTraces{mouse}{per}{1},1)-1);% T-Score for 95% CI
+            ts_cHigh = tinv(0.975,size(CTraces{mouse}{per}{1},1)-1);% T-Score for 95% CI
+            CI_cLow{mouse}{per} = (nanmean(CTraces{mouse}{per}{1},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+            CI_cHigh{mouse}{per} = (nanmean(CTraces{mouse}{per}{1},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
+            x = 1:53;
+            %get averages
+            AVSNCdataPeaks{mouse}{per} = nanmean(CTraces{mouse}{per}{1},1);  
+            % plot data      
+            %determine range of data Ca data
+            CaDataRange = max(AVSNCdataPeaks{mouse}{per})-min(AVSNCdataPeaks{mouse}{per});
+            %determine plotting buffer space for Ca data 
+            CaBufferSpace = CaDataRange;
+            %determine first set of plotting min and max values for Ca data
+            CaPlotMin = min(AVSNCdataPeaks{mouse}{per})-CaBufferSpace;
+            CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
+            %determine Ca 0 ratio/location 
+            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);            
+            for frame = 1:size(I2{terminals{mouse}(ccell)},3)
+                % to only get optical flow vessels near vessel, make vessel outline mask
+                % larger 
+                radius = 4;
+                decomposition = 0;
+                se = strel('disk', radius, decomposition);               
+                vectorMask{mouse}{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
+            end 
+            % apply mask to orignal image to only get vectors of interest 
+            Vid2 = Vid;
+            Vid2{terminals{mouse}(ccell)}(~vectorMask{mouse}{terminals{mouse}(ccell)}) = 0;    
+            if vidQ == 0 
+                sumVid = Vid;
+            elseif vidQ == 1 
+                sumVid = Vid2;
+            end 
+            %black out pixels inside of vessel  
+            if vidQ2 == 1 
+                sumVid{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;
+                % black out pixels that are far from the axon 
+                if vidQ3 == 1                    
+                    if ismember("ROIorders", variableInfo) == 1 
+                        caLoc = ROIorders{1};
+                    elseif ismember("ROIorders", variableInfo) == 0 
+                        caLoc = CaROImasks{1};
+                    end
+                    caLoc(caLoc ~= terminals{mouse}(ccell)) = 0;
+                    caLoc(caLoc == terminals{mouse}(ccell)) = 1;
+                    caLoc = logical(caLoc);
+                    % make vessel outline mask
+                    radius = 6;
+                    decomposition = 0;
+                    se = strel('disk', radius, decomposition);               
+                    caLocMask = imdilate(caLoc,se);       
+                    caLocMasks = repmat(caLocMask,1,1,size(Vid{terminals{mouse}(ccell)},3));
+                    % black out pixels that are far from vessel 
+                    sumVid{terminals{mouse}(ccell)}(~caLocMasks) = 0;
+                end 
+            end 
+            % calculate op flow vectors from sumVid     
+            for frame = 1:size(sumVid{terminals{mouse}(ccell)},3)
+                % determine optical flow  
+                if frame < size(sumVid{terminals{mouse}(ccell)},3)
+                    im1 = sumVid{terminals{mouse}(ccell)}(:,:,frame);
+                    im2 = sumVid{terminals{mouse}(ccell)}(:,:,frame+1);
+                    opflow{ccell,frame} = opticalFlow(im1,im2);
+                    sumVel(ccell,frame+1) = sum(sum(opflow{ccell,frame}.Magnitude)); 
+                end                                 
+            end       
+            % determine range of color amp data             
+            velMax = max(sumVel(ccell,:));                        
+            velMin = min(sumVel(ccell,:));          
+            velRange = velMax - velMin;                                      
+            % determine plotting buffer space for color data           
+            velBufferSpace = velRange;            
+            % determine first set of plotting min and max values for color data
+            velPlotMin = velMin - velBufferSpace;            
+            velPlotMax = velMax + velBufferSpace;               
+            % determine color 0 ratio/location
+            velZeroRatio = abs(velPlotMin)/(velPlotMax-velPlotMin);            
+            % determine how much to shift the color axis so that the zeros align 
+            velBelowZero = (velPlotMax-velPlotMin)*CaZeroRatio;
+            velAboveZero = (velPlotMax-velPlotMin)-velBelowZero;                  
+            % plot 
+            fig = figure;
+            Frames = size(x,2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+            FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+            ax=gca;
+            hold all
+            Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
+            plot(Cdata,'blue','LineWidth',4)
+            CdataCIlow = CI_cLow{mouse}{per}(100:152);
+            CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
+            patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
+            changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;   
+            ax.FontSize = 25;
+            ax.FontName = 'Times';
+            xlabel('time (s)','FontName','Times')
+            ylabel('calcium signal percent change','FontName','Times')
+            xLimStart = floor(10*FPSstack{mouse});
+            xLimEnd = floor(24*FPSstack{mouse}); 
+%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
+            ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+            set(fig,'position', [500 100 900 800])
+            alpha(0.3)
+            % add right y axis tick marks for a specific DOD figure. 
+            yyaxis right 
+            p(1) = plot(sumVel(ccell,:),'k','LineWidth',4);
+%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+            if vidQ == 0 
+                ylabel('Pixel Velocity Amplitude Whole Vid','FontName','Times')
+            elseif vidQ == 1 
+                ylabel('Pixel Velocity Amplitude Near Vessel','FontName','Times')
+            end 
+            title(sprintf('Axon %d',terminals{mouse}(ccell)))
+            alpha(0.3)
+%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+            set(gca,'YColor',[0 0 0]);   
+            ylim([-velBelowZero velAboveZero])   
+            xlim([1 53])
+            % save the plots out 
+            if vidQ == 0
+                label = sprintf('%s/Axon%d_wholeVid_pixelVelocityAmp.tif',dir2,terminals{mouse}(ccell));
+            elseif vidQ == 1 
+                label = sprintf('%s/Axon%d_nearVessel_pixelVelocityAmp.tif',dir2,terminals{mouse}(ccell));
+            end 
+            export_fig(label)                        
+        end 
+    end       
+end 
+% plots av figure of all calcium ROI 
+mouse = 1; 
+per = 1; 
+%DETERMINE 95% CI                       
+SEMc = (nanstd(CTraceArray{mouse}{per}))/(sqrt(size(CTraceArray{mouse}{per},1))); % Standard Error            
+ts_cLow = tinv(0.025,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
+x = 1:53;
+%get averages
+AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
+%DETERMINE 95% of green and red amps and average (across axons)                      
+SEMv = (nanstd(sumVel))/(sqrt(size(sumVel,1))); % Standard Error                 
+ts_vLow = tinv(0.025,size(sumVel,1)-1);% T-Score for 95% CI           
+ts_vHigh = tinv(0.975,size(sumVel,1)-1);% T-Score for 95% CI           
+CI_vLow = (nanmean(sumVel,1)) + (ts_vLow*SEMv);  % Confidence Intervals
+CI_vHigh = (nanmean(sumVel,1)) + (ts_vHigh*SEMv);  % Confidence Intervals 
+%get average
+AVSNVdataPeaks = nanmean(sumVel,1);   
 
-
-
-
-
-
-
-
+% plot 
+fig = figure;
+Frames = size(x,2);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax=gca;
+hold all
+Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
+plot(Cdata,'blue','LineWidth',4)
+CdataCIlow = CI_cLow{mouse}{per}(100:152);
+CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
+patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
+changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;   
+ax.FontSize = 25;
+ax.FontName = 'Times';
+xlabel('time (s)','FontName','Times')
+ylabel('calcium signal percent change','FontName','Times')
+xLimStart = floor(10*FPSstack{mouse});
+xLimEnd = floor(24*FPSstack{mouse}); 
+%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
+ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+set(fig,'position', [500 100 900 800])
+alpha(0.3)
+% add right y axis tick marks for a specific DOD figure. 
+yyaxis right 
+p(1) = plot(AVSNVdataPeaks,'k','LineWidth',4);
+patch([x fliplr(x)],[CI_vLow fliplr(CI_vHigh)],'k','EdgeColor','none')
+%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+if vidQ == 0 
+    ylabel('Pixel Velocity Amplitude Whole Vid','FontName','Times')
+elseif vidQ == 1 
+    ylabel('Pixel Velocity Amplitude Near Vessel','FontName','Times')
+end 
+title(sprintf('Axons Averaged'))
+alpha(0.3)
+%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+set(gca,'YColor',[0 0 0]);   
+ylim([-velBelowZero velAboveZero])   
+xlim([1 53])
+% save the plots out 
+if vidQ == 0
+    label = sprintf('%s/AxonAverage_wholeVid_pixelVelocityAmp.tif',dir2);
+elseif vidQ == 1 
+    label = sprintf('%s/AxonAverage_nearVessel_pixelVelocityAmp.tif',dir2);
+end 
+export_fig(label)     
+%}
 %%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
 %{
