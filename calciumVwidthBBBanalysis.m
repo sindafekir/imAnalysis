@@ -10446,94 +10446,137 @@ end
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
 % original code - does % change
 % option to high pass filter the video 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% EDIT SO THAT YOU CAN SHUFFLE SPIKES (look at shuffled same num spikes
+% first then bootstrap
 %{
+spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized spikes (based on ISI STD). "); 
 % sort red and green channel stacks based on ca peak location 
-for mouse = 1:mouseNum
-    dir1 = dataDir{mouse};   
-    % find peaks and then plot where they are in the entire TS 
-    stdTrace = cell(1,length(vidList{mouse})); 
-    sigPeaks = cell(1,length(vidList{mouse}));
-    sigLocs = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        for ccell = 1:length(terminals{mouse})
-            %find the peaks 
-    %         figure;
-    %         ax=gca;
-    %         hold all
-            [peaks, locs] = findpeaks(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
-            %find the sig peaks (peaks above 2 standard deviations from mean) 
-            stdTrace{vid}{terminals{mouse}(ccell)} = std(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});  
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
-                    %if the peaks fall within the time windows used for the BBB
-                    %trace examples in the DOD figure 
-    %                 if locs(loc) > 197*FPSstack{mouse} && locs(loc) < 206.5*FPSstack{mouse} || locs(loc) > 256*FPSstack{mouse} && locs(loc) < 265.5*FPSstack{mouse} || locs(loc) > 509*FPSstack{mouse} && locs(loc) < 518.5*FPSstack{mouse}
-                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = gpuArray(peaks(loc));
-                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = gpuArray(locs(loc));
-    %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
-                        count = count + 1;
-    %                 end 
-                end 
-            end 
-            % below is plotting code 
-            %{
-            Frames = size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2);
-            Frames_pre_stim_start = -((Frames-1)/2); 
-            Frames_post_stim_start = (Frames-1)/2; 
-    %         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*50:Frames_post_stim_start)/FPSstack{mouse})+51);
-            sec_TimeVals = floor(((0:2:(Frames/FPSstack{mouse}))));
-            min_TimeVals = round(sec_TimeVals/60,2)+7.03;
-            FrameVals = floor((0:(FPSstack{mouse}*2):Frames)); 
-
-            %smooth the calcium data 
-            [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals{mouse}(ccell)},(2/FPSstack{mouse}),FPSstack{mouse});
-
-    %         plot((cDataFullTrace{vid}{terminals{mouse}(ccell)})+150,'b','LineWidth',3)
-    %         plot(ScDataFullTrace+150,'b','LineWidth',3)
-            plot(bDataFullTrace{vid},'r','LineWidth',3)
-
-    %         for trial = 1:size(state_start_f{mouse}{vid},1)
-    %             if TrialTypes{mouse}{vid}(trial,2) == 1
-    %                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-    %                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
-    %             elseif TrialTypes{mouse}{vid}(trial,2) == 2
-    %                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-    %                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
-    %             end 
-    %         end 
-
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
+mouse = 1 ;
+dir1 = dataDir{mouse};   
+% find peaks and then plot where they are in the entire TS 
+stdTrace = cell(1,length(vidList{mouse})); 
+sigPeaks = cell(1,length(vidList{mouse}));
+sigLocs = cell(1,length(vidList{mouse}));
+for vid = 1:length(vidList{mouse})
+    for ccell = 1:length(terminals{mouse})
+        %find the peaks 
+%         figure;
+%         ax=gca;
+%         hold all
+        [peaks, locs] = findpeaks(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+        %find the sig peaks (peaks above 2 standard deviations from mean) 
+        stdTrace{vid}{terminals{mouse}(ccell)} = std(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});  
+        count = 1 ; 
+        for loc = 1:length(locs)
+            if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
+                %if the peaks fall within the time windows used for the BBB
+                %trace examples in the DOD figure 
+%                 if locs(loc) > 197*FPSstack{mouse} && locs(loc) < 206.5*FPSstack{mouse} || locs(loc) > 256*FPSstack{mouse} && locs(loc) < 265.5*FPSstack{mouse} || locs(loc) > 509*FPSstack{mouse} && locs(loc) < 518.5*FPSstack{mouse}
                     sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
                     sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
-                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+%                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
                     count = count + 1;
+%                 end 
+            end 
+        end 
+        % below is plotting code 
+        %{
+        Frames = size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+%         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*50:Frames_post_stim_start)/FPSstack{mouse})+51);
+        sec_TimeVals = floor(((0:2:(Frames/FPSstack{mouse}))));
+        min_TimeVals = round(sec_TimeVals/60,2)+7.03;
+        FrameVals = floor((0:(FPSstack{mouse}*2):Frames)); 
+
+        %smooth the calcium data 
+        [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals{mouse}(ccell)},(2/FPSstack{mouse}),FPSstack{mouse});
+
+%         plot((cDataFullTrace{vid}{terminals{mouse}(ccell)})+150,'b','LineWidth',3)
+%         plot(ScDataFullTrace+150,'b','LineWidth',3)
+        plot(bDataFullTrace{vid},'r','LineWidth',3)
+
+%         for trial = 1:size(state_start_f{mouse}{vid},1)
+%             if TrialTypes{mouse}{vid}(trial,2) == 1
+%                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+%                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+%             elseif TrialTypes{mouse}{vid}(trial,2) == 2
+%                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+%                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+%             end 
+%         end 
+
+        count = 1 ; 
+        for loc = 1:length(locs)
+            if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
+                sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
+                sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
+                plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                count = count + 1;
+            end 
+        end 
+
+%         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
+
+% 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;
+        ax.FontSize = 25;
+        ax.FontName = 'Times';
+        xLimStart = 256*FPSstack{mouse};
+        xLimEnd = 266.5*FPSstack{mouse}; 
+        xlim([0 size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2)])
+        xlim([xLimStart xLimEnd])
+        ylim([-23 80])
+        xlabel('time (sec)','FontName','Times')
+%         if smoothQ ==  1
+%             title({sprintf('terminal #%d data',terminals{mouse}(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
+%         elseif smoothQ == 0 
+%             title(sprintf('terminal #%d raw data',terminals{mouse}(ccell)))
+%         end    
+           %}
+    end 
+end 
+if spikeQ == 1   
+    spikeISIs = cell(1,length(vidList{mouse})); 
+    ISIstds = cell(1,length(vidList{mouse})); 
+    randSpikes = cell(1,length(vidList{mouse})); 
+    ISImean = cell(1,length(vidList{mouse}));
+    randISIs = cell(1,length(vidList{mouse}));
+    randSigLocs = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        for ccell = 1:length(terminals{mouse})
+            % determine ISI
+            spikeISIs{vid}{terminals{mouse}(ccell)} = diff(sigLocs{vid}{terminals{mouse}(ccell)});
+            % determine STD (sigma) of ISI 
+            ISIstds{vid}{terminals{mouse}(ccell)} = std(spikeISIs{vid}{terminals{mouse}(ccell)});
+            % determine mean ISI 
+            ISImean{vid}{terminals{mouse}(ccell)} = mean(spikeISIs{vid}{terminals{mouse}(ccell)});
+            % generate random spike Locs (sigLocs) based on ISI STD using same
+            for it = 1%:3
+                for spike = 1:length(spikeISIs{vid}{terminals{mouse}(ccell)})
+                    % generate random ISI
+                    r = random('Exponential',ISImean{vid}{terminals{mouse}(ccell)});
+                    randISIs{vid}{terminals{mouse}(ccell)}(it,spike) = floor(r);
                 end 
             end 
-
-    %         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
-
-    % 
-            ax.XTick = FrameVals;
-            ax.XTickLabel = sec_TimeVals;
-            ax.FontSize = 25;
-            ax.FontName = 'Times';
-            xLimStart = 256*FPSstack{mouse};
-            xLimEnd = 266.5*FPSstack{mouse}; 
-            xlim([0 size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2)])
-            xlim([xLimStart xLimEnd])
-            ylim([-23 80])
-            xlabel('time (sec)','FontName','Times')
-    %         if smoothQ ==  1
-    %             title({sprintf('terminal #%d data',terminals{mouse}(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
-    %         elseif smoothQ == 0 
-    %             title(sprintf('terminal #%d raw data',terminals{mouse}(ccell)))
-    %         end    
-               %}
+            % plot distribution of real and rand ISIs for sanity check 
+            %{
+            figure;
+            histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
+            title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+            figure;
+            histogram(randISIs{vid}{terminals{mouse}(ccell)})
+            title(sprintf("Rand Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+            %}
+            % use randISIs to generate randSigLocs 
+            randSigLocs{vid}{terminals{mouse}(ccell)} = cumsum(randISIs{vid}{terminals{mouse}(ccell)});
         end 
-    end 
+    end                 
+    sigLocs = randSigLocs;
 end 
 clearvars peaks locs 
 % crop the imaging data if you want to; better to do this up here to
@@ -10925,7 +10968,11 @@ if blackOutCaROIQ == 1
         end 
     end 
     % combine Ca ROIs from different planes in Z into one plane 
-    numZplanes = input('How many planes in Z are there? ');
+    if ismember("ROIorders", variableInfo) == 1 % returns true
+        numZplanes = length(ROIorders);
+    elseif ismember("ROIorders", variableInfo) == 0
+        numZplanes = length(CaROImasks);
+    end 
     if numZplanes > 1 
         combo = cell(1,numZplanes-1);
         combo2 = cell(1,numZplanes-1);
@@ -10976,6 +11023,7 @@ AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 if AVQ == 0 
     % create outline of vessel to overlay the %change BBB perm stack 
     segmentVessel = 1;
+    segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. Input 0 otherwise. ');
     while segmentVessel == 1 
         % apply Ca ROI mask to the appropriate channel to black out these
         % pixels 
@@ -10983,9 +11031,13 @@ if AVQ == 0
             vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
         end 
         %segment the vessel (small sample of the data) 
-        CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
-        imageSegmenter(mean(vesChan{CaROI},3))
-        continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        if segQ == 1 
+            CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
+            imageSegmenter(mean(vesChan{CaROI},3))
+            continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        elseif segQ == 0 
+            continu = 1;
+        end        
         while continu == 1 
             BWstacks = cell(1,length(vesChan));
             BW_perim = cell(1,length(vesChan));
@@ -11005,9 +11057,13 @@ if AVQ == 0
         %play segmentation boundaries over images 
         implay(segOverlays{CaROI})
         %ask about segmentation quality 
-        segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-        if segmentVessel == 1
-            clearvars BWthreshold BWopenRadius BW se boundaries
+        if segQ == 1
+            segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+            if segmentVessel == 1
+                clearvars BWthreshold BWopenRadius BW se boundaries
+            end 
+        elseif segQ == 0 
+            segmentVessel = 0;
         end 
     end
 end
@@ -11063,6 +11119,7 @@ end
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
+vesBlackQ = input('Input 1 to black out vessel. '); 
 if CaFrameQ == 1 
     CaEventFrame = input('What frame did the Ca events happen in? ');
     if AVQ == 0  
@@ -11088,8 +11145,10 @@ if CaFrameQ == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
             end             
             if genImQ == 1 
-                %black out pixels that belong to vessels         
-                RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
+                %black out pixels that belong to vessels 
+                if vesBlackQ == 1 
+                    RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;
+                end 
                 %find the upper and lower bounds of your data (per calcium ROI) 
                 maxValue = max(max(max(max(RightChan{terminals{mouse}(ccell)}))));
                 minValue = min(min(min(min(RightChan{terminals{mouse}(ccell)}))));
@@ -11186,7 +11245,11 @@ if CaFrameQ == 1
                     ax.Visible = 'off';
                     ax.FontSize = 20;
                     %save current figure to file 
-                    filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+                    if spikeQ == 0 
+                        filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+                    elseif spikeQ == 1
+                        filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d_randGenSpikes',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+                    end                    
                     saveas(gca,[filename '.png'])
                 end 
             end            
@@ -11989,7 +12052,11 @@ if blackOutCaROIQ == 1
         end 
     end 
     % combine Ca ROIs from different planes in Z into one plane 
-    numZplanes = input('How many planes in Z are there? ');
+    if ismember("ROIorders", variableInfo) == 1 % returns true
+        numZplanes = length(ROIorders);
+    elseif ismember("ROIorders", variableInfo) == 0
+        numZplanes = length(CaROImasks);
+    end 
     if numZplanes > 1 
         combo = cell(1,numZplanes-1);
         combo2 = cell(1,numZplanes-1);
@@ -12038,18 +12105,23 @@ end
 clearvars SNgreenStackAv SNredStackAv
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 if AVQ == 0 
+    segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
     % create outline of vessel to overlay the %change BBB perm stack 
     segmentVessel = 1;
     while segmentVessel == 1 
         % apply Ca ROI mask to the appropriate channel to black out these
         % pixels 
-%         for ccell = 1:length(terminals{mouse})
-%             vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
-%         end 
+        for ccell = 1:length(terminals{mouse})
+            vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
+        end 
         %segment the vessel (small sample of the data) 
-        CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
-        imageSegmenter(mean(vesChan{CaROI},3))
-        continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        if segQ == 1 
+            CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
+            imageSegmenter(mean(vesChan{CaROI},3))
+            continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        elseif segQ == 0 
+            continu = 1;
+        end   
         while continu == 1 
             BWstacks = cell(1,length(vesChan));
             BW_perim = cell(1,length(vesChan));
@@ -12069,9 +12141,13 @@ if AVQ == 0
         %play segmentation boundaries over images 
         implay(segOverlays{CaROI})
         %ask about segmentation quality 
-        segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-        if segmentVessel == 1
-            clearvars BWthreshold BWopenRadius BW se boundaries
+        if segQ == 1
+            segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+            if segmentVessel == 1
+                clearvars BWthreshold BWopenRadius BW se boundaries
+            end 
+        elseif segQ == 0 
+            segmentVessel = 0;
         end 
     end
 end
@@ -12127,6 +12203,7 @@ end
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
+vesBlackQ = input('Input 1 to black out vessel. '); 
 if CaFrameQ == 1 
     CaEventFrame = input('What frame did the Ca events happen in? ');
     if AVQ == 0  
@@ -12152,8 +12229,10 @@ if CaFrameQ == 1
                 genImQ = input("Input 1 if you need to generate the images. ");
             end             
             if genImQ == 1 
-                %black out pixels that belong to vessels         
-                RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0;            
+                %black out pixels that belong to vessels   
+                if vesBlackQ == 1 
+                    RightChan{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0; 
+                end                            
                 %find the upper and lower bounds of your data (per calcium ROI) 
                 maxValue = max(max(max(max(RightChan{terminals{mouse}(ccell)}))));
                 minValue = min(min(min(min(RightChan{terminals{mouse}(ccell)}))));
@@ -12932,7 +13011,7 @@ for ccell = 1:length(terminals{mouse})
             CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
             %determine Ca 0 ratio/location 
             CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);            
-            for frame = 1:size(I2{terminals{mouse}(ccell)},3)
+            for frame = 1:size(Vid{terminals{mouse}(ccell)},3)
                 % to only get optical flow vessels near vessel, make vessel outline mask
                 % larger 
                 radius = 4;
