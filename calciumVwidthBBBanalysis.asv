@@ -13621,6 +13621,7 @@ export_fig(label)
 % first import the .mat file containing the STA (real spike vids) that you
 % want to subtract from 
 
+
 % ask where the bootsrapped vids are located 
 dir1 = uigetdir('*.*','WHERE ARE THE BOOTSTRAPPED VIDEOS?'); % get the directory where you want to save your images 
 dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
@@ -13641,11 +13642,6 @@ for boot = 1:bootNum
     end 
 end 
 clear sortedVids allVids
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% subtract the STA bootstrapped vids (RightChan2) from the real STA vids
-% (RightChan) 
-
-% save out the diff vids 
 
 %%  custom BBB plume code (one animal at a time) 
 % THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
