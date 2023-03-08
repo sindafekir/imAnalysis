@@ -13649,6 +13649,7 @@ dir4 = strrep(dir3,'\','/'); % change the direction of the slashes
 
 %% to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
+RightChan = diffStack;
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
 vesBlackQ = input('Input 1 to black out vessel. '); 
 if CaFrameQ == 1 
@@ -14071,7 +14072,7 @@ end
 %% use red green pixel amp figures to group axons into listeners vs talkers
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % PLAY AROUND WITH FINDING PEAKS - PLOTTING CODE IS ALL WORKING 
-
+%{
 
 mouse = 1;
 Gpeaks = cell(1,length(terminals{mouse}));
@@ -14179,8 +14180,46 @@ end
 
                
 %}
-%%  custom BBB plume code (one animal at a time) 
-% THIS IS ON HOLD FOR NOW ~ TRYING OTHER TECHNIQUES FIRST 
+%%  BBB plume code (one animal at a time) 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE- NEXT BLACK OUT PIXELS INSIDE OF VESSEL TO FIND RELEVANT
+% CLUSTERS EASIER 
+% THEN PLAY WITH INPUT PARAMATERS 
+
+% use dbscan to find clustered pixels 
+im = RightChan{17}; % input image
+vesselMask = BW_perim{17};
+maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
+thresh = maxPerc/6;
+% convert im to binary matrix where 1 = pixels that are positive going %
+% change 
+im(im < thresh) = 0; im(im > thresh) = 1;
+% get x and y and z coordinates of 1s (pixels that are positive going)
+[row, col, frame] = ind2sub(size(im),find(im > 0));
+inds(:,1) = col; inds(:,2) = row; inds(:,3) = frame;
+% plot these x y coordinates for sanity check 
+% figure;scatter3(inds(:,1),inds(:,2),inds(:,3))
+% feed these x y coordinates into dbscan 
+numP = 1; % number of points a cluster needs to be considered valid
+fixRad = 1; % fixed radius for the search of neighbors 
+[idx,corepts] = dbscan(inds,fixRad,numP);
+% need to convert cluster group identifiers into positive going values only
+% for scatter3
+unIdxVals = unique(idx); minIdxVal = min(unIdxVals);
+if minIdxVal == 0
+    idx = idx + 1;
+elseif minIdxVal < 0
+    idx = idx + abs(minIdxVal) + 1;    
+end 
+[rowV, colV, frameV] = ind2sub(size(vesselMask),find(vesselMask > 0));
+indsV(:,1) = colV; indsV(:,2) = rowV; indsV(:,3) = frameV;                  
+% plot the grouped pixels 
+% figure;gscatter(inds(:,1),inds(:,2),inds(:,3),idx);
+figure;scatter3(inds(:,1),inds(:,2),inds(:,3),30,idx,'filled'); % plot clusters 
+hold on; scatter3(indsV(:,1),indsV(:,2),indsV(:,3),30,'k','filled'); % plot vessel outline 
+clearvars inds row col frame idx corepts unIdxVals indsV
+
+% below is first attempt to write my own clustering algorithm ~ TRYING OTHER TECHNIQUES FIRST 
 %{
 % use 
 % RightChan{terminals{mouse}(ccell)}(:,:,frame) % the % change vid 
@@ -14251,6 +14290,7 @@ end
 %NEXT: NEED TO FIGURE OUT HOW TO ITERATIVELY KEEP LOOKING FOR GROWTH IN THE
 %PLUME 
 
+%}
 %}
 %% average 3 frames (of STA videos) around a specific time point
 %{
