@@ -14182,42 +14182,49 @@ end
 %}
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE- NEXT BLACK OUT PIXELS INSIDE OF VESSEL TO FIND RELEVANT
-% CLUSTERS EASIER 
-% THEN PLAY WITH INPUT PARAMATERS 
-
-% use dbscan to find clustered pixels 
-im = RightChan{17}; % input image
-vesselMask = BW_perim{17};
-maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
-thresh = maxPerc/6;
-% convert im to binary matrix where 1 = pixels that are positive going %
-% change 
-im(im < thresh) = 0; im(im > thresh) = 1;
-% get x and y and z coordinates of 1s (pixels that are positive going)
-[row, col, frame] = ind2sub(size(im),find(im > 0));
-inds(:,1) = col; inds(:,2) = row; inds(:,3) = frame;
-% plot these x y coordinates for sanity check 
-% figure;scatter3(inds(:,1),inds(:,2),inds(:,3))
-% feed these x y coordinates into dbscan 
-numP = 1; % number of points a cluster needs to be considered valid
-fixRad = 1; % fixed radius for the search of neighbors 
-[idx,corepts] = dbscan(inds,fixRad,numP);
-% need to convert cluster group identifiers into positive going values only
-% for scatter3
-unIdxVals = unique(idx); minIdxVal = min(unIdxVals);
-if minIdxVal == 0
-    idx = idx + 1;
-elseif minIdxVal < 0
-    idx = idx + abs(minIdxVal) + 1;    
+% PLAY WITH INPUT PARAMATERS 
+mouse = 1;
+vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
+for ccell = 1:length(terminals{mouse})
+    term = terminals{mouse}(ccell);
+    % use dbscan to find clustered pixels 
+    im = RightChan{term}; % input image
+    vesselMask = BW_perim{term};
+    maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
+    thresh = maxPerc/10;
+    % thresh = 0;
+    % convert im to binary matrix where 1 = pixels that are positive going %
+    % change 
+    im(im < thresh) = 0; im(im > thresh) = 1;
+    % black out pixels inside of vessel     
+    if vidQ2 == 1 
+        im(BWstacks{terminals{mouse}(ccell)}) = 0;
+    end 
+    % get x and y and z coordinates of 1s (pixels that are positive going)
+    [row, col, frame] = ind2sub(size(im),find(im > 0));
+    inds(:,1) = col; inds(:,2) = row; inds(:,3) = frame;
+    % plot these x y coordinates for sanity check 
+    % figure;scatter3(inds(:,1),inds(:,2),inds(:,3))
+    % feed these x y coordinates into dbscan 
+    numP = 3; % number of points a cluster needs to be considered valid
+    fixRad = 3; % fixed radius for the search of neighbors 
+    [idx,corepts] = dbscan(inds,fixRad,numP);
+    % need to convert cluster group identifiers into positive going values only
+    % for scatter3
+    unIdxVals = unique(idx); minIdxVal = min(unIdxVals);
+    if minIdxVal == 0
+        idx = idx + 1;
+    elseif minIdxVal < 0
+        idx = idx + abs(minIdxVal) + 1;    
+    end 
+    [rowV, colV, frameV] = ind2sub(size(vesselMask),find(vesselMask > 0));
+    indsV(:,1) = colV; indsV(:,2) = rowV; indsV(:,3) = frameV;                  
+    % plot the grouped pixels 
+    % figure;gscatter(inds(:,1),inds(:,2),inds(:,3),idx);
+    figure;scatter3(inds(:,1),inds(:,2),inds(:,3),30,idx,'filled'); % plot clusters 
+    hold on; scatter3(indsV(:,1),indsV(:,2),indsV(:,3),30,'k','filled'); % plot vessel outline 
+    clearvars inds row col frame idx corepts unIdxVals indsV
 end 
-[rowV, colV, frameV] = ind2sub(size(vesselMask),find(vesselMask > 0));
-indsV(:,1) = colV; indsV(:,2) = rowV; indsV(:,3) = frameV;                  
-% plot the grouped pixels 
-% figure;gscatter(inds(:,1),inds(:,2),inds(:,3),idx);
-figure;scatter3(inds(:,1),inds(:,2),inds(:,3),30,idx,'filled'); % plot clusters 
-hold on; scatter3(indsV(:,1),indsV(:,2),indsV(:,3),30,'k','filled'); % plot vessel outline 
-clearvars inds row col frame idx corepts unIdxVals indsV
 
 % below is first attempt to write my own clustering algorithm ~ TRYING OTHER TECHNIQUES FIRST 
 %{
