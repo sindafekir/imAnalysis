@@ -14217,8 +14217,16 @@ for ccell = 1:length(terminals{mouse})
     % need to convert cluster group identifiers into positive going values only
     % for scatter3
     unIdxVals = unique(idx{terminals{mouse}(ccell)}); minIdxVal = min(unIdxVals);
-    idx{terminals{mouse}(ccell)}(idx{terminals{mouse}(ccell)}<0) = NaN;
-    unIdxVals(unIdxVals<0) = NaN;
+%     if minIdxVal == 0
+%         idx{terminals{mouse}(ccell)} = idx{terminals{mouse}(ccell)} + 1;
+%         unIdxVals = unIdxVals + 1;
+%     elseif minIdxVal < 0
+%         idx{terminals{mouse}(ccell)} = idx{terminals{mouse}(ccell)} + abs(minIdxVal) + 1;
+%         unIdxVals = unIdxVals + abs(minIdxVal) + 1;
+%     end 
+    idx{terminals{mouse}(ccell)}(idx{terminals{mouse}(ccell)}<0)=NaN;
+    unIdxVals(
+
     % get vessel outline coordinates 
     [rowV, colV, frameV] = ind2sub(size(vesselMask),find(vesselMask > 0));
     indsV{terminals{mouse}(ccell)}(:,1) = colV; indsV{terminals{mouse}(ccell)}(:,2) = rowV; indsV{terminals{mouse}(ccell)}(:,3) = frameV;  
