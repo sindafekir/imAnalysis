@@ -14182,6 +14182,9 @@ end
 %}
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEXT PLOT AXON LOCATION AND LOOK AT CLUSTER SIZE, PIXEL AMP, DISTANCE TO
+% AXON TO GROUP AXONS INTO LISTENERS VS TALKERS 
+
 
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
