@@ -14072,6 +14072,7 @@ end
 %% use red green pixel amp figures to group axons into listeners vs talkers
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % PLAY AROUND WITH FINDING PEAKS - PLOTTING CODE IS ALL WORKING 
+% PUT ON HOLD FOR NOW - BELOW CODE IS MORE PROMISING 
 %{
 
 mouse = 1;
@@ -14182,6 +14183,10 @@ end
 %}
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEXT: DETERMINE DISTANCE OF EACH CLUSTER FROM EACH AXON 
+% LOOK AT CLUSTER SIZE, PIXEL AMP, CLUSTER VELOCITY
+% TO GROUP AXONS INTO LISTENERS VS TALKERS 
+
 
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
@@ -14190,6 +14195,8 @@ idx = cell(1,max(terminals{mouse}));
 indsV = cell(1,max(terminals{mouse}));
 maskNearVessel = cell(1,max(terminals{mouse}));
 indsV2 = cell(1,max(terminals{mouse}));
+indsA = cell(1,max(terminals{mouse}));
+indsA2 = cell(1,size(RightChan{ terminals{mouse}(1)},3));
 for ccell = 1:length(terminals{mouse})
     term = terminals{mouse}(ccell);
     % use dbscan to find clustered pixels 
@@ -14217,16 +14224,8 @@ for ccell = 1:length(terminals{mouse})
     % need to convert cluster group identifiers into positive going values only
     % for scatter3
     unIdxVals = unique(idx{terminals{mouse}(ccell)}); minIdxVal = min(unIdxVals);
-%     if minIdxVal == 0
-%         idx{terminals{mouse}(ccell)} = idx{terminals{mouse}(ccell)} + 1;
-%         unIdxVals = unIdxVals + 1;
-%     elseif minIdxVal < 0
-%         idx{terminals{mouse}(ccell)} = idx{terminals{mouse}(ccell)} + abs(minIdxVal) + 1;
-%         unIdxVals = unIdxVals + abs(minIdxVal) + 1;
-%     end 
-    idx{terminals{mouse}(ccell)}(idx{terminals{mouse}(ccell)}<0)=NaN;
-    unIdxVals(
-
+    idx{terminals{mouse}(ccell)}(idx{terminals{mouse}(ccell)}<0) = NaN;
+    unIdxVals(unIdxVals<0) = NaN;
     % get vessel outline coordinates 
     [rowV, colV, frameV] = ind2sub(size(vesselMask),find(vesselMask > 0));
     indsV{terminals{mouse}(ccell)}(:,1) = colV; indsV{terminals{mouse}(ccell)}(:,2) = rowV; indsV{terminals{mouse}(ccell)}(:,3) = frameV;  
@@ -14246,7 +14245,7 @@ for ccell = 1:length(terminals{mouse})
         % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals(clust)); 
         % identify the x, y, z location of pixels per cluster
-        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);
+        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);        
         % determine if cLocs are near the vessel 
         cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
         if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
@@ -14257,12 +14256,53 @@ for ccell = 1:length(terminals{mouse})
     % plot the grouped pixels 
     % figure;gscatter(inds(:,1),inds(:,2),inds(:,3),idx);
     figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
-    hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline 
+    % plot vessel outline 
+    hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline     
+    % get the x-y coordinates of the Ca ROI         
+    clearvars CAy CAx
+    if ismember("ROIorders", variableInfo) == 1 % returns true
+        [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+    elseif ismember("ROIorders", variableInfo) == 0 % returns true
+        [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+    end   
+    % create axon x, y, z matrix 
+    for frame = 1:size(im,3)
+        if frame == 1 
+            indsA{terminals{mouse}(ccell)}(:,1) = CAxf; indsA{terminals{mouse}(ccell)}(:,2) = CAyf; indsA{terminals{mouse}(ccell)}(:,3) = frame;
+        elseif frame > 1 
+            if frame == 2
+                len = size(indsA{terminals{mouse}(ccell)},1);
+            end 
+            len2 = size(indsA{terminals{mouse}(ccell)},1);
+            indsA{terminals{mouse}(ccell)}(len2+1:len2+len,1) = CAxf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,2) = CAyf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,3) = frame;
+        end 
+    end 
+    % plot axon location 
+    hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
     title(sprintf('Axon %d',terminals{mouse}(ccell)));
 %     clearvars row col frame corepts unIdxVals 
 end 
 
+% determine distance of each cluster from each axon 
+dists = cell(1,max(terminals{mouse}));
+for ccell = 1%:length(terminals{mouse})
+    for clust = 2%:length(unIdxVals)
+       % find what rows each cluster is located in
+        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals(clust)); 
+        % identify the x, y, z location of pixels per cluster
+        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+        for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
+            for Cpoint = 1:size(cLocs,1)
+                % get euclidean pixel distance between each Ca ROI pixel
+                % and BBB cluster pixel 
+                dists{terminals{mouse}(ccell)}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((VyMicrons(Vcoord)-CaROIyMicrons(CaROIcoord))^2)+(((z*ZpixDist)-(z*ZpixDist))^2)); 
+            end 
+        end 
+    end 
+end 
 
+   
+        
 
 % below is first attempt to write my own clustering algorithm ~ TRYING OTHER TECHNIQUES FIRST 
 %{
