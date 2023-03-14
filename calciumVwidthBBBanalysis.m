@@ -14184,7 +14184,8 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: DETERMINE DISTANCE OF EACH CLUSTER FROM EACH AXON 
-% LOOK AT CLUSTER SIZE, PIXEL AMP, CLUSTER VELOCITY
+% THEN PLOT CLUSTER SIZE, PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
+% DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
 
 
@@ -14283,9 +14284,9 @@ for ccell = 1:length(terminals{mouse})
 %     clearvars row col frame corepts unIdxVals 
 end 
 
-%% determine distance of each cluster from each axon 
+% determine distance of each cluster from each axon 
 dists = cell(1,max(terminals{mouse}));
-minACdists = NaN(max(terminals{mouse}),length(unIdxVals));
+minACdists = NaN(length(terminals{mouse}),length(unIdxVals));
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals)
        % find what rows each cluster is located in
@@ -14299,15 +14300,95 @@ for ccell = 1:length(terminals{mouse})
                 dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)+((cLocs(Cpoint,3)-indsA{terminals{mouse}(ccell)}(Apoint,3))^2)); 
             end 
         end 
+    end 
+end 
+for ccell = 1:length(terminals{mouse})
+    for clust = 1:length(dists{terminals{mouse}(ccell)})
         % determine minimum distance between each Ca ROI and cluster 
-        if isempty(dists{terminals{mouse}(ccell)}) == 0 && isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
-            minACdists(terminals{mouse}(ccell),clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+        if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
+            minACdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
         end 
     end 
 end 
- 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE- THE MIN DIST CODE ISN'T WORKING 
+
+% determine cluster size 
+clustSize = NaN(1,length(unIdxVals));
+for clust = 1:length(unIdxVals)
+    clustSize(clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals(clust));
+end 
+% make 0s NaNs 
+clustSize(clustSize == 0) = NaN;
+
+% separate clusters based off of whether they happened before or after the
+% spike 
+
+% plot cluster size as function of distance from axon 
+% resort data for gscatter 
+clear sizeDistArray
+labels = strings(1,length(terminals{mouse}));
+f = cell(1,length(terminals{mouse}));
+for ccell = 1:length(terminals{mouse})
+    if ccell == 1 
+        sizeDistArray(:,1) = minACdists(ccell,:);
+        sizeDistArray(:,2) = clustSize;
+        sizeDistArray(:,3) = ccell;       
+        % determine trend line 
+        includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;                
+        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
+        f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');             
+    elseif ccell > 1 
+        if ccell == 2
+            len = length(unIdxVals);
+        end 
+        len2 = size(sizeDistArray,1);       
+        sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+        sizeDistArray(len2+1:len2+len,2) = clustSize;
+        sizeDistArray(len2+1:len2+len,3) = ccell;                  
+        % determine trend line 
+        includeX =~ isnan(sizeDistArray(len2+1:len2+len,1)); includeY =~ isnan(sizeDistArray(len2+1:len2+len,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;                
+        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);       
+        f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+    end 
+    labels(ccell) = num2str(terminals{mouse}(ccell));
+end 
+
+%% plot cluster size as function of distance from axon 
+ax=gca;
+clr = hsv(length(terminals{mouse}));
+gscatter(sizeDistArray(:,1),sizeDistArray(:,2),sizeDistArray(:,3),clr)
+ylabel("Size of Cluster")
+xlabel("Distance From Axon") 
+ax.FontSize = 15;
+ax.FontName = 'Times';
+legend(labels)
+hold on;
+for ccell = 1:length(terminals{mouse})
+%     plot(xlim,f{ccell},'Color',clr(ccell,:)) 
+    color = clr(ccell,:);
+    colororder(color)
+    plot(f{ccell})    
+end 
+
+% PICK UP HERE - USE BELOW CODE TO MODEL HOW TO CHANGE THE COLOR OF CFIT
+% OBJECT, F 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+cmp = colormap(parula(numberFits)); % Gives a numberFits by 3 matrix of RGB values
+X = 1:10;
+Y = X.^2;
+figure; plot(X,Y,'color','c'); % This plots the data in cyan
+hold on;
+for fitnumber = 1:numberFits
+  [fitobject,foErr]=fit(X',Y','poly1'); % You would change something about the fit with each cycle of loop)
+  FitHandle=plot(fitobject);
+  set(FitHandle,'color',cmp(fitnumber,:));
+end
+
    
         
 
