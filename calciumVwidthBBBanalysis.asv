@@ -14285,8 +14285,9 @@ end
 
 % determine distance of each cluster from each axon 
 dists = cell(1,max(terminals{mouse}));
-for ccell = 1%:length(terminals{mouse})
-    for clust = 2%:length(unIdxVals)
+minACdists = zeros(1,max(terminals{mouse}));
+for ccell = 1:length(terminals{mouse})
+    for clust = 1:length(unIdxVals)
        % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals(clust)); 
         % identify the x, y, z location of pixels per cluster
@@ -14295,12 +14296,16 @@ for ccell = 1%:length(terminals{mouse})
             for Cpoint = 1:size(cLocs,1)
                 % get euclidean pixel distance between each Ca ROI pixel
                 % and BBB cluster pixel 
-                dists{terminals{mouse}(ccell)}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((VyMicrons(Vcoord)-CaROIyMicrons(CaROIcoord))^2)+(((z*ZpixDist)-(z*ZpixDist))^2)); 
+                dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)+((cLocs(Cpoint,3)-indsA{terminals{mouse}(ccell)}(Apoint,3))^2)); 
             end 
         end 
+        % determine minimum distance between each Ca ROI and cluster 
+        minACdists(terminals{mouse}(ccell),clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
     end 
 end 
-
+ 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEXT ADD IN CODE TO GET MINIMUM DISTANCE 
    
         
 

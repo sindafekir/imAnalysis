@@ -14283,8 +14283,9 @@ for ccell = 1:length(terminals{mouse})
 %     clearvars row col frame corepts unIdxVals 
 end 
 
-% determine distance of each cluster from each axon 
+%% determine distance of each cluster from each axon 
 dists = cell(1,max(terminals{mouse}));
+minACdists = NaN(max(terminals{mouse}),length(unIdxVals));
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals)
        % find what rows each cluster is located in
@@ -14298,9 +14299,15 @@ for ccell = 1:length(terminals{mouse})
                 dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)+((cLocs(Cpoint,3)-indsA{terminals{mouse}(ccell)}(Apoint,3))^2)); 
             end 
         end 
+        % determine minimum distance between each Ca ROI and cluster 
+        if isempty(dists{terminals{mouse}(ccell)}) == 0 && isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
+            minACdists(terminals{mouse}(ccell),clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+        end 
     end 
 end 
-
+ 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE- THE MIN DIST CODE ISN'T WORKING 
    
         
 
