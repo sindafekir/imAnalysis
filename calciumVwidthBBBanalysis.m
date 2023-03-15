@@ -14182,8 +14182,9 @@ end
 %}
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEXT: DETERMINE HOW MANY PRE AND POST SPIKE CLUSTERS EACH AXON HAS 
-% THEN PLOT CLUSTER SIZE, PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
+% NEXT: PLOT CLUSTER SIZE GROUPED BY PRE AND POST SPIKE 
+
+% THEN PLOT PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
 
@@ -14458,7 +14459,21 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     ax.YTickLabel = sec_TimeVals;  
 end 
 
-       
+%% plot cluster size grouped by pre and post spike 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+clustSpikeQ = input('Input 0 to see all clusters. Input 1 to see either pre/post spike clusters. ');
+if clustSpikeQ == 1
+    clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. '); 
+end 
+
+
+
 % below is first attempt to write my own clustering algorithm ~ TRYING
 % OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
 %{
