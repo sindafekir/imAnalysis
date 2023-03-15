@@ -14304,7 +14304,7 @@ for ccell = 1:length(terminals{mouse})
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
         % remove clusters that are not in the correct time bin 
-        avClocFrame(ccell,clust) = nanmean(cLocs(:,3));
+        avClocFrame(ccell,clust) = mean(cLocs(:,3));
         frameThresh = ceil(size(im,3)/2);
         if clustSpikeQ == 1
             if clustSpikeQ2 == 0 % see pre spike clusters 
@@ -14430,17 +14430,29 @@ elseif clustSpikeQ == 1
     end 
 end 
 
-% resort average cluster timing for plotting 
-for ccell = 1%:length(terminals{mouse})
-    if ccell == 1 
-        ClocTimeForPlot(:,2) = avClocFrame(ccell,:);
-        ClocTimeForPlot(:,1) = terminals{mouse}(ccell);
-    elseif ccell == 2
-        len = size(ClocTimeForPlot,1);
-    end 
-    len2 = size(ClocTimeForPlot,1);
-    ClocTimeForPlot(len2+1:len2+len,2) = avClocFrame(ccell,:);
-    ClocTimeForPlot(:,1) = terminals{mouse}(ccell);
+%% resort average cluster timing for plotting 
+if clustSpikeQ == 0 % if all the spikes are available to look at 
+    clear ClocTimeForPlot
+    ClocTimeForPlot = avClocFrame';
+    % create scatter over box plot of cluster timing per axon 
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(ClocTimeForPlot);
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,ClocTimeForPlot,[],'red')  
+    yline(frameThresh)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("Average BBB Plume Timing")
+    xlabel("Axon")
+    title('BBB Plume Timing By Axon');
+    xticklabels(labels)
+    ylabel = 
+    yticklabels(ylabel)
 end 
 
        

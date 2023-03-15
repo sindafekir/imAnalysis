@@ -14070,7 +14070,6 @@ if CaFrameQ == 1
 end 
 %}
 %% use red green pixel amp figures to group axons into listeners vs talkers
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % PLAY AROUND WITH FINDING PEAKS - PLOTTING CODE IS ALL WORKING 
 % PUT ON HOLD FOR NOW - BELOW CODE IS MORE PROMISING 
 %{
@@ -14287,6 +14286,7 @@ safeKeptInds = inds;
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
+
 inds = safeKeptInds;
 % separate clusters based off of whether they happened before or after the
 % spike 
@@ -14304,7 +14304,7 @@ for ccell = 1:length(terminals{mouse})
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
         % remove clusters that are not in the correct time bin 
-        avClocFrame(ccell,clust) = nanmean(cLocs(:,3));
+        avClocFrame(ccell,clust) = mean(cLocs(:,3));
         frameThresh = ceil(size(im,3)/2);
         if clustSpikeQ == 1
             if clustSpikeQ2 == 0 % see pre spike clusters 
@@ -14354,8 +14354,7 @@ for clust = 1:length(unIdxVals)
 end 
 % make 0s NaNs 
 clustSize(clustSize == 0) = NaN;
-
-% plot cluster size as function of distance from axon 
+ 
 % resort data for gscatter 
 clear sizeDistArray includeX includY
 labels = strings(1,length(terminals{mouse}));
@@ -14399,7 +14398,7 @@ includeX(zeroRow) = 0; includeXY = includeX;
 sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
 fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');     
                
-% plot cluster size as function of distance from axon 
+%% plot cluster size as function of distance from axon 
 figure;
 ax=gca;
 clr = hsv(length(terminals{mouse}));
@@ -14430,33 +14429,33 @@ elseif clustSpikeQ == 1
     end 
 end 
 
-%% resort average cluster timing for plotting 
+%% create scatter over box plot of cluster timing per axon  
 if clustSpikeQ == 0 % if all the spikes are available to look at 
     clear ClocTimeForPlot
-    for ccell = 1:length(terminals{mouse})
-        if ccell == 1 
-            ClocTimeForPlot(:,2) = avClocFrame(ccell,:);
-            ClocTimeForPlot(:,1) = terminals{mouse}(ccell);
-        elseif ccell > 1
-            if ccell == 2 
-                len = size(ClocTimeForPlot,1);
-            end     
-        len2 = size(ClocTimeForPlot,1);
-        ClocTimeForPlot(len2+1:len2+len,2) = avClocFrame(ccell,:);
-        ClocTimeForPlot(len2+1:len2+len,1) = terminals{mouse}(ccell);
-        end 
-    end 
-    % create scatter plot of cluster timing per axon 
+    ClocTimeForPlot = avClocFrame';    
     figure;
     ax=gca;
-    boxchart(ClocTimeForPlot(:,2),ClocTimeForPlot(:,1));
-    hold on;
-%     boxplot(ClocTimeForPlot(:,1),ClocTimeForPlot(:,2));
+    % plot box plot 
+    boxchart(ClocTimeForPlot);
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,ClocTimeForPlot,[],'red')  
+    yline(frameThresh)
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("Average Cluster Timing")
+    ylabel("Average BBB Plume Timing")
     xlabel("Axon")
     title('BBB Plume Timing By Axon');
+    xticklabels(labels)
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    ax.YTick = FrameVals;
+    ax.YTickLabel = sec_TimeVals;  
 end 
 
        
