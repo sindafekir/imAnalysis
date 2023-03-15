@@ -14358,36 +14358,23 @@ for ccell = 1:length(terminals{mouse})
     labels(ccell) = num2str(terminals{mouse}(ccell));
 end 
 
-%% plot cluster size as function of distance from axon 
+% plot cluster size as function of distance from axon 
 ax=gca;
 clr = hsv(length(terminals{mouse}));
 gscatter(sizeDistArray(:,1),sizeDistArray(:,2),sizeDistArray(:,3),clr)
-ylabel("Size of Cluster")
-xlabel("Distance From Axon") 
 ax.FontSize = 15;
 ax.FontName = 'Times';
 legend(labels)
 hold on;
 for ccell = 1:length(terminals{mouse})
-%     plot(xlim,f{ccell},'Color',clr(ccell,:)) 
-    color = clr(ccell,:);
-    colororder(color)
-    plot(f{ccell})    
+    leg = legend('show');
+    fitHandle = plot(f{ccell});
+    set(fitHandle,'Color',clr(ccell,:));
+    leg.String(end) = [];
+    ylabel("Size of Cluster")
+    xlabel("Distance From Axon") 
 end 
 
-% PICK UP HERE - USE BELOW CODE TO MODEL HOW TO CHANGE THE COLOR OF CFIT
-% OBJECT, F 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-cmp = colormap(parula(numberFits)); % Gives a numberFits by 3 matrix of RGB values
-X = 1:10;
-Y = X.^2;
-figure; plot(X,Y,'color','c'); % This plots the data in cyan
-hold on;
-for fitnumber = 1:numberFits
-  [fitobject,foErr]=fit(X',Y','poly1'); % You would change something about the fit with each cycle of loop)
-  FitHandle=plot(fitobject);
-  set(FitHandle,'color',cmp(fitnumber,:));
-end
 
    
         
