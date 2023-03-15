@@ -14183,9 +14183,7 @@ end
 %}
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEXT: SEPARATE CLUSTERS BASED ON WHETHER THEY OCCURED BEFORE OR AFTER THE
-% SPIKE 
-% NEXT NEXT: DETERMINE HOW MANY PRE AND POST SPIKE CLUSTERS EACH AXON HAS 
+% NEXT: DETERMINE HOW MANY PRE AND POST SPIKE CLUSTERS EACH AXON HAS 
 % THEN PLOT CLUSTER SIZE, PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
@@ -14285,6 +14283,7 @@ for ccell = 1:length(terminals{mouse})
 %     clearvars row col frame corepts unIdxVals 
 end 
 safeKeptInds = inds; 
+
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
@@ -14297,6 +14296,7 @@ clustSpikeQ = input('Input 0 to see all clusters. Input 1 to see either pre/post
 if clustSpikeQ == 1
     clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. '); 
 end 
+avClocFrame = NaN(length(terminals{mouse}),length(unIdxVals));
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals)
        % find what rows each cluster is located in
@@ -14304,15 +14304,15 @@ for ccell = 1:length(terminals{mouse})
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
         % remove clusters that are not in the correct time bin 
-        avClocFrame = nanmean(cLocs(:,3));
+        avClocFrame(ccell,clust) = nanmean(cLocs(:,3));
         frameThresh = ceil(size(im,3)/2);
         if clustSpikeQ == 1
             if clustSpikeQ2 == 0 % see pre spike clusters 
-                if avClocFrame >= frameThresh % remove clusters that come after the spike 
+                if avClocFrame(ccell,clust) >= frameThresh % remove clusters that come after the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                 end 
             elseif clustSpikeQ2 == 1 % see post spike clusters 
-                if avClocFrame < frameThresh % remove clusters that come before the spike 
+                if avClocFrame(ccell,clust) < frameThresh % remove clusters that come before the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                 end 
             end 
@@ -14430,8 +14430,38 @@ elseif clustSpikeQ == 1
     end 
 end 
 
+%% resort average cluster timing for plotting 
+if clustSpikeQ == 0 % if all the spikes are available to look at 
+    clear ClocTimeForPlot
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            ClocTimeForPlot(:,2) = avClocFrame(ccell,:);
+            ClocTimeForPlot(:,1) = terminals{mouse}(ccell);
+        elseif ccell > 1
+            if ccell == 2 
+                len = size(ClocTimeForPlot,1);
+            end     
+        len2 = size(ClocTimeForPlot,1);
+        ClocTimeForPlot(len2+1:len2+len,2) = avClocFrame(ccell,:);
+        ClocTimeForPlot(len2+1:len2+len,1) = terminals{mouse}(ccell);
+        end 
+    end 
+    % create scatter plot of cluster timing per axon 
+    figure;
+    ax=gca;
+    boxchart(ClocTimeForPlot(:,2),ClocTimeForPlot(:,1));
+    hold on;
+%     boxplot(ClocTimeForPlot(:,1),ClocTimeForPlot(:,2));
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("Average Cluster Timing")
+    xlabel("Axon")
+    title('BBB Plume Timing By Axon');
+end 
+
        
-% below is first attempt to write my own clustering algorithm ~ TRYING OTHER TECHNIQUES FIRST 
+% below is first attempt to write my own clustering algorithm ~ TRYING
+% OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
 %{
 % use 
 % RightChan{terminals{mouse}(ccell)}(:,:,frame) % the % change vid 
