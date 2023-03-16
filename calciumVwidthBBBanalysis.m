@@ -14283,12 +14283,13 @@ for ccell = 1:length(terminals{mouse})
 %     clearvars row col frame corepts unIdxVals 
 end 
 safeKeptInds = inds; 
-
+safeKeptIdx = idx;
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
 
 inds = safeKeptInds;
+idx = safeKeptIdx;
 % separate clusters based off of whether they happened before or after the
 % spike 
 % before spike: frame <= 26 
@@ -14311,10 +14312,12 @@ for ccell = 1:length(terminals{mouse})
             if clustSpikeQ2 == 0 % see pre spike clusters 
                 if avClocFrame(ccell,clust) >= frameThresh % remove clusters that come after the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+                    idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                 end 
             elseif clustSpikeQ2 == 1 % see post spike clusters 
                 if avClocFrame(ccell,clust) < frameThresh % remove clusters that come before the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+                    idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                 end 
             end 
         end 
@@ -14349,9 +14352,11 @@ for ccell = 1:length(terminals{mouse})
 end 
 
 % determine cluster size 
-clustSize = NaN(1,length(unIdxVals));
-for clust = 1:length(unIdxVals)
-    clustSize(clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals(clust));
+clustSize = NaN(length(terminals{mouse}),length(unIdxVals));
+for ccell = 1:length(terminals{mouse})
+    for clust = 1:length(unIdxVals)
+        clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals(clust));
+    end 
 end 
 % make 0s NaNs 
 clustSize(clustSize == 0) = NaN;
@@ -14363,7 +14368,7 @@ f = cell(1,length(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
     if ccell == 1 
         sizeDistArray(:,1) = minACdists(ccell,:);
-        sizeDistArray(:,2) = clustSize;
+        sizeDistArray(:,2) = clustSize(ccell,:);
         sizeDistArray(:,3) = ccell;       
         % determine trend line 
         includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
@@ -14378,7 +14383,7 @@ for ccell = 1:length(terminals{mouse})
         end 
         len2 = size(sizeDistArray,1);       
         sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
-        sizeDistArray(len2+1:len2+len,2) = clustSize;
+        sizeDistArray(len2+1:len2+len,2) = clustSize(ccell,:);
         sizeDistArray(len2+1:len2+len,3) = ccell;                  
         % determine trend line 
         includeX =~ isnan(sizeDistArray(len2+1:len2+len,1)); includeY =~ isnan(sizeDistArray(len2+1:len2+len,2));
@@ -14437,7 +14442,7 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     figure;
     ax=gca;
     % plot box plot 
-    boxchart(ClocTimeForPlot);
+    boxchart(ClocTimeForPlot,'MarkerStyle','none');
     % create the x data needed to overlay the swarmchart on the boxchart 
     x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
     % plot swarm chart on top of box plot 
@@ -14460,17 +14465,30 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size grouped by pre and post spike 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% CsizeForPlotPre = clustSize';    
+% CsizeForPlotPost = clustSize';   
 
-
-
-
-clustSpikeQ = input('Input 0 to see all clusters. Input 1 to see either pre/post spike clusters. ');
-if clustSpikeQ == 1
-    clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. '); 
+figure;
+ax=gca;
+% plot box plot 
+boxchart(CsizeForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
+% create the x data needed to overlay the swarmchart on the boxchart 
+x = repmat(1:length(terminals{mouse}),length(unIdxVals),1);
+% plot swarm chart on top of box plot 
+hold all;
+% swarmchart(x,CsizeForPlot,[],'red')  
+boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size")
+xlabel("Axon")
+if clustSpikeQ == 0 
+    title({'BBB Plume Size By Axon';'All Plumes'});
+elseif clustSpikeQ == 1    
+    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes'});  
 end 
+legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+xticklabels(labels)
 
 
 

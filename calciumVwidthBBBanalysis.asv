@@ -14070,7 +14070,6 @@ if CaFrameQ == 1
 end 
 %}
 %% use red green pixel amp figures to group axons into listeners vs talkers
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % PLAY AROUND WITH FINDING PEAKS - PLOTTING CODE IS ALL WORKING 
 % PUT ON HOLD FOR NOW - BELOW CODE IS MORE PROMISING 
 %{
@@ -14183,8 +14182,9 @@ end
 %}
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEXT: DETERMINE HOW MANY PRE AND POST SPIKE CLUSTERS EACH AXON HAS 
-% THEN PLOT CLUSTER SIZE, PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
+% NEXT: PLOT CLUSTER SIZE GROUPED BY PRE AND POST SPIKE 
+
+% THEN PLOT PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
 
@@ -14287,6 +14287,7 @@ safeKeptInds = inds;
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
+
 inds = safeKeptInds;
 % separate clusters based off of whether they happened before or after the
 % spike 
@@ -14354,8 +14355,7 @@ for clust = 1:length(unIdxVals)
 end 
 % make 0s NaNs 
 clustSize(clustSize == 0) = NaN;
-
-% plot cluster size as function of distance from axon 
+ 
 % resort data for gscatter 
 clear sizeDistArray includeX includY
 labels = strings(1,length(terminals{mouse}));
@@ -14399,7 +14399,7 @@ includeX(zeroRow) = 0; includeXY = includeX;
 sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
 fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');     
                
-% plot cluster size as function of distance from axon 
+%% plot cluster size as function of distance from axon 
 figure;
 ax=gca;
 clr = hsv(length(terminals{mouse}));
@@ -14430,11 +14430,10 @@ elseif clustSpikeQ == 1
     end 
 end 
 
-%% resort average cluster timing for plotting 
+%% create scatter over box plot of cluster timing per axon  
 if clustSpikeQ == 0 % if all the spikes are available to look at 
     clear ClocTimeForPlot
-    ClocTimeForPlot = avClocFrame';
-    % create scatter over box plot of cluster timing per axon 
+    ClocTimeForPlot = avClocFrame';    
     figure;
     ax=gca;
     % plot box plot 
@@ -14451,11 +14450,30 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     xlabel("Axon")
     title('BBB Plume Timing By Axon');
     xticklabels(labels)
-    ylabel = 
-    yticklabels(ylabel)
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    ax.YTick = FrameVals;
+    ax.YTickLabel = sec_TimeVals;  
 end 
 
-       
+%% plot cluster size grouped by pre and post spike 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+inds = safeKeptInds;
+
+
+clustSpikeQ = input('Input 0 to see all clusters. Input 1 to see either pre/post spike clusters. ');
+if clustSpikeQ == 1
+    clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. '); 
+end 
+
+
+
 % below is first attempt to write my own clustering algorithm ~ TRYING
 % OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
 %{
