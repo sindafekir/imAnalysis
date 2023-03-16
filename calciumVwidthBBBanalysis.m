@@ -14183,7 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 2) PLOT DISTRIBUTION OF CLUSTER SIZES 
 % 3) PLOT ALL BBB PLUME SIZE BY AXON WITH Y AXIS ON LOG SCALE 
 % 4) REMAKE ALL THE BELOW FIGURES WITH PLUME CLUSTER SIZE LIMITED TO 100 OR
 % MORE (figure out what proportion is 100 < so I can be consistent across
