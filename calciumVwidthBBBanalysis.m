@@ -14183,8 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 1) QUANTIFY AND PLOT NUMBER OF CLUSTERS OF ALL CLUSTERS THAT ARE NEAR THE
-% VESSEL 
 % 2) PLOT DISTRIBUTION OF CLUSTER SIZES 
 % 3) PLOT ALL BBB PLUME SIZE BY AXON WITH Y AXIS ON LOG SCALE 
 % 4) REMAKE ALL THE BELOW FIGURES WITH PLUME CLUSTER SIZE LIMITED TO 100 OR
@@ -14324,17 +14322,14 @@ ylabel("Number of Clusters")
 xlabel("Axon")
 legend("Clusters Near Vessel","Clusters Far from Vessel")
 xticklabels(labels)
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - NEED TO FIGURE OUT HOW TO CHANGE PIE CHART COLORS 
+% plot pie chart 
 subplot(1,2,2)
 % resort data for averaged pie chart 
 AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
-h = pie(AvNearVsFarPlotData,'FaceColor','flat');
-h(1).CData = [0 0.4470 0.7410];
-h(2).CData = [0.8500 0.3250 0.0980];
-% SetPieChartColors(h, [0 0.4470 0.7410;0.8500 0.3250 0.0980]);
+pie(AvNearVsFarPlotData);
+colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+
+
 
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
@@ -14490,6 +14485,16 @@ elseif clustSpikeQ == 1
         title('Post Spike Clusters');
     end 
 end 
+
+%% plot distribution of cluster sizes 
+figure;
+ax=gca;
+histogram(sizeDistArray(:,2))
+ax.FontSize = 15;
+ax.FontName = 'Times';
+title('Distribution of BBB Plume Sizes');
+ylabel("Number of BBB Plumes")
+xlabel("Size of BBB Plume") 
 
 %% create scatter over box plot of cluster timing per axon  
 if clustSpikeQ == 0 % if all the spikes are available to look at 
