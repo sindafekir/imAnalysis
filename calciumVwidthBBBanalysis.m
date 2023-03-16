@@ -14210,7 +14210,9 @@ indsV2 = cell(1,max(terminals{mouse}));
 indsA = cell(1,max(terminals{mouse}));
 indsA2 = cell(1,size(RightChan{ terminals{mouse}(1)},3));
 unIdxVals = cell(1,max(terminals{mouse}));
+CsNotNearVessel = cell(1,max(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
+    count = 1;
     term = terminals{mouse}(ccell);
     % use dbscan to find clustered pixels 
     im = RightChan{term}; % input image
@@ -14263,7 +14265,9 @@ for ccell = 1:length(terminals{mouse})
         cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
         if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
             % delete cluster that is not near the vessel 
-            inds{terminals{mouse}(ccell)}(Crow,:) = NaN;        
+            inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+            CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
+            count = count + 1;            
         end 
     end         
     % plot the grouped pixels 
@@ -14296,6 +14300,42 @@ for ccell = 1:length(terminals{mouse})
 end 
 safeKeptInds = inds; 
 safeKeptIdx = idx;
+
+%% plot the proportion of clusters that are near the vessel out of total # of clusters 
+% use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
+% not near vessel)
+
+nearVsFarPlotData = zeros(length(terminals{mouse}),2);
+% resort data for stacked bar plot 
+for ccell = 1:length(terminals{mouse})
+    nearVsFarPlotData(ccell,1) = length(unIdxVals{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
+    nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
+end 
+% plot stacked bar plot
+figure;
+subplot(1,2,1)
+ax=gca;
+ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
+ba(1).CData = [0 0.4470 0.7410];
+ba(2).CData = [0.8500 0.3250 0.0980];
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("Number of Clusters")
+xlabel("Axon")
+legend("Clusters Near Vessel","Clusters Far from Vessel")
+xticklabels(labels)
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE - NEED TO FIGURE OUT HOW TO CHANGE PIE CHART COLORS 
+subplot(1,2,2)
+% resort data for averaged pie chart 
+AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+h = pie(AvNearVsFarPlotData,'FaceColor','flat');
+h(1).CData = [0 0.4470 0.7410];
+h(2).CData = [0.8500 0.3250 0.0980];
+% SetPieChartColors(h, [0 0.4470 0.7410;0.8500 0.3250 0.0980]);
+
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
