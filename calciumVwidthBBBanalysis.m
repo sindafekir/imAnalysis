@@ -14263,32 +14263,52 @@ for ccell = 1:length(terminals{mouse})
             CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
             count = count + 1;            
         end 
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         % determine cluster size 
         clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust));
-        % make 0s NaNs 
-        clustSize(clustSize == 0) = NaN;
-        % find the top 0.05% of cluster sizes (this will be 100 or more
-        % for 57)
-        numClusts = nnz(~isnan(clustSize));
-        numTopClusts = ceil(numClusts*0.05);
-        reshapedSizes = reshape(clustSize,1,size(clustSize,1)*size(clustSize,2));
-        % remove NaNs 
-        reshapedSizes(isnan(reshapedSizes)) = [];
-        % sort sizes 
-        sortedSize = sort(reshapedSizes);
-        % get the largest 0.05% of cluster sizes 
-        topClusts = sortedSize(end-numTopClusts+1:end);
-
-        % PICK UP HERE- NEXT REMOVE CLUSTERS THAT DO NOT INCLUDE THESE TOP
-        % SIZED CLUSTERS 
-
-
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
     end         
+end 
+CsTooSmall = cell(1,max(terminals{mouse}));
+% remove clusters that are not big enough in size and plot 
+for ccell = 1:length(terminals{mouse})
+    count = 1;
+    % make 0s NaNs 
+    clustSize(clustSize == 0) = NaN;
+    % find the top 0.05% of cluster sizes (this will be 100 or more
+    % for 57)
+    numClusts = nnz(~isnan(clustSize));
+    numTopClusts = ceil(numClusts*0.05);
+    reshapedSizes = reshape(clustSize,1,size(clustSize,1)*size(clustSize,2));
+    % remove NaNs 
+    reshapedSizes(isnan(reshapedSizes)) = [];
+    % sort sizes 
+    sortedSize = sort(reshapedSizes);
+    % get the largest 0.05% of cluster sizes 
+    topClusts = sortedSize(end-numTopClusts+1:end);
+    % get the locations of the topClusts 
+    topClusts2 = ismember(clustSize,topClusts);       
+    [topCx_A, topCy_C] = find(topClusts2);
+    % determine what clusters are big enough to be included 
+    bigClustAlocs = find(topCx_A == ccell); % find what rows the axon is in to determine what clusters are big enough per axon 
+    bigClustLocs = topCy_C(bigClustAlocs);
+    bigClusts = unIdxVals{terminals{mouse}(ccell)}(bigClustLocs);
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % PICK UP HERE- NEXT REMOVE CLUSTERS THAT DO NOT INCLUDE THESE TOP
+    % SIZED CLUSTERS 
+    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+        % find what rows each cluster is located in
+        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust));  
+        % remove clusters if they're too small 
+        if sum(ismember(bigClusts,unIdxVals{terminals{mouse}(ccell)}(clust))) == 0 
+            inds{terminals{mouse}(ccell)}(Crow,:) = NaN;
+            CsTooSmall{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
+            count = count + 1;  
+        end 
+    end 
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % plot the grouped pixels 
     figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
     % plot vessel outline 
@@ -14314,12 +14334,10 @@ for ccell = 1:length(terminals{mouse})
     end 
     % plot axon location 
     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
-    title(sprintf('Axon %d',terminals{mouse}(ccell)));
-%     clearvars row col frame corepts unIdxVals 
+    title(sprintf('Axon %d',terminals{mouse}(ccell)));  
 end 
 safeKeptInds = inds; 
 safeKeptIdx = idx;
-
 
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
