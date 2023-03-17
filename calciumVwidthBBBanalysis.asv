@@ -14183,9 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 1) QUANTIFY AND PLOT NUMBER OF CLUSTERS OF ALL CLUSTERS THAT ARE NEAR THE
-% VESSEL 
-% 2) PLOT DISTRIBUTION OF CLUSTER SIZES 
 % 3) PLOT ALL BBB PLUME SIZE BY AXON WITH Y AXIS ON LOG SCALE 
 % 4) REMAKE ALL THE BELOW FIGURES WITH PLUME CLUSTER SIZE LIMITED TO 100 OR
 % MORE (figure out what proportion is 100 < so I can be consistent across
@@ -14315,17 +14312,22 @@ end
 figure;
 subplot(1,2,1)
 ax=gca;
-bar(nearVsFarPlotData,'stacked')
+ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
+ba(1).CData = [0 0.4470 0.7410];
+ba(2).CData = [0.8500 0.3250 0.0980];
 ax.FontSize = 15;
 ax.FontName = 'Times';
 ylabel("Number of Clusters")
 xlabel("Axon")
 legend("Clusters Near Vessel","Clusters Far from Vessel")
 xticklabels(labels)
-
+% plot pie chart 
 subplot(1,2,2)
 % resort data for averaged pie chart 
-AvNearVsFarPlotData = mean(nearVsFarPlotData)
+AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+pie(AvNearVsFarPlotData);
+colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+
 
 
 %% below code takes the clusters made and plotted above to make figures out of 
@@ -14483,6 +14485,16 @@ elseif clustSpikeQ == 1
     end 
 end 
 
+%% plot distribution of cluster sizes 
+figure;
+ax=gca;
+histogram(sizeDistArray(:,2))
+ax.FontSize = 15;
+ax.FontName = 'Times';
+title('Distribution of BBB Plume Sizes');
+ylabel("Number of BBB Plumes")
+xlabel("Size of BBB Plume") 
+
 %% create scatter over box plot of cluster timing per axon  
 if clustSpikeQ == 0 % if all the spikes are available to look at 
     clear ClocTimeForPlot
@@ -14513,32 +14525,65 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size grouped by pre and post spike 
-% CsizeForPlotPre = clustSize';    
-% CsizeForPlotPost = clustSize';   
-% CsizeForPlot = clustSize';
-
-figure;
-ax=gca;
-% plot box plot 
-boxchart(CsizeForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
-% boxchart(CsizeForPlot,'MarkerStyle','none');
-% create the x data needed to overlay the swarmchart on the boxchart 
-x = repmat(1:length(terminals{mouse}),size(CsizeForPlot,1),1);
-% plot swarm chart on top of box plot 
-hold all;
-% swarmchart(x,CsizeForPlot,[],'red')  
-boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("BBB Plume Size")
-xlabel("Axon")
-if clustSpikeQ == 0 
+  
+if clustSpikeQ == 0
+    CsizeForPlot = clustSize';
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(CsizeForPlot,'MarkerStyle','none');
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:length(terminals{mouse}),size(CsizeForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,CsizeForPlot,[],'red')  
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("BBB Plume Size")
+    xlabel("Axon")  
     title({'BBB Plume Size By Axon';'All Plumes'});
-elseif clustSpikeQ == 1    
-    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes'});  
+    xticklabels(labels)
+elseif clustSpikeQ == 1 
+    preOrPost = input('Input 0 to update pre-spike array. Input 1 to update post-spike array. ');
+    if preOrPost == 0
+        CsizeForPlotPre = clustSize'; 
+    elseif preOrPost == 1 
+        
+    end 
+
+    preDone = 0;
+    while preDone == 0
+        preDoneCheck = input('Did you create the pre-spike array? Input 1 for yes. ');
+        if preDoneCheck == 1
+             
+            preDone = 1;
+        end 
+    end 
+    while preDone == 1 
+        postDoneCheck = input('Did you create the post-spike array? Input 1 for yes. ');
+        if postDoneCheck == 1 
+            CsizeForPlotPost = clustSize'; 
+            postDone = 1;
+        end 
+    end 
+    if postDone == 1 
+        figure;
+        ax=gca;
+        % plot box plot 
+        boxchart(CsizeForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
+        % plot swarm chart on top of box plot 
+        hold all;
+        boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Size")
+        xlabel("Axon")  
+        title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes'});    
+        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        xticklabels(labels)    
+    end 
 end 
-legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
-xticklabels(labels)
+
 
 
 

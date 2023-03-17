@@ -14525,32 +14525,51 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size grouped by pre and post spike 
-% CsizeForPlotPre = clustSize';    
-% CsizeForPlotPost = clustSize';   
-% CsizeForPlot = clustSize';
-
-figure;
-ax=gca;
-% plot box plot 
-boxchart(CsizeForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
-% boxchart(CsizeForPlot,'MarkerStyle','none');
-% create the x data needed to overlay the swarmchart on the boxchart 
-x = repmat(1:length(terminals{mouse}),size(CsizeForPlot,1),1);
-% plot swarm chart on top of box plot 
-hold all;
-% swarmchart(x,CsizeForPlot,[],'red')  
-boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("BBB Plume Size")
-xlabel("Axon")
-if clustSpikeQ == 0 
+  
+if clustSpikeQ == 0
+    CsizeForPlot = clustSize';
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(CsizeForPlot,'MarkerStyle','none');
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:length(terminals{mouse}),size(CsizeForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,CsizeForPlot,[],'red')  
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("BBB Plume Size")
+    xlabel("Axon")  
     title({'BBB Plume Size By Axon';'All Plumes'});
-elseif clustSpikeQ == 1    
-    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes'});  
+    xticklabels(labels)
+    set(gca, 'YScale', 'log')
+elseif clustSpikeQ == 1 
+    preOrPost = input('Input 0 to update pre-spike array. Input 1 to update post-spike array. ');
+    if preOrPost == 0
+        CsizeForPlotPre = clustSize'; 
+    elseif preOrPost == 1 
+        CsizeForPlotPost = clustSize'; 
+    end 
+    preAndPostQ = input('Are both pre and post-spike arrays updated? Input 1 for yes. 0 for no. ');
+    if preAndPostQ == 1 
+        figure;
+        ax=gca;
+        % plot box plot 
+        boxchart(CsizeForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
+        % plot swarm chart on top of box plot 
+        hold all;
+        boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Size")
+        xlabel("Axon")  
+        title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes'});    
+        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        xticklabels(labels)   
+    end 
 end 
-legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
-xticklabels(labels)
+
 
 
 
