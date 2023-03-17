@@ -14183,10 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 3) PLOT ALL BBB PLUME SIZE BY AXON WITH Y AXIS ON LOG SCALE 
-% 4) REMAKE ALL THE BELOW FIGURES WITH PLUME CLUSTER SIZE LIMITED TO 100 OR
-% MORE (figure out what proportion is 100 < so I can be consistent across
-% mice) 
 % 5) PLOT CHANGE IN PLUME SIZE OVER TIME 
 % 6) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
@@ -14208,6 +14204,7 @@ indsA = cell(1,max(terminals{mouse}));
 indsA2 = cell(1,size(RightChan{ terminals{mouse}(1)},3));
 unIdxVals = cell(1,max(terminals{mouse}));
 CsNotNearVessel = cell(1,max(terminals{mouse}));
+clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 for ccell = 1:length(terminals{mouse})
     count = 1;
     term = terminals{mouse}(ccell);
@@ -14266,6 +14263,31 @@ for ccell = 1:length(terminals{mouse})
             CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
             count = count + 1;            
         end 
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % determine cluster size 
+        clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust));
+        % make 0s NaNs 
+        clustSize(clustSize == 0) = NaN;
+        % find the top 0.05% of cluster sizes (this will be 100 or more
+        % for 57)
+        numClusts = nnz(~isnan(clustSize));
+        numTopClusts = ceil(numClusts*0.05);
+        reshapedSizes = reshape(clustSize,1,size(clustSize,1)*size(clustSize,2));
+        % remove NaNs 
+        reshapedSizes(isnan(reshapedSizes)) = [];
+        % sort sizes 
+        sortedSize = sort(reshapedSizes);
+        % get the largest 0.05% of cluster sizes 
+        topClusts = sortedSize(end-numTopClusts+1:end);
+
+        % PICK UP HERE- NEXT REMOVE CLUSTERS THAT DO NOT INCLUDE THESE TOP
+        % SIZED CLUSTERS 
+
+
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     end         
     % plot the grouped pixels 
     figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
@@ -14297,6 +14319,8 @@ for ccell = 1:length(terminals{mouse})
 end 
 safeKeptInds = inds; 
 safeKeptIdx = idx;
+
+
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
@@ -14398,16 +14422,6 @@ for ccell = 1:length(terminals{mouse})
 end 
 % make 0s NaNs 
 minACdists(minACdists == 0) = NaN;
-
-% determine cluster size 
-clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
-for ccell = 1:length(terminals{mouse})
-    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-        clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust));
-    end 
-end 
-% make 0s NaNs 
-clustSize(clustSize == 0) = NaN;
  
 % resort data for gscatter 
 clear sizeDistArray includeX includY
