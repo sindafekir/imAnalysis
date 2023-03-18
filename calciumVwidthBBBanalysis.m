@@ -14291,11 +14291,7 @@ for ccell = 1:length(terminals{mouse})
     bigClustAlocs = find(topCx_A == ccell); % find what rows the axon is in to determine what clusters are big enough per axon 
     bigClustLocs = topCy_C(bigClustAlocs);
     bigClusts = unIdxVals{terminals{mouse}(ccell)}(bigClustLocs);
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE- NEXT REMOVE CLUSTERS THAT DO NOT INCLUDE THESE TOP
-    % SIZED CLUSTERS 
+    % remove clusters that do not include the top 0.05% of sizes 
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
         % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust));  
@@ -14306,9 +14302,6 @@ for ccell = 1:length(terminals{mouse})
             count = count + 1;  
         end 
     end 
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % plot the grouped pixels 
     figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
     % plot vessel outline 
@@ -14336,9 +14329,14 @@ for ccell = 1:length(terminals{mouse})
     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
     title(sprintf('Axon %d',terminals{mouse}(ccell)));  
 end 
+% remove cluster sizes that are irrelevant 
+removeClustSizes = ~ismember(clustSize,topClusts);
+clustSize(removeClustSizes) = NaN;
+
+% safekeep some variables 
 safeKeptInds = inds; 
 safeKeptIdx = idx;
-
+safeKeptClustSize = clustSize;
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
@@ -14378,6 +14376,8 @@ colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 
 inds = safeKeptInds;
 idx = safeKeptIdx;
+clustSize = safeKeptClustSize;
+
 % separate clusters based off of whether they happened before or after the
 % spike 
 % before spike: frame <= 26 
@@ -14400,17 +14400,21 @@ for ccell = 1:length(terminals{mouse})
             if clustSpikeQ2 == 0 % see pre spike clusters 
                 if avClocFrame(ccell,clust) >= frameThresh % remove clusters that come after the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
-                    idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+                    idx{terminals{mouse}(ccell)}(Crow,:) = NaN;
+                    clustSize(ccell,clust) = NaN;
                 end 
             elseif clustSpikeQ2 == 1 % see post spike clusters 
                 if avClocFrame(ccell,clust) < frameThresh % remove clusters that come before the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                     idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+                    clustSize(ccell,clust) = NaN;
                 end 
             end 
         end 
     end 
 end 
+% make 0s NaNs 
+avClocFrame(avClocFrame == 0) = NaN;
 
 % determine distance of each cluster from each axon 
 dists = cell(1,max(terminals{mouse}));
@@ -14442,7 +14446,7 @@ end
 minACdists(minACdists == 0) = NaN;
  
 % resort data for gscatter 
-clear sizeDistArray includeX includY
+clear sizeDistArray includeX includY includeXY
 labels = strings(1,length(terminals{mouse}));
 f = cell(1,length(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
@@ -14455,8 +14459,10 @@ for ccell = 1:length(terminals{mouse})
         % make incude XY that has combined 0 locs 
         [zeroRow, ~] = find(includeY == 0);
         includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
-        f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');             
+        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);  
+        if sum(includeXY) > 1 
+            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
+        end 
     elseif ccell > 1 
         if ccell == 2
             len = size(sizeDistArray,1);   
@@ -14470,8 +14476,10 @@ for ccell = 1:length(terminals{mouse})
         % make incude XY that has combined 0 locs 
         [zeroRow, ~] = find(includeY == 0);
         includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);       
-        f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);   
+        if sum(includeXY) > 1 
+            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+        end 
     end 
     labels(ccell) = num2str(terminals{mouse}(ccell));
 end 
@@ -14487,6 +14495,7 @@ fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$               
 %% plot cluster size as function of distance from axon 
+
 figure;
 ax=gca;
 clr = hsv(length(terminals{mouse}));

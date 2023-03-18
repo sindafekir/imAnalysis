@@ -14267,8 +14267,10 @@ for ccell = 1:length(terminals{mouse})
         clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust));
     end         
 end 
+CsTooSmall = cell(1,max(terminals{mouse}));
 % remove clusters that are not big enough in size and plot 
 for ccell = 1:length(terminals{mouse})
+    count = 1;
     % make 0s NaNs 
     clustSize(clustSize == 0) = NaN;
     % find the top 0.05% of cluster sizes (this will be 100 or more
@@ -14296,27 +14298,14 @@ for ccell = 1:length(terminals{mouse})
     % SIZED CLUSTERS 
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
         % find what rows each cluster is located in
-        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
-        % identify the x, y, z location of pixels per cluster
-        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);   
-
-        % remove clusters is they're too small 
-        if sum(ismember(bigClusts,unIdxVals{terminals{mouse}(ccell)}(clust))) < 0 
-
-
-
-
-        % EXAMPLE CODE BELOW @@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % determine if cLocs are near the vessel 
-        cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
-        if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
-            % delete cluster that is not near the vessel 
-            inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
-            CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
-            count = count + 1;            
+        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust));  
+        % remove clusters if they're too small 
+        if sum(ismember(bigClusts,unIdxVals{terminals{mouse}(ccell)}(clust))) == 0 
+            inds{terminals{mouse}(ccell)}(Crow,:) = NaN;
+            CsTooSmall{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
+            count = count + 1;  
         end 
     end 
-
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -14347,11 +14336,8 @@ for ccell = 1:length(terminals{mouse})
     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
     title(sprintf('Axon %d',terminals{mouse}(ccell)));  
 end 
-
-
 safeKeptInds = inds; 
 safeKeptIdx = idx;
-
 
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
@@ -14455,8 +14441,8 @@ end
 % make 0s NaNs 
 minACdists(minACdists == 0) = NaN;
  
-% resort data for gscatter 
-clear sizeDistArray includeX includY
+%% resort data for gscatter 
+clear sizeDistArray includeX includY includeXY
 labels = strings(1,length(terminals{mouse}));
 f = cell(1,length(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
@@ -14469,8 +14455,10 @@ for ccell = 1:length(terminals{mouse})
         % make incude XY that has combined 0 locs 
         [zeroRow, ~] = find(includeY == 0);
         includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
-        f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');             
+        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);  
+        if sum(includeXY) > 1 
+            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
+        end 
     elseif ccell > 1 
         if ccell == 2
             len = size(sizeDistArray,1);   
@@ -14484,13 +14472,14 @@ for ccell = 1:length(terminals{mouse})
         % make incude XY that has combined 0 locs 
         [zeroRow, ~] = find(includeY == 0);
         includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);       
-        f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);   
+        if sum(includeXY) > 1 
+            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
     end 
     labels(ccell) = num2str(terminals{mouse}(ccell));
 end 
 
-% determine average trend line 
+%% determine average trend line 
 includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
 % make incude XY that has combined 0 locs 
 [zeroRow, ~] = find(includeY == 0);
