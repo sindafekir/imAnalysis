@@ -14499,8 +14499,11 @@ includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
 % make incude XY that has combined 0 locs 
 [zeroRow, ~] = find(includeY == 0);
 includeX(zeroRow) = 0; includeXY = includeX;                
-sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
-fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
+if length(find(includeXY)) > 1
+    fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+end 
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$               
@@ -14522,10 +14525,12 @@ for ccell = 1:length(terminals{mouse})
     fitHandle = plot(f{ccell});
     set(fitHandle,'Color',clr(ccell,:));
 end 
-fitHandle = plot(fav);
-leg = legend('show');
-set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-leg.String(end) = [];
+if length(find(includeXY)) > 1
+    fitHandle = plot(fav);
+    leg = legend('show');
+    set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+    leg.String(end) = [];
+end 
 ylabel("Size of Cluster")
 xlabel("Distance From Axon") 
 if clustSpikeQ == 0 
@@ -14544,7 +14549,15 @@ ax=gca;
 histogram(sizeDistArray(:,2))
 ax.FontSize = 15;
 ax.FontName = 'Times';
-title('Distribution of BBB Plume Sizes');
+if clustSpikeQ == 0 
+    title({'Distribution of BBB Plume Sizes';'All Clusters'});
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters'});
+    elseif clustSpikeQ2 == 1
+        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters'});
+    end 
+end 
 ylabel("Number of BBB Plumes")
 xlabel("Size of BBB Plume") 
 

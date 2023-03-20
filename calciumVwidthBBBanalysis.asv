@@ -14499,7 +14499,8 @@ includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
 % make incude XY that has combined 0 locs 
 [zeroRow, ~] = find(includeY == 0);
 includeX(zeroRow) = 0; includeXY = includeX;                
-sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);       
+sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
+if 
 fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -14518,22 +14519,14 @@ axons = unique(sizeDistArray(fullRows,3));
 label = labels(axons);
 legend(label)
 hold on;
-% figure out what axons have more than one data point to add to fitted
-% legend 
-multAxonPoints = find(~cellfun(@isempty,f));
-fitLabel = terminals
 for ccell = 1:length(terminals{mouse})
-    leg = legend('show');
     fitHandle = plot(f{ccell});
     set(fitHandle,'Color',clr(ccell,:));
-    leg.String(end) = label;
 end 
-
-
-% fitHandle = plot(fav);
-% leg = legend('show');
-% set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-% leg.String(end) = [];
+fitHandle = plot(fav);
+leg = legend('show');
+set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+leg.String(end) = [];
 ylabel("Size of Cluster")
 xlabel("Distance From Axon") 
 if clustSpikeQ == 0 
