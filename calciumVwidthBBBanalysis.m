@@ -14346,10 +14346,14 @@ safeKeptClustSize = clustSize;
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
 
+
+
 nearVsFarPlotData = zeros(length(terminals{mouse}),2);
 % resort data for stacked bar plot 
+unIdxVals2 = cell(1,max(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
-    nearVsFarPlotData(ccell,1) = length(unIdxVals{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
+    unIdxVals2{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)});
+    nearVsFarPlotData(ccell,1) = length(unIdxVals2{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
     nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
 end 
 % plot stacked bar plot

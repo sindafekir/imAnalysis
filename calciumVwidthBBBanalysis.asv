@@ -14346,6 +14346,8 @@ safeKeptClustSize = clustSize;
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
 
+unIdxVals{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)});
+
 nearVsFarPlotData = zeros(length(terminals{mouse}),2);
 % resort data for stacked bar plot 
 for ccell = 1:length(terminals{mouse})
@@ -14718,14 +14720,13 @@ for ccell = 1:length(terminals{mouse})
     % remove rows that are entirely NaN
     clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
     h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);
-    if clust == 1 
-        leg = legend('show');
-        leg.String(end) = [];
-        leg = legend('AutoUpdate','off');
-    elseif clust > 1
-
-        leg = legend('AutoUpdate','off');
-    end 
+%     if clust == 1 
+%         leg = legend('show');
+%         leg.String(end) = [];
+%         leg = legend('AutoUpdate','on');
+%     elseif clust > 1
+%         leg = legend('AutoUpdate','off');
+%     end 
 end 
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
@@ -14744,7 +14745,7 @@ axonLabel = string(1:length(axons));
 for axon = 1:length(axons)
     axonLabel(axon) = num2str(axons(axon));
 end 
-legend(axonLabel)
+% legend(axonLabel)
 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
