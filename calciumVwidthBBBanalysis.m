@@ -14694,6 +14694,60 @@ if preAndPostQ == 1
 end 
 
 
+%% plot change in cluster size over time for each axon and averaged 
+
+% figure out cluster size per frame 
+figure;
+hold all;
+ax=gca;
+clr = hsv(length(terminals{mouse}));
+clustSizeTS = cell(1,max(terminals{mouse}));
+x = 1:size(im,3);
+for ccell = 1:length(terminals{mouse})
+    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+        % find what rows each cluster is located in
+        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+        % identify the x, y, z location of pixels per cluster
+        cLocs = inds{terminals{mouse}(ccell)}(Crow,:); 
+        for frame = 1:size(im,3)
+            clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
+        end         
+    end 
+    % turn 0s into NaNs 
+    clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
+    % remove rows that are entirely NaN
+    clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
+    h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);
+%     if clust == 1 
+%         leg = legend('show');
+%         leg.String(end) = [];
+%         leg = legend('AutoUpdate','on');
+%     elseif clust > 1
+%         leg = legend('AutoUpdate','off');
+%     end 
+end 
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title('Change in BBB Plume Size Over Time')
+axons = find(~cellfun(@isempty,clustSizeTS));
+axonLabel = string(1:length(axons));
+for axon = 1:length(axons)
+    axonLabel(axon) = num2str(axons(axon));
+end 
+% legend(axonLabel)
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEED TO FIX THE LEGEND HERE 
 
 % below is first attempt to write my own clustering algorithm ~ TRYING
 % OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
