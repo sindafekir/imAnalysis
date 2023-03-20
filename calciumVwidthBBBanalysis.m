@@ -14183,7 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 4) PLOT PLUME ONSET PER AXON 
 % 4A) MAKE HISTOGRAM OF PLUME ONSET AND PLUME MID TIMES 
 % 4B) MAKE HISTOGRAM OF PLUME DISTANCE FROM AXON 
 % 5) PLOT CHANGE IN PLUME SIZE OVER TIME 
@@ -14390,18 +14389,30 @@ clustSize = safeKeptClustSize;
 % before spike: frame <= 26 
 % after spike: frame >= 27 
 clustSpikeQ = input('Input 0 to see all clusters. Input 1 to see either pre/post spike clusters. ');
+clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
 if clustSpikeQ == 1
-    clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. '); 
+    clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. ');     
 end 
-avClocFrame = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+% determine largest number of clusters across all axons
+[s, ~] = cellfun(@size,unIdxVals);
+maxNumClusts = max(s);
+avClocFrame = NaN(length(terminals{mouse}),maxNumClusts);
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
        % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
-        % remove clusters that are not in the correct time bin 
-        avClocFrame(ccell,clust) = mean(cLocs(:,3));
+        % remove clusters that are not in the correct time bin                         
+        if clustSpikeQ3 == 0 
+            % this determines the average timing of each cluster 
+            avClocFrame(ccell,clust) = mean(cLocs(:,3)); 
+        elseif clustSpikeQ3 == 1 
+            if isempty(cLocs) == 0
+                % determine the start time of each cluster 
+                avClocFrame(ccell,clust) = min(cLocs(:,3)); 
+            end 
+        end        
         frameThresh = ceil(size(im,3)/2);
         if clustSpikeQ == 1
             if clustSpikeQ2 == 0 % see pre spike clusters 
@@ -14579,7 +14590,11 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     ax.FontName = 'Times';
     ylabel("Average BBB Plume Timing")
     xlabel("Axon")
-    title('BBB Plume Timing By Axon');
+    if clustSpikeQ3 == 0
+        title({'BBB Plume Timing By Axon';'Average Cluster Time'});
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Timing By Axon';'Cluster Start Time'});
+    end     
     xticklabels(labels)
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
@@ -14635,26 +14650,27 @@ elseif clustSpikeQ == 1
         xticklabels(labels)   
     end 
 end 
-
-% reshape data to plot box and whisker plots 
-reshapedPrePlot = reshape(CsizeForPlotPre,size(CsizeForPlotPre,1)*size(CsizeForPlotPre,2),1);
-reshapedPostPlot = reshape(CsizeForPlotPost,size(CsizeForPlotPost,1)*size(CsizeForPlotPost,2),1);
-data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
-figure;
-ax=gca;
-% plot box plot 
-boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
-% plot swarm chart on top of box plot 
-hold all;
-x = repmat(1:size(data,2),size(data,1),1);
-swarmchart(x,data,[],'red') 
-% boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("BBB Plume Size") 
-title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons'});    
-avLabels = ["Pre-Spike","Post-Spike"];
-xticklabels(avLabels) 
+if preAndPostQ == 1 
+    % reshape data to plot box and whisker plots 
+    reshapedPrePlot = reshape(CsizeForPlotPre,size(CsizeForPlotPre,1)*size(CsizeForPlotPre,2),1);
+    reshapedPostPlot = reshape(CsizeForPlotPost,size(CsizeForPlotPost,1)*size(CsizeForPlotPost,2),1);
+    data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+    % plot swarm chart on top of box plot 
+    hold all;
+    x = repmat(1:size(data,2),size(data,1),1);
+    swarmchart(x,data,[],'red') 
+    % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("BBB Plume Size") 
+    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons'});    
+    avLabels = ["Pre-Spike","Post-Spike"];
+    xticklabels(avLabels)
+end 
 
 
 
