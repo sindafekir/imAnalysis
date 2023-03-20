@@ -14183,12 +14183,17 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
+% 4) PLOT PLUME ONSET PER AXON 
+% 4A) MAKE HISTOGRAM OF PLUME ONSET AND PLUME MID TIMES 
+% 4B) MAKE HISTOGRAM OF PLUME DISTANCE FROM AXON 
 % 5) PLOT CHANGE IN PLUME SIZE OVER TIME 
 % 6) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
 % 7) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
 
-% THEN PLOT PIXEL AMP, CLUSTER VELOCITY AS FUNCTION OF
+% THEN PLOT PIXEL AMP, % PLOT PLUME TIMING ON SIDE WITH AVERAGE PIXEL AMP
+% ON TOP 
+% CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
 
@@ -14260,6 +14265,7 @@ for ccell = 1:length(terminals{mouse})
         if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
             % delete cluster that is not near the vessel 
             inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+            idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
             CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
             count = count + 1;            
         end 
@@ -14298,6 +14304,7 @@ for ccell = 1:length(terminals{mouse})
         % remove clusters if they're too small 
         if sum(ismember(bigClusts,unIdxVals{terminals{mouse}(ccell)}(clust))) == 0 
             inds{terminals{mouse}(ccell)}(Crow,:) = NaN;
+            idx{terminals{mouse}(ccell)}(Crow,:) = NaN;
             CsTooSmall{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
             count = count + 1;  
         end 
