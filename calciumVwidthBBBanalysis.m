@@ -14183,8 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 4A) MAKE HISTOGRAM OF PLUME ONSET AND PLUME MID TIMES 
-% 4B) MAKE HISTOGRAM OF PLUME DISTANCE FROM AXON 
 % 5) PLOT CHANGE IN PLUME SIZE OVER TIME 
 % 6) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
@@ -14571,6 +14569,29 @@ elseif clustSpikeQ == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("Size of BBB Plume") 
+
+%% plot distribution of cluster times 
+if clustSpikeQ == 0 
+    figure;
+    ax=gca;
+    histogram(avClocFrame,10)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    if clustSpikeQ3 == 0 
+        title({'Distribution of BBB Plume Timing';'Average Time'});
+    elseif clustSpikeQ3 == 1
+        title({'Distribution of BBB Plume Sizes';'Start Time'});
+    end 
+    ylabel("Number of BBB Plumes")
+    xlabel("Time (s)") 
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;  
+end 
 
 %% create scatter over box plot of cluster timing per axon  
 if clustSpikeQ == 0 % if all the spikes are available to look at 
