@@ -14279,16 +14279,16 @@ for ccell = 1:length(terminals{mouse})
     count = 1;
     % make 0s NaNs 
     clustSize(clustSize == 0) = NaN;
-    % find the top 0.05% of cluster sizes (this will be 100 or more
+    % find the top 10 % of cluster sizes (this will be 100 or more
     % for 57)
     numClusts = nnz(~isnan(clustSize));
-    numTopClusts = ceil(numClusts*0.05);
+    numTopClusts = ceil(numClusts*0.1);
     reshapedSizes = reshape(clustSize,1,size(clustSize,1)*size(clustSize,2));
     % remove NaNs 
     reshapedSizes(isnan(reshapedSizes)) = [];
     % sort sizes 
     sortedSize = sort(reshapedSizes);
-    % get the largest 0.05% of cluster sizes 
+    % get the largest 10 % of cluster sizes 
     topClusts = sortedSize(end-numTopClusts+1:end);
     % get the locations of the topClusts 
     topClusts2 = ismember(clustSize,topClusts);       
@@ -14297,7 +14297,7 @@ for ccell = 1:length(terminals{mouse})
     bigClustAlocs = find(topCx_A == ccell); % find what rows the axon is in to determine what clusters are big enough per axon 
     bigClustLocs = topCy_C(bigClustAlocs);
     bigClusts = unIdxVals{terminals{mouse}(ccell)}(bigClustLocs);
-    % remove clusters that do not include the top 0.05% of sizes 
+    % remove clusters that do not include the top 10 % of sizes 
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
         % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust));  
@@ -14636,6 +14636,25 @@ elseif clustSpikeQ == 1
     end 
 end 
 
+% reshape data to plot box and whisker plots 
+reshapedPrePlot = reshape(CsizeForPlotPre,size(CsizeForPlotPre,1)*size(CsizeForPlotPre,2),1);
+reshapedPostPlot = reshape(CsizeForPlotPost,size(CsizeForPlotPost,1)*size(CsizeForPlotPost,2),1);
+data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
+figure;
+ax=gca;
+% plot box plot 
+boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+% plot swarm chart on top of box plot 
+hold all;
+x = repmat(1:size(data,2),size(data,1),1);
+swarmchart(x,data,[],'red') 
+% boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons'});    
+avLabels = ["Pre-Spike","Post-Spike"];
+xticklabels(avLabels) 
 
 
 
