@@ -14198,18 +14198,16 @@ end
 % 5) ALIGN PLUME START GROUPED BY START TIME 
 % 6) PLOT DISTRIBUTION OF PLUME SIZES ZOOMED INTO SMALLER SIZES WITH MORE
 % BINS 
-% 7) DOUBLE CHECK PLOT OF PLUME CLOSE TO VESSEL PROPORTION TO MAKE SURE ALL
-% CLUSTERS ARE INCLUDED EXCEPT THE SMALL ONES 
-% 8) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
-% 9) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
-% 10) DOES DISTANCE TO VR SPACE PREDICT PLUME START TIMES?
-% 11) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
+% 7) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
+% 8) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
+% 9) DOES DISTANCE TO VR SPACE PREDICT PLUME START TIMES?
+% 10) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
-% 12) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
-% 13) THEN PLOT PIXEL AMP, 
-% 14) PLOT PLUME TIMING ON SIDE WITH AVERAGE PIXEL AMP
+% 11) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
+% 12) THEN PLOT PIXEL AMP, 
+% 13) PLOT PLUME TIMING ON SIDE WITH AVERAGE PIXEL AMP
 % ON TOP 
-% 15) CLUSTER VELOCITY AS FUNCTION OF
+% 14) CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
 
@@ -14266,6 +14264,7 @@ for ccell = 1:length(terminals{mouse})
         se = strel('disk', radius, decomposition);               
         maskNearVessel{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
     end 
+    idx2 = idx;
     % get outline coordinates just outside of vessel 
     [rowV2, colV2, frameV2] = ind2sub(size(maskNearVessel{terminals{mouse}(ccell)}),find(maskNearVessel{terminals{mouse}(ccell)} > 0));
     indsV2{terminals{mouse}(ccell)}(:,1) = colV2; indsV2{terminals{mouse}(ccell)}(:,2) = rowV2; indsV2{terminals{mouse}(ccell)}(:,3) = frameV2;  
@@ -14321,6 +14320,7 @@ for ccell = 1:length(terminals{mouse})
         if sum(ismember(bigClusts,unIdxVals{terminals{mouse}(ccell)}(clust))) == 0 
             inds{terminals{mouse}(ccell)}(Crow,:) = NaN;
             idx{terminals{mouse}(ccell)}(Crow,:) = NaN;
+            idx2{terminals{mouse}(ccell)}(Crow,:) = NaN;
             CsTooSmall{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
             count = count + 1;  
         end 
@@ -14365,13 +14365,11 @@ safeKeptClustSize = clustSize;
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
 
-
-
 nearVsFarPlotData = zeros(length(terminals{mouse}),2);
 % resort data for stacked bar plot 
 unIdxVals2 = cell(1,max(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
-    unIdxVals2{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)});
+    unIdxVals2{terminals{mouse}(ccell)} = unique(idx2{terminals{mouse}(ccell)});
     nearVsFarPlotData(ccell,1) = length(unIdxVals2{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
     nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
 end 
@@ -14454,6 +14452,39 @@ for ccell = 1:length(terminals{mouse})
 end 
 % make 0s NaNs 
 avClocFrame(avClocFrame == 0) = NaN;
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% determine change in cluster size over time 
+% figure out cluster size per frame 
+clustSizeTS = cell(1,max(terminals{mouse}));
+for ccell = 1:length(terminals{mouse})
+    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+        % find what rows each cluster is located in
+        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+        % identify the x, y, z location of pixels per cluster
+        cLocs = inds{terminals{mouse}(ccell)}(Crow,:); 
+        for frame = 1:size(im,3)
+            clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
+        end  
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % remove clusters that start at the first frame and decrease over
+        % time 
+        
+
+
+
+
+
+    end 
+    % turn 0s into NaNs 
+    clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
+    % remove rows that are entirely NaN
+    clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
+end   
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % determine distance of each cluster from each axon 
 dists = cell(1,max(terminals{mouse}));
@@ -14719,36 +14750,43 @@ end
 
 %% plot change in cluster size over time for each axon and averaged 
 
-% figure out cluster size per frame 
+clr = hsv(length(terminals{mouse}));
+x = 1:size(im,3);
+% need to figure out axons with clusters to make 
+count = 1; 
+axonString = string(1);
+for ccell = 1:length(terminals{mouse})
+    if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
+        axonString(count) = num2str(terminals{mouse}(ccell));
+        count = count + 1; 
+    end 
+end 
 figure;
 hold all;
 ax=gca;
-clr = hsv(length(terminals{mouse}));
-clustSizeTS = cell(1,max(terminals{mouse}));
-x = 1:size(im,3);
+count1 = 1; 
+count2 = 1;
+axonLabel = string(1);
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-        % find what rows each cluster is located in
-        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
-        % identify the x, y, z location of pixels per cluster
-        cLocs = inds{terminals{mouse}(ccell)}(Crow,:); 
-        for frame = 1:size(im,3)
-            clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
-        end         
+        if clust == 1
+            if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
+                axonLabel(count2) = axonString(count1);
+                count1 = count1 + 1;
+                count2 = count2 + 1;
+            end 
+        elseif clust > 1 
+            if sum(find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust))) > 0
+                if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
+                    axonLabel(count2) = '';
+                    count2 = count2 + 1;
+                end 
+            end 
+        end 
     end 
-    % turn 0s into NaNs 
-    clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
-    % remove rows that are entirely NaN
-    clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
-    h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);
-%     if clust == 1 
-%         leg = legend('show');
-%         leg.String(end) = [];
-%         leg = legend('AutoUpdate','on');
-%     elseif clust > 1
-%         leg = legend('AutoUpdate','off');
-%     end 
-end 
+    h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);    
+    legend(axonLabel)
+end     
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
@@ -14761,16 +14799,7 @@ ax.FontName = 'Times';
 ylabel("BBB Plume Size") 
 xlabel("Time (s)")
 title('Change in BBB Plume Size Over Time')
-axons = find(~cellfun(@isempty,clustSizeTS));
-axonLabel = string(1:length(axons));
-for axon = 1:length(axons)
-    axonLabel(axon) = num2str(axons(axon));
-end 
-% legend(axonLabel)
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEED TO FIX THE LEGEND HERE 
 
 % below is first attempt to write my own clustering algorithm ~ TRYING
 % OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
