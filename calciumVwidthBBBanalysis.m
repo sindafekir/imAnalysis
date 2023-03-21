@@ -14453,12 +14453,12 @@ end
 % make 0s NaNs 
 avClocFrame(avClocFrame == 0) = NaN;
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % determine change in cluster size over time 
 % figure out cluster size per frame 
 clustSizeTS = cell(1,max(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
+for ccell = 9%1:length(terminals{mouse})
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
         % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
@@ -14467,23 +14467,22 @@ for ccell = 1:length(terminals{mouse})
         for frame = 1:size(im,3)
             clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
         end  
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % remove clusters that start at the first frame and decrease over
-        % time 
-        
-
-
-
-
-
     end 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % remove clusters that start at the first frame and decrease over
+    % time 
+    earlyClusts = find(clustSizeTS{terminals{mouse}(ccell)}(:,1) > 0);
+
+
+
+
     % turn 0s into NaNs 
     clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
     % remove rows that are entirely NaN
     clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
 end   
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % determine distance of each cluster from each axon 
@@ -14776,17 +14775,24 @@ for ccell = 1:length(terminals{mouse})
                 count2 = count2 + 1;
             end 
         elseif clust > 1 
-            if sum(find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust))) > 0
-                if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
-                    axonLabel(count2) = '';
-                    count2 = count2 + 1;
+            if ~isnan(unIdxVals{terminals{mouse}(ccell)}(clust))
+                if sum(find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust))) > 0
+                    if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
+                        axonLabel(count2) = '';
+                        count2 = count2 + 1;
+                    end 
                 end 
             end 
         end 
     end 
-    h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);    
-    legend(axonLabel)
+
+    h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);      
 end     
+% remove empty string that comes right after number 
+notEmptyStrings = find(axonLabel ~= '');
+removeTheseInds = notEmptyStrings + 1;
+axonLabel(removeTheseInds) = [];
+legend(axonLabel)
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
