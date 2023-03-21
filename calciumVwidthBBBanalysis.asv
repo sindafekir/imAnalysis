@@ -14183,7 +14183,23 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 5) PLOT CHANGE IN PLUME SIZE OVER TIME 
+% 1) REMOVE CLUSTERS THAT START AT THE FIRST FRAME AND THEN GET SMALLER
+% (THESE ARE REMNANTS OF OUT OF SCREEN CLUSTERS) 
+% 2) MAKE AVERAGE CHANGE IN SIZE OVER TIME (WITH 95% CI) 
+% 3) MAKE AVERAGE CHANGE IN SIZE OVER TIME OF HOWEVER MANY GROUPS YOU WANT
+% (BASED ON CLUSTER START/AV TIME) (WITH 95% CI) 
+% 4) ALIGN PLUME START TO SEE AVERAGE PLUME CHANGE IN SIZE 
+% 5) ALIGN PLUME START GROUPED BY START TIME 
+% 4) PLOT DISTRIBUTION OF PLUME SIZES ZOOMED INTO SMALLER SIZES WITH MORE
+% BINS 
+% 5) DOUBLE CHECK PLOT OF PLUME CLOSE TO VESSEL PROPORTION TO MAKE SURE ALL
+% CLUSTERS ARE INCLUDED EXCEPT THE SMALL ONES 
+% 6) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
+% 7) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
+% 8) 
+
+
+
 % 6) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
 % 7) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
@@ -14346,12 +14362,14 @@ safeKeptClustSize = clustSize;
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
 
-unIdxVals{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)});
+
 
 nearVsFarPlotData = zeros(length(terminals{mouse}),2);
 % resort data for stacked bar plot 
+unIdxVals2 = cell(1,max(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
-    nearVsFarPlotData(ccell,1) = length(unIdxVals{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
+    unIdxVals2{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)});
+    nearVsFarPlotData(ccell,1) = length(unIdxVals2{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
     nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
 end 
 % plot stacked bar plot
