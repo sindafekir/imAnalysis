@@ -14908,6 +14908,9 @@ if clustTimeGroupQ == 1
             end 
         end 
         binClustTSdata = cell(1,clustTimeNumGroups);
+        sizeArray = zeros(1,clustTimeNumGroups);
+        count1 = 1; count2 = 1;
+        binLabel = string(1);
         for bin = 1:clustTimeNumGroups
             % create time (by frame) bins 
             if bin < clustTimeNumGroups
@@ -14921,27 +14924,32 @@ if clustTimeGroupQ == 1
             curBinBounds = binStartAndEndFrames(bin,:);           
             for ccell = 1:length(terminals{mouse}) 
                 % determine what clusters go into the current bin 
-                theseClusts = clustStartFrame{terminals{mouse}(ccell)} > curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} < curBinBounds(2);
+                theseClusts = clustStartFrame{terminals{mouse}(ccell)} >= curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} <= curBinBounds(2);
                 binClusts = find(theseClusts);                
                 % sort clusters into time bins 
-                if ccell == 1 
-                    binClustTSdata{bin} = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
-                elseif ccell > 1
-                    sizeArray(bin) = size(binClustTSdata{bin},1);
-                    binClustTSdata{bin}(sizeArray(bin)+1:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
-
-                end 
+                sizeArray(bin) = size(binClustTSdata{bin},1);
+                binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
             end 
+            % determine bin labels 
+            binString = string(binStartAndEndFrames(bin,:));
+            if bin == 1 
+                if isempty(binClustTSdata{bin}) == 0 
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    binLabel(count2) = append(binString(1),'-',binString(2));
+                    count1 = count1 + 1;
+                    count2 = count2 + 1;
+                end 
+            elseif bin > 1
+                if isempty(binClustTSdata{bin}) == 0 
+                end                 
+            end 
+           
 
 
-        end 
-        
 
 
-        
 
-    end 
-    for clust = 1:clustTimeNumGroups
+        end  
     end 
 end 
 

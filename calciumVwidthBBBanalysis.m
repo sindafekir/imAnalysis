@@ -14909,6 +14909,8 @@ if clustTimeGroupQ == 1
         end 
         binClustTSdata = cell(1,clustTimeNumGroups);
         sizeArray = zeros(1,clustTimeNumGroups);
+        count = 1; 
+        binLabel = string(1);
         for bin = 1:clustTimeNumGroups
             % create time (by frame) bins 
             if bin < clustTimeNumGroups
@@ -14927,7 +14929,30 @@ if clustTimeGroupQ == 1
                 % sort clusters into time bins 
                 sizeArray(bin) = size(binClustTSdata{bin},1);
                 binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
-            end             
+            end 
+            % determine bin labels 
+            binString = string(round(binStartAndEndFrames(bin,:)./FPSstack{mouse},1));
+            if bin == 1 
+                if isempty(binClustTSdata{bin}) == 0                     
+                    binLabel(count) = append(binString(1),'-',binString(2));
+                    count = count + 1;
+
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    % PICK UP HERE 
+
+                end 
+            elseif bin > 1
+                if isempty(binClustTSdata{bin}) == 0 
+                end                 
+            end 
+           
+
+
+
+
+
         end  
     end 
 end 
