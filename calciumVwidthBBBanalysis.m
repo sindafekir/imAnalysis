@@ -14824,12 +14824,12 @@ ax=gca;
 avAxonClustSizeTS = NaN(length(terminals{mouse}),size(im,3));
 count = 1;
 for ccell = 1:length(terminals{mouse})
-    avAxonClustSizeTS(count,:) = nanmean(clustSizeTS{terminals{mouse}(ccell)},1);
+    avAxonClustSizeTS(count,:) = nanmean(clustSizeTS{terminals{mouse}(ccell)},1);  
     plot(x,avAxonClustSizeTS(count,:),'Color',clr(ccell,:),'LineWidth',2);      
     count = count + 1;
 end 
 % determine what axons are present to include in the legend 
-presentAxons = ~isnan(nanmean(avAxonClustSizeTS,2));
+presentAxons = ~isnan(nanmean(avAxonClustSizeTS,2)); %#ok<*NANMEAN> 
 axonLabel = axonString(presentAxons);
 legend(axonLabel)
 Frames = size(im,3);
@@ -14852,7 +14852,7 @@ ax=gca;
 % determine average 
 avAllClustSizeTS = nanmean(avAxonClustSizeTS);
 % determine 95% CI 
-SEM = (nanstd(avAxonClustSizeTS))/(sqrt(size(avAxonClustSizeTS,1))); % Standard Error            
+SEM = (nanstd(avAxonClustSizeTS))/(sqrt(size(avAxonClustSizeTS,1))); %#ok<*NANSTD> % Standard Error            
 ts_Low = tinv(0.025,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
 ts_High = tinv(0.975,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
 CI_Low = (nanmean(avAxonClustSizeTS,1)) + (ts_Low*SEM);  % Confidence Intervals
@@ -14893,11 +14893,24 @@ if clustTimeGroupQ == 1
     if clustTimeNumGroups == 2 
         timeThresh = input('Input the start time threshold for separating plumes with. ');
     elseif clustTimeNumGroups > 2 
+        clr = hsv(clustTimeNumGroups);
         binFrameSize = floor(size(im,3)/clustTimeNumGroups);
         binThreshs = (1:binFrameSize:size(im,3));
-        binStartAndEndFrames = zeros(clustTimeNumGroups,2);
-        % create time (by frame) bins 
+        binStartAndEndFrames = zeros(clustTimeNumGroups,2);   
+        startFrames = cell(1,max(terminals{mouse}));
+        clustStartFrame = cell(1,max(terminals{mouse}));
+        % determine cluster start frame 
+        for ccell = 1:length(terminals{mouse})               
+            [clustLocX, clustLocY] = find(~isnan(clustSizeTS{terminals{mouse}(ccell)}));
+            clusts = unique(clustLocX);              
+            for clust = 1:length(clusts)
+                clustStartFrame{terminals{mouse}(ccell)}(clust) = min(clustLocY(clustLocX == clust));
+            end 
+        end 
+        binClustTSdata = cell(1,clustTimeNumGroups);
+        sizeArray = zeros(1,clustTimeNumGroups);
         for bin = 1:clustTimeNumGroups
+            % create time (by frame) bins 
             if bin < clustTimeNumGroups
                 binStartAndEndFrames(bin,1) = binThreshs(bin);
                 binStartAndEndFrames(bin,2) = binThreshs(bin)+binFrameSize-1;
@@ -14905,13 +14918,17 @@ if clustTimeGroupQ == 1
                 binStartAndEndFrames(bin,1) = binThreshs(bin);
                 binStartAndEndFrames(bin,2) = size(im,3);                
             end 
-        end 
-        % sort clusters into time bins 
-
-        
-
-    end 
-    for clust = 1:clustTimeNumGroups
+            % set the current bin boundaries 
+            curBinBounds = binStartAndEndFrames(bin,:);           
+            for ccell = 1:length(terminals{mouse}) 
+                % determine what clusters go into the current bin 
+                theseClusts = clustStartFrame{terminals{mouse}(ccell)} >= curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} <= curBinBounds(2);
+                binClusts = find(theseClusts);                
+                % sort clusters into time bins 
+                sizeArray(bin) = size(binClustTSdata{bin},1);
+                binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
+            end             
+        end  
     end 
 end 
 
