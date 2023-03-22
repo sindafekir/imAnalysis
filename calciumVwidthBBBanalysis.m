@@ -14723,7 +14723,11 @@ elseif clustSpikeQ == 1
         ax.FontName = 'Times';
         ylabel("BBB Plume Size")
         xlabel("Axon")  
-        title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes'});    
+        if clustSpikeQ3 == 0 
+            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+        end          
         legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
         xticklabels(labels)   
     end 
@@ -14745,7 +14749,11 @@ if preAndPostQ == 1
     ax.FontSize = 15;
     ax.FontName = 'Times';
     ylabel("BBB Plume Size") 
-    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons'});    
+        if clustSpikeQ3 == 0 
+            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+        end             
     avLabels = ["Pre-Spike","Post-Spike"];
     xticklabels(avLabels)
 end 
@@ -14871,7 +14879,43 @@ ylabel("BBB Plume Size")
 xlabel("Time (s)")
 title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
 
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+% plot average BBB plume change in size over time for however many groups
+% you want 
+clustTimeGroupQ = input('Input 1 if you want to plot the average change in BBB plume size based on plume start time? ');
+if clustTimeGroupQ == 1 
+    times = unique(avClocFrame);
+    timesLoc = ~isnan(unique(avClocFrame));
+    times = times(timesLoc);
+    numTraces = length(times);
+    clustTimeNumGroups = input(sprintf('How many groups do you want to sort plumes into for averaging? There are %d total plumes. ', numTraces));
+    if clustTimeNumGroups == 2 
+        timeThresh = input('Input the start time threshold for separating plumes with. ');
+    elseif clustTimeNumGroups > 2 
+        binFrameSize = floor(size(im,3)/clustTimeNumGroups);
+        binThreshs = (1:binFrameSize:size(im,3));
+        binStartAndEndFrames = zeros(clustTimeNumGroups,2);
+        % create time (by frame) bins 
+        for bin = 1:clustTimeNumGroups
+            if bin < clustTimeNumGroups
+                binStartAndEndFrames(bin,1) = binThreshs(bin);
+                binStartAndEndFrames(bin,2) = binThreshs(bin)+binFrameSize-1;
+            elseif bin == clustTimeNumGroups
+                binStartAndEndFrames(bin,1) = binThreshs(bin);
+                binStartAndEndFrames(bin,2) = size(im,3);                
+            end 
+        end 
+        % sort clusters into time bins 
+
+        
+
+    end 
+    for clust = 1:clustTimeNumGroups
+    end 
+end 
+
+% clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
 
 % below is first attempt to write my own clustering algorithm ~ TRYING
 % OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
