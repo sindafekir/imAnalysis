@@ -14183,8 +14183,6 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 1) REMOVE CLUSTERS THAT START AT THE FIRST FRAME AND THEN GET SMALLER
-% (THESE ARE REMNANTS OF OUT OF SCREEN CLUSTERS) 
 % 2) MAKE AVERAGE CHANGE IN SIZE OVER TIME (WITH 95% CI) 
 % 3) MAKE AVERAGE CHANGE IN SIZE OVER TIME OF HOWEVER MANY GROUPS YOU WANT
 % (BASED ON CLUSTER START/AV TIME) (WITH 95% CI) 
@@ -14196,8 +14194,6 @@ end
 
 % 4) ALIGN PLUME START TO SEE AVERAGE PLUME CHANGE IN SIZE 
 % 5) ALIGN PLUME START GROUPED BY START TIME 
-% 6) PLOT DISTRIBUTION OF PLUME SIZES ZOOMED INTO SMALLER SIZES WITH MORE
-% BINS 
 % 7) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
 % 8) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
 % 9) DOES DISTANCE TO VR SPACE PREDICT PLUME START TIMES?
@@ -14412,6 +14408,7 @@ clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of c
 if clustSpikeQ == 1
     clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. ');     
 end 
+
 % determine largest number of clusters across all axons
 [s, ~] = cellfun(@size,unIdxVals);
 maxNumClusts = max(s);
@@ -14453,11 +14450,10 @@ end
 % make 0s NaNs 
 avClocFrame(avClocFrame == 0) = NaN;
 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % determine change in cluster size over time 
 % figure out cluster size per frame 
 clustSizeTS = cell(1,max(terminals{mouse}));
+clustFit = cell(1);
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
         % find what rows each cluster is located in
@@ -14468,14 +14464,6 @@ for ccell = 1:length(terminals{mouse})
             clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
         end  
     end 
-    % turn 0s into NaNs 
-    clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
-    % remove rows that are entirely NaN
-    clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
-end   
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-clustFit = cell(1);
-for ccell = 1:length(terminals{mouse})
     % remove clusters that start at the first frame and decrease over
     % time 
     [earlyClusts, ~] = find(clustSizeTS{terminals{mouse}(ccell)}(:,1) > 0);
@@ -14483,17 +14471,23 @@ for ccell = 1:length(terminals{mouse})
     for clust = 1:length(earlyClusts)
         clustFit{ccell,clust} = fit((1:sum(~isnan(clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:))))',(clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),1:sum(~isnan(clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:)))))','poly1');
         if clustFit{ccell,clust}.p1 < 0 % if the slope is negative 
+            % find what rows each cluster is located in
+            [Crow, ~] = find(idx{terminals{mouse}(ccell)} == earlyClusts(clust)-1); 
             % remove the cluster 
-            % NEED TO MOVE THIS UP IN PREVIOUS LOOP (BEFORE REMOVING NAN
-            % FULL ROWS TO KNOW WHAT CLUSTERS THESE ARE TO REMOVE FROM IDX 
-
+            inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+            idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+            clustSize(ccell,earlyClusts(clust)) = NaN;
+            clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:) = NaN;
+            avClocFrame(ccell,earlyClusts(clust)) = NaN;
         end 
-    
     end 
 end 
-
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+for ccell = 1:length(terminals{mouse})
+    % turn 0s into NaNs 
+    clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
+    % remove rows that are entirely NaN
+    clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
+end   
 
 % determine distance of each cluster from each axon 
 dists = cell(1,max(terminals{mouse}));
@@ -14618,7 +14612,7 @@ end
 %% plot distribution of cluster sizes 
 figure;
 ax=gca;
-histogram(sizeDistArray(:,2))
+histogram(sizeDistArray(:,2),100)
 ax.FontSize = 15;
 ax.FontName = 'Times';
 if clustSpikeQ == 0 
@@ -14637,7 +14631,7 @@ xlabel("Size of BBB Plume")
 if clustSpikeQ == 0 
     figure;
     ax=gca;
-    histogram(avClocFrame,10)
+    histogram(avClocFrame,20)
     ax.FontSize = 15;
     ax.FontName = 'Times';
     if clustSpikeQ3 == 0 
@@ -14795,7 +14789,6 @@ for ccell = 1:length(terminals{mouse})
             end 
         end 
     end 
-
     h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);      
 end     
 % remove empty string that comes right after number 
@@ -14815,6 +14808,69 @@ ax.FontName = 'Times';
 ylabel("BBB Plume Size") 
 xlabel("Time (s)")
 title('Change in BBB Plume Size Over Time')
+
+% resort data to plot average cluster per axon
+figure;
+hold all;
+ax=gca;
+avAxonClustSizeTS = NaN(length(terminals{mouse}),size(im,3));
+count = 1;
+for ccell = 1:length(terminals{mouse})
+    avAxonClustSizeTS(count,:) = nanmean(clustSizeTS{terminals{mouse}(ccell)},1);
+    plot(x,avAxonClustSizeTS(count,:),'Color',clr(ccell,:),'LineWidth',2);      
+    count = count + 1;
+end 
+% determine what axons are present to include in the legend 
+presentAxons = ~isnan(nanmean(avAxonClustSizeTS,2));
+axonLabel = axonString(presentAxons);
+legend(axonLabel)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title({'Average Change in BBB Plume Size Over Time';'Per Axons'})
+
+% plot average of all axons w/95% CI 
+figure;
+hold all;
+ax=gca;
+% determine average 
+avAllClustSizeTS = nanmean(avAxonClustSizeTS);
+% determine 95% CI 
+SEM = (nanstd(avAxonClustSizeTS))/(sqrt(size(avAxonClustSizeTS,1))); % Standard Error            
+ts_Low = tinv(0.025,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
+ts_High = tinv(0.975,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
+CI_Low = (nanmean(avAxonClustSizeTS,1)) + (ts_Low*SEM);  % Confidence Intervals
+CI_High = (nanmean(avAxonClustSizeTS,1)) + (ts_High*SEM);  % Confidence Intervals
+plot(x,avAllClustSizeTS,'k','LineWidth',2);   
+clear v f 
+v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+% remove NaNs so face can be made and colored 
+nanRows = isnan(v(:,2));
+v(nanRows,:) = []; f = 1:size(v,1);
+p = patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+alpha(0.3)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
+
 
 
 % below is first attempt to write my own clustering algorithm ~ TRYING
