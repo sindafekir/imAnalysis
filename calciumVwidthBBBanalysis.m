@@ -14183,17 +14183,17 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 2) MAKE AVERAGE CHANGE IN SIZE OVER TIME (WITH 95% CI) 
 % 3) MAKE AVERAGE CHANGE IN SIZE OVER TIME OF HOWEVER MANY GROUPS YOU WANT
 % (BASED ON CLUSTER START/AV TIME) (WITH 95% CI) 
+% 4) ALIGN PLUME START TO SEE AVERAGE PLUME CHANGE IN SIZE 
+% 5) ALIGN PLUME START GROUPED BY START TIME 
 
 % THEN GO BACK TO OLDER CODE AND DETERMINE 95 % CI PER PIXEL OF
 % BOOTSTRAPPED SHUFFLED VIDS TO FIGURE OUT SIGNIFICANCE THRESHOLD AND MAKE
 % STA VIDS THAT SHOW PLUMES ABOVE THE SIGNIFICANCE THRESHOLD. RE RUN ALL
 % CURRENT FIGURES WITH THESE NEW VIDS AND THEN PICK UP BELOW 
 
-% 4) ALIGN PLUME START TO SEE AVERAGE PLUME CHANGE IN SIZE 
-% 5) ALIGN PLUME START GROUPED BY START TIME 
+
 % 7) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
 % 8) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
 % 9) DOES DISTANCE TO VR SPACE PREDICT PLUME START TIMES?
@@ -14907,10 +14907,13 @@ if clustTimeGroupQ == 1
                 clustStartFrame{terminals{mouse}(ccell)}(clust) = min(clustLocY(clustLocX == clust));
             end 
         end 
-        binClustTSdata = cell(1,clustTimeNumGroups);
+%         binClustTSdata = cell(1,clustTimeNumGroups);
         sizeArray = zeros(1,clustTimeNumGroups);
         count = 1; 
         binLabel = string(1);
+        figure;
+        hold all;
+        ax=gca;
         for bin = 1:clustTimeNumGroups
             % create time (by frame) bins 
             if bin < clustTimeNumGroups
@@ -14923,39 +14926,80 @@ if clustTimeGroupQ == 1
             % set the current bin boundaries 
             curBinBounds = binStartAndEndFrames(bin,:);           
             for ccell = 1:length(terminals{mouse}) 
-                % determine what clusters go into the current bin 
-                theseClusts = clustStartFrame{terminals{mouse}(ccell)} >= curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} <= curBinBounds(2);
-                binClusts = find(theseClusts);                
-                % sort clusters into time bins 
-                sizeArray(bin) = size(binClustTSdata{bin},1);
-                binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
+%                 % determine what clusters go into the current bin 
+%                 theseClusts = clustStartFrame{terminals{mouse}(ccell)} >= curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} <= curBinBounds(2);
+%                 binClusts = find(theseClusts);                
+%                 % sort clusters into time bins 
+%                 sizeArray(bin) = size(binClustTSdata{bin},1);
+%                 binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
             end 
             % determine bin labels 
-            binString = string(round(binStartAndEndFrames(bin,:)./FPSstack{mouse},1));
-            if bin == 1 
-                if isempty(binClustTSdata{bin}) == 0                     
-                    binLabel(count) = append(binString(1),'-',binString(2));
-                    count = count + 1;
-
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    % PICK UP HERE 
-
+            binString = string(round((binStartAndEndFrames(bin,:)./FPSstack{mouse})-(size(im,3)/FPSstack{mouse}/2),1));
+            for clust = 1:size(binClustTSdata{bin},1)
+                if clust == 1 
+                    if isempty(binClustTSdata{bin}) == 0                     
+                        binLabel(count) = append(binString(1),' to ',binString(2));
+                        count = count + 1;
+                    end 
+                elseif clust > 1
+                    if isempty(binClustTSdata{bin}) == 0 
+                        binLabel(count) = '';
+                        count = count + 1;                        
+                    end                 
                 end 
-            elseif bin > 1
-                if isempty(binClustTSdata{bin}) == 0 
-                end                 
             end 
-           
+            if isempty(binClustTSdata{bin}) == 0 
+                h = plot(x,binClustTSdata{bin},'Color',clr(bin,:),'LineWidth',2); 
+            end 
+        end
 
-
-
-
-
-        end  
     end 
 end 
+legend(binLabel)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title('Change in BBB Plume Size Over Time')
+
+%% plot average change in cluster size by bin w/ 95% CI 
+figure;
+hold all;
+ax=gca;
+avBinClustSizeTS = NaN(clustTimeNumGroups,size(im,3));
+count = 1;
+for bin = 1:clustTimeNumGroups
+    if isempty(binClustTSdata{bin}) == 0
+        avBinClustSizeTS(count,:) = nanmean(binClustTSdata{bin},1);  
+        plot(x,avBinClustSizeTS(count,:),'Color',clr(bin,:),'LineWidth',2);      
+        count = count + 1;
+    end 
+end 
+% remove empty strings 
+emptyStrings = find(binLabel == '');
+binLabel(emptyStrings) = [];
+legend(binLabel)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title({'Average Change in BBB Plume Size Over Time';'Per Axons'})
+
+
 
 % clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
 

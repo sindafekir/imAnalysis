@@ -14909,8 +14909,11 @@ if clustTimeGroupQ == 1
         end 
         binClustTSdata = cell(1,clustTimeNumGroups);
         sizeArray = zeros(1,clustTimeNumGroups);
-        count1 = 1; count2 = 1;
+        count = 1; 
         binLabel = string(1);
+        figure;
+        hold all;
+        ax=gca;
         for bin = 1:clustTimeNumGroups
             % create time (by frame) bins 
             if bin < clustTimeNumGroups
@@ -14931,27 +14934,45 @@ if clustTimeGroupQ == 1
                 binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
             end 
             % determine bin labels 
-            binString = string(binStartAndEndFrames(bin,:));
-            if bin == 1 
-                if isempty(binClustTSdata{bin}) == 0 
-                    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                    binLabel(count2) = append(binString(1),'-',binString(2));
-                    count1 = count1 + 1;
-                    count2 = count2 + 1;
+            binString = string(round((binStartAndEndFrames(bin,:)./FPSstack{mouse})-(size(im,3)/FPSstack{mouse}/2),1));
+            for clust = 1:size(binClustTSdata{bin},1)
+                if clust == 1 
+                    if isempty(binClustTSdata{bin}) == 0                     
+                        binLabel(count) = append(binString(1),' to ',binString(2));
+                        count = count + 1;
+                    end 
+                elseif clust > 1
+                    if isempty(binClustTSdata{bin}) == 0 
+                        binLabel(count) = '';
+                        count = count + 1;                        
+                    end                 
                 end 
-            elseif bin > 1
-                if isempty(binClustTSdata{bin}) == 0 
-                end                 
             end 
-           
+            if isempty(binClustTSdata{bin}) == 0 
+            h = plot(x,binClustTSdata{bin},'Color',clr(bin,:),'LineWidth',2); 
+            end 
+        end
 
-
-
-
-
-        end  
     end 
 end 
+legend(binLabel)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title('Change in BBB Plume Size Over Time')
+
+% plot average change in cluster size by bin 
+
+
+
 
 % clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
 
