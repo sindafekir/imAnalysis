@@ -14183,17 +14183,17 @@ end
 %%  BBB plume code (one animal at a time) 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
-% 2) MAKE AVERAGE CHANGE IN SIZE OVER TIME (WITH 95% CI) 
 % 3) MAKE AVERAGE CHANGE IN SIZE OVER TIME OF HOWEVER MANY GROUPS YOU WANT
 % (BASED ON CLUSTER START/AV TIME) (WITH 95% CI) 
+% 4) ALIGN PLUME START TO SEE AVERAGE PLUME CHANGE IN SIZE 
+% 5) ALIGN PLUME START GROUPED BY START TIME 
 
 % THEN GO BACK TO OLDER CODE AND DETERMINE 95 % CI PER PIXEL OF
 % BOOTSTRAPPED SHUFFLED VIDS TO FIGURE OUT SIGNIFICANCE THRESHOLD AND MAKE
 % STA VIDS THAT SHOW PLUMES ABOVE THE SIGNIFICANCE THRESHOLD. RE RUN ALL
 % CURRENT FIGURES WITH THESE NEW VIDS AND THEN PICK UP BELOW 
 
-% 4) ALIGN PLUME START TO SEE AVERAGE PLUME CHANGE IN SIZE 
-% 5) ALIGN PLUME START GROUPED BY START TIME 
+
 % 7) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
 % 8) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
 % 9) DOES DISTANCE TO VR SPACE PREDICT PLUME START TIMES?
@@ -14890,8 +14890,43 @@ if clustTimeGroupQ == 1
     times = times(timesLoc);
     numTraces = length(times);
     clustTimeNumGroups = input(sprintf('How many groups do you want to sort plumes into for averaging? There are %d total plumes. ', numTraces));
-    if clustTimeNumGroups == 2 
-        timeThresh = input('Input the start time threshold for separating plumes with. ');
+    if clustTimeNumGroups == 2             
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        clr = hsv(clustTimeNumGroups);
+        binThreshTime = input('Input the start time threshold for separating plumes with. ');
+        binThreshFrame = 
+        
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     elseif clustTimeNumGroups > 2 
         clr = hsv(clustTimeNumGroups);
         binFrameSize = floor(size(im,3)/clustTimeNumGroups);
@@ -14949,12 +14984,41 @@ if clustTimeGroupQ == 1
                 end 
             end 
             if isempty(binClustTSdata{bin}) == 0 
-            h = plot(x,binClustTSdata{bin},'Color',clr(bin,:),'LineWidth',2); 
+                h = plot(x,binClustTSdata{bin},'Color',clr(bin,:),'LineWidth',2); 
             end 
         end
-
     end 
 end 
+% legend(binLabel)
+% Frames = size(im,3);
+% Frames_pre_stim_start = -((Frames-1)/2); 
+% Frames_post_stim_start = (Frames-1)/2; 
+% sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+% FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+% ax.XTick = FrameVals;
+% ax.XTickLabel = sec_TimeVals;  
+% ax.FontSize = 15;
+% ax.FontName = 'Times';
+% ylabel("BBB Plume Size") 
+% xlabel("Time (s)")
+% title('Change in BBB Plume Size Over Time')
+
+%% plot average change in cluster size by bin w/ 95% CI 
+figure;
+hold all;
+ax=gca;
+avBinClustSizeTS = NaN(clustTimeNumGroups,size(im,3));
+count = 1;
+for bin = 1:clustTimeNumGroups
+    if isempty(binClustTSdata{bin}) == 0
+        avBinClustSizeTS(count,:) = nanmean(binClustTSdata{bin},1);  
+        plot(x,avBinClustSizeTS(count,:),'Color',clr(bin,:),'LineWidth',2);      
+        count = count + 1;
+    end 
+end 
+% remove empty strings 
+emptyStrings = find(binLabel == '');
+binLabel(emptyStrings) = [];
 legend(binLabel)
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
@@ -14967,10 +15031,7 @@ ax.FontSize = 15;
 ax.FontName = 'Times';
 ylabel("BBB Plume Size") 
 xlabel("Time (s)")
-title('Change in BBB Plume Size Over Time')
-
-% plot average change in cluster size by bin 
-
+title({'Average Change in BBB Plume Size Over Time';'Per Axons'})
 
 
 

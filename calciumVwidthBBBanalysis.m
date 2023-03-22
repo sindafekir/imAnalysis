@@ -14890,8 +14890,46 @@ if clustTimeGroupQ == 1
     times = times(timesLoc);
     numTraces = length(times);
     clustTimeNumGroups = input(sprintf('How many groups do you want to sort plumes into for averaging? There are %d total plumes. ', numTraces));
-    if clustTimeNumGroups == 2 
-        timeThresh = input('Input the start time threshold for separating plumes with. ');
+    if clustTimeNumGroups == 2             
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        clr = hsv(clustTimeNumGroups);
+        binThreshTime = input('Input the start time threshold for separating plumes with. ');
+
+        % PICK UP HERE ~ NEED TO CONVERT TIME TO FRAMES. USE BELOW CODE AS
+        % EXAMPLE 
+        binThreshFrame = 
+
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     elseif clustTimeNumGroups > 2 
         clr = hsv(clustTimeNumGroups);
         binFrameSize = floor(size(im,3)/clustTimeNumGroups);
@@ -14907,7 +14945,7 @@ if clustTimeGroupQ == 1
                 clustStartFrame{terminals{mouse}(ccell)}(clust) = min(clustLocY(clustLocX == clust));
             end 
         end 
-%         binClustTSdata = cell(1,clustTimeNumGroups);
+        binClustTSdata = cell(1,clustTimeNumGroups);
         sizeArray = zeros(1,clustTimeNumGroups);
         count = 1; 
         binLabel = string(1);
@@ -14926,12 +14964,12 @@ if clustTimeGroupQ == 1
             % set the current bin boundaries 
             curBinBounds = binStartAndEndFrames(bin,:);           
             for ccell = 1:length(terminals{mouse}) 
-%                 % determine what clusters go into the current bin 
-%                 theseClusts = clustStartFrame{terminals{mouse}(ccell)} >= curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} <= curBinBounds(2);
-%                 binClusts = find(theseClusts);                
-%                 % sort clusters into time bins 
-%                 sizeArray(bin) = size(binClustTSdata{bin},1);
-%                 binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
+                % determine what clusters go into the current bin 
+                theseClusts = clustStartFrame{terminals{mouse}(ccell)} >= curBinBounds(1) & clustStartFrame{terminals{mouse}(ccell)} <= curBinBounds(2);
+                binClusts = find(theseClusts);                
+                % sort clusters into time bins 
+                sizeArray(bin) = size(binClustTSdata{bin},1);
+                binClustTSdata{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = clustSizeTS{terminals{mouse}(ccell)}(binClusts,:);
             end 
             % determine bin labels 
             binString = string(round((binStartAndEndFrames(bin,:)./FPSstack{mouse})-(size(im,3)/FPSstack{mouse}/2),1));
@@ -14952,22 +14990,21 @@ if clustTimeGroupQ == 1
                 h = plot(x,binClustTSdata{bin},'Color',clr(bin,:),'LineWidth',2); 
             end 
         end
-
     end 
 end 
-legend(binLabel)
-Frames = size(im,3);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;  
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("BBB Plume Size") 
-xlabel("Time (s)")
-title('Change in BBB Plume Size Over Time')
+% legend(binLabel)
+% Frames = size(im,3);
+% Frames_pre_stim_start = -((Frames-1)/2); 
+% Frames_post_stim_start = (Frames-1)/2; 
+% sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+% FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+% ax.XTick = FrameVals;
+% ax.XTickLabel = sec_TimeVals;  
+% ax.FontSize = 15;
+% ax.FontName = 'Times';
+% ylabel("BBB Plume Size") 
+% xlabel("Time (s)")
+% title('Change in BBB Plume Size Over Time')
 
 %% plot average change in cluster size by bin w/ 95% CI 
 figure;
