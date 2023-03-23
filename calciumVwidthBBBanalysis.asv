@@ -14896,9 +14896,20 @@ if clustTimeGroupQ == 1
         % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         clr = hsv(clustTimeNumGroups);
         binThreshTime = input('Input the start time threshold for separating plumes with. ');
-        binThreshFrame = 
-        
+        windTime = floor(size(im,3)/FPSstack{mouse});
+        timeStart = -(windTime/2); timeEnd = windTime/2;
+        frameTimes = linspace(timeStart,size(im,3),timeEnd);
+
+
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        % determine time value per frame 
         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+
+
+        binThreshFrame = ;
+
+        
 
 
 
@@ -14932,7 +14943,6 @@ if clustTimeGroupQ == 1
         binFrameSize = floor(size(im,3)/clustTimeNumGroups);
         binThreshs = (1:binFrameSize:size(im,3));
         binStartAndEndFrames = zeros(clustTimeNumGroups,2);   
-        startFrames = cell(1,max(terminals{mouse}));
         clustStartFrame = cell(1,max(terminals{mouse}));
         % determine cluster start frame 
         for ccell = 1:length(terminals{mouse})               
