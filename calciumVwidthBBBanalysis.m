@@ -14864,7 +14864,7 @@ v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
 % remove NaNs so face can be made and colored 
 nanRows = isnan(v(:,2));
 v(nanRows,:) = []; f = 1:size(v,1);
-p = patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
 alpha(0.3)
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
@@ -14882,6 +14882,7 @@ title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
 %% plot average BBB plume change in size over time for however many groups
 % you want 
 clustTimeGroupQ = input('Input 1 if you want to plot the average change in BBB plume size based on plume start time? ');
+x = 1:size(im,3);
 if clustTimeGroupQ == 1 
     times = unique(avClocFrame);
     timesLoc = ~isnan(unique(avClocFrame));
@@ -15038,7 +15039,7 @@ legend(binLabel)
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd;
 FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
@@ -15047,6 +15048,103 @@ ax.FontName = 'Times';
 ylabel("BBB Plume Size") 
 xlabel("Time (s)")
 title({'Average Change in BBB Plume Size Over Time';'Per Axons'})
+
+% plot aligned clusters per bin and total average 
+% determine cluster start frame per bin  
+binClustStartFrame = cell(1,clustTimeNumGroups);
+alignedBinClusts = cell(1,clustTimeNumGroups);
+avAlignedClusts = cell(1,clustTimeNumGroups);
+figure;
+hold all;
+ax=gca;
+for bin = 1:clustTimeNumGroups             
+    [clustLocX, clustLocY] = find(~isnan(binClustTSdata{bin}));
+    clusts = unique(clustLocX);              
+    for clust = 1:length(clusts)
+        binClustStartFrame{bin}(clust) = min(clustLocY(clustLocX == clust));
+    end 
+    % align clusters
+    % determine longest cluster 
+    [longestClustStart,longestClust] = min(binClustStartFrame{bin});
+    arrayLen = size(im,3)-longestClustStart+1;
+    for clust = 1:size(binClustTSdata{bin},1)
+        % get data and buffer end as needed 
+        data = binClustTSdata{bin}(clust,binClustStartFrame{bin}(clust):end);
+        data(:,length(data)+1:arrayLen) = NaN;
+        % align data 
+        alignedBinClusts{bin}(clust,:) = data;
+    end 
+    x = 1:size(alignedBinClusts{bin},2);
+    % averaged the aligned clusters 
+    avAlignedClusts{bin} = nanmean(alignedBinClusts{bin},1);
+    if isempty(binClustTSdata{bin}) == 0 
+        h = plot(x,avAlignedClusts{bin},'Color',clr(bin,:),'LineWidth',2); 
+    end 
+end 
+legend(binLabel)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd-0.5;
+FrameVals = round((1:FPSstack{mouse}:Frames)); 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title({'Change in BBB Plume Size Over Time';'Clusters Aligned and Averaged'})
+
+% plot total aligned cluster average 
+[r,c] = cellfun(@size,alignedBinClusts);
+maxLen = max(c);
+if clustTimeNumGroups == 2     
+    for bin = 1:clustTimeNumGroups           
+        % put data together with appropriate buffering to get total average 
+        data = alignedBinClusts{bin};
+        data(:,size(data,2)+1:maxLen) = NaN;        
+        if bin == 1 
+            allClusts = data;
+        elseif bin == 2 
+            allClusts(size(allClusts,1)+1:size(allClusts,1)+size(data,1),:) = data;
+        end 
+    end 
+end 
+% plot average of all axons w/95% CI 
+figure;
+hold all;
+ax=gca;
+% determine average 
+avAllClustSizeTS = nanmean(allClusts);
+x = 1:length(avAllClustSizeTS);
+% determine 95% CI 
+SEM = (nanstd(allClusts))/(sqrt(size(allClusts,1))); %#ok<*NANSTD> % Standard Error            
+ts_Low = tinv(0.025,size(allClusts,1)-1);% T-Score for 95% CI
+ts_High = tinv(0.975,size(allClusts,1)-1);% T-Score for 95% CI
+CI_Low = (nanmean(allClusts,1)) + (ts_Low*SEM);  % Confidence Intervals
+CI_High = (nanmean(allClusts,1)) + (ts_High*SEM);  % Confidence Intervals
+plot(x,avAllClustSizeTS,'k','LineWidth',2);   
+clear v f 
+v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+% remove NaNs so face can be made and colored 
+nanRows = isnan(v(:,2));
+v(nanRows,:) = []; f = 1:size(v,1);
+patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+alpha(0.3)
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd-0.5;
+FrameVals = round((1:FPSstack{mouse}:Frames)); 
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size") 
+xlabel("Time (s)")
+title({'Average Aligned Change in BBB Plume Size Over Time';'Across Axons'})
+
 
 
 
