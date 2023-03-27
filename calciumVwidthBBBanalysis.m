@@ -11544,10 +11544,13 @@ end
 %% (STA stacks) create red and green channel stack averages around calcium peak location (one animal at a time) 
 % z scores the entire stack before sorting into windows for averaging 
 % option to high pass filter the video 
+% can create shuffled spikes 
+% bootstrap option 
 
 
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
+spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized spikes (based on ISI STD). "); 
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
 %     dir1 = dataDir{mouse};   
@@ -11637,6 +11640,43 @@ for mouse = 1:mouseNum
     end 
 end 
 clearvars peaks locs 
+if spikeQ == 1   
+    spikeISIs = cell(1,length(vidList{mouse})); 
+    ISIstds = cell(1,length(vidList{mouse})); 
+    randSpikes = cell(1,length(vidList{mouse})); 
+    ISImean = cell(1,length(vidList{mouse}));
+    randISIs = cell(1,length(vidList{mouse}));
+    randSigLocs = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        for ccell = 1:length(terminals{mouse})
+            % determine ISI
+            spikeISIs{vid}{terminals{mouse}(ccell)} = diff(sigLocs{vid}{terminals{mouse}(ccell)});
+            % determine STD (sigma) of ISI 
+            ISIstds{vid}{terminals{mouse}(ccell)} = std(spikeISIs{vid}{terminals{mouse}(ccell)});
+            % determine mean ISI 
+            ISImean{vid}{terminals{mouse}(ccell)} = mean(spikeISIs{vid}{terminals{mouse}(ccell)});
+            % generate random spike Locs (sigLocs) based on ISI STD using same            
+            for spike = 1:length(spikeISIs{vid}{terminals{mouse}(ccell)})
+                % generate random ISI
+                r = random('Exponential',ISImean{vid}{terminals{mouse}(ccell)});
+                randISIs{vid}{terminals{mouse}(ccell)}(spike) = floor(r);
+            end              
+            % plot distribution of real and rand ISIs for sanity check 
+            %{
+            figure;
+            histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
+            title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+            figure;
+            histogram(randISIs{vid}{terminals{mouse}(ccell)})
+            title(sprintf("Rand Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+            %}
+            % use randISIs to generate randSigLocs 
+            randSigLocs{vid}{terminals{mouse}(ccell)} = cumsum(randISIs{vid}{terminals{mouse}(ccell)});
+        end 
+    end                 
+    sigLocs = randSigLocs;
+end 
+clearvars peaks locs 
 % crop the imaging data if you want to; better to do this up here to
 % maximize computational speed ~ 
 rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
@@ -11646,10 +11686,10 @@ if cropQ == 1
     %select the correct channel to view for cropping 
     if rightChan == 0     
         hold off;
-        cropIm = nanmean(greenStacks{1},3); %#ok<*NANMEAN> 
+        cropIm = nanmean(greenStacksOrigin{1},3); %#ok<*NANMEAN> 
     elseif rightChan == 1
         hold off; 
-        cropIm = nanmean(redStacks{1},3);
+        cropIm = nanmean(redStacksOrigin{1},3);
     end         
     [~, rect] = imcrop(cropIm);
 end  
@@ -11658,21 +11698,21 @@ greenStacks2 = cell(1,length(vidList{mouse}));
 redStacks2 = cell(1,length(vidList{mouse}));
 if cropQ == 1 
     for vid = 1:length(vidList{mouse})
-        for frame = 1:size(greenStacks{vid},3)
-            cropdIm = imcrop(greenStacks{vid}(:,:,frame),rect);
+        for frame = 1:size(greenStacksOrigin{vid},3)
+            cropdIm = imcrop(greenStacksOrigin{vid}(:,:,frame),rect);
             greenStacks2{vid}(:,:,frame) = cropdIm;
         end 
     end 
     
     for vid = 1:length(vidList{mouse})
-        for frame = 1:size(greenStacks{vid},3)
-            cropdIm = imcrop(redStacks{vid}(:,:,frame),rect);
+        for frame = 1:size(greenStacksOrigin{vid},3)
+            cropdIm = imcrop(redStacksOrigin{vid}(:,:,frame),rect);
             redStacks2{vid}(:,:,frame) = cropdIm;
         end 
     end 
 elseif cropQ == 0
-    greenStacks2 = greenStacks;
-    redStacks2 = redStacks;
+    greenStacks2 = greenStacksOrigin;
+    redStacks2 = redStacksOrigin;
 end  
 clearvars greenStacks redStacks
 greenStacks = greenStacks2;
@@ -11797,24 +11837,26 @@ elseif tTypeQ == 1
     end   
 end 
 clearvars greenStacks redStacks start stop sigLocs sigPeaks 
+% resort and bootstrap the data 
+bootQ = input('Input 1 to bootstrap the data. Input 0 otherwise. ');
 % average calcium peak aligned traces across videos 
 if tTypeQ == 0 
-    greenStackArray2 = cell(1,length(vidList{mouse}));
-    avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
-    avGreenStack = cell(1,length(sortedGreenStacks{1}));
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
+    greenStackArray2 = cell(1,max(terminals{mouse}));
     if rightChan == 0     
-        VesGreenStackArray2 = cell(1,length(vidList{mouse})); 
-        VesAvGreenStack2 = cell(1,length(vidList{mouse})); 
-        VesAvGreenStack = cell(1,length(vidList{mouse}));
+        VesGreenStackArray2 = cell(1,max(terminals{mouse}));
     end  
     for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            count = 1;
+        count = 1;
+        for vid = 1:length(vidList{mouse})        
             for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)},2)  
                 if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                    greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                    greenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
                     if rightChan == 0
-                        VesGreenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                        VesGreenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
                     end           
                     count = count + 1;
                 end 
@@ -11822,61 +11864,105 @@ if tTypeQ == 0
         end 
     end 
     clearvars sortedGreenStacks VesSortedGreenStacks
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
-            if rightChan == 0
-                VesAvGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(VesGreenStackArray2{vid}{terminals{mouse}(ccell)},4);
-            end 
-        end 
-    end 
-    clearvars greenStackArray2 VesGreenStackArray2
-    for ccell = 1:length(terminals{mouse})
-        avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
-        if rightChan == 0
-            VesAvGreenStack{terminals{mouse}(ccell)} = nanmean(VesAvGreenStack2{terminals{mouse}(ccell)},4);
-        end 
-    end 
-    clearvars avGreenStack2 VesAvGreenStack2
-    redStackArray2 = cell(1,length(vidList{mouse}));
-    avRedStack2 = cell(1,length(sortedRedStacks{1}));
-    avRedStack = cell(1,length(sortedRedStacks{1}));
+    redStackArray2 = cell(1,max(terminals{mouse}));
     if rightChan == 1     
-        VesRedStackArray2 = cell(1,length(vidList{mouse})); 
-        VesAvRedStack2 = cell(1,length(vidList{mouse})); 
-        VesAvRedStack = cell(1,length(vidList{mouse}));
+        VesRedStackArray2 = cell(1,max(terminals{mouse}));
     end  
     for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            count = 1;
+        count = 1;
+        for vid = 1:length(vidList{mouse})        
             for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
                 if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                    redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                    redStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
                     if rightChan == 1
-                        VesRedStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                    end 
+                        VesRedStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                    end           
                     count = count + 1;
                 end 
             end
         end 
-    end   
+    end 
     clearvars sortedRedStacks VesSortedRedStacks
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})    
-            avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
-            if rightChan == 1
-                VesAvRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(VesRedStackArray2{vid}{terminals{mouse}(ccell)},4);
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    if bootQ == 1
+        bootGreenArray = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse})
+            % determine how many spikes there are already 
+            numSpikes = size(greenStackArray2{terminals{mouse}(ccell)},4);
+            for boot = 1:10000
+                % select random spike 
+                thisSpike = randi(numSpikes);
+                bootGreenArray{terminals{mouse}(ccell)}(:,:,:,boot) = greenStackArray2{terminals{mouse}(ccell)}(:,:,:,thisSpike); 
             end 
         end 
-    end       
-    clearvars redStackArray2 VesRedStackArray2
-    for ccell = 1:length(terminals{mouse})
-        avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
-        if rightChan == 1
-            VesAvRedStack{terminals{mouse}(ccell)} = nanmean(VesAvRedStack2{terminals{mouse}(ccell)},4);
+        clearvars greenStackArray2
+        % determine 95% CI of bootstrapped data and av 
+        SEM = (nanstd(bootGreenArray{terminals{mouse}(ccell)},0,4))/(sqrt(size(bootGreenArray{terminals{mouse}(ccell)},4))); % Standard Error    
+        ts_High = tinv(0.975,size(bootGreenArray{terminals{mouse}(ccell)},4)-1);% T-Score for 95% CI
+        avGreenStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            avGreenStack{terminals{mouse}(ccell)} = nanmean(bootGreenArray{terminals{mouse}(ccell)},4);
         end 
-    end       
-    clearvars avRedStack2 VesAvRedStack2    
+        clearvars bootGreenArray greenStackArray2
+        if spikeQ == 1 
+            CI_High_Green = cell(1,max(terminals{mouse}));
+            for ccell = 1:length(terminals{mouse}) 
+                CI_High_Green{terminals{mouse}(ccell)} = (avGreenStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
+            end 
+        end 
+
+        bootRedArray = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse})
+            % determine how many spikes there are already 
+            numSpikes = size(redStackArray2{terminals{mouse}(ccell)},4);
+            for boot = 1:10000
+                % select random spike 
+                thisSpike = randi(numSpikes);
+                bootRedArray{terminals{mouse}(ccell)}(:,:,:,boot) = redStackArray2{terminals{mouse}(ccell)}(:,:,:,thisSpike); 
+            end 
+        end 
+        clearvars redStackArray2
+        % determine 95% CI of bootstrapped data and av 
+        SEM = (nanstd(bootRedArray{terminals{mouse}(ccell)},0,4))/(sqrt(size(bootRedArray{terminals{mouse}(ccell)},4))); % Standard Error    
+        ts_High = tinv(0.975,size(bootRedArray{terminals{mouse}(ccell)},4)-1);% T-Score for 95% CI
+        avRedStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            avRedStack{terminals{mouse}(ccell)} = nanmean(bootRedArray{terminals{mouse}(ccell)},4);
+        end 
+        clearvars bootRedArray redStackArray2
+        if spikeQ == 1 
+            CI_High_Red = cell(1,max(terminals{mouse}));
+            for ccell = 1:length(terminals{mouse}) 
+                CI_High_Red{terminals{mouse}(ccell)} = (avRedStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
+            end 
+        end 
+    elseif bootQ == 0
+        avGreenStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            avGreenStack{terminals{mouse}(ccell)} = nanmean(greenStackArray2{terminals{mouse}(ccell)},4);
+        end 
+        clearvars greenStackArray2
+
+        avRedStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            avRedStack{terminals{mouse}(ccell)} = nanmean(redStackArray2{terminals{mouse}(ccell)},4);
+        end 
+        clearvars redStackArray2
+    end 
+    if rightChan == 0  
+        VesAvGreenStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            VesAvGreenStack{terminals{mouse}(ccell)} = nanmean(VesGreenStackArray2{terminals{mouse}(ccell)},4);
+        end 
+        clearvars VesGreenStackArray2
+    end 
+    if rightChan == 1  
+        VesAvRedStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            VesAvRedStack{terminals{mouse}(ccell)} = nanmean(VesRedStackArray2{terminals{mouse}(ccell)},4);
+        end 
+        clearvars VesRedStackArray2
+    end 
 elseif tTypeQ == 1
     per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
     greenStackArray2 = cell(1,length(vidList{mouse}));
@@ -11903,6 +11989,7 @@ elseif tTypeQ == 1
     end 
     clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
 end 
+
 % don't normalize because it's z-scored 
 NgreenStackAv = avGreenStack;
 NredStackAv = avRedStack; 
@@ -12437,7 +12524,8 @@ if CaFrameQ == 1
                 Ccolors = [0,0,1;0,0.5,1;0,1,1];
                 % resort data: concatenate all CaROI data 
                 % output = CaArray{mouse}{per}(concatenated caRoi data)
-                % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)               
+                % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)     
+                CTraceArray = cell(1,1);
                 for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
                     if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
                         if isempty(CTraces{mouse}{ccell}) == 0 
