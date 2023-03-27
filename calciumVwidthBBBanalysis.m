@@ -11837,14 +11837,18 @@ elseif tTypeQ == 1
     end   
 end 
 clearvars greenStacks redStacks start stop sigLocs sigPeaks 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE - NEED TO REGENERATE THE ARRAYS MADE BELOW AND THEN ENSURE
+% THAT THE CI HIGH ARRAYS GET SMOOTHED TEMPORALLY AND SPATIALLY 
+
 % resort and bootstrap the data 
 bootQ = input('Input 1 to bootstrap the data. Input 0 otherwise. ');
 % average calcium peak aligned traces across videos 
 if tTypeQ == 0 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
     greenStackArray2 = cell(1,max(terminals{mouse}));
     if rightChan == 0     
         VesGreenStackArray2 = cell(1,max(terminals{mouse}));
@@ -11883,7 +11887,6 @@ if tTypeQ == 0
         end 
     end 
     clearvars sortedRedStacks VesSortedRedStacks
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     if bootQ == 1
         bootGreenArray = cell(1,max(terminals{mouse}));
         for ccell = 1:length(terminals{mouse})
@@ -11904,7 +11907,7 @@ if tTypeQ == 0
             avGreenStack{terminals{mouse}(ccell)} = nanmean(bootGreenArray{terminals{mouse}(ccell)},4);
         end 
         clearvars bootGreenArray greenStackArray2
-        if spikeQ == 1 
+        if spikeQ == 1 && rightChan == 0  
             CI_High_Green = cell(1,max(terminals{mouse}));
             for ccell = 1:length(terminals{mouse}) 
                 CI_High_Green{terminals{mouse}(ccell)} = (avGreenStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
@@ -11930,7 +11933,7 @@ if tTypeQ == 0
             avRedStack{terminals{mouse}(ccell)} = nanmean(bootRedArray{terminals{mouse}(ccell)},4);
         end 
         clearvars bootRedArray redStackArray2
-        if spikeQ == 1 
+        if spikeQ == 1 && rightChan == 1 
             CI_High_Red = cell(1,max(terminals{mouse}));
             for ccell = 1:length(terminals{mouse}) 
                 CI_High_Red{terminals{mouse}(ccell)} = (avRedStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
@@ -12228,10 +12231,11 @@ if AVQ == 0
             end 
             continu = 0;
         end 
-        %play segmentation boundaries over images 
-        implay(segOverlays{CaROI})
+
         %ask about segmentation quality 
         if segQ == 1
+            %play segmentation boundaries over images 
+            implay(segOverlays{CaROI})
             segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
             if segmentVessel == 1
                 clearvars BWthreshold BWopenRadius BW se boundaries
@@ -12287,6 +12291,57 @@ if CaROItimingCheckQ == 1
          end 
     end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+subQ = input('Input 1 to create STA videos that only show BBB plumes > 95% confidence interval of shuffled bootstrapped data. ');
+if subQ == 1 
+    clearvars 
+    dataDir = uigetdir('*.*','WHERE ARE THE STA VIDEO .MAT FILES?');
+    cd(dataDir);
+    shuffledFileName = uigetfile('*.*','GET THE SHUFFLED BOOTSTRAPPED DATA'); 
+    load(shuffledFileName)
+    shuffledVids = RightChan;
+    clear RightChan;
+end 
+
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% THIS CODE BELOW IS JUST FOR EXAMPLES IN CASE NEEDED 
+
+cd(CaROImaskDir);
+CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
+CaROImaskMat = matfile(CaROImaskFileName); 
+CaROImasks = CaROImaskMat.CaROImasks; 
+
+
+if bootQ == 1 
+    % save the .mat file out per iteration 
+    filename = sprintf('rightChan_%d.mat',boot);
+    filename2 = append(dir2,'/',filename);
+    save(filename2,"RightChan");
+end 
+ 
+% average the videos to make bootstrapped vids 
+sortedVids = cell(1,length(RightChan));
+clear RightChan
+RightChan = cell(1,max(terminals{1}));
+allVids = cell(1,bootNum);
+for boot = 1:bootNum
+    filename = sprintf('rightChan_%d.mat',boot);
+    filename2 = append(dir2,'/',filename);
+    load(filename2,"RightChan")
+    allVids{boot} = RightChan;
+    for ccell = 1:length(terminals{mouse})
+        sortedVids{terminals{mouse}(ccell)}(:,:,:,4) = allVids{boot}{terminals{mouse}(ccell)};
+        RightChan{terminals{mouse}(ccell)} = nanmean(sortedVids{terminals{mouse}(ccell)},4);
+    end 
+end 
+clear sortedVids allVids
+
+
+
+
+
 
 %% conditional statement that ensures you checked the other channel
 
