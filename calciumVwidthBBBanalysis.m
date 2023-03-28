@@ -11548,9 +11548,18 @@ end
 % bootstrap option 
 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% UPDATE BOOTSTRAPPING CODE SO THAT
+% 2) CREATE SAME NUMBER OF SHUFFLED SPIKES AS REAL SPIKES, CALCULATE 95 AND
+% 5% CI (HIGH AND LOW), THEN DO THIS 10,000 TIMES, AVERAGE THE 10K CI HIGH
+% AND LOW VIDS TO GET TRULY SHUFFLED VIDS THAT MATCH THE STATS OF THE REAL
+% DATA 
+% 3) CREATE BINARIZED STA STACKS TO SHOW WHERE CI HIGH AND LOW PIXELS ARE
+% FOR DBSCAN 
+
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
-spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized spikes (based on ISI STD). "); 
+spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
 %     dir1 = dataDir{mouse};   
@@ -11641,42 +11650,52 @@ for mouse = 1:mouseNum
 end 
 clearvars peaks locs 
 if spikeQ == 1   
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% 2) CREATE SAME NUMBER OF SHUFFLED SPIKES AS REAL SPIKES, 
+% CALCULATE 95 AND 5% CI (HIGH AND LOW), 
+% THEN DO THIS 10,000 TIMES, 
+% AVERAGE THE 10K CI HIGH AND LOW VIDS TO GET TRULY SHUFFLED VIDS THAT MATCH THE STATS OF THE REAL DATA 
+
     spikeISIs = cell(1,length(vidList{mouse})); 
     ISIstds = cell(1,length(vidList{mouse})); 
     randSpikes = cell(1,length(vidList{mouse})); 
     ISImean = cell(1,length(vidList{mouse}));
     randISIs = cell(1,length(vidList{mouse}));
     randSigLocs = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        for ccell = 1:length(terminals{mouse})
-            % determine ISI
-            spikeISIs{vid}{terminals{mouse}(ccell)} = diff(sigLocs{vid}{terminals{mouse}(ccell)});
-            % determine STD (sigma) of ISI 
-            ISIstds{vid}{terminals{mouse}(ccell)} = std(spikeISIs{vid}{terminals{mouse}(ccell)});
-            % determine mean ISI 
-            ISImean{vid}{terminals{mouse}(ccell)} = mean(spikeISIs{vid}{terminals{mouse}(ccell)});
-            % generate random spike Locs (sigLocs) based on ISI STD using same            
-            for spike = 1:length(spikeISIs{vid}{terminals{mouse}(ccell)})
-                % generate random ISI
-                r = random('Exponential',ISImean{vid}{terminals{mouse}(ccell)});
-                randISIs{vid}{terminals{mouse}(ccell)}(spike) = floor(r);
-            end              
-            % plot distribution of real and rand ISIs for sanity check 
-            %{
-            figure;
-            histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
-            title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
-            figure;
-            histogram(randISIs{vid}{terminals{mouse}(ccell)})
-            title(sprintf("Rand Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
-            %}
-            % use randISIs to generate randSigLocs 
-            randSigLocs{vid}{terminals{mouse}(ccell)} = cumsum(randISIs{vid}{terminals{mouse}(ccell)});
-        end 
-    end                 
+    for it = 1:10000
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                % determine ISI
+                spikeISIs{vid}{terminals{mouse}(ccell)} = diff(sigLocs{vid}{terminals{mouse}(ccell)});
+                % determine STD (sigma) of ISI 
+                ISIstds{vid}{terminals{mouse}(ccell)} = std(spikeISIs{vid}{terminals{mouse}(ccell)});
+                % determine mean ISI 
+                ISImean{vid}{terminals{mouse}(ccell)} = mean(spikeISIs{vid}{terminals{mouse}(ccell)});
+                % generate random spike Locs (sigLocs) based on ISI STD using same            
+                for spike = 1:length(spikeISIs{vid}{terminals{mouse}(ccell)})
+                    % generate random ISI
+                    r = random('Exponential',ISImean{vid}{terminals{mouse}(ccell)});
+                    randISIs{vid}{terminals{mouse}(ccell)}(spike) = floor(r);
+                end              
+                % plot distribution of real and rand ISIs for sanity check 
+                %{
+                figure;
+                histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
+                title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+                figure;
+                histogram(randISIs{vid}{terminals{mouse}(ccell)})
+                title(sprintf("Rand Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+                %}
+                % use randISIs to generate randSigLocs 
+                randSigLocs{it,vid}{terminals{mouse}(ccell)} = cumsum(randISIs{vid}{terminals{mouse}(ccell)});
+            end 
+        end      
+    end 
     sigLocs = randSigLocs;
 end 
-clearvars peaks locs 
+clearvars randSigLocs 
 % crop the imaging data if you want to; better to do this up here to
 % maximize computational speed ~ 
 rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
@@ -11838,9 +11857,7 @@ elseif tTypeQ == 1
 end 
 clearvars greenStacks redStacks start stop sigLocs sigPeaks 
 
-% resort and bootstrap the data 
-bootQ = input('Input 1 to bootstrap the data. Input 0 otherwise. ');
-% average calcium peak aligned traces across videos 
+% resort and average calcium peak aligned traces across videos 
 if tTypeQ == 0 
     greenStackArray2 = cell(1,max(terminals{mouse}));
     if rightChan == 0     
@@ -11880,71 +11897,16 @@ if tTypeQ == 0
         end 
     end 
     clearvars sortedRedStacks VesSortedRedStacks
-    if bootQ == 1
-        bootGreenArray = cell(1,max(terminals{mouse}));
-        for ccell = 1:length(terminals{mouse})
-            % determine how many spikes there are already 
-            numSpikes = size(greenStackArray2{terminals{mouse}(ccell)},4);
-            for boot = 1:10000
-                % select random spike 
-                thisSpike = randi(numSpikes);
-                bootGreenArray{terminals{mouse}(ccell)}(:,:,:,boot) = greenStackArray2{terminals{mouse}(ccell)}(:,:,:,thisSpike); 
-            end 
-        end 
-        clearvars greenStackArray2
-        % determine 95% CI of bootstrapped data and av 
-        SEM = (nanstd(bootGreenArray{terminals{mouse}(ccell)},0,4))/(sqrt(size(bootGreenArray{terminals{mouse}(ccell)},4))); % Standard Error    
-        ts_High = tinv(0.975,size(bootGreenArray{terminals{mouse}(ccell)},4)-1);% T-Score for 95% CI
-        avGreenStack = cell(1,max(terminals{mouse}));
-        for ccell = 1:length(terminals{mouse}) % determine the average 
-            avGreenStack{terminals{mouse}(ccell)} = nanmean(bootGreenArray{terminals{mouse}(ccell)},4);
-        end 
-        clearvars bootGreenArray greenStackArray2
-        if spikeQ == 1 && rightChan == 0  
-            CI_High_Green = cell(1,max(terminals{mouse}));
-            for ccell = 1:length(terminals{mouse}) 
-                CI_High_Green{terminals{mouse}(ccell)} = (avGreenStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
-            end 
-        end 
-
-        bootRedArray = cell(1,max(terminals{mouse}));
-        for ccell = 1:length(terminals{mouse})
-            % determine how many spikes there are already 
-            numSpikes = size(redStackArray2{terminals{mouse}(ccell)},4);
-            for boot = 1:10000
-                % select random spike 
-                thisSpike = randi(numSpikes);
-                bootRedArray{terminals{mouse}(ccell)}(:,:,:,boot) = redStackArray2{terminals{mouse}(ccell)}(:,:,:,thisSpike); 
-            end 
-        end 
-        clearvars redStackArray2
-        % determine 95% CI of bootstrapped data and av 
-        SEM = (nanstd(bootRedArray{terminals{mouse}(ccell)},0,4))/(sqrt(size(bootRedArray{terminals{mouse}(ccell)},4))); % Standard Error    
-        ts_High = tinv(0.975,size(bootRedArray{terminals{mouse}(ccell)},4)-1);% T-Score for 95% CI
-        avRedStack = cell(1,max(terminals{mouse}));
-        for ccell = 1:length(terminals{mouse}) % determine the average 
-            avRedStack{terminals{mouse}(ccell)} = nanmean(bootRedArray{terminals{mouse}(ccell)},4);
-        end 
-        clearvars bootRedArray redStackArray2
-        if spikeQ == 1 && rightChan == 1 
-            CI_High_Red = cell(1,max(terminals{mouse}));
-            for ccell = 1:length(terminals{mouse}) 
-                CI_High_Red{terminals{mouse}(ccell)} = (avRedStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
-            end 
-        end 
-    elseif bootQ == 0
-        avGreenStack = cell(1,max(terminals{mouse}));
-        for ccell = 1:length(terminals{mouse}) % determine the average 
-            avGreenStack{terminals{mouse}(ccell)} = nanmean(greenStackArray2{terminals{mouse}(ccell)},4);
-        end 
-        clearvars greenStackArray2
-
-        avRedStack = cell(1,max(terminals{mouse}));
-        for ccell = 1:length(terminals{mouse}) % determine the average 
-            avRedStack{terminals{mouse}(ccell)} = nanmean(redStackArray2{terminals{mouse}(ccell)},4);
-        end 
-        clearvars redStackArray2
+    avGreenStack = cell(1,max(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse}) % determine the average 
+        avGreenStack{terminals{mouse}(ccell)} = nanmean(greenStackArray2{terminals{mouse}(ccell)},4);
     end 
+    clearvars greenStackArray2
+    avRedStack = cell(1,max(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse}) % determine the average 
+        avRedStack{terminals{mouse}(ccell)} = nanmean(redStackArray2{terminals{mouse}(ccell)},4);
+    end 
+    clearvars redStackArray2
     if rightChan == 0  
         VesAvGreenStack = cell(1,max(terminals{mouse}));
         for ccell = 1:length(terminals{mouse}) % determine the average 
@@ -12349,7 +12311,16 @@ if CaROItimingCheckQ == 1
     end 
 end 
 
+% BINARIZE STA VID TO SHOW WHERE PIXELS ARE ABOVE 95% CI (ONE COLOR/NUMBER) AND BELOW
+% (ANOTHER COLOR/NUMBER) 5% CI AS MASTER STA VID TO CREATE ABOVE 95% AND
+% BELOW 5% CI BINARIZED VIDS FOR DBSCAN 
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% THIS CODE BELOW IS JUST FOR EXAMPLES IN CASE NEEDED 
+
+
 subQ = input('Input 1 to create STA videos that only show BBB plumes > 95% confidence interval of shuffled bootstrapped data. ');
 if subQ == 1 
     clearvars 
@@ -12361,9 +12332,10 @@ if subQ == 1
     clear RightChan;
 end 
 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% THIS CODE BELOW IS JUST FOR EXAMPLES IN CASE NEEDED 
+% binarize STA
+% convert im to binary matrix where 1 = pixels that are positive going %
+% change 
+im(im < thresh) = 0; im(im > thresh) = 1;
 
 cd(CaROImaskDir);
 CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
