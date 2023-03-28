@@ -11838,13 +11838,6 @@ elseif tTypeQ == 1
 end 
 clearvars greenStacks redStacks start stop sigLocs sigPeaks 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - NEED TO REGENERATE THE ARRAYS MADE BELOW AND THEN ENSURE
-% THAT THE CI HIGH ARRAYS GET SMOOTHED TEMPORALLY AND SPATIALLY 
-
 % resort and bootstrap the data 
 bootQ = input('Input 1 to bootstrap the data. Input 0 otherwise. ');
 % average calcium peak aligned traces across videos 
@@ -12016,11 +12009,17 @@ elseif rightChan == 1
     vesChan = VesAvRedStack;
 end    
 clearvars avGreenStack avRedStack VesAvGreenStack 
+
 %temporal smoothing option
-smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise.');
+smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise. ');
 if smoothQ == 0 
     SNgreenStackAv = NgreenStackAv;
     SNredStackAv = NredStackAv;
+    if spikeQ == 1 && rightChan == 0
+        SN_CIhighGreen = cell(1,max(terminals{mouse}));
+    elseif spikeQ == 1 && rightChan == 1
+        SN_CIhighRed = cell(1,max(terminals{mouse}));
+    end 
 elseif smoothQ == 1
     filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
     filter_rate = FPSstack{mouse}*filtTime; 
@@ -12048,31 +12047,64 @@ elseif smoothQ == 1
             end 
         end 
     end 
+    for ccell = 1:length(terminals{mouse})
+        if spikeQ == 1 && rightChan == 0
+            SN_CIhighGreen{terminals{mouse}(ccell)} = smoothdata(CI_High_Green{terminals{mouse}(ccell)},3,'movmean',filter_rate); %#ok<SAGROW> 
+        elseif spikeQ == 1 && rightChan == 1
+            SN_CIhighRed{terminals{mouse}(ccell)} = smoothdata(CI_High_Red{terminals{mouse}(ccell)},3,'movmean',filter_rate); %#ok<SAGROW> 
+        end    
+    end 
 end 
-clearvars NgreenStackAv NredStackAv
+clearvars NgreenStackAv NredStackAv 
+if spikeQ == 1 && rightChan == 0
+    clearvars CI_High_Green
+elseif spikeQ == 1 && rightChan == 1
+    clearvars CI_High_Red
+end 
+
 %spatial smoothing option
-spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise.');
+spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise. ');
 if spatSmoothQ == 1 
     spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
     spatFiltChanQ= input('Input 0 to spatially smooth both channels. Input 1 otherwise. ');
     if spatFiltChanQ == 0 % if you want to spatially smooth both channels 
         redIn = SNredStackAv; 
         greenIn = SNgreenStackAv;
+        if spikeQ == 1 && rightChan == 0
+            CIgreenIn = SN_CIhighGreen;
+        elseif spikeQ == 1 && rightChan == 1
+            CIredIn = SN_CIhighRed;
+        end 
+        if spikeQ == 1 && rightChan == 0
+            clearvars SN_CIhighGreen
+        elseif spikeQ == 1 && rightChan == 1
+            clearvars SN_CIhighRed
+        end 
         clearvars SNredStackAv SNgreenStackAv
         if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
             sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
-                for ccell = 1:length(terminals{mouse})
-                    SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
-                    SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
+            for ccell = 1:length(terminals{mouse})
+                SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
+                SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
+                if spikeQ == 1 && rightChan == 0
+                    SN_CIhighGreen{terminals{mouse}(ccell)} = imgaussfilt(CIgreenIn{terminals{mouse}(ccell)},sigma);
+                elseif spikeQ == 1 && rightChan == 1
+                    SN_CIhighRed{terminals{mouse}(ccell)} = imgaussfilt(CIredIn{terminals{mouse}(ccell)},sigma);
                 end 
+            end 
         elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
             % create your kernal for smoothing by convolution 
             kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
             K = 0.125*ones(kernalSize);
-                for ccell = 1:length(terminals{mouse})
-                    SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
-                    SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
+            for ccell = 1:length(terminals{mouse})
+                SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
+                SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
+                if spikeQ == 1 && rightChan == 0
+                    SN_CIhighGreen{terminals{mouse}(ccell)} = convn(CIgreenIn{terminals{mouse}(ccell)},K,'same');
+                elseif spikeQ == 1 && rightChan == 1
+                    SN_CIhighRed{terminals{mouse}(ccell)} = convn(CIredIn{terminals{mouse}(ccell)},K,'same');
                 end 
+            end 
         end 
     elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
         spatSmoothChanQ = input('Input 0 to spatially smooth the green channel. Input 1 for the red channel. ');
@@ -12083,12 +12115,22 @@ if spatSmoothQ == 1
                 clearvars SNgreenStackAv
                 for ccell = 1:length(terminals{mouse})
                     SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
-                end 
+                    if spikeQ == 1 && rightChan == 0
+                        SN_CIhighGreen{terminals{mouse}(ccell)} = imgaussfilt(CIgreenIn{terminals{mouse}(ccell)},sigma);
+                    elseif spikeQ == 1 && rightChan == 1
+                        SN_CIhighRed{terminals{mouse}(ccell)} = imgaussfilt(CIredIn{terminals{mouse}(ccell)},sigma);
+                    end 
+                end              
             elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
                 redIn = SNredStackAv; 
                 clearvars SNredStackAv 
                 for ccell = 1:length(terminals{mouse})
                     SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
+                    if spikeQ == 1 && rightChan == 0
+                        SN_CIhighGreen{terminals{mouse}(ccell)} = imgaussfilt(CIgreenIn{terminals{mouse}(ccell)},sigma);
+                    elseif spikeQ == 1 && rightChan == 1
+                        SN_CIhighRed{terminals{mouse}(ccell)} = imgaussfilt(CIredIn{terminals{mouse}(ccell)},sigma);
+                    end                     
                 end 
             end        
         elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
@@ -12100,18 +12142,33 @@ if spatSmoothQ == 1
                 clearvars SNgreenStackAv
                 for ccell = 1:length(terminals{mouse})
                     SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
+                    if spikeQ == 1 && rightChan == 0
+                        SN_CIhighGreen{terminals{mouse}(ccell)} = convn(CIgreenIn{terminals{mouse}(ccell)},K,'same');
+                    elseif spikeQ == 1 && rightChan == 1
+                        SN_CIhighRed{terminals{mouse}(ccell)} = convn(CIredIn{terminals{mouse}(ccell)},K,'same');
+                    end 
                 end 
             elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
                 redIn = SNredStackAv; 
                 clearvars SNredStackAv 
                 for ccell = 1:length(terminals{mouse})
                     SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
+                    if spikeQ == 1 && rightChan == 0
+                        SN_CIhighGreen{terminals{mouse}(ccell)} = convn(CIgreenIn{terminals{mouse}(ccell)},K,'same');
+                    elseif spikeQ == 1 && rightChan == 1
+                        SN_CIhighRed{terminals{mouse}(ccell)} = convn(CIredIn{terminals{mouse}(ccell)},K,'same');
+                    end                     
                 end 
             end                          
         end 
     end 
 end 
 clearvars redIn greenIn 
+if spikeQ == 1 && rightChan == 0
+    clearvars CIgreenIn
+elseif spikeQ == 1 && rightChan == 1
+    clearvars CIredIn
+end 
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
 if blackOutCaROIQ == 1         
