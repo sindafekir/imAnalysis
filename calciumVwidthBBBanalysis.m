@@ -14282,7 +14282,9 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
 
-% RE RUN ALL CURRENT FIGURES WITH THE NEW BINARIZED STA VIDS SHOWING PIXELS ABOVE AND BELOW THE 95% CI AND THEN PICK UP BELOW 
+% MAKE Z SCORED 95% CI THRESHOLDED BINARY ARRAY MORE RESTRICTED (USE ABOVE
+% CODE FOR THAT) THEN PLAY AROUND WITH DBSCAN INPUT PARAMATERS, THEN RERUN
+% FIGURES 
 
 % 7) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
 % 8) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
@@ -14297,6 +14299,7 @@ end
 % DISTANCE 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
 % DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM 
+
 
 %{
 mouse = 1;
@@ -14315,14 +14318,20 @@ for ccell = 1:length(terminals{mouse})
     count = 1;
     term = terminals{mouse}(ccell);
     % use dbscan to find clustered pixels 
-    im = RightChan{term}; % input image
+%     im = RightChan{term}; % input image for % change vids
+    im = binarySTA{term}; % input image for binarized z scored vids 
     vesselMask = BW_perim{term};
-    maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
-    thresh = maxPerc/10;
-    % thresh = 0;
     % convert im to binary matrix where 1 = pixels that are positive going %
-    % change 
-    im(im < thresh) = 0; im(im > thresh) = 1;
+    % below code is for binarized z-score vids where 
+    % 1 means greater than 95% CI and 2 means lower than 95% CI 
+    im(im>1) = 0;
+
+    % below code is for % change videos 
+%     maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
+%     thresh = maxPerc/10;
+%     % thresh = 0;
+%     % change 
+%     im(im < thresh) = 0; im(im > thresh) = 1;
     % black out pixels inside of vessel     
     if vidQ2 == 1 
         im(BWstacks{terminals{mouse}(ccell)}) = 0;
@@ -14455,10 +14464,12 @@ safeKeptClustSize = clustSize;
 nearVsFarPlotData = zeros(length(terminals{mouse}),2);
 % resort data for stacked bar plot 
 unIdxVals2 = cell(1,max(terminals{mouse}));
+labels = strings(1,length(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
     unIdxVals2{terminals{mouse}(ccell)} = unique(idx2{terminals{mouse}(ccell)});
     nearVsFarPlotData(ccell,1) = length(unIdxVals2{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
     nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
+    labels(ccell) = num2str(terminals{mouse}(ccell));
 end 
 % plot stacked bar plot
 figure;
@@ -14775,7 +14786,7 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size grouped by pre and post spike 
-  
+% clearvars data
 if clustSpikeQ == 0
     CsizeForPlot = clustSize';
     figure;
@@ -14823,30 +14834,32 @@ elseif clustSpikeQ == 1
         xticklabels(labels)   
     end 
 end 
-if preAndPostQ == 1 
-    % reshape data to plot box and whisker plots 
-    reshapedPrePlot = reshape(CsizeForPlotPre,size(CsizeForPlotPre,1)*size(CsizeForPlotPre,2),1);
-    reshapedPostPlot = reshape(CsizeForPlotPost,size(CsizeForPlotPost,1)*size(CsizeForPlotPost,2),1);
-    data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
-    % plot swarm chart on top of box plot 
-    hold all;
-    x = repmat(1:size(data,2),size(data,1),1);
-    swarmchart(x,data,[],'red') 
-    % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
-        if clustSpikeQ3 == 0 
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-        end             
-    avLabels = ["Pre-Spike","Post-Spike"];
-    xticklabels(avLabels)
+if  clustSpikeQ == 1 
+    if preAndPostQ == 1 
+        % reshape data to plot box and whisker plots 
+        reshapedPrePlot = reshape(CsizeForPlotPre,size(CsizeForPlotPre,1)*size(CsizeForPlotPre,2),1);
+        reshapedPostPlot = reshape(CsizeForPlotPost,size(CsizeForPlotPost,1)*size(CsizeForPlotPost,2),1);
+        data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
+        figure;
+        ax=gca;
+        % plot box plot 
+        boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+        % plot swarm chart on top of box plot 
+        hold all;
+        x = repmat(1:size(data,2),size(data,1),1);
+        swarmchart(x,data,[],'red') 
+        % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Size") 
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+            end             
+        avLabels = ["Pre-Spike","Post-Spike"];
+        xticklabels(avLabels)
+    end 
 end 
 
 
@@ -14870,25 +14883,27 @@ count1 = 1;
 count2 = 1;
 axonLabel = string(1);
 for ccell = 1:length(terminals{mouse})
-    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-        if clust == 1
-            if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
-                axonLabel(count2) = axonString(count1);
-                count1 = count1 + 1;
-                count2 = count2 + 1;
-            end 
-        elseif clust > 1 
-            if ~isnan(unIdxVals{terminals{mouse}(ccell)}(clust))
-                if sum(find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust))) > 0
-                    if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
-                        axonLabel(count2) = '';
-                        count2 = count2 + 1;
+    if isempty(clustSizeTS{terminals{mouse}(ccell)}) == 0 
+        for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+            if clust == 1
+                if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
+                    axonLabel(count2) = axonString(count1);
+                    count1 = count1 + 1;
+                    count2 = count2 + 1;
+                end 
+            elseif clust > 1 
+                if ~isnan(unIdxVals{terminals{mouse}(ccell)}(clust))
+                    if sum(find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust))) > 0
+                        if sum(~isnan(idx{terminals{mouse}(ccell)})) > 0 
+                            axonLabel(count2) = '';
+                            count2 = count2 + 1;
+                        end 
                     end 
                 end 
             end 
         end 
+        h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);   
     end 
-    h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);      
 end     
 % remove empty string that comes right after number 
 notEmptyStrings = find(axonLabel ~= '');
@@ -14922,6 +14937,7 @@ end
 % determine what axons are present to include in the legend 
 presentAxons = ~isnan(nanmean(avAxonClustSizeTS,2)); %#ok<*NANMEAN> 
 axonLabel = axonString(presentAxons);
+% axonLabel = axonString;
 legend(axonLabel)
 Frames = size(im,3);
 Frames_pre_stim_start = -((Frames-1)/2); 
