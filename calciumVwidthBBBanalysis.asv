@@ -14309,12 +14309,11 @@ end
 % ON TOP 
 % 14) CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
-
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
-% AVERAGE ACROSS MICE 
-% DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM AND BEHAVIOR 
+% DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM 
 
-%{
+
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 inds = cell(1,max(terminals{mouse}));
