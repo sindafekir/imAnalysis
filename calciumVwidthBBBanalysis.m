@@ -14298,23 +14298,29 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % NEXT: 
 
-% 7) PLOT DISTANCE OF PLUMES FROM AXON GROUPED BY PLUME START 
-% 8) PLOT AXON CLUSTER DISTANCE VS PLUME START/AV TIME 
-% 9) DOES DISTANCE TO VR SPACE PREDICT PLUME START TIMES?
+% 12) THEN PLOT PIXEL AMP, 
+% 13) PLOT PLUME TIMING ON SIDE WITH AVERAGE PIXEL AMP
 % 10) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
 % 11) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
-% 12) THEN PLOT PIXEL AMP, 
-% 13) PLOT PLUME TIMING ON SIDE WITH AVERAGE PIXEL AMP
-% ON TOP 
 % 14) CLUSTER VELOCITY AS FUNCTION OF
 % DISTANCE 
+% ON TOP 
+
 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
-% AVERAGE ACROSS MICE 
+% AVERAGE ACROSS MICE: Notes: first just make binarySTA for multiple mice
+% and import that, then rewrite bottom code for multiple binarySTA vids. 
+% 
+% IF TOP APPROACH IS TOO SLOW
+% make different avClocFrame variable for
+% cluster start and average time, go through all figures and make sure
+% variables are unique so I can pull variables per mouse for
+% averaging/plotting together 
+
 % DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM AND BEHAVIOR 
 
-%{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 inds = cell(1,max(terminals{mouse}));
@@ -14327,6 +14333,7 @@ indsA2 = cell(1,size(RightChan{ terminals{mouse}(1)},3));
 unIdxVals = cell(1,max(terminals{mouse}));
 CsNotNearVessel = cell(1,max(terminals{mouse}));
 clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+clustAmp = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 for ccell = 1:length(terminals{mouse})
     count = 1;
     term = terminals{mouse}(ccell);
@@ -14397,6 +14404,12 @@ for ccell = 1:length(terminals{mouse})
         end 
         % determine cluster size 
         clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust));
+        % determine cluster pixel amplitude 
+        pixAmp = nan(1,size(cLocs,1));
+        for pix = 1:length(pixAmp)
+            pixAmp(pix) = RightChan{terminals{mouse}(ccell)}(cLocs(pix,2),cLocs(pix,1),cLocs(pix,3));
+        end 
+        clustAmp(ccell,clust) =  nansum(pixAmp); %#ok<*NANSUM> 
     end         
 end 
 CsTooSmall = cell(1,max(terminals{mouse}));
@@ -14405,6 +14418,7 @@ for ccell = 1:length(terminals{mouse})
     count = 1;
     % make 0s NaNs 
     clustSize(clustSize == 0) = NaN;
+    clustAmp(clustAmp == 0) = NaN;
     % find the top 10 % of cluster sizes (this will be 100 or more
     % for 57)
     numClusts = nnz(~isnan(clustSize));
@@ -14466,11 +14480,15 @@ end
 % remove cluster sizes that are irrelevant 
 removeClustSizes = ~ismember(clustSize,topClusts);
 clustSize(removeClustSizes) = NaN;
+% make sure clustAmp shows the same clusts as clustSize 
+clustsToRemove = isnan(clustSize);
+clustAmp(clustsToRemove) = NaN;
 
 % safekeep some variables 
 safeKeptInds = inds; 
 safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
+safeKeptClustAmp = clustAmp;
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
@@ -14515,6 +14533,7 @@ colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 inds = safeKeptInds;
 idx = safeKeptIdx;
 clustSize = safeKeptClustSize;
+clustAmp = safeKeptClustAmp;
 
 % separate clusters based off of whether they happened before or after the
 % spike 
@@ -14553,12 +14572,14 @@ for ccell = 1:length(terminals{mouse})
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                     idx{terminals{mouse}(ccell)}(Crow,:) = NaN;
                     clustSize(ccell,clust) = NaN;
+                    clustAmp(ccell,clust) = NaN;
                 end 
             elseif clustSpikeQ2 == 1 % see post spike clusters 
                 if avClocFrame(ccell,clust) < frameThresh % remove clusters that come before the spike 
                     inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                     idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
                     clustSize(ccell,clust) = NaN;
+                    clustAmp(ccell,clust) = NaN;
                 end 
             end 
         end 
@@ -14567,8 +14588,8 @@ end
 % make 0s NaNs 
 avClocFrame(avClocFrame == 0) = NaN;
 
-% determine change in cluster size over time 
-% figure out cluster size per frame 
+% determine change in cluster size and pixel amplitude over time  
+clustPixAmpTS = cell(1,max(terminals{mouse}));
 clustSizeTS = cell(1,max(terminals{mouse}));
 clustFit = cell(1);
 for ccell = 1:length(terminals{mouse})
@@ -14578,6 +14599,14 @@ for ccell = 1:length(terminals{mouse})
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:); 
         for frame = 1:size(im,3)
+            % get change in pixel amplitude 
+            pixelInds = find(cLocs(:,3)==frame);
+            pixAmp = nan(1,length(pixelInds));
+            for pix = 1:length(pixelInds)
+                pixAmp(pix) = RightChan{terminals{mouse}(ccell)}(cLocs(pixelInds(pix),2),cLocs(pixelInds(pix),1),cLocs(pixelInds(pix),3));
+            end 
+            clustPixAmpTS{terminals{mouse}(ccell)}(clust,frame) = nansum(pixAmp); %#ok<*NANSUM> 
+            % get change in cluster size 
             clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
         end  
     end 
@@ -14594,16 +14623,20 @@ for ccell = 1:length(terminals{mouse})
             inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
             idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
             clustSize(ccell,earlyClusts(clust)) = NaN;
+            clustAmp(ccell,earlyClusts(clust)) = NaN;
             clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:) = NaN;
             avClocFrame(ccell,earlyClusts(clust)) = NaN;
+            clustPixAmpTS{terminals{mouse}(ccell)}(earlyClusts(clust),:) = NaN;
         end 
     end 
 end 
 for ccell = 1:length(terminals{mouse})
     % turn 0s into NaNs 
     clustSizeTS{terminals{mouse}(ccell)}(clustSizeTS{terminals{mouse}(ccell)} == 0) = NaN;
+    clustPixAmpTS{terminals{mouse}(ccell)}(clustPixAmpTS{terminals{mouse}(ccell)} == 0) = NaN;
     % remove rows that are entirely NaN
     clustSizeTS{terminals{mouse}(ccell)}(all(isnan(clustSizeTS{terminals{mouse}(ccell)}),2),:) = [];
+    clustPixAmpTS{terminals{mouse}(ccell)}(all(isnan(clustPixAmpTS{terminals{mouse}(ccell)}),2),:) = [];
 end   
 
 % determine distance of each cluster from each axon 
@@ -14634,8 +14667,7 @@ for ccell = 1:length(terminals{mouse})
 end 
 % make 0s NaNs 
 minACdists(minACdists == 0) = NaN;
- 
-% resort data for gscatter 
+% resort size and distance data for gscatter 
 if size(minACdists,2) < size(clustSize,2)
     minACdists(:,size(minACdists,2)+1:size(clustSize,2)) = NaN;
 end 
@@ -14676,8 +14708,7 @@ for ccell = 1:length(terminals{mouse})
     end 
     labels(ccell) = num2str(terminals{mouse}(ccell));
 end 
-
-% determine average trend line 
+% determine average trend line for size vs distance 
 includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
 % make incude XY that has combined 0 locs 
 [zeroRow, ~] = find(includeY == 0);
@@ -14687,10 +14718,206 @@ if length(find(includeXY)) > 1
     fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
 end 
 
+clear ampDistArray includeX includY includeXY
+fAmp = cell(1,length(terminals{mouse}));
+for ccell = 1:length(terminals{mouse})
+    if ccell == 1 
+        ampDistArray(:,1) = minACdists(ccell,:);
+        ampDistArray(:,2) = clustAmp(ccell,:);
+        ampDistArray(:,3) = ccell;       
+        % determine trend line 
+        includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;                
+        ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);  
+        if sum(includeXY) > 1 
+            fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');  
+        end 
+    elseif ccell > 1 
+        if ccell == 2
+            len = size(ampDistArray,1);   
+        end 
+        len2 = size(ampDistArray,1);       
+        ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+        ampDistArray(len2+1:len2+len,2) = clustAmp(ccell,:);
+        ampDistArray(len2+1:len2+len,3) = ccell;                  
+        % determine trend line 
+        includeX =~ isnan(ampDistArray(len2+1:len2+len,1)); includeY =~ isnan(ampDistArray(len2+1:len2+len,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;                
+        ampDistX = ampDistArray(len2+1:len2+len,1); ampDistY = ampDistArray(len2+1:len2+len,2);   
+        if sum(includeXY) > 1 
+            fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+        end 
+    end 
+end 
+% determine average trend line for size vs distance 
+includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
+% make incude XY that has combined 0 locs 
+[zeroRow, ~] = find(includeY == 0);
+includeX(zeroRow) = 0; includeXY = includeX;                
+ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);   
+if length(find(includeXY)) > 1
+    fAmpAv = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+end 
+
+% resort cluster start time and distance data for gscatter 
+clear timeDistArray includeX2 includY2 includeXY2
+f2 = cell(1,length(terminals{mouse}));
+for ccell = 1:length(terminals{mouse})
+    if ccell == 1 
+        timeDistArray(:,1) = avClocFrame(ccell,:);
+        timeDistArray(:,2) = minACdists(ccell,:);
+        timeDistArray(:,3) = ccell;       
+        % determine trend line 
+        includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY2 == 0);
+        includeX2(zeroRow) = 0; includeXY2 = includeX2;                
+        timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);  
+        if sum(includeXY2) > 1 
+            f2{ccell} = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');  
+        end 
+    elseif ccell > 1 
+        if ccell == 2
+            len = size(timeDistArray,1);   
+        end 
+        len2 = size(timeDistArray,1);       
+        timeDistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
+        timeDistArray(len2+1:len2+len,2) = minACdists(ccell,:);
+        timeDistArray(len2+1:len2+len,3) = ccell;                  
+        % determine trend line 
+        includeX2 =~ isnan(timeDistArray(len2+1:len2+len,1)); includeY2 =~ isnan(timeDistArray(len2+1:len2+len,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY2 == 0);
+        includeX2(zeroRow) = 0; includeXY2 = includeX2;                
+        timeDistX = timeDistArray(len2+1:len2+len,1); timeDistY = timeDistArray(len2+1:len2+len,2);   
+        if sum(includeXY2) > 1 
+            f2{ccell} = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+        end 
+    end 
+end 
+% determine average trend line for time vs distance 
+includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
+% make incude XY that has combined 0 locs 
+[zeroRow, ~] = find(includeY2 == 0);
+includeX2(zeroRow) = 0; includeXY2 = includeX2;                
+timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);   
+if length(find(includeXY2)) > 1
+    fav2 = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+end 
+
+% determine cluster distance from VR space if you want 
+VRQ = input('Input 1 to determine the distance of each axon from the VR space. ');
+if VRQ == 1 
+    drawVRQ = input('Input 1 to draw VR space outline. ');
+    if drawVRQ == 1 
+        vesIm = nanmean(vesChan{terminals{mouse}(1)},3);
+        imshow(vesIm,[0 500])
+        VRdata = drawfreehand(gca);  % manually draw vessel outline
+        % get VR outline coordinates 
+        VRinds = VRdata.Position;    
+        outLineQ = input('Input 1 if you are done drawing the VR outline. ');
+        if outLineQ == 1
+            close all
+        end 
+        len = size(VRinds,1); 
+        for frame = 1:size(im,3)
+            if frame == 1 
+                indsVR(:,1:2) = VRinds;
+                indsVR(:,3) = frame;
+            elseif frame > 1 
+                len2 = size(indsVR,1);
+                indsVR(len2+1:len2+len,1:2) = VRinds;
+                indsVR(len2+1:len2+len,3) = frame;
+            end 
+        end 
+    end 
+    % determine distance of each cluster from the VR space 
+    dists = cell(1,max(terminals{mouse}));
+    minVRCdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+    for ccell = 5:length(terminals{mouse})
+        for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+           % find what rows each cluster is located in
+            [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+            % identify the x, y, z location of pixels per cluster
+            cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+            for VRpoint = 1:size(indsVR,1)
+                for Cpoint = 1:size(cLocs,1)
+                    % get euclidean pixel distance between each Ca ROI pixel
+                    % and BBB cluster pixel 
+                    dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)+((cLocs(Cpoint,3)-indsVR(VRpoint,3))^2)); 
+                end 
+            end 
+        end 
+    end 
+    for ccell = 1:length(terminals{mouse})
+        for clust = 1:length(dists{terminals{mouse}(ccell)})
+            % determine minimum distance between each Ca ROI and cluster 
+            if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
+                minVRCdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+            end 
+        end 
+    end 
+    % make 0s NaNs 
+    minVRCdists(minVRCdists == 0) = NaN;
+    % resort size and distance data for gscatter 
+    if size(minVRCdists,2) < size(clustSize,2)
+        minVRCdists(:,size(minVRCdists,2)+1:size(clustSize,2)) = NaN;
+    end 
+    % resort cluster start time and VR distance data for gscatter 
+    clear timeVRDistArray includeX3 includY3 includeXY3
+    f3 = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            timeVRDistArray(:,1) = avClocFrame(ccell,:);
+            timeVRDistArray(:,2) = minVRCdists(ccell,:);
+            timeVRDistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX3 =~ isnan(timeVRDistArray(:,1)); includeY3 =~ isnan(timeVRDistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY3 == 0);
+            includeX3(zeroRow) = 0; includeXY3 = includeX3;                
+            timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);  
+            if sum(includeXY3) > 1 
+                f3{ccell} = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(timeVRDistArray,1);   
+            end 
+            len2 = size(timeVRDistArray,1);       
+            timeVRDistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
+            timeVRDistArray(len2+1:len2+len,2) = minVRCdists(ccell,:);
+            timeVRDistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX3 =~ isnan(timeVRDistArray(len2+1:len2+len,1)); includeY3 =~ isnan(timeVRDistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY3 == 0);
+            includeX3(zeroRow) = 0; includeXY3 = includeX3;                
+            timeVRDistX = timeVRDistArray(len2+1:len2+len,1); timeVRDistY = timeVRDistArray(len2+1:len2+len,2);   
+            if sum(includeXY3) > 1 
+                f3{ccell} = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
+            end 
+        end 
+    end 
+    % determine average trend line for time vs distance 
+    includeX3 =~ isnan(timeVRDistArray(:,1)); includeY3 =~ isnan(timeVRDistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY3 == 0);
+    includeX3(zeroRow) = 0; includeXY3 = includeX3;                
+    timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);   
+    if length(find(includeXY3)) > 1
+        fav3 = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
+    end 
+end 
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$               
-%% plot cluster size as function of distance from axon 
+%% plot cluster size and pixel amplitude as function of distance from axon 
 
 figure;
 ax=gca;
@@ -14699,7 +14926,7 @@ gscatter(sizeDistArray(:,1),sizeDistArray(:,2),sizeDistArray(:,3),clr)
 ax.FontSize = 15;
 ax.FontName = 'Times';
 % figure out what axons have clusters to be plotted 
-fullRows = find(~isnan(sizeDistArray(:,1)));
+fullRows = ~isnan(sizeDistArray(:,1));
 axons = unique(sizeDistArray(fullRows,3));
 label = labels(axons);
 legend(label)
@@ -14726,7 +14953,124 @@ elseif clustSpikeQ == 1
     end 
 end 
 
-%% plot distribution of cluster sizes 
+figure;
+ax=gca;
+clr = hsv(length(terminals{mouse}));
+gscatter(ampDistArray(:,1),ampDistArray(:,2),ampDistArray(:,3),clr)
+ax.FontSize = 15;
+ax.FontName = 'Times';
+% figure out what axons have clusters to be plotted 
+fullRows = find(~isnan(ampDistArray(:,1)));
+axons = unique(ampDistArray(fullRows,3));
+label = labels(axons);
+legend(label)
+hold on;
+for ccell = 1:length(terminals{mouse})
+    fitHandle = plot(fAmp{ccell});
+    set(fitHandle,'Color',clr(ccell,:));
+end 
+if length(find(includeXY)) > 1
+    fitHandle = plot(fAmpAv);
+    leg = legend('show');
+    set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+    leg.String(end) = [];
+end 
+ylabel("Pixel Amplitude of Cluster")
+xlabel("Distance From Axon") 
+if clustSpikeQ == 0 
+    title('All Clusters');
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title('Pre Spike Clusters');
+    elseif clustSpikeQ2 == 1
+        title('Post Spike Clusters');
+    end 
+end 
+
+%% plot distance from axon as a function of cluster timing
+if clustSpikeQ == 0 
+    figure;
+    ax=gca;
+    clr = hsv(length(terminals{mouse}));
+    gscatter(timeDistArray(:,1),timeDistArray(:,2),timeDistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    % figure out what axons have clusters to be plotted 
+    fullRows = find(~isnan(timeDistArray(:,1)));
+    axons = unique(timeDistArray(fullRows,3));
+    label = labels(axons);
+    legend(label)
+    hold on;
+    for ccell = 1:length(terminals{mouse})
+        fitHandle = plot(f2{ccell});
+        set(fitHandle,'Color',clr(ccell,:));
+    end 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fav2);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+    end 
+    ylabel("Distance From Axon")
+    if clustSpikeQ3 == 0 
+        xlabel("Average BBB Plume Timing") 
+    elseif clustSpikeQ3 == 1
+        xlabel("BBB Plume Start Time") 
+    end 
+    title('BBB Plume Distance From Axon Compared to Timing');
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;  
+end 
+
+%% plot VR-BBB plume distance as function of BBB plume timing 
+if VRQ == 1
+    if clustSpikeQ == 0 
+        figure;
+        ax=gca;
+        clr = hsv(length(terminals{mouse}));
+        gscatter(timeVRDistArray(:,1),timeVRDistArray(:,2),timeVRDistArray(:,3),clr)
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        % figure out what axons have clusters to be plotted 
+        fullRows = find(~isnan(timeVRDistArray(:,1)));
+        axons = unique(timeVRDistArray(fullRows,3));
+        label = labels(axons);
+        legend(label)
+        hold on;
+        for ccell = 1:length(terminals{mouse})
+            fitHandle = plot(f3{ccell});
+            set(fitHandle,'Color',clr(ccell,:));
+        end 
+        if length(find(includeXY)) > 1
+            fitHandle = plot(fav3);
+            leg = legend('show');
+            set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+            leg.String(end) = [];
+        end 
+        ylabel("Distance From VR space")
+        if clustSpikeQ3 == 0 
+            xlabel("Average BBB Plume Timing") 
+        elseif clustSpikeQ3 == 1
+            xlabel("BBB Plume Start Time") 
+        end 
+        title('BBB Plume Distance From VR Space Compared to Timing');
+        Frames = size(im,3);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+        FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+    end 
+end 
+
+
+%% plot distribution of cluster sizes and pixel amplitudes 
 figure;
 ax=gca;
 histogram(sizeDistArray(:,2),100)
@@ -14744,6 +15088,23 @@ end
 ylabel("Number of BBB Plumes")
 xlabel("Size of BBB Plume") 
 
+figure;
+ax=gca;
+histogram(ampDistArray(:,2),100)
+ax.FontSize = 15;
+ax.FontName = 'Times';
+if clustSpikeQ == 0 
+    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters'});
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters'});
+    elseif clustSpikeQ2 == 1
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters'});
+    end 
+end 
+ylabel("Number of BBB Plumes")
+xlabel("BBB Plume Pixel Amplitudes") 
+
 %% plot distribution of cluster times 
 if clustSpikeQ == 0 
     figure;
@@ -14754,7 +15115,7 @@ if clustSpikeQ == 0
     if clustSpikeQ3 == 0 
         title({'Distribution of BBB Plume Timing';'Average Time'});
     elseif clustSpikeQ3 == 1
-        title({'Distribution of BBB Plume Sizes';'Start Time'});
+        title({'Distribution of BBB Plume Timing';'Start Time'});
     end 
     ylabel("Number of BBB Plumes")
     xlabel("Time (s)") 
@@ -14800,9 +15161,10 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     ax.YTickLabel = sec_TimeVals;  
 end 
 
-%% plot cluster size grouped by pre and post spike 
-% clearvars data
+%% plot cluster size and pixel amp grouped by pre and post spike 
+
 if clustSpikeQ == 0
+    clearvars data
     CsizeForPlot = clustSize';
     figure;
     ax=gca;
@@ -14820,12 +15182,32 @@ if clustSpikeQ == 0
     title({'BBB Plume Size By Axon';'All Plumes'});
     xticklabels(labels)
     set(gca, 'YScale', 'log')
+
+    CampForPlot = clustAmp';
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(CampForPlot,'MarkerStyle','none');
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:length(terminals{mouse}),size(CampForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,CampForPlot,[],'red')  
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("BBB Plume Pixel Amplitude")
+    xlabel("Axon")  
+    title({'BBB Plume Pixel Amplitude By Axon';'All Plumes'});
+    xticklabels(labels)
+    set(gca, 'YScale', 'log')
 elseif clustSpikeQ == 1 
     preOrPost = input('Input 0 to update pre-spike array. Input 1 to update post-spike array. ');
     if preOrPost == 0
         CsizeForPlotPre = clustSize'; 
+        CampForPlotPre = clustAmp'; 
     elseif preOrPost == 1 
         CsizeForPlotPost = clustSize'; 
+        CampForPlotPost = clustAmp'; 
     end 
     preAndPostQ = input('Are both pre and post-spike arrays updated? Input 1 for yes. 0 for no. ');
     if preAndPostQ == 1 
@@ -14847,6 +15229,25 @@ elseif clustSpikeQ == 1
         end          
         legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
         xticklabels(labels)   
+
+        figure;
+        ax=gca;
+        % plot box plot 
+        boxchart(CampForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
+        % plot swarm chart on top of box plot 
+        hold all;
+        boxchart(CampForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Pixel Amplitude")
+        xlabel("Axon")  
+        if clustSpikeQ3 == 0 
+            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+        end          
+        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        xticklabels(labels) 
     end 
 end 
 if  clustSpikeQ == 1 
@@ -14874,11 +15275,43 @@ if  clustSpikeQ == 1
             end             
         avLabels = ["Pre-Spike","Post-Spike"];
         xticklabels(avLabels)
+
+        % reshape data to plot box and whisker plots 
+        reshapedPrePlot = reshape(CampForPlotPre,size(CampForPlotPre,1)*size(CampForPlotPre,2),1);
+        reshapedPostPlot = reshape(CampForPlotPost,size(CampForPlotPost,1)*size(CampForPlotPost,2),1);
+        data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
+        figure;
+        ax=gca;
+        % plot box plot 
+        boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+        % plot swarm chart on top of box plot 
+        hold all;
+        x = repmat(1:size(data,2),size(data,1),1);
+        swarmchart(x,data,[],'red') 
+        % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Pixel Amplitude") 
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+            end             
+        avLabels = ["Pre-Spike","Post-Spike"];
+        xticklabels(avLabels)
     end 
 end 
 
 
 %% plot change in cluster size over time for each axon and averaged 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE: PLOT PIXAMP OVER TIME 
+
 if clustSpikeQ == 0
     clr = hsv(length(terminals{mouse}));
     x = 1:size(im,3);
@@ -15261,7 +15694,8 @@ end
 
 
 
-% clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
+
+
 
 % below is first attempt to write my own clustering algorithm ~ TRYING
 % OTHER TECHNIQUES FIRST - DBSCAN CODE ABOVE WORKS WAY BETTER 
