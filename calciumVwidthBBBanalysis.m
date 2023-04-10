@@ -14302,8 +14302,7 @@ end
 % FIGURE OUT PLUME MOVEMENT DIRECTION 
 % 11) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
 % 14) CLUSTER VELOCITY AS FUNCTION OF
-% DISTANCE 
-% ON TOP 
+% DISTANCE ON TOP 
 
 
 % TO GROUP AXONS INTO LISTENERS VS TALKERS 
@@ -14543,10 +14542,11 @@ if clustSpikeQ == 1
     clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. ');     
 end 
 
-% determine largest number of clusters across all axons
+% determine cluster timing 
 [s, ~] = cellfun(@size,unIdxVals);
 maxNumClusts = max(s);
 avClocFrame = NaN(length(terminals{mouse}),maxNumClusts);
+clustStartFrame = NaN(length(terminals{mouse}),maxNumClusts);
 for ccell = 1:length(terminals{mouse})
     for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
        % find what rows each cluster is located in
@@ -14563,6 +14563,9 @@ for ccell = 1:length(terminals{mouse})
                 avClocFrame(ccell,clust) = min(cLocs(:,3)); 
             end 
         end        
+        if isempty(cLocs) == 0
+            clustStartFrame(ccell,clust) = min(cLocs(:,3)); 
+        end 
         frameThresh = ceil(size(im,3)/2);
         if clustSpikeQ == 1
             if clustSpikeQ2 == 0 % see pre spike clusters 
@@ -14585,6 +14588,27 @@ for ccell = 1:length(terminals{mouse})
 end 
 % make 0s NaNs 
 avClocFrame(avClocFrame == 0) = NaN;
+clustStartFrame(clustStartFrame == 0) = NaN;
+
+% determine when the cluster touches the vessel 
+clustTouchVesFrame = NaN(length(terminals{mouse}),maxNumClusts);
+for ccell = 1:length(terminals{mouse})
+    % for each cluster, if one pixel is next to the vessel, keep that
+    % cluster, otherwise clear that cluster
+    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+        % find what rows each cluster is located in
+        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+        % identify the x, y, z location of pixels per cluster
+        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);        
+        % determine if cLocs are near the vessel 
+        cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
+        % determine the first frame that cluster touches the vessel in
+        vesTouchFrame = find(cLocsNearVes == 1, 1);
+        if isempty(vesTouchFrame) == 0 
+            clustTouchVesFrame(ccell,clust) = vesTouchFrame;
+        end 
+    end 
+end 
 
 % determine change in cluster size and pixel amplitude over time  
 clustPixAmpTS = cell(1,max(terminals{mouse}));
@@ -14624,6 +14648,8 @@ for ccell = 1:length(terminals{mouse})
             clustAmp(ccell,earlyClusts(clust)) = NaN;
             clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:) = NaN;
             avClocFrame(ccell,earlyClusts(clust)) = NaN;
+            clustStartFrame(ccell,earlyClusts(clust)) = NaN;
+            clustTouchVesFrame(ccell,earlyClusts(clust)) = NaN;
             clustPixAmpTS{terminals{mouse}(ccell)}(earlyClusts(clust),:) = NaN;
         end 
     end 
@@ -14912,9 +14938,16 @@ if VRQ == 1
     end 
 end 
 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$               
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot cluster size and pixel amplitude as function of distance from axon 
 
 figure;
@@ -15302,14 +15335,6 @@ end
 
 
 %% plot change in cluster size and pixel amplitude over time for each axon and averaged 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE: PLOT PIXAMP OVER TIME 
-
 if clustSpikeQ == 0
     clr = hsv(length(terminals{mouse}));
     x = 1:size(im,3);
