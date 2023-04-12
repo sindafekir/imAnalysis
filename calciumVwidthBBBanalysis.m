@@ -11928,10 +11928,10 @@ while workFlow == 1
                 for ccell = 1:length(terminals{mouse})
                     if rightChan == 0 % BBB data is in green channel 
                         SEM = (nanstd(avGreenStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avGreenStack{terminals{mouse}(ccell)},3))); % Standard Error 
-%                         ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
-%                         ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
-                        ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
-                        ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+                        ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+                        ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+%                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
                         if HighLowQ == 0
                             CI_Low{terminals{mouse}(ccell)}(:,:,:,it) = (avGreenStack{terminals{mouse}(ccell)}) + (ts_Low*SEM); 
                         elseif HighLowQ == 1 
@@ -11939,10 +11939,10 @@ while workFlow == 1
                         end 
                     elseif rightChan == 1 % BBB data is in red channel 
                         SEM = (nanstd(avRedStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avRedStack{terminals{mouse}(ccell)},3))); % Standard Error 
-%                         ts_High = tinv(0.975,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
-%                         ts_Low =  tinv(0.025,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
-                        ts_High = tinv(0.995,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
-                        ts_Low =  tinv(0.005,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+                        ts_High = tinv(0.975,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+                        ts_Low =  tinv(0.025,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_High = tinv(0.995,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+%                         ts_Low =  tinv(0.005,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
                         if HighLowQ == 0
                             CI_Low{terminals{mouse}(ccell)}(:,:,:,it) = (avRedStack{terminals{mouse}(ccell)}) + (ts_Low*SEM);   
                         elseif HighLowQ == 1 
@@ -12288,7 +12288,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -14406,7 +14406,7 @@ for ccell = 1:length(terminals{mouse})
         for pix = 1:length(pixAmp)
             pixAmp(pix) = RightChan{terminals{mouse}(ccell)}(cLocs(pix,2),cLocs(pix,1),cLocs(pix,3));
         end 
-        clustAmp(ccell,clust) =  nansum(pixAmp); %#ok<*NANSUM> 
+        clustAmp(ccell,clust) =  nanmean(pixAmp); %#ok<*NANSUM> 
     end         
 end 
 CsTooSmall = cell(1,max(terminals{mouse}));
@@ -14627,7 +14627,7 @@ for ccell = 1:length(terminals{mouse})
             for pix = 1:length(pixelInds)
                 pixAmp(pix) = RightChan{terminals{mouse}(ccell)}(cLocs(pixelInds(pix),2),cLocs(pixelInds(pix),1),cLocs(pixelInds(pix),3));
             end 
-            clustPixAmpTS{terminals{mouse}(ccell)}(clust,frame) = nansum(pixAmp); %#ok<*NANSUM> 
+            clustPixAmpTS{terminals{mouse}(ccell)}(clust,frame) = nanmean(pixAmp); %#ok<*NANSUM> 
             % get change in cluster size 
             clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
         end  
@@ -14739,7 +14739,7 @@ includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
 includeX(zeroRow) = 0; includeXY = includeX;                
 sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
 if length(find(includeXY)) > 1
-    fav = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+    fav = fitlm(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
 end 
 
 clear ampDistArray includeX includY includeXY
@@ -14784,7 +14784,7 @@ includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
 includeX(zeroRow) = 0; includeXY = includeX;                
 ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);   
 if length(find(includeXY)) > 1
-    fAmpAv = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+    fAmpAv = fitlm(ampDistX(includeXY),ampDistY(includeXY),'poly1');
 end 
 
 % resort cluster start time and distance data for gscatter 
@@ -14830,7 +14830,7 @@ includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
 includeX2(zeroRow) = 0; includeXY2 = includeX2;                
 timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);   
 if length(find(includeXY2)) > 1
-    fav2 = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+    fav2 = fitlm(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
 end 
 
 % determine cluster distance from VR space if you want 
@@ -14839,6 +14839,7 @@ if VRQ == 1
     drawVRQ = input('Input 1 to draw VR space outline. ');
     if drawVRQ == 1 
         vesIm = nanmean(vesChan{terminals{mouse}(1)},3);
+        figure;
         imshow(vesIm,[0 500])
         VRdata = drawfreehand(gca);  % manually draw vessel outline
         % get VR outline coordinates 
@@ -14934,7 +14935,7 @@ if VRQ == 1
     includeX3(zeroRow) = 0; includeXY3 = includeX3;                
     timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);   
     if length(find(includeXY3)) > 1
-        fav3 = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
+        fav3 = fitlm(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
     end 
 end 
 
@@ -14944,7 +14945,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot cluster size and pixel amplitude as function of distance from axon 
-
 figure;
 ax=gca;
 clr = hsv(length(terminals{mouse}));
@@ -14956,7 +14956,7 @@ fullRows = ~isnan(sizeDistArray(:,1));
 axons = unique(sizeDistArray(fullRows,3));
 label = labels(axons);
 legend(label)
-hold on;
+hold all;
 for ccell = 1:length(terminals{mouse})
     fitHandle = plot(f{ccell});
     set(fitHandle,'Color',clr(ccell,:));
@@ -14966,6 +14966,8 @@ if length(find(includeXY)) > 1
     leg = legend('show');
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
+    rSquared = string(round(fav.Rsquared.Ordinary,2));
+    text(0,-50,rSquared,'FontSize',20)
 end 
 ylabel("Size of Cluster")
 xlabel("Distance From Axon") 
@@ -14990,7 +14992,7 @@ fullRows = find(~isnan(ampDistArray(:,1)));
 axons = unique(ampDistArray(fullRows,3));
 label = labels(axons);
 legend(label)
-hold on;
+hold all;
 for ccell = 1:length(terminals{mouse})
     fitHandle = plot(fAmp{ccell});
     set(fitHandle,'Color',clr(ccell,:));
@@ -15000,6 +15002,8 @@ if length(find(includeXY)) > 1
     leg = legend('show');
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
+    rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
+    text(0,0.04,rSquared,'FontSize',20)
 end 
 ylabel("Pixel Amplitude of Cluster")
 xlabel("Distance From Axon") 
@@ -15013,7 +15017,7 @@ elseif clustSpikeQ == 1
     end 
 end 
 
-%% plot distance from axon as a function of cluster timing
+%% plot distance from axon and VR space as a function of cluster timing
 if clustSpikeQ == 0 
     figure;
     ax=gca;
@@ -15036,6 +15040,8 @@ if clustSpikeQ == 0
         leg = legend('show');
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
+        rSquared = string(round(fav2.Rsquared.Ordinary,2));
+        text(10,-30,rSquared,'FontSize',20)
     end 
     ylabel("Distance From Axon")
     if clustSpikeQ3 == 0 
@@ -15053,7 +15059,6 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
 end 
 
-%% plot VR-BBB plume distance as function of BBB plume timing 
 if VRQ == 1
     if clustSpikeQ == 0 
         figure;
@@ -15067,7 +15072,7 @@ if VRQ == 1
         axons = unique(timeVRDistArray(fullRows,3));
         label = labels(axons);
         legend(label)
-        hold on;
+        hold all;
         for ccell = 1:length(terminals{mouse})
             fitHandle = plot(f3{ccell});
             set(fitHandle,'Color',clr(ccell,:));
@@ -15077,6 +15082,8 @@ if VRQ == 1
             leg = legend('show');
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
+            rSquared = string(round(fav3.Rsquared.Ordinary,2));
+            text(10,20,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -15188,7 +15195,6 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size and pixel amp grouped by pre and post spike 
-
 if clustSpikeQ == 0
     clearvars data
     CsizeForPlot = clustSize';
@@ -15528,7 +15534,6 @@ if clustSpikeQ == 0
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for however many groups you want 
-
 % plot change in cluster size color coded by axon 
 x = 1:size(im,3);
 times = unique(avClocFrame);
