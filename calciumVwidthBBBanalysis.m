@@ -4748,7 +4748,7 @@ end
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
 
-
+%{
 mouse = 1;
 termQ = input('Input 1 to update terminal labels. ');
 if termQ == 1 
@@ -12408,8 +12408,8 @@ for mouse = 1:mouseNum
                     %if the peaks fall within the time windows used for the BBB
                     %trace examples in the DOD figure 
     %                 if locs(loc) > 197*FPSstack{mouse} && locs(loc) < 206.5*FPSstack{mouse} || locs(loc) > 256*FPSstack{mouse} && locs(loc) < 265.5*FPSstack{mouse} || locs(loc) > 509*FPSstack{mouse} && locs(loc) < 518.5*FPSstack{mouse}
-                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = gpuArray(peaks(loc));
-                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = gpuArray(locs(loc));
+                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
+                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
     %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
                         count = count + 1;
     %                 end 
@@ -12765,8 +12765,10 @@ while workFlow == 1
                 for ccell = 1:length(terminals{mouse})
                     if rightChan == 0 % BBB data is in green channel 
                         SEM = (nanstd(avGreenStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avGreenStack{terminals{mouse}(ccell)},3))); % Standard Error 
-                        ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
-                        ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+                        ts_High = tinv(0.99997244,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+                        ts_Low =  tinv(0.000027563,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
 %                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
 %                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
                         if HighLowQ == 0
@@ -13125,7 +13127,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -15154,7 +15156,7 @@ end
 
 % DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM AND BEHAVIOR 
 
-
+%{
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
