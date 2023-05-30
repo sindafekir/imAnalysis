@@ -12765,8 +12765,16 @@ while workFlow == 1
                 for ccell = 1:length(terminals{mouse})
                     if rightChan == 0 % BBB data is in green channel 
                         SEM = (nanstd(avGreenStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avGreenStack{terminals{mouse}(ccell)},3))); % Standard Error 
-                        ts_High = tinv(0.99997244,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
-                        ts_Low =  tinv(0.000027563,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+                        % calculate bounds for stricter bonferroni
+                        % correction (per pixel)
+                        numPix = size(avGreenStack{terminals{mouse}(ccell)},1)*size(avGreenStack{terminals{mouse}(ccell)},2);
+                        format long 
+                        lowBound = 0.025/numPix;                      
+                        highBound = 1-lowBound;
+                        ts_High = tinv(highBound,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+                        ts_Low =  tinv(lowBound,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+%                         ts_High = tinv(0.99997244,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_Low =  tinv(0.000027563,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
 %                         ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
 %                         ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
 %                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
@@ -13650,6 +13658,1279 @@ if CaFrameQ == 1
     end 
 end 
 %}
+%% (STA stacks) create raw, but high pass filtered STA vids for Muller lab wave analysis 
+% sorts data into windows for averaging 
+% option to high pass filter the video 
+% can create shuffled and bootrapped x100 spikes 
+% (must save out non-shuffled STA vids before making
+% shuffled and bootstrapped STA vids to create binary vids for DBscan)
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+greenStacksOrigin = greenStacks;
+redStacksOrigin = redStacks;
+spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
+% sort red and green channel stacks based on ca peak location 
+for mouse = 1:mouseNum
+%     dir1 = dataDir{mouse};   
+    % find peaks and then plot where they are in the entire TS 
+    stdTrace = cell(1,length(vidList{mouse})); 
+    sigPeaks = cell(1,length(vidList{mouse}));
+    sigLocs = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        for ccell = 1:length(terminals{mouse})
+            %find the peaks 
+    %         figure;
+    %         ax=gca;
+    %         hold all
+            [peaks, locs] = findpeaks(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+            %find the sig peaks (peaks above 2 standard deviations from mean) 
+            stdTrace{vid}{terminals{mouse}(ccell)} = std(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});  
+            count = 1 ; 
+            for loc = 1:length(locs)
+                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
+                    %if the peaks fall within the time windows used for the BBB
+                    %trace examples in the DOD figure 
+    %                 if locs(loc) > 197*FPSstack{mouse} && locs(loc) < 206.5*FPSstack{mouse} || locs(loc) > 256*FPSstack{mouse} && locs(loc) < 265.5*FPSstack{mouse} || locs(loc) > 509*FPSstack{mouse} && locs(loc) < 518.5*FPSstack{mouse}
+                        sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
+                        sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
+    %                     plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                        count = count + 1;
+    %                 end 
+                end 
+            end 
+            % below is plotting code 
+            %{
+            Frames = size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2);
+            Frames_pre_stim_start = -((Frames-1)/2); 
+            Frames_post_stim_start = (Frames-1)/2; 
+    %         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}*50:Frames_post_stim_start)/FPSstack{mouse})+51);
+            sec_TimeVals = floor(((0:2:(Frames/FPSstack{mouse}))));
+            min_TimeVals = round(sec_TimeVals/60,2)+7.03;
+            FrameVals = floor((0:(FPSstack{mouse}*2):Frames)); 
+
+            %smooth the calcium data 
+            [ScDataFullTrace] = MovMeanSmoothData(cDataFullTrace{vid}{terminals{mouse}(ccell)},(2/FPSstack{mouse}),FPSstack{mouse});
+
+    %         plot((cDataFullTrace{vid}{terminals{mouse}(ccell)})+150,'b','LineWidth',3)
+    %         plot(ScDataFullTrace+150,'b','LineWidth',3)
+            plot(bDataFullTrace{vid},'r','LineWidth',3)
+
+    %         for trial = 1:size(state_start_f{mouse}{vid},1)
+    %             if TrialTypes{mouse}{vid}(trial,2) == 1
+    %                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+    %                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'b','LineWidth',2)
+    %             elseif TrialTypes{mouse}{vid}(trial,2) == 2
+    %                 plot([state_start_f{mouse}{vid}(trial) state_start_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+    %                 plot([state_end_f{mouse}{vid}(trial) state_end_f{mouse}{vid}(trial)], [-5000 5000], 'r','LineWidth',2)
+    %             end 
+    %         end 
+
+            count = 1 ; 
+            for loc = 1:length(locs)
+                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
+                    sigPeaks{vid}{terminals{mouse}(ccell)}(count) = peaks(loc);
+                    sigLocs{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
+                    plot([locs(loc) locs(loc)], [-5000 5000], 'k','LineWidth',2)
+                    count = count + 1;
+                end 
+            end 
+
+    %         legend('Calcium signal','BBB permeability','Calcium peak','Location','NorthWest')
+
+    % 
+            ax.XTick = FrameVals;
+            ax.XTickLabel = sec_TimeVals;
+            ax.FontSize = 25;
+            ax.FontName = 'Times';
+            xLimStart = 256*FPSstack{mouse};
+            xLimEnd = 266.5*FPSstack{mouse}; 
+            xlim([0 size(cDataFullTrace{vid}{terminals{mouse}(ccell)},2)])
+            xlim([xLimStart xLimEnd])
+            ylim([-23 80])
+            xlabel('time (sec)','FontName','Times')
+    %         if smoothQ ==  1
+    %             title({sprintf('terminal #%d data',terminals{mouse}(ccell)); sprintf('smoothed by %0.2f seconds',filtTime)})
+    %         elseif smoothQ == 0 
+    %             title(sprintf('terminal #%d raw data',terminals{mouse}(ccell)))
+    %         end    
+               %}
+        end 
+    end 
+end 
+clearvars peaks locs 
+if spikeQ == 1   
+    spikeISIs = cell(1,length(vidList{mouse})); 
+    ISIstds = cell(1,length(vidList{mouse})); 
+    randSpikes = cell(1,length(vidList{mouse})); 
+    ISImean = cell(1,length(vidList{mouse}));
+    randISIs = cell(1,length(vidList{mouse}));
+    randSigLocs = cell(1,length(vidList{mouse}));
+    for it = 1:100
+        for vid = 1:length(vidList{mouse})
+            for ccell = 1:length(terminals{mouse})
+                % determine ISI
+                spikeISIs{vid}{terminals{mouse}(ccell)} = diff(sigLocs{vid}{terminals{mouse}(ccell)});
+                % determine STD (sigma) of ISI 
+                ISIstds{vid}{terminals{mouse}(ccell)} = std(spikeISIs{vid}{terminals{mouse}(ccell)});
+                % determine mean ISI 
+                ISImean{vid}{terminals{mouse}(ccell)} = mean(spikeISIs{vid}{terminals{mouse}(ccell)});
+                % generate random spike Locs (sigLocs) based on ISI STD using same            
+                for spike = 1:length(spikeISIs{vid}{terminals{mouse}(ccell)})
+                    % generate random ISI
+                    r = random('Exponential',ISImean{vid}{terminals{mouse}(ccell)});
+                    randISIs{vid}{terminals{mouse}(ccell)}(spike) = floor(r);
+                end              
+                % plot distribution of real and rand ISIs for sanity check 
+                %{
+                figure;
+                histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
+                title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+                figure;
+                histogram(randISIs{vid}{terminals{mouse}(ccell)})
+                title(sprintf("Rand Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
+                %}
+                % use randISIs to generate randSigLocs 
+                randSigLocs{vid}{terminals{mouse}(ccell)}(it,:) = cumsum(randISIs{vid}{terminals{mouse}(ccell)});
+            end 
+        end      
+    end 
+    sigLocs = randSigLocs;
+end 
+clearvars randSigLocs 
+
+% crop the imaging data if you want to; better to do this up here to
+% maximize computational speed ~ 
+rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
+% ask user where to crop image     
+if cropQ == 1 
+    %select the correct channel to view for cropping 
+    if rightChan == 0     
+        hold off;
+        cropIm = nanmean(greenStacksOrigin{1},3); %#ok<*NANMEAN> 
+    elseif rightChan == 1
+        hold off; 
+        cropIm = nanmean(redStacksOrigin{1},3);
+    end         
+    [~, rect] = imcrop(cropIm);
+end  
+% crop if necessary  
+greenStacks2 = cell(1,length(vidList{mouse}));
+redStacks2 = cell(1,length(vidList{mouse}));
+if cropQ == 1 
+    for vid = 1:length(vidList{mouse})
+        for frame = 1:size(greenStacksOrigin{vid},3)
+            cropdIm = imcrop(greenStacksOrigin{vid}(:,:,frame),rect);
+            greenStacks2{vid}(:,:,frame) = cropdIm;
+        end 
+    end 
+    
+    for vid = 1:length(vidList{mouse})
+        for frame = 1:size(greenStacksOrigin{vid},3)
+            cropdIm = imcrop(redStacksOrigin{vid}(:,:,frame),rect);
+            redStacks2{vid}(:,:,frame) = cropdIm;
+        end 
+    end 
+elseif cropQ == 0
+    greenStacks2 = greenStacksOrigin;
+    redStacks2 = redStacksOrigin;
+end  
+clearvars greenStacks redStacks
+greenStacks = greenStacks2;
+redStacks = redStacks2;
+clearvars greenStacks2 redStacks2
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% REMOVE ALL THE BELLS AND WHISTLES FOR THE MULLER LAB WAVE ANALYSIS 
+
+% high pass filter the videos if you want 
+highPassQ = input("Input 1 if you want to high pass filter the videos. Input 0 otherwise. ");
+if highPassQ == 1 
+    hpfGreen = cell(1,length(vidList{mouse}));
+    hpfRed = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        %get sliding baseline 
+        [greenSlidingBL]=slidingBaselineVid(greenStacks{vid},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value    
+        [redSlidingBL]=slidingBaselineVid(redStacks{vid},floor((FPS)*10),0.5);
+        %subtract sliding baseline from F
+        hpfGreen{vid} = greenStacks{vid}-greenSlidingBL;
+        hpfRed{vid} = redStacks{vid}-redSlidingBL;       
+    end 
+    clearvars greenSlidingBL redSlidingBL
+elseif highPassQ == 0 
+    hpfGreen = greenStacks;
+    hpfRed = redStacks;
+end 
+
+% do not z score 
+szGreenStack = hpfGreen; 
+szRedStack = hpfRed; 
+clearvars hpfGreen hpfRed
+
+% further sort and average data, get 95% CI bounds 
+CI_High = cell(1,max(terminals{mouse}));
+CI_Low = cell(1,max(terminals{mouse}));
+CIlowAv = cell(1,max(terminals{mouse}));
+CIhighAv = cell(1,max(terminals{mouse}));
+windSize = input('How big should the window be around Ca peak in seconds? '); %24
+workFlow = 1;
+while workFlow == 1 
+    tic
+    if spikeQ == 1 
+%         CIq = input('Input 0 to get 95% CI. Input 1 for 99% CI. ')
+        HighLowQ = input('Input 0 to get the low CI bound . Input 1 for the high CI bound. ');  
+    end 
+    for it = 1:size(sigLocs{vid}{terminals{mouse}(ccell)},1)
+        % sort data 
+        % terminals = terminals{1};
+        if tTypeQ == 0 
+            sortedGreenStacks = cell(1,length(vidList{mouse}));
+            sortedRedStacks = cell(1,length(vidList{mouse}));
+            if rightChan == 0     
+                VesSortedGreenStacks = cell(1,length(vidList{mouse}));
+            elseif rightChan == 1
+                VesSortedRedStacks = cell(1,length(vidList{mouse}));
+            end    
+                for vid = 1:length(vidList{mouse})
+                    for ccell = 1:length(terminals{mouse})               
+                        for peak = 1:size(sigLocs{vid}{terminals{mouse}(ccell)},2)            
+                            if sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
+                                start = sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                                stop = sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                                if start == 0 
+                                    start = 1 ;
+                                    stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                                end        
+                                if stop < size(szGreenStack{vid},3)
+                                    sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = szGreenStack{vid}(:,:,start:stop);
+                                    sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = szRedStack{vid}(:,:,start:stop);
+                                    if rightChan == 0     
+                                        VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = greenStacks{vid}(:,:,start:stop);
+                                    elseif rightChan == 1
+                                        VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = redStacks{vid}(:,:,start:stop);
+                                    end    
+                                end 
+                            end 
+                        end               
+                    end 
+                end 
+        elseif tTypeQ == 1
+            %tTypeSigLocs{vid}{CaROI}{1} = blue light
+            %tTypeSigLocs{vid}{CaROI}{2} = red light
+            %tTypeSigLocs{vid}{CaROI}{3} = ISI
+            sortedGreenStacks = cell(1,length(vidList{mouse}));
+            sortedRedStacks = cell(1,length(vidList{mouse}));
+            for vid = 1:length(vidList{mouse})  
+                for ccell = 1:length(terminals{mouse})   
+                    for per = 1:3 
+                        for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                    
+                            if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                                     
+                                start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
+                                stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}); 
+                                if start == 0 
+                                    start = 1 ;
+                                    stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                                end                
+                                sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szGreenStack{vid}(:,:,start:stop);
+                                sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szRedStack{vid}(:,:,start:stop);
+                            end 
+                        end 
+                    end 
+                end 
+            end   
+        end 
+    %     clearvars greenStacks redStacks start stop sigLocs sigPeaks 
+    
+        % resort and average calcium peak aligned traces across videos 
+        if tTypeQ == 0 
+            greenStackArray2 = cell(1,max(terminals{mouse}));
+            if rightChan == 0     
+                VesGreenStackArray2 = cell(1,max(terminals{mouse}));
+            end  
+            for ccell = 1:length(terminals{mouse})
+                count = 1;
+                for vid = 1:length(vidList{mouse})        
+                    for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)},2)  
+                        if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
+                            greenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            if rightChan == 0
+                                VesGreenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            end           
+                            count = count + 1;
+                        end 
+                    end
+                end 
+            end 
+    %         clearvars sortedGreenStacks VesSortedGreenStacks
+            clearvars VesSortedGreenStacks
+            redStackArray2 = cell(1,max(terminals{mouse}));
+            if rightChan == 1     
+                VesRedStackArray2 = cell(1,max(terminals{mouse}));
+            end  
+            for ccell = 1:length(terminals{mouse})
+                count = 1;
+                for vid = 1:length(vidList{mouse})        
+                    for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
+                        if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
+                            redStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            if rightChan == 1
+                                VesRedStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            end           
+                            count = count + 1;
+                        end 
+                    end
+                end 
+            end 
+    %         clearvars sortedRedStacks VesSortedRedStacks
+            clearvars VesSortedRedStacks
+            avGreenStack = cell(1,max(terminals{mouse}));
+            for ccell = 1:length(terminals{mouse}) % determine the average 
+                avGreenStack{terminals{mouse}(ccell)} = nanmean(greenStackArray2{terminals{mouse}(ccell)},4);
+            end 
+            clearvars greenStackArray2
+            avRedStack = cell(1,max(terminals{mouse}));
+            for ccell = 1:length(terminals{mouse}) % determine the average 
+                avRedStack{terminals{mouse}(ccell)} = nanmean(redStackArray2{terminals{mouse}(ccell)},4);
+            end 
+            clearvars redStackArray2
+            if rightChan == 0  
+                VesAvGreenStack = cell(1,max(terminals{mouse}));
+                for ccell = 1:length(terminals{mouse}) % determine the average 
+                    VesAvGreenStack{terminals{mouse}(ccell)} = nanmean(VesGreenStackArray2{terminals{mouse}(ccell)},4);
+                end 
+                clearvars VesGreenStackArray2
+            end 
+            if rightChan == 1  
+                VesAvRedStack = cell(1,max(terminals{mouse}));
+                for ccell = 1:length(terminals{mouse}) % determine the average 
+                    VesAvRedStack{terminals{mouse}(ccell)} = nanmean(VesRedStackArray2{terminals{mouse}(ccell)},4);
+                end 
+                clearvars VesRedStackArray2
+            end 
+    
+            % determine 95% or 99% CI of bootstrapped data and av
+            if spikeQ == 1
+                for ccell = 1:length(terminals{mouse})
+                    if rightChan == 0 % BBB data is in green channel 
+                        SEM = (nanstd(avGreenStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avGreenStack{terminals{mouse}(ccell)},3))); % Standard Error
+                        % calculate bounds for stricter bonferroni
+                        % correction (per pixel)
+                        numPix = size(avGreenStack{terminals{mouse}(ccell)},1)*size(avGreenStack{terminals{mouse}(ccell)},2);
+                        format long 
+                        lowBound = 0.025/numPix;                      
+                        highBound = 1-lowBound;
+                        ts_High = tinv(highBound,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+                        ts_Low =  tinv(lowBound,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+%                         ts_High = tinv(0.99997244,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_Low =  tinv(0.000027563,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+%                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+                        if HighLowQ == 0
+                            CI_Low{terminals{mouse}(ccell)}(:,:,:,it) = (avGreenStack{terminals{mouse}(ccell)}) + (ts_Low*SEM); 
+                        elseif HighLowQ == 1 
+                            CI_High{terminals{mouse}(ccell)}(:,:,:,it) = (avGreenStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
+                        end 
+                    elseif rightChan == 1 % BBB data is in red channel 
+                        SEM = (nanstd(avRedStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avRedStack{terminals{mouse}(ccell)},3))); % Standard Error 
+                        ts_High = tinv(0.975,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+                        ts_Low =  tinv(0.025,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_High = tinv(0.995,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+%                         ts_Low =  tinv(0.005,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+                        if HighLowQ == 0
+                            CI_Low{terminals{mouse}(ccell)}(:,:,:,it) = (avRedStack{terminals{mouse}(ccell)}) + (ts_Low*SEM);   
+                        elseif HighLowQ == 1 
+                            CI_High{terminals{mouse}(ccell)}(:,:,:,it) = (avRedStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
+                        end          
+                    end 
+                end 
+            end 
+        elseif tTypeQ == 1
+            per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
+            greenStackArray2 = cell(1,length(vidList{mouse}));
+            redStackArray2 = cell(1,length(vidList{mouse}));
+            avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
+            avRedStack2 = cell(1,length(sortedGreenStacks{1}));
+            avGreenStack = cell(1,length(sortedGreenStacks{1}));
+            avRedStack = cell(1,length(sortedGreenStacks{1}));
+            for ccell = 1:length(terminals{mouse})
+                for vid = 1:length(vidList{mouse})    
+                    count = 1;
+                    for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per},2)  
+                        if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak}) == 0
+                            greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
+                            redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
+                            count = count + 1;
+                        end 
+                    end
+                    avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
+                    avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
+                end 
+                avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
+                avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
+            end 
+    %         clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
+            clearvars greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
+        end 
+    end 
+    if spikeQ == 1
+        for ccell = 1:length(terminals{mouse})
+            if HighLowQ == 0         
+                CIlowAv{terminals{mouse}(ccell)} = nanmean(CI_Low{terminals{mouse}(ccell)},4);
+            elseif HighLowQ == 1
+                CIhighAv{terminals{mouse}(ccell)} = nanmean(CI_High{terminals{mouse}(ccell)},4);
+            end 
+        end 
+        if HighLowQ == 0         
+            clearvars CI_Low
+        elseif HighLowQ == 1
+            clearvars CI_High
+        end 
+        CIdoneQ = input('Input 1 if you created and averaged the bootstrapped CI high and low bounds? ');
+        if CIdoneQ == 1
+            workFlow = 0;
+            clearvars sortedGreenStacks sortedRedStacks 
+        end 
+    elseif spikeQ == 0
+        workFlow = 0;
+        clearvars sortedGreenStacks sortedRedStacks 
+    end 
+    toc
+end 
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+% don't normalize because it's z-scored 
+NgreenStackAv = avGreenStack;
+NredStackAv = avRedStack; 
+if spikeQ == 1 
+    nCIhighAv = CIhighAv;
+    nCIlowAv = CIlowAv;
+    clearvars CIhighAv CIlowAv
+end 
+%{
+% normalize to some baseline point 
+changePt = floor(size(avGreenStack{terminals{mouse}(ccell)},3)/2)-2; 
+normTime = input("How many seconds before the calcium peak do you want to baseline to? ");
+BLstart = changePt - floor(normTime*FPSstack{mouse});
+NgreenStackAv = cell(1,length(avGreenStack));
+NredStackAv = cell(1,length(avGreenStack));
+% normalize to baseline period 
+for ccell = 1:length(terminals{mouse})
+    NgreenStackAv{terminals{mouse}(ccell)} = ((avGreenStack{terminals{mouse}(ccell)}./ (nanmean(avGreenStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
+    NredStackAv{terminals{mouse}(ccell)} = ((avRedStack{terminals{mouse}(ccell)}./ (nanmean(avRedStack{terminals{mouse}(ccell)}(:,:,BLstart:changePt),3)))*100)-100;
+end 
+%}
+%select the correct channel for vessel segmentation  
+if rightChan == 0     
+    vesChan = VesAvGreenStack;
+elseif rightChan == 1
+    vesChan = VesAvRedStack;
+end    
+clearvars avGreenStack avRedStack VesAvGreenStack 
+
+%temporal smoothing option
+smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise. ');
+if smoothQ == 0 
+    SNgreenStackAv = NgreenStackAv;
+    SNredStackAv = NredStackAv;
+    if spikeQ == 1 
+        snCIhighAv = nCIhighAv;
+        snCIlowAv = nCIlowAv;
+    end 
+elseif smoothQ == 1
+    filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
+    filter_rate = FPSstack{mouse}*filtTime; 
+    tempFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
+    if tempFiltChanQ == 0
+        SNredStackAv = cell(1,length(NgreenStackAv));
+        SNgreenStackAv = cell(1,length(NgreenStackAv));
+        for ccell = 1:length(terminals{mouse})
+            SNredStackAv{terminals{mouse}(ccell)} = smoothdata(NredStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
+            SNgreenStackAv{terminals{mouse}(ccell)} = smoothdata(NgreenStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
+        end 
+    elseif tempFiltChanQ == 1
+        tempSmoothChanQ = input('Input 0 to temporally smooth green channel. Input 1 for red channel. ');
+        if tempSmoothChanQ == 0
+            SNredStackAv = NredStackAv;
+            SNgreenStackAv = cell(1,length(NgreenStackAv));
+            for ccell = 1:length(terminals{mouse})
+                SNgreenStackAv{terminals{mouse}(ccell)} = smoothdata(NgreenStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
+            end 
+        elseif tempSmoothChanQ == 1
+            SNredStackAv = cell(1,length(NgreenStackAv));
+            SNgreenStackAv = NgreenStackAv;
+            for ccell = 1:length(terminals{mouse})
+                SNredStackAv{terminals{mouse}(ccell)} = smoothdata(NredStackAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);               
+            end 
+        end 
+    end 
+    if spikeQ == 1 
+        snCIhighAv = cell(1,max(terminals{mouse}));
+        snCIlowAv = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse})      
+            snCIhighAv{terminals{mouse}(ccell)} = smoothdata(nCIhighAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
+            snCIlowAv{terminals{mouse}(ccell)} = smoothdata(nCIlowAv{terminals{mouse}(ccell)},3,'movmean',filter_rate);
+        end    
+    end 
+end 
+clearvars NgreenStackAv NredStackAv 
+if spikeQ == 1
+    clearvars nCIhighAv nCIlowAv
+end 
+
+%spatial smoothing option
+spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise. ');
+if spatSmoothQ == 1 
+    spatSmoothTypeQ = input('Input 0 to do gaussian spatial smoothing. Input 1 to do convolution spatial smoothing (using NxN array of 0.125 values). ');
+    spatFiltChanQ= input('Input 0 to spatially smooth both channels. Input 1 otherwise. ');
+    if spatFiltChanQ == 0 % if you want to spatially smooth both channels 
+        redIn = SNredStackAv; 
+        greenIn = SNgreenStackAv;
+        if spikeQ == 1 
+            CIhighIn = snCIhighAv;
+            CIlowIn = snCIlowAv;    
+            clearvars snCIhighAv snCIlowAv
+        end 
+        clearvars SNredStackAv SNgreenStackAv       
+        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
+            for ccell = 1:length(terminals{mouse})
+                SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
+                SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
+                if spikeQ == 1
+                    snCIhighAv{terminals{mouse}(ccell)} = imgaussfilt(CIhighIn{terminals{mouse}(ccell)},sigma);
+                    snCIlowAv{terminals{mouse}(ccell)} = imgaussfilt(CIlowIn{terminals{mouse}(ccell)},sigma);
+                end 
+            end 
+        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
+            for ccell = 1:length(terminals{mouse})
+                SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
+                SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
+                if spikeQ == 1
+                    snCIhighAv{terminals{mouse}(ccell)} = convn(CIhighIn{terminals{mouse}(ccell)},K,'same');
+                    snCIlowAv{terminals{mouse}(ccell)} = convn(CIlowIn{terminals{mouse}(ccell)},K,'same');
+                end 
+            end 
+        end 
+    elseif spatFiltChanQ == 1 % if you only want to spatially smooth one channel 
+        spatSmoothChanQ = input('Input 0 to spatially smooth the green channel. Input 1 for the red channel. ');
+        if spatSmoothTypeQ == 0 % if you want to use gaussian spatial smoothing 
+            sigma = input('What sigma do you want to use for Gaussian spatial filtering? ');
+            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
+                greenIn = SNgreenStackAv;
+                clearvars SNgreenStackAv
+                for ccell = 1:length(terminals{mouse})
+                    SNgreenStackAv{terminals{mouse}(ccell)} = imgaussfilt(greenIn{terminals{mouse}(ccell)},sigma);
+                    if spikeQ == 1 
+                        snCIhighAv{terminals{mouse}(ccell)} = imgaussfilt(CIhighIn{terminals{mouse}(ccell)},sigma);
+                        snCIlowAv{terminals{mouse}(ccell)} = imgaussfilt(CIlowIn{terminals{mouse}(ccell)},sigma);
+                    end 
+                end              
+            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
+                redIn = SNredStackAv; 
+                clearvars SNredStackAv 
+                for ccell = 1:length(terminals{mouse})
+                    SNredStackAv{terminals{mouse}(ccell)} = imgaussfilt(redIn{terminals{mouse}(ccell)},sigma);
+                    if spikeQ == 1 
+                        snCIhighAv{terminals{mouse}(ccell)} = imgaussfilt(CIhighIn{terminals{mouse}(ccell)},sigma);
+                        snCIlowAv{terminals{mouse}(ccell)} = imgaussfilt(CIlowIn{terminals{mouse}(ccell)},sigma);
+                    end                     
+                end 
+            end        
+        elseif spatSmoothTypeQ == 1 % if you want to use convolution smoothing 
+            % create your kernal for smoothing by convolution 
+            kernalSize = input('What size NxN array do you want to use for convolution spatial filtering? ');
+            K = 0.125*ones(kernalSize);
+            if spatSmoothChanQ == 0 % if you want to spatially smooth the green channel 
+                greenIn = SNgreenStackAv;
+                clearvars SNgreenStackAv
+                for ccell = 1:length(terminals{mouse})
+                    SNgreenStackAv{terminals{mouse}(ccell)} = convn(greenIn{terminals{mouse}(ccell)},K,'same');
+                    if spikeQ == 1 
+                        snCIhighAv{terminals{mouse}(ccell)} = convn(CIhighIn{terminals{mouse}(ccell)},K,'same');
+                        snCIlowAv{terminals{mouse}(ccell)} = convn(CIlowIn{terminals{mouse}(ccell)},K,'same');
+                    end 
+                end 
+            elseif spatSmoothChanQ == 1 % if you want to spatially smooth the red channel 
+                redIn = SNredStackAv; 
+                clearvars SNredStackAv 
+                for ccell = 1:length(terminals{mouse})
+                    SNredStackAv{terminals{mouse}(ccell)} = convn(redIn{terminals{mouse}(ccell)},K,'same');
+                    if spikeQ == 1 
+                        snCIhighAv{terminals{mouse}(ccell)} = convn(CIhighIn{terminals{mouse}(ccell)},K,'same');
+                        snCIlowAv{terminals{mouse}(ccell)} = convn(CIlowIn{terminals{mouse}(ccell)},K,'same');
+                    end                     
+                end 
+            end                          
+        end 
+    end 
+end 
+clearvars redIn greenIn 
+if spikeQ == 1 
+    clearvars CIhighIn CIlowIn
+end 
+
+% black out the pixels that are part of calcium ROIs 
+blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
+if blackOutCaROIQ == 1         
+    CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
+    cd(CaROImaskDir);
+    CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
+    CaROImaskMat = matfile(CaROImaskFileName); 
+    CaROImasks = CaROImaskMat.CaROImasks; 
+    % check to see if ROIorders exists in the matfile 
+    variableInfo = who(CaROImaskMat);
+    if ismember("ROIorders", variableInfo) == 1 % returns true 
+        ROIorders = CaROImaskMat.ROIorders;                
+    end   
+    % crop if necessary 
+    if cropQ == 1 
+        if ismember("ROIorders", variableInfo) == 1 % returns true 
+            ROIorders2 = cell(1,length(ROIorders));
+            for z = 1:length(ROIorders)
+                cropdIm = imcrop(ROIorders{z},rect);
+                ROIorders2{z} = cropdIm;
+            end     
+        end 
+        CaROImasks2 = cell(1,length(CaROImasks));
+        for z = 1:length(CaROImasks)
+            cropdIm = imcrop(CaROImasks{z},rect);
+            CaROImasks2{z} = cropdIm;
+        end              
+        clearvars CaROImasks; CaROImasks = CaROImasks2; clearvars CaROImasks2 
+        if ismember("ROIorders", variableInfo) == 1 % returns true 
+            clearvars ROIorders; ROIorders = ROIorders2; clearvars ROIorders2
+        end 
+    end 
+    % combine Ca ROIs from different planes in Z into one plane 
+    if ismember("ROIorders", variableInfo) == 1 % returns true
+        numZplanes = length(ROIorders);
+    elseif ismember("ROIorders", variableInfo) == 0
+        numZplanes = length(CaROImasks);
+    end 
+    if numZplanes > 1 
+        combo = cell(1,numZplanes-1);
+        combo2 = cell(1,numZplanes-1);
+        for it = 1:numZplanes-1
+            if it == 1 
+                combo{it} = or(CaROImasks{1},CaROImasks{2});
+                if ismember("ROIorders", variableInfo) == 1 % returns true
+                    combo2{it} = or(ROIorders{1},ROIorders{2});
+                end 
+            elseif it > 1
+                combo{it} = or(combo{it-1},CaROImasks{it+1});
+                if ismember("ROIorders", variableInfo) == 1 % returns true
+                    combo2{it} = or(combo2{it-1},ROIorders{it+1});
+                end 
+            end 
+        end      
+        ROIorders = combo2;
+    elseif numZplanes == 1 
+        combo = CaROImasks;       
+    end    
+    %make your combined Ca ROI mask the right size for applying to a 3D
+    %arrray 
+    ind = length(combo);
+    ThreeDCaMask = logical(repmat(combo{ind},1,1,size(SNredStackAv{terminals{mouse}(ccell)},3)));
+    %apply new mask to the right channel 
+    % this is defined above: rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
+    if rightChan == 0     
+        RightChan = SNgreenStackAv;
+        otherChan = SNredStackAv;
+    elseif rightChan == 1
+        RightChan = SNredStackAv;
+        otherChan = SNgreenStackAv;
+    end     
+    for ccell = 1:length(terminals{mouse})
+        RightChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;        
+    end 
+elseif blackOutCaROIQ == 0          
+    if rightChan == 0     
+        RightChan = SNgreenStackAv;
+        otherChan = SNredStackAv;
+    elseif rightChan == 1
+        RightChan = SNredStackAv;
+        otherChan = SNgreenStackAv;
+    end   
+end 
+clearvars SNgreenStackAv SNredStackAv
+
+AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
+if AVQ == 0 
+    segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
+    % create outline of vessel to overlay the %change BBB perm stack 
+    segmentVessel = 1;
+    while segmentVessel == 1 
+        % apply Ca ROI mask to the appropriate channel to black out these
+        % pixels 
+        for ccell = 1:length(terminals{mouse})
+            vesChan{terminals{mouse}(ccell)}(ThreeDCaMask) = 0;
+        end 
+        %segment the vessel (small sample of the data) 
+        if segQ == 1 
+            CaROI = input('What Ca ROI do you want to use to create the segmentation algorithm? ');    
+            imageSegmenter(mean(vesChan{CaROI},3))
+            continu = input('Is the image segmenter closed? Yes = 1. No = 0. ');
+        elseif segQ == 0 
+            continu = 1;
+        end   
+        while continu == 1 
+            BWstacks = cell(1,length(vesChan));
+            BW_perim = cell(1,length(vesChan));
+            segOverlays = cell(1,length(vesChan));    
+            for ccell = 1:length(terminals{mouse})
+                for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
+                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
+                    %get the segmentation boundaries 
+                    BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
+                    %overlay segmentation boundaries on data
+                    segOverlays{terminals{mouse}(ccell)}(:,:,:,frame) = imoverlay(mat2gray(vesChan{terminals{mouse}(ccell)}(:,:,frame)), BW_perim{terminals{mouse}(ccell)}(:,:,frame), [.3 1 .3]);   
+                end   
+            end 
+            continu = 0;
+        end 
+
+        %ask about segmentation quality 
+        if segQ == 1
+            %play segmentation boundaries over images 
+            implay(segOverlays{CaROI})
+            segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+            if segmentVessel == 1
+                clearvars BWthreshold BWopenRadius BW se boundaries
+            end 
+        elseif segQ == 0 
+            segmentVessel = 0;
+        end 
+    end
+end
+clearvars segOverlays 
+cMapQ = input('Input 0 to create a color map that is red for positive % change and green for negative % change. Input 1 to create a colormap for only positive going values. ');
+if cMapQ == 0
+    % Create colormap that is green for positive, red for negative,
+    % and a chunk inthe middle that is black.
+%     greenColorMap = [zeros(1, 156), linspace(0, 1, 100)];
+%     redColorMap = [linspace(1, 0, 100), zeros(1, 156)];
+    % these are the original colors 
+    greenColorMap = [zeros(1, 132), linspace(0, 1, 124)];
+    redColorMap = [linspace(1, 0, 124), zeros(1, 132)];
+    cMap = [redColorMap; greenColorMap; zeros(1, 256)]';
+elseif cMapQ == 1
+    % Create colormap that is green at max and black at min
+    % this is the original green colorbar 
+%     greenColorMap = linspace(0, 1, 256);
+    % green colorbar with less green
+    greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
+%     % steeper green colorbar (SF-57)
+%     greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
+    cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
+
+%     % steeper green colorbar (SF-56)
+%     greenColorMap = [linspace(0, 1, 110),ones(1,146)];
+%     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
+end 
+% save the other channel first to ensure that all Ca ROIs show an average
+%peak in the same frame 
+dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
+dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
+CaROItimingCheckQ = input('Do you need to save the Ca data? Input 1 for yes. 0 for no. ');
+if CaROItimingCheckQ == 1 
+    for ccell = 1:length(terminals{mouse})
+        %create a new folder per calcium ROI 
+        newFolder = sprintf('CaROI_%d_calciumSignal',terminals{mouse}(ccell));
+        mkdir(dir2,newFolder)
+         for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)    
+            figure('Visible','off');     
+            % the color lims below work great for 56 and 57, but not 58
+            %imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame),[3,5]) 
+            imagesc(otherChan{terminals{mouse}(ccell)}(:,:,frame))
+            %save current figure to file 
+            filename = sprintf('%s/CaROI_%d_calciumSignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+            saveas(gca,[filename '.png'])
+         end 
+    end 
+end 
+
+% create a binarized version of the STA vids
+% 1 means greater than 95% CI and 2 means lower than 95% CI 
+if spikeQ == 1 
+    clearvars RightChan
+    dataDir = uigetdir('*.*','WHERE IS THE NON-SHUFFLED STA VIDEO .MAT FILE?');
+    cd(dataDir);
+    nonShuffledFileName = uigetfile('*.*','GET THE NON-SHUFFLED STA VIDEO .MAT FILE'); 
+    nonShuffledMat = matfile(nonShuffledFileName);
+    RightChan = nonShuffledMat.RightChan;
+    % create binary STA vid 
+    binarySTAhigh = cell(1,max(terminals{mouse}));
+    binarySTAlow = cell(1,max(terminals{mouse}));
+    binarySTA = cell(1,max(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse}) 
+        binarySTAhigh{terminals{mouse}(ccell)} = RightChan{terminals{mouse}(ccell)} > snCIhighAv{terminals{mouse}(ccell)}; 
+        binarySTAlow{terminals{mouse}(ccell)} = RightChan{terminals{mouse}(ccell)} < snCIlowAv{terminals{mouse}(ccell)}; 
+        data = single(binarySTAhigh{terminals{mouse}(ccell)});
+        binarySTA{terminals{mouse}(ccell)} = data;
+        binarySTA{terminals{mouse}(ccell)}(binarySTAlow{terminals{mouse}(ccell)}) = 2;
+    end 
+    clearvars binarySTAhigh binarySTAlow
+end 
+
+%% conditional statement that ensures you checked the other channel
+
+% to make sure Ca ROIs show an average peak in the same frame, before
+% moving onto the next step 
+CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
+vesBlackQ = input('Input 1 to black out vessel. '); 
+if spikeQ ==0 
+    ims = RightChan;
+elseif spikeQ == 1 
+    ims = snCIhighAv;
+end 
+if CaFrameQ == 1 
+    CaEventFrame = input('What frame did the Ca events happen in? ');
+    if AVQ == 0  
+        %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
+        %the vessel is (because they're distracting), and save these images to a
+        %folder of your choosing (there will be subFolders per calcium ROI)
+        BBBtraceQ = input("Input 1 if you want to plot BBB STA traces.");
+        if BBBtraceQ == 1 
+            CTraces = cell(1,mouseNum); 
+            CI_cLow = cell(1,mouseNum);
+            CI_cHigh = cell(1,mouseNum);
+            CTraceArray = cell(1,mouseNum);
+            AVSNCdataPeaks = cell(1,mouseNum);
+            SCdataPeaks = cell(1,mouseNum);
+            SNCdataPeaks = cell(1,mouseNum);
+            sortedCdata2 = cell(1,mouseNum);
+            allCTraces3 = cell(1,mouseNum);  
+            sortedCdata = cell(1,mouseNum);
+            BBBdata = cell(1,mouseNum);
+        end 
+        for ccell = 1:length(terminals{mouse})  
+            if ccell == 1
+                genImQ = input("Input 1 if you need to generate the images. ");
+            end             
+            if genImQ == 1 
+                %black out pixels that belong to vessels   
+                if vesBlackQ == 1 
+                    ims{terminals{mouse}(ccell)}(BWstacks{terminals{mouse}(ccell)}) = 0; 
+                end                            
+                %find the upper and lower bounds of your data (per calcium ROI) 
+                maxValue = max(max(max(max(ims{terminals{mouse}(ccell)}))));
+                minValue = min(min(min(min(ims{terminals{mouse}(ccell)}))));
+                minMaxAbsVals = [abs(minValue),abs(maxValue)];
+                maxAbVal = max(minMaxAbsVals);
+                % ask user where to crop image
+                if ccell == 1   
+                    if BBBtraceQ == 1 
+                        BBBtraceNumQ = input("How manny BBB traces do you want to generate? ");
+                    end                 
+                end            
+                %create a new folder per calcium ROI 
+                newFolder = sprintf('CaROI_%d_BBBsignal',terminals{mouse}(ccell));
+                mkdir(dir2,newFolder)
+                %overlay segmentation boundaries on the % change image stack and save
+                %images
+                for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)   
+                    % get the x-y coordinates of the Ca ROI         
+                    clearvars CAy CAx
+                    if ismember("ROIorders", variableInfo) == 1 % returns true
+                        [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+                    elseif ismember("ROIorders", variableInfo) == 0 % returns true
+                        [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+                    end 
+                    figure('Visible','off');  
+                    if BBBtraceQ == 1
+                        if ccell == 1 
+                            if frame == 1
+                                ROIboundDatas = cell(1,BBBtraceNumQ);
+                                ROIstacks = cell(1,length(terminals{mouse}));
+                                for BBBroi = 1:BBBtraceNumQ
+                                    % create BBB ROIs 
+                                    disp('Create your ROI for BBB perm analysis');
+                                    [~,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,ims{terminals{mouse}(ccell)}(:,:,frame));
+                                    ROIboundData{1} = xmins;
+                                    ROIboundData{2} = ymins;
+                                    ROIboundData{3} = widths;
+                                    ROIboundData{4} = heights;
+                                    ROIboundDatas{BBBroi} = ROIboundData;                          
+                                end 
+                            end 
+                        end 
+                        for BBBroi = 1:BBBtraceNumQ
+                            %use the ROI boundaries to generate ROIstacks 
+                            xmins = ROIboundDatas{BBBroi}{1};
+                            ymins = ROIboundDatas{BBBroi}{2};
+                            widths = ROIboundDatas{BBBroi}{3};
+                            heights = ROIboundDatas{BBBroi}{4};
+                            [ROI_stacks] = make_ROIs_notfirst_time(ims{terminals{mouse}(ccell)}(:,:,frame),xmins,ymins,widths,heights);
+                            ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame) = ROI_stacks{1};
+                        end 
+                    end 
+                    % create the % change image with the right white and black point
+                    % boundaries and colormap 
+                    if cMapQ == 0
+                        imagesc(ims{terminals{mouse}(ccell)}(:,:,frame),[-maxAbVal,maxAbVal]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    elseif cMapQ == 1 
+                        imagesc(ims{terminals{mouse}(ccell)}(:,:,frame),[0,maxAbVal/3]); colormap(cMap); colorbar%this makes the max point 1% and the min point -1% 
+                    end                                    
+                    % get the x-y coordinates of the vessel outline
+                    [yf, xf] = find(BW_perim{terminals{mouse}(ccell)}(:,:,frame));  % x and y are column vectors.                                         
+                    % plot the vessel outline over the % change image 
+                    hold on;
+                    scatter(xf,yf,'white','.');
+                    if cropQ == 1
+                        axonPixSize = 500;
+                    elseif cropQ == 0
+                        axonPixSize = 100;
+                    end 
+                    scatter(CAxf,CAyf,axonPixSize,[0.5 0.5 0.5],'filled','square');
+                    % plot the GCaMP signal marker in the right frame 
+                    if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                        hold on;
+                        scatter(CAxf,CAyf,axonPixSize,[0 0 1],'filled','square');
+                        %get border coordinates 
+                        colLen = size(ims{terminals{mouse}(ccell)},2);
+                        rowLen = size(ims{terminals{mouse}(ccell)},1);
+                        edg1_x = repelem(1,rowLen);
+                        edg1_y = 1:rowLen;
+                        edg2_x = repelem(colLen,rowLen);
+                        edg2_y = 1:rowLen;
+                        edg3_x = 1:colLen;
+                        edg3_y = repelem(1,colLen);
+                        edg4_x = 1:colLen;
+                        edg4_y = repelem(rowLen,colLen);
+                        edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                        edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                        hold on;
+                        if cropQ == 1 
+                            scatter(edg_x,edg_y,100,'blue','filled','square');    
+                        end 
+                    end 
+                    ax = gca;
+                    ax.Visible = 'off';
+                    ax.FontSize = 20;
+                    %save current figure to file 
+                    filename = sprintf('%s/CaROI_%d_BBBsignal/CaROI_%d_frame%d',dir2,terminals{mouse}(ccell),terminals{mouse}(ccell),frame);
+                    saveas(gca,[filename '.png'])
+                end 
+            end            
+            % Plot BBB STA trace per axon and BBB roi 
+            if BBBtraceQ == 1 
+                regImDir = uigetdir('*.*',sprintf('WHERE IS THE STA DATA FOR MOUSE #%d?',mouse));
+                cd(regImDir);
+                MatFileName = uigetfile('*.*',sprintf('SELECT THE STA DATA FOR MOUSE #%d',mouse));
+                Mat = matfile(MatFileName);                  
+                sortedCdata{mouse} = Mat.sortedCdata;               
+                % sort data         
+                baselineTime = normTime;
+                %smoothing option               
+                if smoothQ == 0 
+                    SCdataPeaks{mouse} = sortedCdata{mouse};
+                elseif smoothQ == 1           
+                    SCdataPeaks{mouse} = sortedCdata{mouse};
+                    for vid = 1:length(vidList{mouse})                    
+                       if vid <= length(sortedCdata{mouse}) 
+                            for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}) 
+                                if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                    %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                    SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(any(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},2),:);                 
+                                end 
+                            end
+                       end                         
+                    end 
+                end     
+                %normalize
+                 for vid = 1:length(vidList{mouse})
+                    if vid <= length(sortedCdata{mouse}) 
+                        for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                            if isempty(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                %the data needs to be added to because there are some
+                                %negative gonig points which mess up the normalizing 
+                                % determine the minimum value, add space (+100)
+                                minValToAdd = abs(ceil(min(min(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}))))+100;
+                                % add min value
+                                sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per} = SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} + minValToAdd;
+                                %normalize to baselineTime sec before changePt (calcium peak
+                                %onset) BLstart 
+                                if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}) == 0
+                                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1},2)/2)-4;
+                                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(1)}{2},2)/2)-4;
+                                    end   
+                                elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}) == 0
+                                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1},2)/2)-4;
+                                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(2)}{2},2)/2)-4;
+                                    end  
+                                elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}) == 0
+                                    if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                                    elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                                        changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                                    end   
+                                end 
+
+                                if isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 0
+                                    changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1},2)/2)-4;
+                                elseif isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{1}) == 1 && isempty(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2}) == 0
+                                    changePt = floor(size(sortedCdata{mouse}{1}{terminals{mouse}(3)}{2},2)/2)-4;
+                                end   
+                %                 BLstart = changePt - floor(0.5*FPSstack{mouse});
+                                BLstart = changePt - floor(baselineTime*FPSstack{mouse});
+
+                                if isempty(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                    SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per} = ((sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per})./(nanmean(sortedCdata2{mouse}{vid}{terminals{mouse}(ccell)}{per}(:,BLstart:changePt),2)))*100;
+                                end 
+                            end               
+                        end
+                    end                   
+                 end     
+                count = 1;
+                for vid = 1:length(vidList{mouse})  
+                    if vid <= length(sortedCdata{mouse}) 
+                        for per = 1:length(sortedCdata{mouse}{vid}{terminals{mouse}(ccell)})
+                            if isempty(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}) == 0 %{mouse}{vid}{terminals{mouse}(ccell)}{per}
+                                if isempty(SCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}) == 0 
+                                    for peak = 1:size(SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per},1) 
+                                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(count,:) = (SNCdataPeaks{mouse}{vid}{terminals{mouse}(ccell)}{per}(peak,:)-100);
+                                        %remove rows full of 0s if there are any b = a(any(a,2),:)
+                                        allCTraces3{mouse}{terminals{mouse}(ccell)}{per} = allCTraces3{mouse}{terminals{mouse}(ccell)}{per}(any(allCTraces3{mouse}{terminals{mouse}(ccell)}{per},2),:);
+                                        count = count + 1;
+                                    end 
+                                end 
+                            end                            
+                        end 
+                    end 
+                end           
+                %put all similar trials together 
+                allCTraces = allCTraces3;
+                CaROIs = terminals;
+                CTraces{mouse} = allCTraces{mouse}(CaROIs{mouse});                                      
+                %remove empty cells if there are any b = a(any(a,2),:)
+                CTraces{mouse} = CTraces{mouse}(~cellfun('isempty',CTraces{mouse}));                               
+                % create colors for plotting 
+                Bcolors = [1,0,0;1,0.5,0;1,1,0];
+                Ccolors = [0,0,1;0,0.5,1;0,1,1];
+                % resort data: concatenate all CaROI data 
+                % output = CaArray{mouse}{per}(concatenated caRoi data)
+                % output = VW/BBBarray{mouse}{BBB/VWroi}{per}(concatenated caRoi data)     
+                CTraceArray = cell(1,1);
+                for per = 1:length(allCTraces3{mouse}{CaROIs{mouse}(1)})
+                    if isempty(allCTraces3{mouse}{CaROIs{mouse}(1)}{per}) == 0                                                                                               
+                        if isempty(CTraces{mouse}{ccell}) == 0 
+                            if ccell == 1 
+                                CTraceArray{mouse}{per} = CTraces{mouse}{ccell}{per};                              
+                            elseif ccell > 1 
+                                CTraceArray{mouse}{per} = vertcat(CTraceArray{mouse}{per},CTraces{mouse}{ccell}{per});                             
+                            end
+                        end 
+                     
+                        %DETERMINE 95% CI                       
+                        SEMc = (nanstd(CTraceArray{mouse}{per}))/(sqrt(size(CTraceArray{mouse}{per},1))); %#ok<*NANSTD> % Standard Error            
+                        ts_cLow = tinv(0.025,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+                        ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
+                        CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
+                        CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
+                        
+                        %get averages
+                        AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);                    
+
+                        % plot data                                                                           
+                        for BBBroi = 1:BBBtraceNumQ
+                            %determine range of data Ca data
+                            CaDataRange = max(AVSNCdataPeaks{mouse}{per})-min(AVSNCdataPeaks{mouse}{per});
+                            %determine plotting buffer space for Ca data 
+                            CaBufferSpace = CaDataRange;
+                            %determine first set of plotting min and max values for Ca data
+                            CaPlotMin = min(AVSNCdataPeaks{mouse}{per})-CaBufferSpace;
+                            CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
+                            %determine Ca 0 ratio/location 
+                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+                                                       
+                            %determine range of BBB data 
+                            BBBdataRange = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})));                                       
+                            %determine plotting buffer space for BBB data 
+                            BBBbufferSpace = BBBdataRange;
+                            %determine first set of plotting min and max values for BBB data
+                            BBBplotMin = min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-BBBbufferSpace;
+                            BBBplotMax = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))+BBBbufferSpace;
+                            %determine BBB 0 ratio/location
+                            BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+                            %determine how much to shift the BBB axis so that the zeros align 
+                            BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+                            BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+                            % replace zeros with NaNs 
+                            ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
+                            for frame = 1:size(ROIstacks{terminals{mouse}(ccell)}{BBBroi},3)                                
+                                % convert BBB ROI frames to TS values
+                                BBBdata{terminals{mouse}(ccell)}{BBBroi}(frame) = nanmean(nanmean(ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame)));
+                            end 
+                            x = 1:length(BBBdata{terminals{mouse}(ccell)}{1});
+%                             %DETERMINE 95% CI                       
+%                             SEMb = (nanstd(BBBdata{terminals{mouse}(ccell)}{BBBroi}))/(sqrt(size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1))); % Standard Error            
+%                             ts_bLow = tinv(0.025,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
+%                             ts_bHigh = tinv(0.975,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
+%                             CI_bLow{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
+%                             CI_bHigh{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals 
+%                             %get average
+%                             AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
+                                                       
+                            fig = figure;
+                            Frames = size(x,2);
+                            Frames_pre_stim_start = -((Frames-1)/2); 
+                            Frames_post_stim_start = (Frames-1)/2; 
+                            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+                            FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+                            ax=gca;
+                            hold all
+                            Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
+                            plot(Cdata,'blue','LineWidth',4)
+                            CdataCIlow = CI_cLow{mouse}{per}(100:152);
+                            CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
+                            patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
+                            changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+                            ax.XTick = FrameVals;
+                            ax.XTickLabel = sec_TimeVals;   
+                            ax.FontSize = 25;
+                            ax.FontName = 'Times';
+                            xlabel('time (s)','FontName','Times')
+                            ylabel('calcium signal percent change','FontName','Times')
+                            xLimStart = floor(10*FPSstack{mouse});
+                            xLimEnd = floor(24*FPSstack{mouse}); 
+%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
+                            ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+                            set(fig,'position', [500 100 900 800])
+                            alpha(0.3)
+                            %add right y axis tick marks for a specific DOD figure. 
+                            yyaxis right 
+                            p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
+%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+                            ylabel('BBB permeability percent change','FontName','Times')
+                            title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+                            alpha(0.3)
+%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+                            set(gca,'YColor',[0 0 0]);   
+                            ylim([-BBBbelowZero BBBaboveZero])
+                        end                                       
+                    end 
+                end                
+            end 
+        end
+        if BBBtraceQ == 1 
+            clearvars sortedCdata SCdataPeaks SNCdataPeaks sortedCdata2 allCTraces3 CTraces CI_cLow CI_cHigh CTraceArray AVSNCdataPeaks BBBdata
+        end 
+    elseif AVQ == 1
+        termsToAv = input('Input what terminal STA videos you want to average. '); 
+        STAterms = zeros(size(ims{termsToAv(1)},1),size(ims{termsToAv(1)},2),size(ims{termsToAv(1)},3),length(termsToAv));
+        STAtermsVesChans = zeros(size(ims{termsToAv(1)},1),size(ims{termsToAv(1)},2),size(ims{termsToAv(1)},3),length(termsToAv));        
+        for termToAv = 1:length(termsToAv)
+            %create 4D array containing all relevant terminals 
+            STAterms(:,:,:,termToAv) = ims{termsToAv(termToAv)};
+            STAtermsVesChans(:,:,:,termToAv) = vesChan{termsToAv(termToAv)};
+        end 
+        % average terminals of your choosing 
+        STAav = mean(STAterms,4);
+        STAavVesVid = mean(STAtermsVesChans,4);
+        
+        clearvars BW BWstacks BW_perim segOverlays
+        BWstacks = zeros(size(ims{termsToAv(1)},1),size(ims{termsToAv(1)},2),size(ims{termsToAv(1)},3));
+        BW_perim = zeros(size(ims{termsToAv(1)},1),size(ims{termsToAv(1)},2),size(ims{termsToAv(1)},3));
+        for frame = 1:size(STAavVesVid,3)
+            [BW,~] = segmentImageVesselFOV_SF58(STAavVesVid(:,:,frame));
+            BWstacks(:,:,frame) = BW; 
+            %get the segmentation boundaries 
+            BW_perim(:,:,frame) = bwperim(BW);
+            %overlay segmentation boundaries on data
+            segOverlays(:,:,:,frame) = imoverlay(mat2gray(STAavVesVid(:,:,frame)), BW_perim(:,:,frame), [.3 1 .3]);   
+        end 
+        %play segmentation boundaries over images 
+        implay(segOverlays)
+        
+        segQ = input('Input 1 if the segmentation was good. ');
+        if segQ == 1
+            %black out pixels that belong to vessels  
+            BWstacks = ~BWstacks;
+            STAav(~BWstacks) = 0;
+            for frame = 1:size(STAavVesVid,3)
+                % create the % change image with the right white and black point
+                % boundaries and colormap 
+                figure('Visible','off');  
+                imagesc(STAav(:,:,frame),[0,0.5]); colormap(cMap); cbh = colorbar; set(cbh,'YTick',0:0.25:0.5)%this makes the max point 1% and the min point -1% 
+                % get the x-y coordinates of the vessel outline
+                [y, x] = find(BW_perim(:,:,frame));  % x and y are column vectors.     
+                % plot the vessel outline over the % change image 
+                hold on;
+                scatter(x,y,'white','.');
+                % plot the GCaMP signal marker in the right frame 
+                if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)     
+                    % get the x-y coordinates of the Ca ROIs         
+                    % find the pixels that are over 20 in value 
+                    clearvars CAy CAx
+                    for termToAv = 1:length(termsToAv)
+                        [CAy, CAx] = find(otherChan{termsToAv(termToAv)}(:,:,frame) >= 20);  % x and y are column vectors.
+                        hold on;
+                        scatter(CAx,CAy,100,'white','filled');
+                    end 
+                    %get border coordinates 
+                    colLen = size(STAav,2);
+                    rowLen = size(STAav,1);
+                    edg1_x = repelem(1,rowLen);
+                    edg1_y = 1:rowLen;
+                    edg2_x = repelem(colLen,rowLen);
+                    edg2_y = 1:rowLen;
+                    edg3_x = 1:colLen;
+                    edg3_y = repelem(1,colLen);
+                    edg4_x = 1:colLen;
+                    edg4_y = repelem(rowLen,colLen);
+                    edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                    edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                    hold on;
+                    scatter(edg_x,edg_y,15,'white','filled','square');               
+                end 
+                ax = gca;
+                ax.Visible = 'off';
+                ax.FontSize = 20;
+                %save current figure to file 
+                termsString1 = string(termsToAv);
+                termsString = join(termsString1,'_');
+                filename = sprintf('%s/CaROIs_%s_frame%d',dir2,termsString,frame);
+                saveas(gca,[filename '.png'])
+            end 
+        end 
+        clearvars STAterms STAtermsVesChans STAav STAavVesVid BWstacks BW_perim segOverlays
+    end 
+end 
+%}
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 %% saves out STA stack compatible optical flow 
 %{
 CaEventFrame = input('What frame did the Ca events happen in? ');
@@ -15155,8 +16436,8 @@ end
 % averaging/plotting together 
 
 % DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM AND BEHAVIOR 
-
 %{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
