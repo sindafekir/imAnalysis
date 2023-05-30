@@ -16436,7 +16436,7 @@ end
 % averaging/plotting together 
 
 % DBSCAN/STA VIDS TIME LOCKED TO OPTO STIM AND BEHAVIOR 
-%{
+
 
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
@@ -16568,10 +16568,22 @@ for ccell = 1:length(terminals{mouse})
             count = count + 1;  
         end 
     end 
+    % TRYING TO FLIP THE AXES FOR GRANT 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % plot the grouped pixels 
-    figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
+    figure;scatter3(inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
     % plot vessel outline 
-    hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline     
+    hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline     
+
+
+
+    % ORIGINAL PLOTTING CODE BELOW 
+%     % plot the grouped pixels 
+%     figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
+%     % plot vessel outline 
+%     hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline     
     % get the x-y coordinates of the Ca ROI         
     clearvars CAy CAx
     if ismember("ROIorders", variableInfo) == 1 % returns true
@@ -16591,8 +16603,15 @@ for ccell = 1:length(terminals{mouse})
             indsA{terminals{mouse}(ccell)}(len2+1:len2+len,1) = CAxf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,2) = CAyf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,3) = frame;
         end 
     end 
+    % TRYING TO FLIP THE AXES FOR GRANT 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % plot axon location 
-    hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
+    hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon
+    set(gca,'XLim',[0 40],'YLim',[10 65])%,'ZLim',[18.5 19.5])
+    % ORIGINAL PLOTTING CODE BELOW 
+%     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
     if ETAorSTAq == 0 
         title(sprintf('Axon %d',terminals{mouse}(ccell))); 
     elseif ETAorSTAq == 1 
