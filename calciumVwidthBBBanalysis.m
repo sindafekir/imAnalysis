@@ -12386,6 +12386,9 @@ end
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
+if spikeQ == 1
+    itNum = input('Input the number of bootstrap iterations that you want. ');
+end 
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
 %     dir1 = dataDir{mouse};   
@@ -12482,7 +12485,7 @@ if spikeQ == 1
     ISImean = cell(1,length(vidList{mouse}));
     randISIs = cell(1,length(vidList{mouse}));
     randSigLocs = cell(1,length(vidList{mouse}));
-    for it = 1:100
+    for it = 1:itNum
         for vid = 1:length(vidList{mouse})
             for ccell = 1:length(terminals{mouse})
                 % determine ISI
@@ -15719,8 +15722,8 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-
 %{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
