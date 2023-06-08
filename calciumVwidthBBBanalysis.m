@@ -12382,7 +12382,7 @@ end
 % can create shuffled and bootrapped x100 spikes 
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-%{
+
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
@@ -13158,7 +13158,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -15998,7 +15998,8 @@ clustAmp = safeKeptClustAmp;
 % before spike: frame <= 26 
 % after spike: frame >= 27 
 clustSpikeQ = input('Input 0 to see all clusters. Input 1 to see either pre/post spike clusters. ');
-clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
+% clustSpikeQ3 = input('Input 0 to get average cluster timing. 1 to get start of cluster timing. ');
+clustSpikeQ3 = 1;
 if clustSpikeQ == 1
     clustSpikeQ2 = input('Input 0 to see pre spike clusters. Input 1 to see post spike clusters. ');     
 end 
@@ -16100,15 +16101,6 @@ for ccell = 1:length(terminals{mouse})
     for clust = 1:length(earlyClusts)
         clustFit{ccell,clust} = fit((1:sum(~isnan(clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:))))',(clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),1:sum(~isnan(clustSizeTS{terminals{mouse}(ccell)}(earlyClusts(clust),:)))))','poly1');
         if clustFit{ccell,clust}.p1 < 0 %|| avClocFrame(ccell,earlyClusts(clust)) == 1  % if the slope is negative
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             % THE SECOND CONDITION DIRECLTY ABOVE IS TEMPORARY CODE FOR 58
 
             % find what rows each cluster is located in
@@ -16464,7 +16456,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fav.Rsquared.Ordinary,2));
-    text(0,10000,rSquared,'FontSize',20)
+    text(0,-500,rSquared,'FontSize',20)
 end 
 ylabel("Size of Cluster")
 xlabel("Distance From Axon") 
@@ -16500,7 +16492,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-    text(0,0.2,rSquared,'FontSize',20)
+    text(0,0.05,rSquared,'FontSize',20)
 end 
 ylabel("Pixel Amplitude of Cluster")
 xlabel("Distance From Axon") 
@@ -16538,7 +16530,7 @@ if clustSpikeQ == 0
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2.Rsquared.Ordinary,2));
-        text(10,30,rSquared,'FontSize',20)
+        text(10,100,rSquared,'FontSize',20)
     end 
     ylabel("Distance From Axon")
     if clustSpikeQ3 == 0 
@@ -16580,7 +16572,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(10,8,rSquared,'FontSize',20)
+            text(10,100,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
