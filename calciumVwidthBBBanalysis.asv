@@ -12705,17 +12705,16 @@ while workFlow == 1
             for ccell = 1:length(terminals{mouse})
                 count = 1;
                 for vid = 1:length(vidList{mouse})     
-                    if length(sortedGreenStacks{vid}) >= terminals{mouse}(ccell)
+                    if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0 && length(sortedGreenStacks{vid}) >= terminals{mouse}(ccell)
                         for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)},2)  
-                            if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0 
-                                greenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
-                                if rightChan == 0
-                                    VesGreenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
-                                end           
-                                count = count + 1;
-                            end 
-                        end
-                    end 
+
+                            greenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            if rightChan == 0
+                                VesGreenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            end           
+                            count = count + 1;
+                        end 
+                    end
                 end 
             end 
     %         clearvars sortedGreenStacks VesSortedGreenStacks
@@ -12726,18 +12725,16 @@ while workFlow == 1
             end  
             for ccell = 1:length(terminals{mouse})
                 count = 1;
-                for vid = 1:length(vidList{mouse})  
-                    if length(sortedRedStacks{vid}) >= terminals{mouse}(ccell)  
-                        for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
-                            if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0 
-                                redStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                                if rightChan == 1
-                                    VesRedStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                                end           
-                                count = count + 1;
-                            end 
-                        end
-                    end 
+                for vid = 1:length(vidList{mouse})        
+                    for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
+                        if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0 && length(sortedRedStacks{vid}) >= terminals{mouse}(ccell)
+                            redStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            if rightChan == 1
+                                VesRedStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                            end           
+                            count = count + 1;
+                        end 
+                    end
                 end 
             end 
     %         clearvars sortedRedStacks VesSortedRedStacks
