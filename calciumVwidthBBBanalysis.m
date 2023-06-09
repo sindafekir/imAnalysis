@@ -12382,7 +12382,7 @@ end
 % can create shuffled and bootrapped x100 spikes 
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
+%{
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
