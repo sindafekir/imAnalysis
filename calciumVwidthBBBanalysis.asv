@@ -5062,31 +5062,47 @@ while workFlow == 1
             if spikeQ == 1       
                 if rightChan == 0 % BBB data is in green channel 
                     SEM = (nanstd(avGreenStack,0,3))/(sqrt(size(avGreenStack,3))); % Standard Error 
+                    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                     % calculate bounds for bonferroni correction (per
                     % extravascular pixel) 
-                   if rightChan == 0 % if BBB data is in green channel 
-                        avZ = nanmean(VesAvGreenStack,3);
-                    elseif rightChan == 1 % if BBB data is in red channel 
-                        avZ = nanmean(VesAvRedStack,3);
-                    end 
-                    % figure out how many pixels are roughly in the
-                    % vessel 
-                    % Normalize input data to range in [0,1].
-                    Xmin = min(avZ(:));
-                    Xmax = max(avZ(:));
-                    if isequal(Xmax,Xmin)
-                        avZ = 0*avZ;
-                    else
-                        avZ = (avZ - Xmin) ./ (Xmax - Xmin);
-                    end                 
-                    % Threshold image - global threshold
-                    BW = imbinarize(im2gray(avZ));         
-                    numPix = nnz(~BW);
-                    format long 
-                    lowBound = 0.025/numPix;                      
-                    highBound = 1-lowBound;
-                    ts_High = tinv(highBound,size(avGreenStack,3)-1);% T-Score for 95% CI
-                    ts_Low =  tinv(lowBound,size(avGreenStack,3)-1);% T-Score for 95% CI
+                       if rightChan == 0 % if BBB data is in green channel 
+                            avZ = nanmean(VesAvGreenStack{terminals{mouse}(ccell)},3);
+                        elseif rightChan == 1 % if BBB data is in red channel 
+                            avZ = nanmean(VesAvRedStack{terminals{mouse}(ccell)},3);
+                        end 
+                        % figure out how many pixels are roughly in the
+                        % vessel 
+                        % Normalize input data to range in [0,1].
+                        Xmin = min(avZ(:));
+                        Xmax = max(avZ(:));
+                        if isequal(Xmax,Xmin)
+                            avZ = 0*avZ;
+                        else
+                            avZ = (avZ - Xmin) ./ (Xmax - Xmin);
+                        end                 
+                        % Threshold image - global threshold
+                        BW = imbinarize(im2gray(avZ));         
+                        numPix = nnz(~BW);
+                        format long 
+                        lowBound = 0.025/numPix;                      
+                        highBound = 1-lowBound;
+
+
+
+
+
+
+
+
+
+                    ts_High = tinv(0.975,size(avGreenStack,3)-1);% T-Score for 95% CI
+                    ts_Low =  tinv(0.025,size(avGreenStack,3)-1);% T-Score for 95% CI
+                    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 %                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
 %                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
                     if HighLowQ == 0
