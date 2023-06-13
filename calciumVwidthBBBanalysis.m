@@ -4747,14 +4747,13 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
-
+%{
 mouse = 1;
 termQ = input('Input 1 to update terminal labels. ');
 if termQ == 1 
     terminals{mouse} = input(sprintf('What terminals do you care about for mouse #%d? Input in correct order. ',mouse)); 
     tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
-    dirLabel = sprintf('WHERE IS THE DATA FOR MOUSE #%d? ',mouse);
+    dirLabel = sprintf('WHERE IS THE CA DATA FOR MOUSE #%d? ',mouse);
     dataDir{mouse} = uigetdir('*.*',dirLabel);
     cd(dataDir{mouse}); % go to the right directory 
     % get calcium data    
@@ -4924,7 +4923,7 @@ for vid = 1:length(vidList{mouse})
 end 
 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
-windFrames = ceil(windSize*FPSstack{mouse});
+windFrames = floor(windSize*FPSstack{mouse});
 % further sort and average data, get 95% CI bounds 
 CI_High = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
 CI_Low = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
@@ -5409,7 +5408,7 @@ while segmentVessel == 1
         BW_perim = nan(size(BW,1),size(BW,2),size(vesChan,3));
         segOverlays = nan(size(BW,1),size(BW,2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -5478,25 +5477,29 @@ if spikeQ == 1
     binarySTA = data;
     binarySTA(binarySTAlow) = 2;
     clearvars binarySTAhigh binarySTAlow
-end 
 
-clearvars data
-data{1} = RightChan;
-clearvars RightChan terminals; 
-RightChan = data;
-terminals{1} = 1;
-clearvars data 
-data = binarySTA;
-clearvars binarySTA;
-binarySTA{1} = data;
-clearvars data;
-data = BW_perim;
-clearvars BW_perim;
-BW_perim{1} = data;
-clearvars data;
-data = BWstacks;
-clearvars BWstacks;
-BWstacks{1} = logical(data);
+    clearvars data
+    data{1} = RightChan;
+    clearvars RightChan terminals; 
+    RightChan = data;
+    terminals{1} = 1;
+    clearvars data 
+    data = binarySTA;
+    clearvars binarySTA;
+    binarySTA{1} = data;
+    clearvars data;
+    data = BW_perim;
+    clearvars BW_perim;
+    BW_perim{1} = data;
+    clearvars data;
+    data = BWstacks;
+    clearvars BWstacks;
+    BWstacks{1} = logical(data);
+    data = vesChan;
+    clearvars vesChan;
+    vesChan{1} = data;
+    clearvars data
+end 
 
 %% conditional statement that ensures you checked the other channel
 
@@ -15927,14 +15930,16 @@ for ccell = 1:length(terminals{mouse})
             indsA{terminals{mouse}(ccell)}(len2+1:len2+len,1) = CAxf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,2) = CAyf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,3) = frame;
         end 
     end 
-    % plot axon location 
-    hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon
+    if ETAorSTAq == 0 % STA data 
+        % plot axon location 
+        hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon
+    end 
 %     set(gca,'XLim',[0 40],'YLim',[10 65])%,'ZLim',[18.5 19.5])
     % ORIGINAL PLOTTING CODE BELOW 
 %     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
-    if ETAorSTAq == 0 
+    if ETAorSTAq == 0 % STA data 
         title(sprintf('Axon %d',terminals{mouse}(ccell))); 
-    elseif ETAorSTAq == 1 
+    elseif ETAorSTAq == 1 % ETA data 
         title('Opto Triggered'); 
     end 
 end 
@@ -15966,24 +15971,35 @@ for ccell = 1:length(terminals{mouse})
     labels(ccell) = num2str(terminals{mouse}(ccell));
 end 
 % plot stacked bar plot
-figure;
-subplot(1,2,1)
-ax=gca;
-ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
-ba(1).CData = [0 0.4470 0.7410];
-ba(2).CData = [0.8500 0.3250 0.0980];
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("Number of Clusters")
-xlabel("Axon")
-legend("Clusters Near Vessel","Clusters Far from Vessel")
-xticklabels(labels)
-% plot pie chart 
-subplot(1,2,2)
-% resort data for averaged pie chart 
-AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
-pie(AvNearVsFarPlotData);
-colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    figure;
+    subplot(1,2,1)
+    ax=gca;
+    ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
+    ba(1).CData = [0 0.4470 0.7410];
+    ba(2).CData = [0.8500 0.3250 0.0980];
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("Number of Clusters")
+    xlabel("Axon")
+    legend("Clusters Near Vessel","Clusters Far from Vessel")
+    xticklabels(labels)
+    % plot pie chart 
+    subplot(1,2,2)
+    % resort data for averaged pie chart 
+    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+    pie(AvNearVsFarPlotData);
+    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+elseif ETAorSTAq == 1 
+    % EDIT TO JUST MAKE PIE CHART 
+    figure;
+    % plot pie chart 
+    % resort data for averaged pie chart 
+    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+    pie(AvNearVsFarPlotData);
+    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+    legend("Clusters Near Vessel","Clusters Far from Vessel")
+end 
 
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
 uniqClusts = cell(1,max(terminals{mouse}));
@@ -16378,7 +16394,7 @@ if VRQ == 1
     % determine distance of each cluster from the VR space 
     dists = cell(1,max(terminals{mouse}));
     minVRCdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
-    for ccell = 5:length(terminals{mouse})
+    for ccell = 1:length(terminals{mouse})
         for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
            % find what rows each cluster is located in
             [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
@@ -16460,84 +16476,86 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot cluster size and pixel amplitude as function of distance from axon
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-figure;
-ax=gca;
-clr = hsv(length(terminals{mouse}));
-gscatter(sizeDistArray(:,1),sizeDistArray(:,2),sizeDistArray(:,3),clr)
-ax.FontSize = 15;
-ax.FontName = 'Times';
-% figure out what axons have clusters to be plotted 
-fullRows = ~isnan(sizeDistArray(:,1));
-axons = unique(sizeDistArray(fullRows,3));
-label = labels(axons);
-legend(label)
-hold all;
-for ccell = 1:length(terminals{mouse})
-    fitHandle = plot(f{ccell});
-    set(fitHandle,'Color',clr(ccell,:));
-end 
-if length(find(includeXY)) > 1
-    fitHandle = plot(fav);
-    leg = legend('show');
-    set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-    leg.String(end) = [];
-    rSquared = string(round(fav.Rsquared.Ordinary,2));
-    text(0,-10000000000000000000,rSquared,'FontSize',20)
-end 
-ylabel("Size of Cluster")
-xlabel("Distance From Axon") 
-if clustSpikeQ == 0 
-    title('All Clusters');
-elseif clustSpikeQ == 1 
-    if clustSpikeQ2 == 0 
-        title('Pre Spike Clusters');
-    elseif clustSpikeQ2 == 1
-        title('Post Spike Clusters');
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+if ETAorSTAq == 0 % STA data 
+    figure;
+    ax=gca;
+    clr = hsv(length(terminals{mouse}));
+    gscatter(sizeDistArray(:,1),sizeDistArray(:,2),sizeDistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    % figure out what axons have clusters to be plotted 
+    fullRows = ~isnan(sizeDistArray(:,1));
+    axons = unique(sizeDistArray(fullRows,3));
+    label = labels(axons);
+    legend(label)
+    hold all;
+    for ccell = 1:length(terminals{mouse})
+        fitHandle = plot(f{ccell});
+        set(fitHandle,'Color',clr(ccell,:));
     end 
-end 
-
-figure;
-ax=gca;
-clr = hsv(length(terminals{mouse}));
-gscatter(ampDistArray(:,1),ampDistArray(:,2),ampDistArray(:,3),clr)
-ax.FontSize = 15;
-ax.FontName = 'Times';
-% figure out what axons have clusters to be plotted 
-fullRows = find(~isnan(ampDistArray(:,1)));
-axons = unique(ampDistArray(fullRows,3));
-label = labels(axons);
-legend(label)
-hold all;
-for ccell = 1:length(terminals{mouse})
-    fitHandle = plot(fAmp{ccell});
-    set(fitHandle,'Color',clr(ccell,:));
-end 
-if length(find(includeXY)) > 1
-    fitHandle = plot(fAmpAv);
-    leg = legend('show');
-    set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-    leg.String(end) = [];
-    rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-    text(0,-10000000000000,rSquared,'FontSize',20)
-end 
-ylabel("Pixel Amplitude of Cluster")
-xlabel("Distance From Axon") 
-if clustSpikeQ == 0 
-    title('All Clusters');
-elseif clustSpikeQ == 1 
-    if clustSpikeQ2 == 0 
-        title('Pre Spike Clusters');
-    elseif clustSpikeQ2 == 1
-        title('Post Spike Clusters');
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fav);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(fav.Rsquared.Ordinary,2));
+        text(0,-10,rSquared,'FontSize',20)
+    end 
+    ylabel("Size of Cluster")
+    xlabel("Distance From Axon") 
+    if clustSpikeQ == 0 
+        title('All Clusters');
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title('Pre Spike Clusters');
+        elseif clustSpikeQ2 == 1
+            title('Post Spike Clusters');
+        end 
+    end 
+    
+    figure;
+    ax=gca;
+    clr = hsv(length(terminals{mouse}));
+    gscatter(ampDistArray(:,1),ampDistArray(:,2),ampDistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    % figure out what axons have clusters to be plotted 
+    fullRows = find(~isnan(ampDistArray(:,1)));
+    axons = unique(ampDistArray(fullRows,3));
+    label = labels(axons);
+    legend(label)
+    hold all;
+    for ccell = 1:length(terminals{mouse})
+        fitHandle = plot(fAmp{ccell});
+        set(fitHandle,'Color',clr(ccell,:));
+    end 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fAmpAv);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
+        text(0,-10,rSquared,'FontSize',20)
+    end 
+    ylabel("Pixel Amplitude of Cluster")
+    xlabel("Distance From Axon") 
+    if clustSpikeQ == 0 
+        title('All Clusters');
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title('Pre Spike Clusters');
+        elseif clustSpikeQ2 == 1
+            title('Post Spike Clusters');
+        end 
     end 
 end 
 
 %% plot distance from axon and VR space as a function of cluster timing
-if clustSpikeQ == 0 
+if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
     clr = hsv(length(terminals{mouse}));
@@ -16596,13 +16614,13 @@ if VRQ == 1
             fitHandle = plot(f3{ccell});
             set(fitHandle,'Color',clr(ccell,:));
         end 
-        if length(find(includeXY)) > 1
+        if length(find(includeXY3)) > 1
             fitHandle = plot(fav3);
             leg = legend('show');
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(10,8,rSquared,'FontSize',20)
+            text(32,2,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -16697,12 +16715,22 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     ax.FontSize = 15;
     ax.FontName = 'Times';
     ylabel("Average BBB Plume Timing")
-    xlabel("Axon")
-    if clustSpikeQ3 == 0
-        title({'BBB Plume Timing By Axon';'Average Cluster Time'});
-    elseif clustSpikeQ3 == 1
-        title({'BBB Plume Timing By Axon';'Cluster Start Time'});
-    end     
+    if ETAorSTAq == 0 % STA data
+        xlabel("Axon")
+    end 
+    if ETAorSTAq == 0 % STA data
+        if clustSpikeQ3 == 0
+            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
+        end     
+    elseif ETAorSTAq == 1 % ETA data
+        if clustSpikeQ3 == 0
+            title({'BBB Plume Timing';'Average Cluster Time'});
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Timing';'Cluster Start Time'});
+        end   
+    end 
     xticklabels(labels)
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
@@ -16729,8 +16757,13 @@ if clustSpikeQ == 0
     ax.FontSize = 15;
     ax.FontName = 'Times';
     ylabel("BBB Plume Size")
-    xlabel("Axon")  
-    title({'BBB Plume Size By Axon';'All Plumes'});
+    if ETAorSTAq == 0 % STA data
+        xlabel("Axon")  
+        title({'BBB Plume Size By Axon';'All Plumes'});
+    elseif ETAorSTAq == 1 % ETA data
+        title({'BBB Plume Size';'All Plumes'});
+    end 
+    
     xticklabels(labels)
 %     set(gca, 'YScale', 'log')
 
@@ -16747,8 +16780,12 @@ if clustSpikeQ == 0
     ax.FontSize = 15;
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude")
-    xlabel("Axon")  
-    title({'BBB Plume Pixel Amplitude By Axon';'All Plumes'});
+    if ETAorSTAq == 0 % STA data
+        xlabel("Axon")  
+        title({'BBB Plume Pixel Amplitude By Axon';'All Plumes'});
+    elseif ETAorSTAq == 1 % ETA data
+        title({'BBB Plume Pixel Amplitude';'All Plumes'});
+    end 
     xticklabels(labels)
 %     set(gca, 'YScale', 'log')
 elseif clustSpikeQ == 1 
@@ -16772,12 +16809,22 @@ elseif clustSpikeQ == 1
         ax.FontSize = 15;
         ax.FontName = 'Times';
         ylabel("BBB Plume Size")
-        xlabel("Axon")  
-        if clustSpikeQ3 == 0 
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-        end          
+        if ETAorSTAq == 0 % STA data
+            xlabel("Axon")
+        end 
+        if ETAorSTAq == 0 % STA data
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+            end          
+        elseif ETAorSTAq == 1 % ETA data
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+            end              
+        end 
         legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
         xticklabels(labels)   
 
@@ -16791,12 +16838,22 @@ elseif clustSpikeQ == 1
         ax.FontSize = 15;
         ax.FontName = 'Times';
         ylabel("BBB Plume Pixel Amplitude")
-        xlabel("Axon")  
-        if clustSpikeQ3 == 0 
-            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-        end          
+        if ETAorSTAq == 0 % STA data
+            xlabel("Axon")
+        end 
+        if ETAorSTAq == 0 % STA data
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+            end          
+        elseif ETAorSTAq == 1 % ETA data
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+            end       
+        end 
         legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
         xticklabels(labels) 
     end 
@@ -16819,11 +16876,19 @@ if  clustSpikeQ == 1
         ax.FontSize = 15;
         ax.FontName = 'Times';
         ylabel("BBB Plume Size") 
+        if ETAorSTAq == 0 % STA data
             if clustSpikeQ3 == 0 
                 title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
             elseif clustSpikeQ3 == 1
                 title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-            end             
+            end     
+        elseif ETAorSTAq == 1 % ETA data
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+            end                 
+        end 
         avLabels = ["Pre-Spike","Post-Spike"];
         xticklabels(avLabels)
 
@@ -16843,11 +16908,19 @@ if  clustSpikeQ == 1
         ax.FontSize = 15;
         ax.FontName = 'Times';
         ylabel("BBB Plume Pixel Amplitude") 
+        if ETAorSTAq == 0 % STA data
             if clustSpikeQ3 == 0 
                 title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
             elseif clustSpikeQ3 == 1
                 title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-            end             
+            end       
+        elseif ETAorSTAq == 1 % ETA data
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+            end     
+        end 
         avLabels = ["Pre-Spike","Post-Spike"];
         xticklabels(avLabels)
     end 
@@ -16856,12 +16929,17 @@ end
 
 %% plot change in cluster size and pixel amplitude over time for each axon and averaged 
 if clustSpikeQ == 0
-    clr = hsv(length(terminals{mouse}));
+    if ETAorSTAq == 0 % STA data 
+        clr = hsv(length(terminals{mouse}));
+    elseif ETAorSTAq == 1 % ETA data 
+        clr = hsv(size(clustSizeTS{terminals{mouse}(ccell)},1));
+    end 
     x = 1:size(im,3);
     % make a string array for the axons 
     count = 1; 
     axonString = string(1);
-    % plot change in plume size per cluster color coded by axon 
+    % plot change in plume size per cluster color coded by axon (STA) or
+    % cluster (ETA)
     figure;
     hold all;
     ax=gca;
@@ -16885,11 +16963,18 @@ if clustSpikeQ == 0
                         end                        
                     end 
                 end 
+                if ETAorSTAq == 1 % ETA data 
+                    h = plot(x,clustSizeTS{terminals{mouse}(ccell)}(clust,:),'Color',clr(clust,:),'LineWidth',2);  
+                end 
             end 
-            h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);   
+            if ETAorSTAq == 0 % STA data 
+                h = plot(x,clustSizeTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);   
+            end 
         end 
     end     
-    legend(axonLabel)
+    if ETAorSTAq == 0 % STA data 
+        legend(axonLabel)
+    end 
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
@@ -16909,10 +16994,19 @@ if clustSpikeQ == 0
     ax=gca;
     for ccell = 1:length(terminals{mouse})
         if isempty(clustPixAmpTS{terminals{mouse}(ccell)}) == 0 
-            h = plot(x,clustPixAmpTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);   
+            for clust = 1:size(clustSizeTS{terminals{mouse}(ccell)},1)
+                if ETAorSTAq == 1 % ETA data
+                    h = plot(x,clustPixAmpTS{terminals{mouse}(ccell)}(clust,:),'Color',clr(clust,:),'LineWidth',2);  
+                end 
+            end 
+            if ETAorSTAq == 0 % STA data 
+                h = plot(x,clustPixAmpTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);  
+            end 
         end 
     end     
-    legend(axonLabel)
+    if ETAorSTAq == 0 % STA data 
+        legend(axonLabel)
+    end 
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
@@ -16944,7 +17038,9 @@ if clustSpikeQ == 0
     axons = terminals{mouse};
     axons(presentAxons) = NaN;
     axonString = string(axons);
-    legend(axonString)
+    if ETAorSTAq == 0 % STA data 
+        legend(axonString)
+    end 
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
@@ -16956,7 +17052,11 @@ if clustSpikeQ == 0
     ax.FontName = 'Times';
     ylabel("BBB Plume Size") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size Over Time';'Per Axon'})
+    if ETAorSTAq == 0 % STA data 
+        title({'Average Change in BBB Plume Size Over Time';'Per Axon'})
+    elseif ETAorSTAq == 1 % ETA data 
+        title('Average Change in BBB Plume Size Over Time')
+    end 
 
      % resort data to plot change in average cluster pixel amplitude per axon
     figure;
@@ -16969,7 +17069,9 @@ if clustSpikeQ == 0
         plot(x,avAxonClustPixAmpTS(count,:),'Color',clr(ccell,:),'LineWidth',2);      
         count = count + 1;
     end 
-    legend(axonString)
+    if ETAorSTAq == 0 % STA data 
+        legend(axonString)
+    end 
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
@@ -16981,75 +17083,83 @@ if clustSpikeQ == 0
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Average Change in';'BBB Plume Pixel Amplitude Over Time';'Per Axon'})   
+    if ETAorSTAq == 0 % STA data 
+        title({'Average Change in';'BBB Plume Pixel Amplitude Over Time';'Per Axon'})   
+    elseif ETAorSTAq == 1 % ETA data 
+        title({'Average Change in';'BBB Plume Pixel Amplitude Over Time'}) 
+    end 
 
-    % plot average change in cluster size of all axons w/95% CI 
-    figure;
-    hold all;
-    ax=gca;
-    % determine average 
-    avAllClustSizeTS = nanmean(avAxonClustSizeTS);
-    % determine 95% CI 
-    SEM = (nanstd(avAxonClustSizeTS))/(sqrt(size(avAxonClustSizeTS,1))); %#ok<*NANSTD> % Standard Error            
-    ts_Low = tinv(0.025,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
-    ts_High = tinv(0.975,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
-    CI_Low = (nanmean(avAxonClustSizeTS,1)) + (ts_Low*SEM);  % Confidence Intervals
-    CI_High = (nanmean(avAxonClustSizeTS,1)) + (ts_High*SEM);  % Confidence Intervals
-    plot(x,avAllClustSizeTS,'k','LineWidth',2);   
-    clear v f 
-    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
-    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
-    % remove NaNs so face can be made and colored 
-    nanRows = isnan(v(:,2));
-    v(nanRows,:) = []; f = 1:size(v,1);
-    patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
-    alpha(0.3)
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
-    xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
-
-    % plot average change in cluster pixel amplitude of all axons w/95% CI 
-    figure;
-    hold all;
-    ax=gca;
-    % determine average 
-    avAllClustPixAmpTS = nanmean(avAxonClustPixAmpTS);
-    % determine 95% CI 
-    SEM = (nanstd(avAxonClustPixAmpTS))/(sqrt(size(avAxonClustPixAmpTS,1))); %#ok<*NANSTD> % Standard Error            
-    ts_Low = tinv(0.025,size(avAxonClustPixAmpTS,1)-1);% T-Score for 95% CI
-    ts_High = tinv(0.975,size(avAxonClustPixAmpTS,1)-1);% T-Score for 95% CI
-    CI_Low = (nanmean(avAxonClustPixAmpTS,1)) + (ts_Low*SEM);  % Confidence Intervals
-    CI_High = (nanmean(avAxonClustPixAmpTS,1)) + (ts_High*SEM);  % Confidence Intervals
-    plot(x,avAllClustPixAmpTS,'k','LineWidth',2);   
-    clear v f 
-    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
-    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
-    % remove NaNs so face can be made and colored 
-    nanRows = isnan(v(:,2));
-    v(nanRows,:) = []; f = 1:size(v,1);
-    patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
-    alpha(0.3)
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
-    xlabel("Time (s)")
-    title({'Average Change in'; 'BBB Plume Pixel Amplitude Over Time';'Across Axons'})  
+    if ETAorSTAq == 0 % STA data 
+        % plot average change in cluster size of all axons w/95% CI 
+        figure;
+        hold all;
+        ax=gca;
+        % determine average 
+        avAllClustSizeTS = nanmean(avAxonClustSizeTS);
+        % determine 95% CI 
+        SEM = (nanstd(avAxonClustSizeTS))/(sqrt(size(avAxonClustSizeTS,1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(avAxonClustSizeTS,1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(avAxonClustSizeTS,1)) + (ts_High*SEM);  % Confidence Intervals
+        plot(x,avAllClustSizeTS,'k','LineWidth',2);   
+        clear v f 
+        v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+        v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+        % remove NaNs so face can be made and colored 
+        nanRows = isnan(v(:,2));
+        v(nanRows,:) = []; f = 1:size(v,1);
+        patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+        alpha(0.3)
+        Frames = size(im,3);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+        FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Size") 
+        xlabel("Time (s)")
+        title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
+    end 
+    
+    if ETAorSTAq == 0 % STA data
+        % plot average change in cluster pixel amplitude of all axons w/95% CI 
+        figure;
+        hold all;
+        ax=gca;
+        % determine average 
+        avAllClustPixAmpTS = nanmean(avAxonClustPixAmpTS);
+        % determine 95% CI 
+        SEM = (nanstd(avAxonClustPixAmpTS))/(sqrt(size(avAxonClustPixAmpTS,1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(avAxonClustPixAmpTS,1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(avAxonClustPixAmpTS,1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(avAxonClustPixAmpTS,1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(avAxonClustPixAmpTS,1)) + (ts_High*SEM);  % Confidence Intervals
+        plot(x,avAllClustPixAmpTS,'k','LineWidth',2);   
+        clear v f 
+        v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+        v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+        % remove NaNs so face can be made and colored 
+        nanRows = isnan(v(:,2));
+        v(nanRows,:) = []; f = 1:size(v,1);
+        patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+        alpha(0.3)
+        Frames = size(im,3);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+        FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Average Change in'; 'BBB Plume Pixel Amplitude Over Time';'Across Axons'})  
+    end 
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for however many groups you want 
