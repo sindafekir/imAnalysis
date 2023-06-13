@@ -13714,7 +13714,7 @@ if CaFrameQ == 1
     end 
 end 
 %}
-%% (STA stacks) create raw, but high pass filtered STA vids for Muller lab wave analysis 
+%% (STA stacks) create zscored and high pass filtered STA vids for Muller lab wave analysis 
 % sorts data into windows for averaging 
 % option to high pass filter the video 
 % can create shuffled and bootrapped x100 spikes 
@@ -13727,7 +13727,7 @@ end
 %{
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
-spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
+spikeQ = 0; %input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
 % sort red and green channel stacks based on ca peak location 
 for mouse = 1:mouseNum
 %     dir1 = dataDir{mouse};   
@@ -13879,10 +13879,49 @@ elseif highPassQ == 0
     hpfRed = redStacks;
 end 
 
-% do not z score 
-szGreenStack = hpfGreen; 
-szRedStack = hpfRed; 
-clearvars hpfGreen hpfRed
+% combine the vids to get z score of whole experiment
+frameLens = zeros(1,length(vidList{mouse}));
+for vid = 1:length(vidList{mouse})
+    if vid == 1 
+        frameLen = size(greenStacks{vid},3);
+    elseif vid > 1 
+        frameLen = frameLen + size(greenStacks{vid},3);
+    end 
+    frameLens(vid) = size(greenStacks{vid},3);
+end 
+combGreenStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
+combRedStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
+for vid = 1:length(vidList{mouse})
+    if vid == 1 
+        count = size(greenStacks{vid},3);
+    end 
+    for frame = 1:size(greenStacks{vid},3) 
+        if vid == 1 
+            combGreenStack(:,:,frame) = hpfGreen{vid}(:,:,frame);
+            combRedStack(:,:,frame) = hpfRed{vid}(:,:,frame);
+        elseif vid > 1 
+            combGreenStack(:,:,count+1) = hpfGreen{vid}(:,:,frame);
+            combRedStack(:,:,count+1) = hpfRed{vid}(:,:,frame);
+            count = count + 1;                                      
+        end 
+    end     
+end 
+% z score the videos 
+zGreenStack = zscore(combGreenStack,0,3);
+zRedStack = zscore(combRedStack,0,3);
+clearvars combGreenStack combRedStack
+% resort videos
+szGreenStack = cell(1,length(vidList{mouse}));
+szRedStack = cell(1,length(vidList{mouse}));
+count = 1;
+for vid = 1:length(vidList{mouse})
+    for frame = 1:frameLens(vid)       
+        szGreenStack{vid}(:,:,frame) = zGreenStack(:,:,count); 
+        szRedStack{vid}(:,:,frame) = zRedStack(:,:,count); 
+        count = count + 1;
+    end 
+end 
+clearvars zGreenStack zRedStack hpfGreen hpfRed
 
 % further sort and average data
 CI_High = cell(1,max(terminals{mouse}));
@@ -13890,166 +13929,161 @@ CI_Low = cell(1,max(terminals{mouse}));
 CIlowAv = cell(1,max(terminals{mouse}));
 CIhighAv = cell(1,max(terminals{mouse}));
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
-workFlow = 1;
-while workFlow == 1 
-    tic
-    for it = 1:size(sigLocs{vid}{terminals{mouse}(ccell)},1)
-        % sort data 
-        % terminals = terminals{1};
-        if tTypeQ == 0 
-            sortedGreenStacks = cell(1,length(vidList{mouse}));
-            sortedRedStacks = cell(1,length(vidList{mouse}));
-            if rightChan == 0     
-                VesSortedGreenStacks = cell(1,length(vidList{mouse}));
-            elseif rightChan == 1
-                VesSortedRedStacks = cell(1,length(vidList{mouse}));
-            end    
-                for vid = 1:length(vidList{mouse})
-                    for ccell = 1:length(terminals{mouse})               
-                        for peak = 1:size(sigLocs{vid}{terminals{mouse}(ccell)},2)            
-                            if sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
-                                start = sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                                stop = sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
-                                if start == 0 
-                                    start = 1 ;
-                                    stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                                end        
-                                if stop < size(szGreenStack{vid},3)
-                                    sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = szGreenStack{vid}(:,:,start:stop);
-                                    sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = szRedStack{vid}(:,:,start:stop);
-                                    if rightChan == 0     
-                                        VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = greenStacks{vid}(:,:,start:stop);
-                                    elseif rightChan == 1
-                                        VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = redStacks{vid}(:,:,start:stop);
-                                    end    
-                                end 
+for it = 1:size(sigLocs{vid}{terminals{mouse}(ccell)},1)
+    % sort data 
+    % terminals = terminals{1};
+    if tTypeQ == 0 
+        sortedGreenStacks = cell(1,length(vidList{mouse}));
+        sortedRedStacks = cell(1,length(vidList{mouse}));
+        if rightChan == 0     
+            VesSortedGreenStacks = cell(1,length(vidList{mouse}));
+        elseif rightChan == 1
+            VesSortedRedStacks = cell(1,length(vidList{mouse}));
+        end    
+            for vid = 1:length(vidList{mouse})
+                for ccell = 1:length(terminals{mouse})               
+                    for peak = 1:size(sigLocs{vid}{terminals{mouse}(ccell)},2)            
+                        if sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
+                            start = sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                            stop = sigLocs{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                            if start == 0 
+                                start = 1 ;
+                                stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                            end        
+                            if stop < size(szGreenStack{vid},3)
+                                sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = szGreenStack{vid}(:,:,start:stop);
+                                sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = szRedStack{vid}(:,:,start:stop);
+                                if rightChan == 0     
+                                    VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak} = greenStacks{vid}(:,:,start:stop);
+                                elseif rightChan == 1
+                                    VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak} = redStacks{vid}(:,:,start:stop);
+                                end    
                             end 
-                        end               
-                    end 
+                        end 
+                    end               
                 end 
-        elseif tTypeQ == 1
-            %tTypeSigLocs{vid}{CaROI}{1} = blue light
-            %tTypeSigLocs{vid}{CaROI}{2} = red light
-            %tTypeSigLocs{vid}{CaROI}{3} = ISI
-            sortedGreenStacks = cell(1,length(vidList{mouse}));
-            sortedRedStacks = cell(1,length(vidList{mouse}));
-            for vid = 1:length(vidList{mouse})  
-                for ccell = 1:length(terminals{mouse})   
-                    for per = 1:3 
-                        for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                    
-                            if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                                     
-                                start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
-                                stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}); 
-                                if start == 0 
-                                    start = 1 ;
-                                    stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                                end                
-                                sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szGreenStack{vid}(:,:,start:stop);
-                                sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szRedStack{vid}(:,:,start:stop);
-                            end 
+            end 
+    elseif tTypeQ == 1
+        %tTypeSigLocs{vid}{CaROI}{1} = blue light
+        %tTypeSigLocs{vid}{CaROI}{2} = red light
+        %tTypeSigLocs{vid}{CaROI}{3} = ISI
+        sortedGreenStacks = cell(1,length(vidList{mouse}));
+        sortedRedStacks = cell(1,length(vidList{mouse}));
+        for vid = 1:length(vidList{mouse})  
+            for ccell = 1:length(terminals{mouse})   
+                for per = 1:3 
+                    for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                    
+                        if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                                     
+                            start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
+                            stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}); 
+                            if start == 0 
+                                start = 1 ;
+                                stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                            end                
+                            sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szGreenStack{vid}(:,:,start:stop);
+                            sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szRedStack{vid}(:,:,start:stop);
                         end 
                     end 
                 end 
-            end   
-        end 
-    %     clearvars greenStacks redStacks start stop sigLocs sigPeaks 
-    
-        % resort and average calcium peak aligned traces across videos 
-        if tTypeQ == 0 
-            greenStackArray2 = cell(1,max(terminals{mouse}));
-            if rightChan == 0     
-                VesGreenStackArray2 = cell(1,max(terminals{mouse}));
-            end  
-            for ccell = 1:length(terminals{mouse})
-                count = 1;
-                for vid = 1:length(vidList{mouse})        
-                    for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)},2)  
-                        if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                            greenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
-                            if rightChan == 0
-                                VesGreenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
-                            end           
-                            count = count + 1;
-                        end 
-                    end
-                end 
             end 
-    %         clearvars sortedGreenStacks VesSortedGreenStacks
-            clearvars VesSortedGreenStacks
-            redStackArray2 = cell(1,max(terminals{mouse}));
-            if rightChan == 1     
-                VesRedStackArray2 = cell(1,max(terminals{mouse}));
-            end  
-            for ccell = 1:length(terminals{mouse})
-                count = 1;
-                for vid = 1:length(vidList{mouse})        
-                    for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
-                        if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                            redStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                            if rightChan == 1
-                                VesRedStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
-                            end           
-                            count = count + 1;
-                        end 
-                    end
-                end 
-            end 
-    %         clearvars sortedRedStacks VesSortedRedStacks
-            clearvars VesSortedRedStacks
-            avGreenStack = cell(1,max(terminals{mouse}));
-            for ccell = 1:length(terminals{mouse}) % determine the average 
-                avGreenStack{terminals{mouse}(ccell)} = nanmean(greenStackArray2{terminals{mouse}(ccell)},4);
-            end 
-            clearvars greenStackArray2
-            avRedStack = cell(1,max(terminals{mouse}));
-            for ccell = 1:length(terminals{mouse}) % determine the average 
-                avRedStack{terminals{mouse}(ccell)} = nanmean(redStackArray2{terminals{mouse}(ccell)},4);
-            end 
-            clearvars redStackArray2
-            if rightChan == 0  
-                VesAvGreenStack = cell(1,max(terminals{mouse}));
-                for ccell = 1:length(terminals{mouse}) % determine the average 
-                    VesAvGreenStack{terminals{mouse}(ccell)} = nanmean(VesGreenStackArray2{terminals{mouse}(ccell)},4);
-                end 
-                clearvars VesGreenStackArray2
-            end 
-            if rightChan == 1  
-                VesAvRedStack = cell(1,max(terminals{mouse}));
-                for ccell = 1:length(terminals{mouse}) % determine the average 
-                    VesAvRedStack{terminals{mouse}(ccell)} = nanmean(VesRedStackArray2{terminals{mouse}(ccell)},4);
-                end 
-                clearvars VesRedStackArray2
-            end 
-    
-        elseif tTypeQ == 1
-            per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
-            greenStackArray2 = cell(1,length(vidList{mouse}));
-            redStackArray2 = cell(1,length(vidList{mouse}));
-            avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
-            avRedStack2 = cell(1,length(sortedGreenStacks{1}));
-            avGreenStack = cell(1,length(sortedGreenStacks{1}));
-            avRedStack = cell(1,length(sortedGreenStacks{1}));
-            for ccell = 1:length(terminals{mouse})
-                for vid = 1:length(vidList{mouse})    
-                    count = 1;
-                    for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per},2)  
-                        if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak}) == 0
-                            greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
-                            redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
-                            count = count + 1;
-                        end 
-                    end
-                    avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
-                    avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
-                end 
-                avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
-                avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
-            end 
-    %         clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
-            clearvars greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
-        end 
+        end   
     end 
-    toc
+%     clearvars greenStacks redStacks start stop sigLocs sigPeaks 
+
+    % resort and average calcium peak aligned traces across videos 
+    if tTypeQ == 0 
+        greenStackArray2 = cell(1,max(terminals{mouse}));
+        if rightChan == 0     
+            VesGreenStackArray2 = cell(1,max(terminals{mouse}));
+        end  
+        for ccell = 1:length(terminals{mouse})
+            count = 1;
+            for vid = 1:length(vidList{mouse})        
+                for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)},2)  
+                    if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
+                        greenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                        if rightChan == 0
+                            VesGreenStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedGreenStacks{vid}{terminals{mouse}(ccell)}{peak});
+                        end           
+                        count = count + 1;
+                    end 
+                end
+            end 
+        end 
+%         clearvars sortedGreenStacks VesSortedGreenStacks
+        clearvars VesSortedGreenStacks
+        redStackArray2 = cell(1,max(terminals{mouse}));
+        if rightChan == 1     
+            VesRedStackArray2 = cell(1,max(terminals{mouse}));
+        end  
+        for ccell = 1:length(terminals{mouse})
+            count = 1;
+            for vid = 1:length(vidList{mouse})        
+                for peak = 1:size(sortedRedStacks{vid}{terminals{mouse}(ccell)},2)  
+                    if isempty(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak}) == 0
+                        redStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(sortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                        if rightChan == 1
+                            VesRedStackArray2{terminals{mouse}(ccell)}(:,:,:,count) = single(VesSortedRedStacks{vid}{terminals{mouse}(ccell)}{peak});
+                        end           
+                        count = count + 1;
+                    end 
+                end
+            end 
+        end 
+%         clearvars sortedRedStacks VesSortedRedStacks
+        clearvars VesSortedRedStacks
+        avGreenStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            avGreenStack{terminals{mouse}(ccell)} = nanmean(greenStackArray2{terminals{mouse}(ccell)},4);
+        end 
+        clearvars greenStackArray2
+        avRedStack = cell(1,max(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse}) % determine the average 
+            avRedStack{terminals{mouse}(ccell)} = nanmean(redStackArray2{terminals{mouse}(ccell)},4);
+        end 
+        clearvars redStackArray2
+        if rightChan == 0  
+            VesAvGreenStack = cell(1,max(terminals{mouse}));
+            for ccell = 1:length(terminals{mouse}) % determine the average 
+                VesAvGreenStack{terminals{mouse}(ccell)} = nanmean(VesGreenStackArray2{terminals{mouse}(ccell)},4);
+            end 
+            clearvars VesGreenStackArray2
+        end 
+        if rightChan == 1  
+            VesAvRedStack = cell(1,max(terminals{mouse}));
+            for ccell = 1:length(terminals{mouse}) % determine the average 
+                VesAvRedStack{terminals{mouse}(ccell)} = nanmean(VesRedStackArray2{terminals{mouse}(ccell)},4);
+            end 
+            clearvars VesRedStackArray2
+        end 
+
+    elseif tTypeQ == 1
+        per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
+        greenStackArray2 = cell(1,length(vidList{mouse}));
+        redStackArray2 = cell(1,length(vidList{mouse}));
+        avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
+        avRedStack2 = cell(1,length(sortedGreenStacks{1}));
+        avGreenStack = cell(1,length(sortedGreenStacks{1}));
+        avRedStack = cell(1,length(sortedGreenStacks{1}));
+        for ccell = 1:length(terminals{mouse})
+            for vid = 1:length(vidList{mouse})    
+                count = 1;
+                for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per},2)  
+                    if isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak}) == 0
+                        greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
+                        redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
+                        count = count + 1;
+                    end 
+                end
+                avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
+                avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
+            end 
+            avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
+            avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
+        end 
+%         clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
+        clearvars greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
+    end 
 end 
 
 % don't normalize because it's z-scored 
