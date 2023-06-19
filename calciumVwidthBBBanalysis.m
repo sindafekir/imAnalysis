@@ -17673,7 +17673,7 @@ end
 
 %}
 %}
-%% Muller wave finder 
+%% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
 % use non-smoothed, but high pass filtered and z-scored data 
 
 downsampleRate = input("Input the downsample rate for wave vector creation. ");

@@ -17673,20 +17673,28 @@ end
 
 %}
 %}
-%% Muller wave finder 
+%% Muller wave finder (this section of this code uses Lyle Mullers wave finder 
 % use non-smoothed, but high pass filtered and z-scored data 
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% TO DO:
-% 1) make downsample rate adjustable 
-% 2) iterate through axons 
-% 3) compare with DBSCAN clusters 
-
-for ccell = 1:length(terminals{mouse})
+downsampleRate = input("Input the downsample rate for wave vector creation. ");
+timeQ = input("Input 1 to look either before or after the spike/event. Input 0 otherwise. ");
+if timeQ == 1 
+    timeQ2 = input("Input 0 to see pre-spike/event data. Input 1 to see post-spike/event data. ");
+end 
+for ccell = 1%:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
-    imData = RightChan{axon};
+    if timeQ == 0 
+        imData = RightChan{axon};
+    elseif timeQ == 1 
+        thresh = ceil(size(RightChan{axon},3)/2);
+        if timeQ2 == 0 % look at pre-spike/event data 
+            imData = RightChan{axon}(:,:,1:thresh);
+        elseif timeQ2 == 1 % look at post-spike/event data 
+            imData = RightChan{axon}(:,:,thresh:size(RightChan{axon},3));
+        end 
+    end 
+
     % get average vessel width outline (all pixels that at some point have the
     % vessel outline in them) 
     vWidthPerim = mean(BW_perim{axon},3);
@@ -17704,7 +17712,6 @@ for ccell = 1:length(terminals{mouse})
     end 
     
     % spatially smooth the data
-    downsampleRate = 4;
     smth_filt_xf = downsample(filt_xf,downsampleRate);
     smth_filt_xf = permute(smth_filt_xf,[2 1 3]);
     smth_filt_xf = downsample(smth_filt_xf,downsampleRate);
@@ -17731,9 +17738,18 @@ for ccell = 1:length(terminals{mouse})
     % plot the vessel outline over the % change image 
     hold on;
     scatter(xf,yf,1000,'red','.');
+    if timeQ == 0
+        title(sprintf("Axon %d. Downsampled x%d.",axon,downsampleRate))
+    elseif timeQ == 1 
+        if timeQ2 == 0 % look at pre-spike/event data 
+            title(sprintf("Axon %d. Downsampled x%d. Pre-spike/event data.",axon,downsampleRate))
+        elseif timeQ2 == 1 % look at post-spike/event data 
+            title(sprintf("Axon %d. Downsampled x%d. Post-spike/event data.",axon,downsampleRate))
+        end 
+    end 
+    set(gcf,'units','normalized','outerposition',[0 0 1 1])
 end 
-
-
+%}
 %% average 3 frames (of STA videos) around a specific time point
 %{
 %specify what time point you want to see 
