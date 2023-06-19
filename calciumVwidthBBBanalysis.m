@@ -17681,7 +17681,7 @@ timeQ = input("Input 1 to look either before or after the spike/event. Input 0 o
 if timeQ == 1 
     timeQ2 = input("Input 0 to see pre-spike/event data. Input 1 to see post-spike/event data. ");
 end 
-for ccell = 1%:length(terminals{mouse})
+for ccell = 1:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
     if timeQ == 0 
