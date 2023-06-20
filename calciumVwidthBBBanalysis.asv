@@ -17673,14 +17673,17 @@ end
 
 %}
 %}
-%% Muller wave finder (this section of this code uses Lyle Mullers wave finder 
+%% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
 % use non-smoothed, but high pass filtered and z-scored data 
 
+pixelxDist = 3.23; % microns 
+pixel_spacing = 2.16; %a.u.
 downsampleRate = input("Input the downsample rate for wave vector creation. ");
 timeQ = input("Input 1 to look either before or after the spike/event. Input 0 otherwise. ");
 if timeQ == 1 
     timeQ2 = input("Input 0 to see pre-spike/event data. Input 1 to see post-spike/event data. ");
 end 
+pdAv = cell(1,length(terminals{mouse}));
 for ccell = 1%:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
@@ -17700,14 +17703,14 @@ for ccell = 1%:length(terminals{mouse})
     vWidthPerim = mean(BW_perim{axon},3);
     vWidthPerim=vWidthPerim~=0;
     % identify imaging data                                    
-    xf = double(imData);
+    im = double(imData);
     
     % bandpass filter the data (this works on vectors so need to iterate
     % through vid 
-    filt_xf = nan(size(xf,1),size(xf,2),size(xf,3));
-    for row = 1 : size(xf,1)
-        for col = 1:size(xf,2)
-            filt_xf(row,col,:) = bandpass_filter(xf(row,col,:),0.2,1.2,4,FPS);
+    filt_xf = nan(size(im,1),size(im,2),size(im,3));
+    for row = 1 : size(im,1)
+        for col = 1:size(im,2)
+            filt_xf(row,col,:) = bandpass_filter(im(row,col,:),0.2,1.2,4,FPS);
         end 
     end 
     
@@ -17733,8 +17736,10 @@ for ccell = 1%:length(terminals{mouse})
     % calculate phase gradient
     [pm,pd,dx,dy] = phase_gradient_complex_multiplication( xph, pixel_spacing, signIF );
     
-    % plot resulting vector field
-    plot_vector_field( exp( 1i .* pd(:,:,1) ), 1 );
+    % plot average resulting vector field
+    pdAv{ccell} = mean(pd,3);
+    plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
+
     % plot the vessel outline over the % change image 
     hold on;
     scatter(xf,yf,1000,'red','.');
@@ -17749,6 +17754,57 @@ for ccell = 1%:length(terminals{mouse})
     end 
     set(gcf,'units','normalized','outerposition',[0 0 1 1])
 end 
+
+% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
+% right facing arrow = 0, 6.2832, -6.2832
+% up facing arrow = 1.5708, -4.7124
+% left facing arrow = 3.1416, -3.1416
+% down facing arrow = 4.7124, -1.5708
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% plot the coherence of vectors around the vessel and in the entire image outside of the vessel 
+% that move away from the vessel 
+if downsampleRate == 1 && timeQ == 0
+    correctedPdAv = cell(1,length(terminals{mouse}));
+    awayFromCenterVectors = cell(1,length(terminals{mouse}));
+    for ccell = 1%:length(terminals{mouse})
+        
+        % get average vessel width location (all pixels that at some point have the
+        % vessel in them) 
+        vesselMask = mean(BWstacks{axon},3);
+        vesselMask=vesselMask~=0;
+
+        % determine the center of the vessel 
+        center = regionprops(vesselMask,"Centroid");
+
+        % change the original pd values so they are positive going only
+        % (between 0 and 6.29)
+        [negLocRow, negLocCol] = find(pdAv{ccell} < 0);
+        correctedPdAv{ccell}(negLocRow,negLocCol) = pdAv{ccell}(negLocRow,negLocCol)+6.2832;
+
+        % calculate new pd values for each pixel moving away from the
+        % centroid 
+        x1 = center.Centroid(1); y1 = center.Centroid(2); 
+        xr = y1; yr = size(im,1); % reference vector 
+%         v_1 = [xr,yr,0] - [x1,y1,0];
+        for row = 1 : size(im,1)
+            y2 = row;
+            for col = 1:size(im,2)
+                x2 = col; 
+%                 v_2 = [x2,y2,0] - [x1,y1,0];
+                awayFromCenterVectors{ccell}(row,col) = atan2(x1*y2-y1*x2,x1*x2+y1*y2);
+            end 
+        end 
+%         plot_vector_field( exp( 1i .* corPdAv{ccell} ), 1 );     
+%         plot_vector_field( exp( 1i .* awayFromCenterVectors{ccell} ), 1 );  
+    end 
+
+elseif downsampleRate ~= 1 || timeQ ~= 0 
+    fprintf("To see coherence of vectors (near vessel) moving away from vessel, must set downsample rate to 1 and look at all the data.");
+end 
+
 %}
 %% average 3 frames (of STA videos) around a specific time point
 %{
