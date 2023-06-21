@@ -17786,19 +17786,20 @@ if downsampleRate == 1 && timeQ == 0
 
         % calculate new pd values for each pixel moving away from the
         % centroid 
-        x1 = center.Centroid(1); y1 = center.Centroid(2); 
-        xr = y1; yr = size(im,1); % reference vector 
-        v_1 = [xr,yr,0] - [x1,y1,0];
+        x1 = floor(center.Centroid(1)); y1 = floor(center.Centroid(2)); 
+        xr = size(im,2); yr = y1; % reference vector 
         for row = 1 : size(im,1)
             y2 = row;
             for col = 1:size(im,2)
                 x2 = col; 
-                v_2 = [x2,y2,0] - [x1,y1,0];
-                awayFromCenterVectors{ccell}(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1));
+                v_1 = [xr,yr,0] - [x1,y1,0]; v_2 = [x2,y2,0] - [x1,y1,0]; % atempt #1 
+                if row >= y1
+                    awayFromCenterVectors{ccell}(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % atempt #1 
+                elseif row < y1 
+                    awayFromCenterVectors{ccell}(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % atempt #1 
+                end 
             end 
         end 
-%         plot_vector_field( exp( 1i .* corPdAv{ccell} ), 1 );     
-%         plot_vector_field( exp( 1i .* awayFromCenterVectors{ccell} ), 1 );  
     end 
 
 elseif downsampleRate ~= 1 || timeQ ~= 0 
