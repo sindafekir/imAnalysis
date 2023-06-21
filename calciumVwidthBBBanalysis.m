@@ -17735,9 +17735,11 @@ for ccell = 1%:length(terminals{mouse})
     
     % calculate phase gradient
     [pm,pd,dx,dy] = phase_gradient_complex_multiplication( xph, pixel_spacing, signIF );
-    
+   
     % plot average resulting vector field
-    pdAv{ccell} = mean(pd,3);
+    pdAv{ccell} = mean(pd,3); 
+    % replace 0s with nan 
+    pdAv{ccell}(pdAv{ccell}==0) = NaN;
     plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
 
     % plot the vessel outline over the % change image 
@@ -17761,9 +17763,6 @@ end
 % left facing arrow = 3.1416, -3.1416
 % down facing arrow = 4.7124, -1.5708
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % plot the coherence of vectors around the vessel and in the entire image outside of the vessel 
 % that move away from the vessel 
 if downsampleRate == 1 && timeQ == 0
@@ -17794,14 +17793,21 @@ if downsampleRate == 1 && timeQ == 0
                 x2 = col; 
                 v_1 = [xr,yr,0] - [x1,y1,0]; v_2 = [x2,y2,0] - [x1,y1,0]; % atempt #1 
                 if row >= y1
-                    awayFromCenterVectors{ccell}(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % atempt #1 
+                    awayFromCenterVectors{ccell}(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % working counter clockwise to determine angle of pixle relative to reference angle 
                 elseif row < y1 
-                    awayFromCenterVectors{ccell}(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % atempt #1 
+                    awayFromCenterVectors{ccell}(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % once an angle is greater than 180 degrees, matlab works clockwise 
                 end 
             end 
         end 
-    end 
+%         plot_vector_field( exp( 1i .* awayFromCenterVectors{ccell} ), 1 );  
+        
+        % make all pixels inside of vessel nan for real pdAv and
+        % awayFromCenterVectors 
+        pdAv{ccell}(vesselMask) = nan;
+        awayFromCenterVectors{ccell}(vesselMask) = nan;
 
+
+    end 
 elseif downsampleRate ~= 1 || timeQ ~= 0 
     fprintf("To see coherence of vectors (near vessel) moving away from vessel, must set downsample rate to 1 and look at all the data.");
 end 
