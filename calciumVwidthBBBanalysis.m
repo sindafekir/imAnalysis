@@ -17685,7 +17685,7 @@ if timeQ == 1
 end 
 pdAv = cell(1,length(terminals{mouse}));
 PD = cell(1,length(terminals{mouse}));
-for ccell = 1%:length(terminals{mouse})
+for ccell = 1:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
     if timeQ == 0 
@@ -17758,57 +17758,84 @@ end
 
 % plot the coherence of vectors around the vessel and in the entire image outside of the vessel 
 % that move away from the vessel 
-if downsampleRate == 1 && timeQ == 0
-    correctedPdAv = cell(1,length(terminals{mouse}));
-    awayFromCenterVectors = nan(size(im,1),size(im,2));
-    awayPix = cell(1,length(terminals{mouse}));
-    for ccell = 1%:length(terminals{mouse})        
-        % get average vessel width location (all pixels that at some point have the
-        % vessel in them) 
-        vesselMask = mean(BWstacks{axon},3);
-        vesselMask=vesselMask~=0;
-        % determine the center of the vessel 
-        center = regionprops(vesselMask,"Centroid");
+if downsampleRate == 1 && timeQ == 0 
+    % get average vessel width location (all pixels that at some point have the
+    % vessel in them) 
+    vesselMask = mean(BWstacks{axon},3);
+    vesselMask=vesselMask~=0;
+    % determine the center of the vessel 
+    center = regionprops(vesselMask,"Centroid");
 %         % change the original pd values so they are positive going only
 %         % (between 0 and 6.29)
 %         [negLocRow, negLocCol] = find(pdAv{ccell} < 0);
 %         correctedPdAv{ccell}(negLocRow,negLocCol) = pdAv{ccell}(negLocRow,negLocCol)+6.2832;
-        % calculate new pd values for each pixel moving away from the
-        % centroid 
-        x1 = floor(center.Centroid(1)); y1 = floor(center.Centroid(2)); 
-        xr = size(im,2); yr = y1; % reference vector 
-        for row = 1 : size(im,1)
-            y2 = row;
-            for col = 1:size(im,2)
-                x2 = col; 
-                v_1 = [xr,yr,0] - [x1,y1,0]; v_2 = [x2,y2,0] - [x1,y1,0]; % atempt #1 
-                if row >= y1
-                    awayFromCenterVectors(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % working counter clockwise to determine angle of pixle relative to reference angle 
-                elseif row < y1 
-                    awayFromCenterVectors(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % once an angle is greater than 180 degrees, matlab works clockwise 
-                end 
+    % calculate new pd values for each pixel moving away from the
+    % centroid 
+    x1 = floor(center.Centroid(1)); y1 = floor(center.Centroid(2)); 
+    xr = size(im,2); yr = y1; % reference vector 
+    awayFromCenterVectors = nan(size(im,1),size(im,2)); 
+    for row = 1 : size(im,1)
+        y2 = row;
+        for col = 1:size(im,2)
+            x2 = col; 
+            v_1 = [xr,yr,0] - [x1,y1,0]; v_2 = [x2,y2,0] - [x1,y1,0]; % atempt #1 
+            if row >= y1
+                awayFromCenterVectors(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % working counter clockwise to determine angle of pixle relative to reference angle 
+            elseif row < y1 
+                awayFromCenterVectors(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % once an angle is greater than 180 degrees, matlab works clockwise 
             end 
         end 
+    end 
+    correctedPdAv = cell(1,length(terminals{mouse}));
+    awayPix = cell(1,length(terminals{mouse}));
+    totalNumPix = cell(1,length(terminals{mouse}));
+    numAwayPix = cell(1,length(terminals{mouse}));
+    percentAwayPix = cell(1,length(terminals{mouse}));
+    windTime = ceil(size(im,3)/FPSstack{mouse});
+    timeStart = -(windTime/2); timeEnd = windTime/2;
+    for ccell = 1:length(terminals{mouse})  
 %         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );          
         % make all pixels inside of vessel nan for real pdAv and
         % awayFromCenterVectors 
         pdAv{ccell}(vesselMask) = nan;
         PD{ccell}(BWstacks{terminals{mouse}(ccell)}) = nan;
         awayFromCenterVectors(vesselMask) = nan;
-        % determine what pixels are going away from the vessel (180
-        % degrees/pi radians centered around guide/awayFromCenter vector)
-        [awayPixR, awayPixC, awayPixF] = ind2sub(size(PD{ccell}),find(PD{ccell} < awayFromCenterVectors+pi & PD{ccell} > awayFromCenterVectors-pi));
-        % create array showing what pixels are going away from the vessel 
-        awayPix{ccell} = zeros((size(im)));
-        awayPix{ccell}(awayPixR, awayPixC, awayPixF) = 1;
-
-
-        % 1) make video of pixels that are going away from vessel 
-        % 2) know % of pixels that are going away from vessel 
+        % determine what pixels are going away from the vessel (90
+        % degrees (pi/2) radians centered around guide/awayFromCenter vector)
+        % this makes videos of pixels that are going away from the vessel 
+        awayPix = PD; 
+        awayPix{ccell}(PD{ccell} <= awayFromCenterVectors+(pi/2) & PD{ccell} >= awayFromCenterVectors-(pi/2)) = 1;
+        awayPix{ccell}(PD{ccell} > awayFromCenterVectors+(pi/2) | PD{ccell} < awayFromCenterVectors-(pi/2)) = 0;
+        awayPix{ccell}(awayPix{ccell} ~= 0 & awayPix{ccell} ~= 1) = nan;
+        % determine the % of pixels that are going away from vessel 
+        numAwayPix1 = sum(sum(awayPix{ccell} == 1)); 
+        totalNumPix1 = sum(sum(awayPix{ccell} == 1)) + sum(sum(awayPix{ccell} == 0));
+        for frame = 1: size(im,3)
+            numAwayPix{ccell}(frame) = numAwayPix1(:,:,frame);
+            totalNumPix{ccell}(frame) = totalNumPix1(:,:,frame);
+        end 
+        percentAwayPix{ccell} = (numAwayPix{ccell}./totalNumPix{ccell})*100;
+        % plot the total % of pixels moving away from the vessel for each axon 
+        figure; 
+        plot(percentAwayPix{ccell},'k','LineWidth',2);
+        axonLabel = sprintf('Axon %d',terminals{mouse}(ccell));
+        title({'Percent of total pixels'; 'moving away from the vessel.';axonLabel});
+        xlabel('time')
+        ylabel('percent change')
+        Frames = size(im,3);
+        Frames_pre_stim_start = -((Frames-1)/2); 
+        Frames_post_stim_start = (Frames-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd-2.5;
+        FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+        ax = gca; 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 15;
+        ax.FontName = 'Arial';
+        
         % 3) know coherence of all pixels with direction away from vessel 
-
-
     end 
+    % determine average % of pixels moveing away from vessel 
 elseif downsampleRate ~= 1 || timeQ ~= 0 
     fprintf("To see coherence of vectors (near vessel) moving away from vessel, must set downsample rate to 1 and look at all the data.");
 end 
