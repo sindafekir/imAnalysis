@@ -17674,7 +17674,7 @@ end
 %}
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
-% use non-smoothed, but high pass filtered and z-scored data 
+% use non-smoothed, but high pass filtered and z-scored STA vid data 
 
 pixelxDist = 3.23; % microns 
 pixel_spacing = 2.16; %a.u.
@@ -17684,6 +17684,7 @@ if timeQ == 1
     timeQ2 = input("Input 0 to see pre-spike/event data. Input 1 to see post-spike/event data. ");
 end 
 pdAv = cell(1,length(terminals{mouse}));
+PD = cell(1,length(terminals{mouse}));
 for ccell = 1%:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
@@ -17735,9 +17736,14 @@ for ccell = 1%:length(terminals{mouse})
     
     % calculate phase gradient
     [pm,pd,dx,dy] = phase_gradient_complex_multiplication( xph, pixel_spacing, signIF );
-    
+    PD{ccell} = pd; 
+
+   
     % plot average resulting vector field
-    pdAv{ccell} = mean(pd,3);
+    pdAv{ccell} = mean(pd,3); 
+    % replace 0s with nan 
+    pdAv{ccell}(pdAv{ccell}==0) = NaN;
+    PD{ccell}(PD{ccell}==0) = NaN;
     plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
 
     % plot the vessel outline over the % change image 
@@ -17755,7 +17761,7 @@ for ccell = 1%:length(terminals{mouse})
     set(gcf,'units','normalized','outerposition',[0 0 1 1])
 end 
 
-% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
+%% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
 % right facing arrow = 0, 6.2832, -6.2832
 % up facing arrow = 1.5708, -4.7124
 % left facing arrow = 3.1416, -3.1416
@@ -17801,7 +17807,16 @@ if downsampleRate == 1 && timeQ == 0
         
         % make all pixels inside of vessel nan for real pdAv and
         % awayFromCenterVectors 
-        
+        pdAv{ccell}(vesselMask) = nan;
+        for frame = 1:size(im,3)
+            PD{ccell}(:,:,frame)(BWstacks{ccell}) = nan;
+        end 
+        awayFromCenterVectors{ccell}(vesselMask) = nan;
+
+
+        % 1) make video of pixels that are going away from vessel 
+        % 2) know % of pixels that are going away from vessel 
+        % 3) know coherence of all pixels with direction away from vessel 
 
 
     end 

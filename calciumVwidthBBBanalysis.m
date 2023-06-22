@@ -17674,7 +17674,7 @@ end
 %}
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
-% use non-smoothed, but high pass filtered and z-scored data 
+% use non-smoothed, but high pass filtered and z-scored STA vid data 
 
 pixelxDist = 3.23; % microns 
 pixel_spacing = 2.16; %a.u.
@@ -17684,6 +17684,7 @@ if timeQ == 1
     timeQ2 = input("Input 0 to see pre-spike/event data. Input 1 to see post-spike/event data. ");
 end 
 pdAv = cell(1,length(terminals{mouse}));
+PD = cell(1,length(terminals{mouse}));
 for ccell = 1%:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
@@ -17697,14 +17698,12 @@ for ccell = 1%:length(terminals{mouse})
             imData = RightChan{axon}(:,:,thresh:size(RightChan{axon},3));
         end 
     end 
-
     % get average vessel width outline (all pixels that at some point have the
     % vessel outline in them) 
     vWidthPerim = mean(BW_perim{axon},3);
     vWidthPerim=vWidthPerim~=0;
     % identify imaging data                                    
     im = double(imData);
-    
     % bandpass filter the data (this works on vectors so need to iterate
     % through vid 
     filt_xf = nan(size(im,1),size(im,2),size(im,3));
@@ -17712,36 +17711,30 @@ for ccell = 1%:length(terminals{mouse})
         for col = 1:size(im,2)
             filt_xf(row,col,:) = bandpass_filter(im(row,col,:),0.2,1.2,4,FPS);
         end 
-    end 
-    
-    % spatially smooth the data
+    end   
+    % downsample the data
     smth_filt_xf = downsample(filt_xf,downsampleRate);
     smth_filt_xf = permute(smth_filt_xf,[2 1 3]);
     smth_filt_xf = downsample(smth_filt_xf,downsampleRate);
-    smth_filt_xf = permute(smth_filt_xf,[2 1 3]);
-    
+    smth_filt_xf = permute(smth_filt_xf,[2 1 3]);  
     % get the x-y coordinates of the vessel outline
-    [yf, xf] = find(vWidthPerim);  % x and y are column vectors.   
-    
+    [yf, xf] = find(vWidthPerim);  % x and y are column vectors.       
     % downsample vessel width perimeter 
     xf = xf/downsampleRate;
-    yf = yf/downsampleRate;
-    
+    yf = yf/downsampleRate;   
     % form analytic signal 
-    xph = analytic_signal( smth_filt_xf );
-    
+    xph = analytic_signal( smth_filt_xf );   
     % calculate instantaneous frequency 
-    [wt,signIF] = instantaneous_frequency( xph, FPS );
-    
+    [wt,signIF] = instantaneous_frequency( xph, FPS );  
     % calculate phase gradient
     [pm,pd,dx,dy] = phase_gradient_complex_multiplication( xph, pixel_spacing, signIF );
-   
+    PD{ccell} = pd;   
     % plot average resulting vector field
     pdAv{ccell} = mean(pd,3); 
     % replace 0s with nan 
     pdAv{ccell}(pdAv{ccell}==0) = NaN;
+    PD{ccell}(PD{ccell}==0) = NaN;
     plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
-
     % plot the vessel outline over the % change image 
     hold on;
     scatter(xf,yf,1000,'red','.');
@@ -17757,7 +17750,7 @@ for ccell = 1%:length(terminals{mouse})
     set(gcf,'units','normalized','outerposition',[0 0 1 1])
 end 
 
-% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
+%% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
 % right facing arrow = 0, 6.2832, -6.2832
 % up facing arrow = 1.5708, -4.7124
 % left facing arrow = 3.1416, -3.1416
@@ -17767,22 +17760,19 @@ end
 % that move away from the vessel 
 if downsampleRate == 1 && timeQ == 0
     correctedPdAv = cell(1,length(terminals{mouse}));
-    awayFromCenterVectors = cell(1,length(terminals{mouse}));
-    for ccell = 1%:length(terminals{mouse})
-        
+    awayFromCenterVectors = nan(size(im,1),size(im,2));
+    awayPix = cell(1,length(terminals{mouse}));
+    for ccell = 1%:length(terminals{mouse})        
         % get average vessel width location (all pixels that at some point have the
         % vessel in them) 
         vesselMask = mean(BWstacks{axon},3);
         vesselMask=vesselMask~=0;
-
         % determine the center of the vessel 
         center = regionprops(vesselMask,"Centroid");
-
-        % change the original pd values so they are positive going only
-        % (between 0 and 6.29)
-        [negLocRow, negLocCol] = find(pdAv{ccell} < 0);
-        correctedPdAv{ccell}(negLocRow,negLocCol) = pdAv{ccell}(negLocRow,negLocCol)+6.2832;
-
+%         % change the original pd values so they are positive going only
+%         % (between 0 and 6.29)
+%         [negLocRow, negLocCol] = find(pdAv{ccell} < 0);
+%         correctedPdAv{ccell}(negLocRow,negLocCol) = pdAv{ccell}(negLocRow,negLocCol)+6.2832;
         % calculate new pd values for each pixel moving away from the
         % centroid 
         x1 = floor(center.Centroid(1)); y1 = floor(center.Centroid(2)); 
@@ -17793,18 +17783,29 @@ if downsampleRate == 1 && timeQ == 0
                 x2 = col; 
                 v_1 = [xr,yr,0] - [x1,y1,0]; v_2 = [x2,y2,0] - [x1,y1,0]; % atempt #1 
                 if row >= y1
-                    awayFromCenterVectors{ccell}(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % working counter clockwise to determine angle of pixle relative to reference angle 
+                    awayFromCenterVectors(row,col) = atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % working counter clockwise to determine angle of pixle relative to reference angle 
                 elseif row < y1 
-                    awayFromCenterVectors{ccell}(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % once an angle is greater than 180 degrees, matlab works clockwise 
+                    awayFromCenterVectors(row,col) = -atan2(norm(cross(v_2, v_1)), dot(v_2, v_1)); % once an angle is greater than 180 degrees, matlab works clockwise 
                 end 
             end 
         end 
-%         plot_vector_field( exp( 1i .* awayFromCenterVectors{ccell} ), 1 );  
-        
+%         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );          
         % make all pixels inside of vessel nan for real pdAv and
         % awayFromCenterVectors 
         pdAv{ccell}(vesselMask) = nan;
-        awayFromCenterVectors{ccell}(vesselMask) = nan;
+        PD{ccell}(BWstacks{terminals{mouse}(ccell)}) = nan;
+        awayFromCenterVectors(vesselMask) = nan;
+        % determine what pixels are going away from the vessel (180
+        % degrees/pi radians centered around guide/awayFromCenter vector)
+        [awayPixR, awayPixC, awayPixF] = ind2sub(size(PD{ccell}),find(PD{ccell} < awayFromCenterVectors+pi & PD{ccell} > awayFromCenterVectors-pi));
+        % create array showing what pixels are going away from the vessel 
+        awayPix{ccell} = zeros((size(im)));
+        awayPix{ccell}(awayPixR, awayPixC, awayPixF) = 1;
+
+
+        % 1) make video of pixels that are going away from vessel 
+        % 2) know % of pixels that are going away from vessel 
+        % 3) know coherence of all pixels with direction away from vessel 
 
 
     end 
