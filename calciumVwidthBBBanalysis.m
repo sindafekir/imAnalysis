@@ -17832,6 +17832,9 @@ if downsampleRate == 1 && timeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Arial';
+
+        % 2) determine % of pixels near the vessel that are moving away
+        % from the vessel and then plot 
         
         % 3) know coherence of all pixels with direction away from vessel 
     end 
