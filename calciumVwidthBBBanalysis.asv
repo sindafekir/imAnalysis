@@ -17685,6 +17685,7 @@ if timeQ == 1
 end 
 pdAv = cell(1,length(terminals{mouse}));
 PD = cell(1,length(terminals{mouse}));
+PM = cell(1,length(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
     % select axon for specific imaging data 
     axon = terminals{mouse}(ccell);
@@ -17729,6 +17730,7 @@ for ccell = 1:length(terminals{mouse})
     % calculate phase gradient
     [pm,pd,dx,dy] = phase_gradient_complex_multiplication( xph, pixel_spacing, signIF );
     PD{ccell} = pd;   
+    PM{ccell} = pm;
     % plot average resulting vector field
     pdAv{ccell} = mean(pd,3); 
     % replace 0s with nan 
@@ -17738,6 +17740,7 @@ for ccell = 1:length(terminals{mouse})
     pdAv{ccell}(vesselMask) = nan;
     PD{ccell}(BWstacks{terminals{mouse}(ccell)}) = nan;
     plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
+%         plot_vector_field( exp( 1i .* PD{ccell}(:,:,frame) ), 1 ); 
     % plot the vessel outline over the % change image 
     hold on;
     scatter(xf,yf,1000,'red','.');
@@ -17789,7 +17792,6 @@ if downsampleRate == 1 && timeQ == 0
     % make all pixels inside of vessel nan
     awayFromCenterVectors(vesselMask) = nan;
 %         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );  
-    correctedPdAv = cell(1,length(terminals{mouse}));
     totalNumPix = cell(1,length(terminals{mouse}));
     numAwayPix = cell(1,length(terminals{mouse}));
     percentAwayPix = cell(1,length(terminals{mouse}));
@@ -17797,18 +17799,11 @@ if downsampleRate == 1 && timeQ == 0
     timeStart = -(windTime/2); timeEnd = windTime/2;
     awayPix = PD; 
     avAwayPix = cell(1,length(terminals{mouse}));
-    posPD = PD;
-    posAwayFromCenterVectors = awayFromCenterVectors;
-    % change the original pd values so they are positive going only
-    % (between 0 and 6.2832 (2pi))
-    [negLocRow, negLocCol] = find(awayFromCenterVectors < 0);
-    posAwayFromCenterVectors(negLocRow,negLocCol) = awayFromCenterVectors(negLocRow,negLocCol)+2*pi;
-    % change the values so that they only go between 0 and 2pi (6.2832)
-    [tooHighLocRow, tooHighLocCol] = find(posAwayFromCenterVectors > 2*pi);
-    posAwayFromCenterVectors(tooHighLocRow,tooHighLocCol) = posAwayFromCenterVectors(tooHighLocRow,tooHighLocCol)-2*pi;
-%         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );       
-%         plot_vector_field( exp( 1i .* posAwayFromCenterVectors ), 1 ); 
-    for ccell = 1%:length(terminals{mouse})  
+    clearvars negLocRow negLocCol
+%         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );    
+    angleCloseness = cell(1,length(terminals{mouse}));
+    pixSpeed = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})  
         % determine what pixels are going away from the vessel (90
         % degrees (pi/2) radians centered around guide/awayFromCenter vector)
         % this makes videos of pixels that are going away from the vessel        
@@ -17858,37 +17853,36 @@ if downsampleRate == 1 && timeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Arial';
-        % change the original pd values so they are only positive going 
-%         posCurFrame = nan(size(im,1),size(im,2));
-        for frame = 1%:size(im,3)
-            [negLocRow, negLocCol] = find(PD{ccell}(:,:,frame) < 0);
-            posPD{ccell}(negLocRow,negLocCol,frame) = PD{ccell}(negLocRow,negLocCol,frame)+2*pi;
-
-%             curFrame = PD{ccell}(:,:,frame); 
-%             posCurFrame(negLocRow,negLocCol) = curFrame(negLocRow,negLocCol)+2*pi;
-%             posPD{ccell}(:,:,frame) = posCurFrame;
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % change the values so that they only go between 0 and 2pi (6.2832)
-%             [tooHighLocRow, tooHighLocCol] = find(posPD{ccell}(:,:,frame) > 2*pi);
-%             posPD{ccell}(tooHighLocRow,tooHighLocCol,frame) = PD{ccell}(tooHighLocRow,tooHighLocCol,frame)-2*pi;
-        end 
-
-
-
-
-%         plot_vector_field( exp( 1i .* PD{ccell}(:,:,frame) ), 1 ); 
-%         plot_vector_field( exp( 1i .* posPD{ccell}(:,:,frame) ), 1 ); 
-
-
-
-
-
-        % figure out how close the pixel movement vectors are to the guide
+        % figure out and plot how close the pixel movement vectors are to the guide
         % vectors 
+        for frame = 1:size(im,3)
+            angleCloseness{ccell}(frame) = nanmean(nanmean(abs(repelem(2*pi,size(im,1),size(im,2))-abs(awayFromCenterVectors)-abs(PD{ccell}(:,:,frame)))));
+            pixSpeed{ccell} = nanmean(PM{ccell},1);
+        end 
+        figure;
+        plot(angleCloseness{ccell},'k','LineWidth',2)
+        set(gca, 'YDir','reverse')
+        title({'Metric of pixel movement'; 'away from the vessel.';axonLabel});
+        xlabel('time')
+        ylabel('radians to away guide vector')
+        ax = gca; 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 15;
+        ax.FontName = 'Arial';
+        % plot change in pixel speed over time 
         
+        figure;
+        plot(pixSpeed{ccell},'k','LineWidth',2)
+        title({'Pixel speed.';axonLabel});
+        xlabel('time')
+        ylabel('speed')
+        ax = gca; 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 15;
+        ax.FontName = 'Arial';
 
-        % 2) know coherence of all pixels with direction away from vessel 
         % 3) determine % of pixels near the vessel that are moving away
         % from the vessel and then plot      
         % 4) plot speed 
