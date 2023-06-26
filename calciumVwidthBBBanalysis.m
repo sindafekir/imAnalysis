@@ -17914,9 +17914,9 @@ if downsampleRate == 1 && timeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Arial';
-
-        % 3) determine % of pixels near the vessel that are moving away
-        % from the vessel and then plot      
+    
+        % 4) identify listener vs controller programmatically using wave metrics and DBSCAN and then
+        % compare with videos 
         % 5) plot pixels moving towards vessel 
     end 
     % determine average % of pixels moveing away from vessel 
