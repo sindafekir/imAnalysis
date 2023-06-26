@@ -17683,6 +17683,7 @@ timeQ = input("Input 1 to look either before or after the spike/event. Input 0 o
 if timeQ == 1 
     timeQ2 = input("Input 0 to see pre-spike/event data. Input 1 to see post-spike/event data. ");
 end 
+imGenQ = input('Input 1 to generate wave vector figures. '); 
 pdAv = cell(1,length(terminals{mouse}));
 PD = cell(1,length(terminals{mouse}));
 PM = cell(1,length(terminals{mouse}));
@@ -17739,22 +17740,24 @@ for ccell = 1:length(terminals{mouse})
      % make all pixels inside of vessel nan
     pdAv{ccell}(vesselMask) = nan;
     PD{ccell}(BWstacks{terminals{mouse}(ccell)}) = nan;
-    plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
-%         plot_vector_field( exp( 1i .* PD{ccell}(:,:,frame) ), 1 ); 
-    % plot the vessel outline over the % change image 
-    hold on;
-    scatter(xf,yf,1000,'red','.');
-    if timeQ == 0
-        title(sprintf("Axon %d. Downsampled x%d.",axon,downsampleRate))
-    elseif timeQ == 1 
-        if timeQ2 == 0 % look at pre-spike/event data 
-            title(sprintf("Axon %d. Downsampled x%d. Pre-spike/event data.",axon,downsampleRate))
-        elseif timeQ2 == 1 % look at post-spike/event data 
-            title(sprintf("Axon %d. Downsampled x%d. Post-spike/event data.",axon,downsampleRate))
+    PM{ccell}(BWstacks{terminals{mouse}(ccell)}) = nan;
+    if imGenQ == 1 
+        plot_vector_field( exp( 1i .* pdAv{ccell} ), 1 );
+    %         plot_vector_field( exp( 1i .* PD{ccell}(:,:,frame) ), 1 ); 
+        % plot the vessel outline over the % change image 
+        hold on;
+        scatter(xf,yf,1000,'red','.');
+        if timeQ == 0
+            title(sprintf("Axon %d. Downsampled x%d.",axon,downsampleRate))
+        elseif timeQ == 1 
+            if timeQ2 == 0 % look at pre-spike/event data 
+                title(sprintf("Axon %d. Downsampled x%d. Pre-spike/event data.",axon,downsampleRate))
+            elseif timeQ2 == 1 % look at post-spike/event data 
+                title(sprintf("Axon %d. Downsampled x%d. Post-spike/event data.",axon,downsampleRate))
+            end 
         end 
+        set(gcf,'units','normalized','outerposition',[0 0 1 1])
     end 
-    set(gcf,'units','normalized','outerposition',[0 0 1 1])
-
 end 
 
 %% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
@@ -17800,7 +17803,23 @@ if downsampleRate == 1 && timeQ == 0
     awayPix = PD; 
     avAwayPix = cell(1,length(terminals{mouse}));
     clearvars negLocRow negLocCol
-%         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );    
+%         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );  
+    vectorQ = input('Input 0 to look at all extravascular pixels. Input 1 to look at extravascular pixels near the vessel. ');
+    if vectorQ == 1 
+        % create mask for extravascular pixels near the vessel 
+        radius = 2;
+        decomposition = 0;
+        se = strel('disk', radius, decomposition);               
+        dilatedVesselMask = imdilate(vesselMask,se);  
+        % black out pixels that are far from the vessel 
+        awayFromCenterVectors(~dilatedVesselMask) = nan;
+        dilatedBWstacks = cell(1,length(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse})
+            dilatedBWstacks{ccell} = imdilate(BWstacks{terminals{mouse}(ccell)},se);
+            PD{ccell}(~dilatedBWstacks{ccell}) = nan;
+            PM{ccell}(~dilatedBWstacks{ccell}) = nan;
+        end 
+    end 
     angleCloseness = cell(1,length(terminals{mouse}));
     pixSpeed = cell(1,length(terminals{mouse}));
     for ccell = 1:length(terminals{mouse})  
@@ -17819,16 +17838,18 @@ if downsampleRate == 1 && timeQ == 0
         elseif ismember("ROIorders", variableInfo) == 0 % returns true
             [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
         end   
-        % plot the averagey awayPix 
-        figure; 
-        imagesc(avAwayPix{ccell})
-        hold on; 
-        plot(CAxf,CAyf, 'r.',"MarkerSize",50);
         axonLabel = sprintf('Axon %d.',terminals{mouse}(ccell));
-        title({'Average movement of'; 'pixels away from vessel.';axonLabel})
-        ax = gca; 
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
+        if vectorQ == 0 
+            % plot the averagey awayPix 
+            figure; 
+            imagesc(avAwayPix{ccell})
+            hold on; 
+            plot(CAxf,CAyf, 'r.',"MarkerSize",50);            
+            title({'Average movement of'; 'pixels away from vessel.';axonLabel})
+            ax = gca; 
+            ax.FontSize = 15;
+            ax.FontName = 'Arial';
+        end 
         % determine the % of pixels that are going away from vessel 
         numAwayPix1 = sum(sum(awayPix{ccell} == 1)); 
         totalNumPix1 = sum(sum(awayPix{ccell} == 1)) + sum(sum(awayPix{ccell} == 0));
@@ -17840,7 +17861,11 @@ if downsampleRate == 1 && timeQ == 0
         % plot the total % of pixels moving away from the vessel for each axon 
         figure; 
         plot(percentAwayPix{ccell},'k','LineWidth',2);
-        title({'Percent of total pixels'; 'moving away from the vessel.';axonLabel});
+        if vectorQ == 0
+            title({'Percent of total pixels'; 'moving away from the vessel.';axonLabel});
+        elseif vectorQ == 1 
+            title({'Percent of pixels near vessel';'moving away from the vessel';axonLabel});
+        end 
         xlabel('time')
         ylabel('percent change')
         Frames = size(im,3);
@@ -17862,7 +17887,11 @@ if downsampleRate == 1 && timeQ == 0
         figure;
         plot(angleCloseness{ccell},'k','LineWidth',2)
         set(gca, 'YDir','reverse')
-        title({'Metric of pixel movement'; 'away from the vessel.';axonLabel});
+        if vectorQ == 0
+            title({'Metric of pixel movement'; 'away from the vessel.';axonLabel});
+        elseif vectorQ == 1 
+            title({'Metric of near vessel pixel movement'; 'away from the vessel.';axonLabel});
+        end 
         xlabel('time')
         ylabel('radians to away guide vector')
         ax = gca; 
@@ -17873,7 +17902,11 @@ if downsampleRate == 1 && timeQ == 0
         % plot change in pixel speed over time 
         figure;
         plot(pixSpeed{ccell},'k','LineWidth',2)
-        title({'Pixel speed.';axonLabel});
+        if vectorQ == 0
+            title({'Pixel speed.';axonLabel});
+        elseif vectorQ == 1 
+            title({'Near vessel pixel speed.';axonLabel});
+        end 
         xlabel('time')
         ylabel('speed')
         ax = gca; 
