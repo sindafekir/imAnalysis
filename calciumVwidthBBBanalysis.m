@@ -14780,8 +14780,8 @@ for ccell = 1:length(terminals{mouse})
             ax.FontName = 'Times';
             xlabel('time (s)','FontName','Times')
             ylabel('calcium signal percent change','FontName','Times')
-            xLimStart = floor(10*FPSstack{mouse});
-            xLimEnd = floor(24*FPSstack{mouse}); 
+%             xLimStart = floor(10*FPSstack{mouse});
+%             xLimEnd = floor(24*FPSstack{mouse}); 
 %                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
             ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
             set(fig,'position', [500 100 900 800])
@@ -14832,7 +14832,7 @@ CI_gLow = (nanmean(greenSum,1)) + (ts_gLow*SEMg);  % Confidence Intervals
 CI_gHigh = (nanmean(greenSum,1)) + (ts_gHigh*SEMg);  % Confidence Intervals 
 %get average
 AVSNGdataPeaks = nanmean(greenSum,1);  
-SEMr = (nanstd(redSum))/(sqrt(size(redSum,1))); % Standard Error                 
+SEMr = (nanstd(redSum))/(sqrt(size(redSum,1))); %#ok<*NANSTD> % Standard Error                 
 ts_rLow = tinv(0.025,size(redSum,1)-1);% T-Score for 95% CI           
 ts_rHigh = tinv(0.975,size(redSum,1)-1);% T-Score for 95% CI           
 CI_rLow = (nanmean(redSum,1)) + (ts_rLow*SEMr);  % Confidence Intervals
@@ -14861,8 +14861,8 @@ ax.FontSize = 25;
 ax.FontName = 'Times';
 xlabel('time (s)','FontName','Times')
 ylabel('calcium signal percent change','FontName','Times')
-xLimStart = floor(10*FPSstack{mouse});
-xLimEnd = floor(24*FPSstack{mouse}); 
+% xLimStart = floor(10*FPSstack{mouse});
+% xLimEnd = floor(24*FPSstack{mouse}); 
 %                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
 ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
 set(fig,'position', [500 100 900 800])
@@ -15120,8 +15120,8 @@ for ccell = 1:length(terminals{mouse})
             ax.FontName = 'Times';
             xlabel('time (s)','FontName','Times')
             ylabel('calcium signal percent change','FontName','Times')
-            xLimStart = floor(10*FPSstack{mouse});
-            xLimEnd = floor(24*FPSstack{mouse}); 
+%             xLimStart = floor(10*FPSstack{mouse});
+%             xLimEnd = floor(24*FPSstack{mouse}); 
 %                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
             ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
             set(fig,'position', [500 100 900 800])
@@ -17760,7 +17760,7 @@ for ccell = 1:length(terminals{mouse})
     end 
 end 
 
-%% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
+% pd notes is in radians. There are 2pi (6.2832) radians in a circle 
 % right facing arrow = 0, 6.2832, -6.2832
 % up facing arrow = 1.5708, -4.7124
 % left facing arrow = 3.1416, -3.1416
@@ -17804,8 +17804,8 @@ if downsampleRate == 1 && timeQ == 0
     avAwayPix = cell(1,length(terminals{mouse}));
     clearvars negLocRow negLocCol
 %         plot_vector_field( exp( 1i .* awayFromCenterVectors ), 1 );  
-    vectorQ = input('Input 0 to look at all extravascular pixels. Input 1 to look at extravascular pixels near the vessel. ');
-    if vectorQ == 1 
+    vectorQ = input('Input 0 to look at all extravascular pixels. Input 1 to look at extravascular pixels near the vessel. Input 2 to look at extravascular pixels near the axon. ');
+    if vectorQ == 1 % look just near the vessel 
         % create mask for extravascular pixels near the vessel 
         radius = 2;
         decomposition = 0;
@@ -17818,6 +17818,27 @@ if downsampleRate == 1 && timeQ == 0
             dilatedBWstacks{ccell} = imdilate(BWstacks{terminals{mouse}(ccell)},se);
             PD{ccell}(~dilatedBWstacks{ccell}) = nan;
             PM{ccell}(~dilatedBWstacks{ccell}) = nan;
+        end 
+    elseif vectorQ == 2 % look just near the axon 
+        % create mask near the axon 
+        if ismember("ROIorders", variableInfo) == 1 
+            caLoc = ROIorders{1};
+        elseif ismember("ROIorders", variableInfo) == 0 
+            caLoc = CaROImasks{1};
+        end
+        caLoc(caLoc ~= terminals{mouse}(ccell)) = 0;
+        caLoc(caLoc == terminals{mouse}(ccell)) = 1;
+        caLoc = logical(caLoc);
+        radius = 6;
+        decomposition = 0;
+        se = strel('disk', radius, decomposition);               
+        caLocMask = imdilate(caLoc,se);       
+        caLocMasks = repmat(caLocMask,1,1,size(im,3));
+        % black out pixels that are far from axon
+        awayFromCenterVectors(~caLocMask) = nan;
+        for ccell = 1:length(terminals{mouse})
+            PD{ccell}(~caLocMasks) = nan;
+            PM{ccell}(~caLocMasks) = nan;
         end 
     end 
     angleCloseness = cell(1,length(terminals{mouse}));
@@ -17863,8 +17884,10 @@ if downsampleRate == 1 && timeQ == 0
         plot(percentAwayPix{ccell},'k','LineWidth',2);
         if vectorQ == 0
             title({'Percent of total pixels'; 'moving away from the vessel.';axonLabel});
-        elseif vectorQ == 1 
+        elseif vectorQ == 1 % look near the vessel 
             title({'Percent of pixels near vessel';'moving away from the vessel';axonLabel});
+        elseif vectorQ == 2 % look just near the axon 
+            title({'Percent of pixels near axon';'moving away from the vessel';axonLabel});
         end 
         xlabel('time')
         ylabel('percent change')
@@ -17889,8 +17912,10 @@ if downsampleRate == 1 && timeQ == 0
         set(gca, 'YDir','reverse')
         if vectorQ == 0
             title({'Metric of pixel movement'; 'away from the vessel.';axonLabel});
-        elseif vectorQ == 1 
+        elseif vectorQ == 1 % look near vessel 
             title({'Metric of near vessel pixel movement'; 'away from the vessel.';axonLabel});
+        elseif vectorQ == 2 % look just near the axon 
+            title({'Metric of near axon pixel movement'; 'away from the vessel.';axonLabel});
         end 
         xlabel('time')
         ylabel('radians to away guide vector')
@@ -17904,8 +17929,10 @@ if downsampleRate == 1 && timeQ == 0
         plot(pixSpeed{ccell},'k','LineWidth',2)
         if vectorQ == 0
             title({'Pixel speed.';axonLabel});
-        elseif vectorQ == 1 
+        elseif vectorQ == 1 % look near vessel 
             title({'Near vessel pixel speed.';axonLabel});
+        elseif vectorQ == 2 % look just near the axon 
+            title({'Near axon pixel speed.';axonLabel});
         end 
         xlabel('time')
         ylabel('speed')
@@ -17914,7 +17941,12 @@ if downsampleRate == 1 && timeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Arial';
-    
+
+        % 1) look at metrics just near the axon and outside of the vessel 
+        % 2) rewrite code so that it makes all these figures (maybe) 
+        %) 3) have all figures and the video play to blindly vote whether
+        %it's a listener or a controller 
+   
         % 4) identify listener vs controller programmatically using wave metrics and DBSCAN and then
         % compare with videos 
         % 5) plot pixels moving towards vessel 
