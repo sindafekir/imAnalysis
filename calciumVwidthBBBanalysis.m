@@ -15810,7 +15810,7 @@ end
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
 
-%{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -15825,7 +15825,16 @@ unIdxVals = cell(1,max(terminals{mouse}));
 CsNotNearVessel = cell(1,max(terminals{mouse}));
 clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 clustAmp = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+spikeCount = cell(1,max(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
+    % figure out the number of spikes per axon 
+    for vid = 1:length(sigLocs)
+        if vid == 1 
+            spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
+        elseif vid > 1 
+            spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
+        end 
+    end 
     count = 1;
     term = terminals{mouse}(ccell);
     % use dbscan to find clustered pixels 
@@ -15972,7 +15981,9 @@ for ccell = 1:length(terminals{mouse})
     % ORIGINAL PLOTTING CODE BELOW 
 %     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
     if ETAorSTAq == 0 % STA data 
-        title(sprintf('Axon %d',terminals{mouse}(ccell))); 
+        axonLabel = sprintf('Axon %d.',terminals{mouse}(ccell)); 
+        spikeCountLabel = sprintf('%d spikes.',spikeCount{terminals{mouse}(ccell)}); 
+        title({axonLabel;spikeCountLabel})
     elseif ETAorSTAq == 1 % ETA data 
         title('Opto Triggered'); 
     end 
@@ -15990,6 +16001,26 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
+%% remove outlier clusters if there are any 
+% THIS IS NOT FINISHED 
+%{
+% do one axon at a time and rerun charts to confirm the correct clusters
+% were removed 
+removeOutlierQ = input('Input 1 if you need to remove outlier clusters. '); 
+if removeOutlierQ == 1 
+    axonQ = input('What axon has the outlier?. '); 
+    clusterIDQ = input('What clusters need to be removed? ');
+    for clust = 1:length(clusterIDQ)
+        % find what rows each cluster is located in
+        [Crow, ~] = find(idx{axonQ} == clusterIDQ(clust));  
+        inds{axonQ}(Crow,:) = NaN;
+        idx{axonQ}(Crow,:) = NaN;
+
+        % LOOK UP AND MAKE SURE TO REMOVE OUTLIER CLUSTERS IN OTHER
+        % VARIABLES THAT CARRY OVER 
+    end 
+end 
+%}
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
@@ -17675,7 +17706,7 @@ end
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
 % use non-smoothed, but high pass filtered and z-scored STA vid data 
-
+%{
 pixelxDist = 3.23; % microns 
 pixel_spacing = 2.16; %a.u.
 downsampleRate = input("Input the downsample rate for wave vector creation. ");
