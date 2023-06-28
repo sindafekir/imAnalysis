@@ -15810,6 +15810,10 @@ end
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
@@ -16056,7 +16060,6 @@ if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this i
     pie(AvNearVsFarPlotData);
     colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 elseif ETAorSTAq == 1 
-    % EDIT TO JUST MAKE PIE CHART 
     figure;
     % plot pie chart 
     % resort data for averaged pie chart 
@@ -16076,14 +16079,6 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% REPORT 
-% 1) TOTAL NUMBER OF CLUSTERS 
-% 2) AVERAGE AND MEDIAN NUMBER OF PIXELS PER AXON (FIRST PANEL) 
-% 3) AVERAGE AND MEDIAN NUMBER OF PIXELS PER CLUSTER 
 
 uniqClusts = cell(1,max(terminals{mouse}));
 numPixels = nan(1,length(terminals{mouse}));
@@ -16754,10 +16749,6 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 figure;
 ax=gca;
 avClustSize = nanmean(sizeDistArray(:,2)); 
@@ -16801,12 +16792,22 @@ ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
 
 %% plot distribution of cluster times 
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 if clustSpikeQ == 0 
     figure;
     ax=gca;
     histogram(avClocFrame,20)
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+%     ax.FontName = 'Times';
     if clustSpikeQ3 == 0 
         title({'Distribution of BBB Plume Timing';'Average Time'});
     elseif clustSpikeQ3 == 1
@@ -16821,6 +16822,19 @@ if clustSpikeQ == 0
     FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
+    
+    % plot pie chart of before vs after spike cluster start times 
+    threshFrame = floor(size(im,3)/2);
+    numPreSpikeStarts = nansum(nansum(avClocFrame < 27));
+    numPostSpikeStarts = nansum(nansum(avClocFrame >= 27));
+    preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
+    figure; 
+    p = pie(preVsPostSpikeStarts);
+    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+    legend('Pre-spike clusters','Post-spike clusters')
+    ax=gca; ax.FontSize = 15;
+    t1 = p(4); t2 = p(2);
+    t1.FontSize = 15; t2.FontSize = 15;
 end 
 
 %% create scatter over box plot of cluster timing per axon 

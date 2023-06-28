@@ -16056,7 +16056,6 @@ if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this i
     pie(AvNearVsFarPlotData);
     colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 elseif ETAorSTAq == 1 
-    % EDIT TO JUST MAKE PIE CHART 
     figure;
     % plot pie chart 
     % resort data for averaged pie chart 
@@ -16076,14 +16075,6 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-% REPORT 
-% 1) TOTAL NUMBER OF CLUSTERS 
-% 2) AVERAGE AND MEDIAN NUMBER OF PIXELS PER AXON (FIRST PANEL) 
-% 3) AVERAGE AND MEDIAN NUMBER OF PIXELS PER CLUSTER 
 
 uniqClusts = cell(1,max(terminals{mouse}));
 numPixels = nan(1,length(terminals{mouse}));
@@ -16754,25 +16745,22 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 figure;
 ax=gca;
 avClustSize = nanmean(sizeDistArray(:,2)); 
 medClustSize = nanmedian(sizeDistArray(:,2)); %#ok<*NANMEDIAN> 
-avClustSizeLabel = sprintf('%.0f average');
+avClustSizeLabel = sprintf('Average cluster size: %.0f',avClustSize);
+medClustSizeLabel = sprintf('Median cluster size: %.0f',medClustSize);
 histogram(sizeDistArray(:,2),100)
 ax.FontSize = 15;
 % ax.FontName = 'Times';
 if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Sizes';'All Clusters'});
+    title({'Distribution of BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
 elseif clustSpikeQ == 1 
     if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters'});
+        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
     elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters'});
+        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
     end 
 end 
 ylabel("Number of BBB Plumes")
@@ -16781,27 +16769,45 @@ xlabel("Size of BBB Plume")
 figure;
 ax=gca;
 histogram(ampDistArray(:,2),100)
+avClustAmp = nanmean(ampDistArray(:,2)); 
+medClustAmp = nanmedian(ampDistArray(:,2)); %#ok<*NANMEDIAN> 
+avClustAmpLabel = sprintf('Average cluster pixel amplitude: %.3f',avClustAmp);
+medClustAmpLabel = sprintf('Median cluster pixel amplitude: %.3f',medClustAmp);
 ax.FontSize = 15;
 % ax.FontName = 'Times';
 if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters'});
+    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
 elseif clustSpikeQ == 1 
     if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters'});
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
     elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters'});
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
     end 
 end 
 ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
 
 %% plot distribution of cluster times 
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0 
     figure;
     ax=gca;
     histogram(avClocFrame,20)
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+%     ax.FontName = 'Times';
     if clustSpikeQ3 == 0 
         title({'Distribution of BBB Plume Timing';'Average Time'});
     elseif clustSpikeQ3 == 1
@@ -16816,6 +16822,22 @@ if clustSpikeQ == 0
     FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
+    
+    % plot pie chart of before vs after spike cluster start times 
+    threshFrame = floor(size(im,3)/2);
+    numPreSpikeStarts = nansum(nansum(avClocFrame < 27));
+    numPostSpikeStarts = nansum(nansum(avClocFrame >= 27));
+    
+    figure; 
+    ax=gca;
+    ax.FontSize = 15;
+
+
+        % resort data for averaged pie chart 
+    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+    pie(AvNearVsFarPlotData);
+    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+
 end 
 
 %% create scatter over box plot of cluster timing per axon 
