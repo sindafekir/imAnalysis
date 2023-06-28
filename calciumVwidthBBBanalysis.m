@@ -16835,6 +16835,38 @@ if clustSpikeQ == 0
     ax=gca; ax.FontSize = 15;
     t1 = p(4); t2 = p(2);
     t1.FontSize = 15; t2.FontSize = 15;
+
+    for ccell = 1:length(terminals{mouse})
+        % plot pie chart of before vs after spike cluster start times per
+        % axon 
+        threshFrame = floor(size(im,3)/2);
+        numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
+        numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
+        preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
+        figure; 
+        p = pie(preVsPostSpikeStarts);
+        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+        legend('Pre-spike clusters','Post-spike clusters')
+        ax=gca; ax.FontSize = 15;
+        t1 = p(4); t2 = p(2);
+        t1.FontSize = 15; t2.FontSize = 15;
+        title(sprintf('Axon %d.',terminals{mouse}(ccell)))
+    end 
+
+    % create pie chart showing number of axons that are mostly pre, mostly
+    % post, and evenly split 
+    totalClusts = numPreSpikeStarts + numPostSpikeStarts;
+    preSpikeRatio = numPreSpikeStarts./totalClusts;
+    numMostlyPre = sum(preSpikeRatio > 0.5);
+    numMostlyPost = sum(preSpikeRatio < 0.5);
+    evenPreAndPost = sum(preSpikeRatio == 0.5);
+    axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
+    p = pie(axonTypes);
+    colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
+    legend('Listener','Even-Split','Controller')
+    ax=gca; ax.FontSize = 15;
+    t1 = p(2); t2 = p(4); t3 = p(6);
+    t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
 end 
 
 %% create scatter over box plot of cluster timing per axon 

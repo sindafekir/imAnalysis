@@ -15810,7 +15810,6 @@ end
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
 
-
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -16788,6 +16787,11 @@ ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
 
 %% plot distribution of cluster times 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -16798,10 +16802,6 @@ xlabel("BBB Plume Pixel Amplitudes")
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0 
     figure;
     ax=gca;
@@ -16827,17 +16827,49 @@ if clustSpikeQ == 0
     threshFrame = floor(size(im,3)/2);
     numPreSpikeStarts = nansum(nansum(avClocFrame < 27));
     numPostSpikeStarts = nansum(nansum(avClocFrame >= 27));
-    
+    preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
     figure; 
-    ax=gca;
-    ax.FontSize = 15;
-
-
-        % resort data for averaged pie chart 
-    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
-    pie(AvNearVsFarPlotData);
+    p = pie(preVsPostSpikeStarts);
     colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+    legend('Pre-spike clusters','Post-spike clusters')
+    ax=gca; ax.FontSize = 15;
+    t1 = p(4); t2 = p(2);
+    t1.FontSize = 15; t2.FontSize = 15;
 
+    for ccell = 1:length(terminals{mouse})
+        % plot pie chart of before vs after spike cluster start times per
+        % axon 
+        threshFrame = floor(size(im,3)/2);
+        numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
+        numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
+        preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
+        figure; 
+        p = pie(preVsPostSpikeStarts);
+        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+        legend('Pre-spike clusters','Post-spike clusters')
+        ax=gca; ax.FontSize = 15;
+        t1 = p(4); t2 = p(2);
+        t1.FontSize = 15; t2.FontSize = 15;
+        title(sprintf('Axon %d.',terminals{mouse}(ccell)))
+    end 
+
+    % create pie chart showing number of axons that are mostly pre, mostly
+    % post, and evenly split 
+%     PreVsPostSpikeStarts(1,:) = numPreSpikeStarts; PreVsPostSpikeStarts(2,:) = numPostSpikeStarts;
+    totalClusts = numPreSpikeStarts + numPostSpikeStarts;
+    preSpikeRatio = numPreSpikeStarts./totalClusts;
+    numMostlyPre = sum(preSpikeRatio > 0.5);
+    numMostlyPost = sum(preSpikeRatio < 0.5);
+    evenPreAndPost = sum(preSpikeRatio == 0.5);
+    axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
+
+    p = pie(axonTypes);
+    colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
+    legend('Pre-spike clusters','','Post-spike clusters')
+    ax=gca; ax.FontSize = 15;
+    t1 = p(4); t2 = p(2);
+    t1.FontSize = 15; t2.FontSize = 15;
+    title(sprintf('Axon %d.',terminals{mouse}(ccell)))
 end 
 
 %% create scatter over box plot of cluster timing per axon 
