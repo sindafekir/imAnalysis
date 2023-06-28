@@ -16067,6 +16067,24 @@ elseif ETAorSTAq == 1
 end 
 
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+% REPORT 
+% 1) TOTAL NUMBER OF CLUSTERS 
+% 2) AVERAGE AND MEDIAN NUMBER OF PIXELS PER AXON (FIRST PANEL) 
+% 3) AVERAGE AND MEDIAN NUMBER OF PIXELS PER CLUSTER 
+
 uniqClusts = cell(1,max(terminals{mouse}));
 numPixels = nan(1,length(terminals{mouse}));
 numClusts = nan(1,length(terminals{mouse}));
@@ -16075,26 +16093,50 @@ count = 1;
 for ccell = 1:length(terminals{mouse})
     % determine the total number of pixels 
     numPixels(ccell) = length(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})));
+    totalNumPixels = sum(numPixels);
+    avNumPixels = mean(numPixels);
+    medNumPixels = median(numPixels);
     % determine the total number of clusters 
     uniqClusts{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})));
     numClusts(ccell) = length(uniqClusts{terminals{mouse}(ccell)});
+    totalNumClusts = sum(numClusts);
+    avNumClusts = mean(numClusts);
+    medNumClusts = median(numClusts);
     % determine the number of pixels per cluster 
     for clust = 1:numClusts(ccell)
         uniqClustPixNums(count) = length(find(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})) == uniqClusts{terminals{mouse}(ccell)}(clust)));
         count = count + 1;
     end 
+    totalUniqClustPixNums = sum(uniqClustPixNums);
+    avNumUniqClustPixNums = mean(uniqClustPixNums);
+    medNumUniqClustPixNums = median(uniqClustPixNums);
 end 
 
 subplot(1,3,1)
 histogram(numPixels,10)
-title('# of pixels')
+totalPixelNumLabel = sprintf('%.0f pixels total.',totalNumPixels);
+avPixelNumLabel = sprintf('%.0f average pixels per axon.',avNumPixels);
+medPixelNumLabel = sprintf('%.0f median pixels per axon.',medNumPixels);
+title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
+ax = gca;
+ax.FontSize = 15;
 subplot(1,3,2)
 histogram(numClusts,10)
-title('# of clusters')
+totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
+avClustNumLabel = sprintf('%.0f average clusters per axon.',avNumClusts);
+medClustNumLabel = sprintf('%.0f median clusters per axon.',medNumClusts);
+title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
+ax = gca;
+ax.FontSize = 15;
 subplot(1,3,3)
 histogram(uniqClustPixNums,10)
-title('# of pixels per cluster')
-
+% totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
+avUniqClustPixNumsLabel = sprintf('%.0f average pixels per cluster.',avNumUniqClustPixNums);
+medNumUniqClustPixNumsLabel = sprintf('%.0f median pixels per cluster.',medNumUniqClustPixNums);
+title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+ax = gca;
+ax.FontSize = 15;
+ 
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
@@ -16541,10 +16583,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot cluster size and pixel amplitude as function of distance from axon
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -16706,18 +16744,36 @@ end
 
 
 %% plot distribution of cluster sizes and pixel amplitudes 
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 figure;
 ax=gca;
+avClustSize = nanmean(sizeDistArray(:,2)); 
+medClustSize = nanmedian(sizeDistArray(:,2)); %#ok<*NANMEDIAN> 
+avClustSizeLabel = sprintf('Average cluster size: %.0f',avClustSize);
+medClustSizeLabel = sprintf('Median cluster size: %.0f',medClustSize);
 histogram(sizeDistArray(:,2),100)
 ax.FontSize = 15;
-ax.FontName = 'Times';
+% ax.FontName = 'Times';
 if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Sizes';'All Clusters'});
+    title({'Distribution of BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
 elseif clustSpikeQ == 1 
     if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters'});
+        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
     elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters'});
+        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
     end 
 end 
 ylabel("Number of BBB Plumes")
@@ -16726,15 +16782,19 @@ xlabel("Size of BBB Plume")
 figure;
 ax=gca;
 histogram(ampDistArray(:,2),100)
+avClustAmp = nanmean(ampDistArray(:,2)); 
+medClustAmp = nanmedian(ampDistArray(:,2)); %#ok<*NANMEDIAN> 
+avClustAmpLabel = sprintf('Average cluster pixel amplitude: %.3f',avClustAmp);
+medClustAmpLabel = sprintf('Median cluster pixel amplitude: %.3f',medClustAmp);
 ax.FontSize = 15;
-ax.FontName = 'Times';
+% ax.FontName = 'Times';
 if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters'});
+    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
 elseif clustSpikeQ == 1 
     if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters'});
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
     elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters'});
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
     end 
 end 
 ylabel("Number of BBB Plumes")
