@@ -12410,10 +12410,17 @@ end
 % option to high pass filter the video 
 % can create shuffled and bootrapped x number of spikes (based on input) 
 % (must save out non-shuffled STA vids before making
-% shuffled and bootstrapped STA vids to create binary vids for DBscan)
-%{
+% shuffled and bootstrapped STA vids to create binary vids for DBSCAN)
+
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
+if exist('dataScrambleCutOffs','var') == 0
+    dataScrambleCutOffs = input('What are the data scramble frame cut offs for all of the raw videos? ');
+    for vid = 1:length(greenStacksOrigin)
+        greenStacksOrigin{vid} = greenStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+        redStacksOrigin{vid} = redStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+    end 
+end 
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
 if spikeQ == 1
     itNum = input('Input the number of bootstrap iterations that you want. ');
@@ -15792,24 +15799,16 @@ end
                
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (one animal at a time) 
-
-% NEXT: 
-% 10) PLOT WHEN PLUME TOUCHES VESSEL RELATIVE TO IT'S OWN EXISTANCE TO
-% FIGURE OUT PLUME MOVEMENT DIRECTION 
-% 11) PLOT LIKLIHOOD OF PLUME MOVING AWAY VS TOWARDS VESSEL 
-% 14) CLUSTER VELOCITY AS FUNCTION OF
-% DISTANCE ON TOP 
-
-% TO GROUP AXONS INTO LISTENERS VS TALKERS 
+% NEXT~ 
 % AVERAGE ACROSS MICE: Notes: first just make binarySTA for multiple mice
 % and import that, then rewrite bottom code for multiple binarySTA vids. 
-% 
+
 % IF TOP APPROACH IS TOO SLOW
 % make different avClocFrame variable for
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-
+%{
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -16079,6 +16078,7 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 uniqClusts = cell(1,max(terminals{mouse}));
 numPixels = nan(1,length(terminals{mouse}));
@@ -16748,6 +16748,7 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 figure;
 ax=gca;
