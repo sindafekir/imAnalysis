@@ -15829,7 +15829,7 @@ CsNotNearVessel = cell(1,max(terminals{mouse}));
 clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 clustAmp = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 spikeCount = cell(1,max(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
+for ccell = 1%:length(terminals{mouse})
     % figure out the number of spikes per axon 
     for vid = 1:length(sigLocs)
         if vid == 1 
@@ -15848,7 +15848,19 @@ for ccell = 1:length(terminals{mouse})
     % below code is for binarized z-score vids where 
     % 1 means greater than 95% CI and 2 means lower than 95% CI 
     im(im>1) = 0;
-    
+    % remove noise pixels that are there in all the frames 
+    noise = all(im,3);
+    noise = repelem(noise,1,1,size(im,3));
+    im(noise) = 0;
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % remove columnar noise 
+    noise = 
+
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     % below code is for % change videos 
 %     maxPerc = max(max(max(im))); minPerc = min(min(min(im)));

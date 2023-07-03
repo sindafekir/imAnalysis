@@ -15809,11 +15809,6 @@ end
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -15848,25 +15843,14 @@ for ccell = 1:length(terminals{mouse})
     % below code is for binarized z-score vids where 
     % 1 means greater than 95% CI and 2 means lower than 95% CI 
     im(im>1) = 0;
-
-
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % remove noise pixels that are there in all the frames 
     noise = all(im,3);
-    noise = repmat(noise,:,:,size(im,3));
-    test = im;
-    test(noise) = 0;
-
-
-
-
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
+    noise = repelem(noise,1,1,size(im,3));
+    im(noise) = 0;
+    % remove columnar noise 
+    for frame = 1:size(im,3)
+        im(:,:,frame) = bwareaopen(im(:,:,frame),3);
+    end 
     % below code is for % change videos 
 %     maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
 %     thresh = maxPerc/10;
@@ -16024,30 +16008,9 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
-%% remove outlier clusters if there are any 
-% THIS IS NOT FINISHED 
-%{
-% do one axon at a time and rerun charts to confirm the correct clusters
-% were removed 
-removeOutlierQ = input('Input 1 if you need to remove outlier clusters. '); 
-if removeOutlierQ == 1 
-    axonQ = input('What axon has the outlier?. '); 
-    clusterIDQ = input('What clusters need to be removed? ');
-    for clust = 1:length(clusterIDQ)
-        % find what rows each cluster is located in
-        [Crow, ~] = find(idx{axonQ} == clusterIDQ(clust));  
-        inds{axonQ}(Crow,:) = NaN;
-        idx{axonQ}(Crow,:) = NaN;
-
-        % LOOK UP AND MAKE SURE TO REMOVE OUTLIER CLUSTERS IN OTHER
-        % VARIABLES THAT CARRY OVER 
-    end 
-end 
-%}
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
-
 nearVsFarPlotData = zeros(length(terminals{mouse}),2);
 % resort data for stacked bar plot 
 unIdxVals2 = cell(1,max(terminals{mouse}));
@@ -16089,17 +16052,6 @@ elseif ETAorSTAq == 1
 end 
 
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 uniqClusts = cell(1,max(terminals{mouse}));
 numPixels = nan(1,length(terminals{mouse}));
 numClusts = nan(1,length(terminals{mouse}));
@@ -16155,7 +16107,6 @@ ax.FontSize = 15;
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
-
 inds = safeKeptInds;
 idx = safeKeptIdx;
 clustSize = safeKeptClustSize;
@@ -16621,7 +16572,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav.Rsquared.Ordinary,2));
-        text(0,-10,rSquared,'FontSize',20)
+        text(0,500000,rSquared,'FontSize',20)
     end 
     ylabel("Size of Cluster")
     xlabel("Distance From Axon") 
@@ -16657,7 +16608,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-        text(0,-10,rSquared,'FontSize',20)
+        text(0,0.5,rSquared,'FontSize',20)
     end 
     ylabel("Pixel Amplitude of Cluster")
     xlabel("Distance From Axon") 
@@ -16738,7 +16689,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(32,2,rSquared,'FontSize',20)
+            text(32,6,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -16759,17 +16710,6 @@ end
 
 
 %% plot distribution of cluster sizes and pixel amplitudes 
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 figure;
 ax=gca;
 avClustSize = nanmean(sizeDistArray(:,2)); 
@@ -16813,16 +16753,6 @@ ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
 
 %% plot distribution of cluster times 
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!   UPDATED REPLOT   !!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 if clustSpikeQ == 0 
     figure;
     ax=gca;
@@ -16934,6 +16864,10 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size and pixel amp grouped by pre and post spike
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     clearvars data
     CsizeForPlot = clustSize';
