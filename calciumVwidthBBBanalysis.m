@@ -13198,7 +13198,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
