@@ -15808,7 +15808,7 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-%{
+
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -15848,6 +15848,24 @@ for ccell = 1:length(terminals{mouse})
     % below code is for binarized z-score vids where 
     % 1 means greater than 95% CI and 2 means lower than 95% CI 
     im(im>1) = 0;
+
+
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % remove noise pixels that are there in all the frames 
+    noise = all(im,3);
+    noise = repmat(noise,:,:,size(im,3));
+    test = im;
+    test(noise) = 0;
+
+
+
+
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 
     % below code is for % change videos 
 %     maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
@@ -15959,10 +15977,12 @@ for ccell = 1:length(terminals{mouse})
     hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline 
     % get the x-y coordinates of the Ca ROI         
     clearvars CAy CAx
-    if ismember("ROIorders", variableInfo) == 1 % returns true
+    if ismember("ROIorders", variableInfo) == 1 && sum(unique(ROIorders{1})) > 1
         [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
     elseif ismember("ROIorders", variableInfo) == 0 % returns true
         [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
+    elseif ismember("ROIorders", variableInfo) == 1 && sum(unique(ROIorders{1})) <= 1
+        [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));
     end   
     % create axon x, y, z matrix 
     for frame = 1:size(im,3)
