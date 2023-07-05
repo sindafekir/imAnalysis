@@ -12411,14 +12411,41 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input) 
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBSCAN)
-%{
+
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
-if exist('dataScrambleCutOffs','var') == 0
-    dataScrambleCutOffs = input('What are the data scramble frame cut offs for all of the raw videos? ');
+% option to downsample the data 
+downSampleQ = input('Input 1 to downsample the data. '); 
+while downSampleQ == 1 
+    dwnR = cell(1,length(vidList{mouse})); 
+    dwnG = cell(1,length(vidList{mouse})); 
+    downsampleRate = input("Input the downsample rate. ");
     for vid = 1:length(greenStacksOrigin)
-        greenStacksOrigin{vid} = greenStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
-        redStacksOrigin{vid} = redStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+        dwnR{vid} = downsample(redStacksOrigin{vid},downsampleRate);
+        dwnR{vid} = permute(dwnR{vid},[2 1 3]);
+        dwnR{vid} = downsample(dwnR{vid},downsampleRate);
+        dwnR{vid} = permute(dwnR{vid},[2 1 3]);       
+        dwnG{vid} = downsample(greenStacksOrigin{vid},downsampleRate);
+        dwnG{vid} = permute(dwnG{vid},[2 1 3]);
+        dwnG{vid} = downsample(dwnG{vid},downsampleRate);
+        dwnG{vid} = permute(dwnG{vid},[2 1 3]);   
+    end 
+    implay(redStacksOrigin{1}); implay(dwnR{1}); implay(greenStacksOrigin{1}); implay(dwnG{1});
+    downSampleQ2 = input('Input 1 if the data looks good and does not need re-downsampling. '); 
+    if downSampleQ2 == 1
+        downSampleQ = 0; 
+    end 
+end 
+greenStacksOrigin = dwnG; redStacksOrigin = dwnR; 
+clearvars dwnG dwnR
+if exist('dataScrambleCutOffs','var') == 0 && exist('dataScrambleQ','var') == 0
+    dataScrambleQ = input('Input 1 if there is data scramble. Input 0 otherwise. ');
+    if dataScrambleQ == 1 
+        dataScrambleCutOffs = input('What are the data scramble frame cut offs for all of the raw videos? ');
+        for vid = 1:length(greenStacksOrigin)
+            greenStacksOrigin{vid} = greenStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+            redStacksOrigin{vid} = redStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+        end 
     end 
 end 
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized and bootstrapped spikes (based on ISI STD). "); 
@@ -12553,7 +12580,6 @@ if spikeQ == 1
     sigLocs = randSigLocs;
 end 
 clearvars randSigLocs 
-
 % crop the imaging data if you want to; better to do this up here to
 % maximize computational speed ~ 
 rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
@@ -12595,7 +12621,6 @@ clearvars greenStacks redStacks
 greenStacks = greenStacks2;
 redStacks = redStacks2;
 clearvars greenStacks2 redStacks2
-
 % high pass filter the videos if you want 
 highPassQ = input("Input 1 if you want to high pass filter the videos. Input 0 otherwise. ");
 if highPassQ == 1 
@@ -12657,7 +12682,6 @@ for vid = 1:length(vidList{mouse})
     end 
 end 
 clearvars zGreenStack zRedStack
-
 % further sort and average data, get 95% CI bounds 
 CI_High = cell(1,max(terminals{mouse}));
 CI_Low = cell(1,max(terminals{mouse}));
@@ -12913,7 +12937,6 @@ while workFlow == 1
     end 
     toc
 end 
-
 % don't normalize because it's z-scored 
 NgreenStackAv = avGreenStack;
 NredStackAv = avRedStack; 
@@ -12942,7 +12965,6 @@ elseif rightChan == 1
     vesChan = VesAvRedStack;
 end    
 clearvars avGreenStack avRedStack VesAvGreenStack 
-
 %temporal smoothing option
 smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise. ');
 if smoothQ == 0 
@@ -12992,7 +13014,6 @@ clearvars NgreenStackAv NredStackAv
 if spikeQ == 1
     clearvars nCIhighAv nCIlowAv
 end 
-
 %spatial smoothing option
 spatSmoothQ = input('Input 0 if you do not want to do spatial smoothing. Input 1 otherwise. ');
 if spatSmoothQ == 1 
@@ -13087,7 +13108,6 @@ clearvars redIn greenIn
 if spikeQ == 1 
     clearvars CIhighIn CIlowIn
 end 
-
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
 if blackOutCaROIQ == 1         
@@ -13145,11 +13165,20 @@ if blackOutCaROIQ == 1
         ROIorders = combo2;
     elseif numZplanes == 1 
         combo = CaROImasks;       
-    end    
+    end        
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
-    ind = length(combo);
-    ThreeDCaMask = logical(repmat(combo{ind},1,1,size(SNredStackAv{terminals{mouse}(ccell)},3)));
+    ind = length(combo); combo1 = combo{ind};
+    % downsample the Ca ROI mask if necessary 
+    if exist("downsampleRate", 'var') == 1
+        dwnC = downsample(combo1,downsampleRate);
+        dwnC = permute(dwnC,[2 1 3]);
+        dwnC = downsample(dwnC,downsampleRate);
+        dwnC = permute(dwnC,[2 1 3]);  
+        combo1 = dwnC; 
+        clearvars dwnC 
+    end 
+    ThreeDCaMask = logical(repmat(combo1,1,1,size(SNredStackAv{terminals{mouse}(ccell)},3)));
     %apply new mask to the right channel 
     % this is defined above: rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
     if rightChan == 0     
@@ -13172,7 +13201,6 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
-
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 if AVQ == 0 
     segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
@@ -13198,7 +13226,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage110_STAvid_20230703zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
