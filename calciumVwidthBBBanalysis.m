@@ -7,6 +7,7 @@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%THIS VERSION
 %% get the data you need 
 % includes batch processing (across mice) option for STA/ETA figure generation
 %{
