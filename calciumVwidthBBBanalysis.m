@@ -12411,7 +12411,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input) 
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBSCAN)
-
+%{
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 % option to downsample the data 
@@ -13201,6 +13201,9 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
+
+
+
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 if AVQ == 0 
     segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
@@ -15836,7 +15839,7 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-%{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -16604,7 +16607,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav.Rsquared.Ordinary,2));
-        text(0,500000,rSquared,'FontSize',20)
+        text(70,400,rSquared,'FontSize',20)
     end 
     ylabel("Size of Cluster")
     xlabel("Distance From Axon") 
@@ -16640,7 +16643,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-        text(0,0.5,rSquared,'FontSize',20)
+        text(70,0.02,rSquared,'FontSize',20)
     end 
     ylabel("Pixel Amplitude of Cluster")
     xlabel("Distance From Axon") 
@@ -16679,7 +16682,7 @@ if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2.Rsquared.Ordinary,2));
-        text(10,30,rSquared,'FontSize',20)
+        text(32,150,rSquared,'FontSize',20)
     end 
     ylabel("Distance From Axon")
     if clustSpikeQ3 == 0 
@@ -16721,7 +16724,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(32,6,rSquared,'FontSize',20)
+            text(32,0.2,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -16838,6 +16841,7 @@ if clustSpikeQ == 0
 
     % create pie chart showing number of axons that are mostly pre, mostly
     % post, and evenly split 
+    figure;
     totalClusts = numPreSpikeStarts + numPostSpikeStarts;
     preSpikeRatio = numPreSpikeStarts./totalClusts;
     numMostlyPre = sum(preSpikeRatio > 0.5);
@@ -17316,7 +17320,7 @@ if clustSpikeQ == 0
     end 
 end 
 
-%% plot average BBB plume change in size and pixel amplitude over time for however many groups you want 
+%% plot average BBB plume change in size and pixel amplitude over time for however many groups you want
 if clustSpikeQ == 0
     % plot change in cluster size color coded by axon 
     x = 1:size(im,3);
