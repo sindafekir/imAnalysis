@@ -4771,25 +4771,25 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
+%{
 mouse = 1;
-termQ = input('Input 1 to update terminal labels. ');
-if termQ == 1 
-    terminals{mouse} = input(sprintf('What terminals do you care about for mouse #%d? Input in correct order. ',mouse)); 
-    tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
-    dirLabel = sprintf('WHERE IS THE CA DATA FOR MOUSE #%d? ',mouse);
-    dataDir{mouse} = uigetdir('*.*',dirLabel);
-    cd(dataDir{mouse}); % go to the right directory 
-    % get calcium data    
-    CAfileList = dir('**/*CAdata_*.mat'); % list data files in current directory 
-    cDataFullTrace = cell(1);
-    for vid = 1:length(vidList{mouse})
-        CAlabel = CAfileList(vid).name;
-        CAmat = matfile(sprintf(CAlabel,vidList{mouse}(vid)));
-        CAdata = CAmat.CcellData;       
-        cDataFullTrace{mouse}{vid} = CAdata;
-    end 
-end 
+% termQ = input('Input 1 to update terminal labels. ');
+% if termQ == 1 
+%     terminals{mouse} = input(sprintf('What terminals do you care about for mouse #%d? Input in correct order. ',mouse)); 
+%     tTypeQ = input('Do you want to seperate calcium peaks by trial type (light condition)? No = 0. Yes = 1. ');
+%     dirLabel = sprintf('WHERE IS THE CA DATA FOR MOUSE #%d? ',mouse);
+%     dataDir{mouse} = uigetdir('*.*',dirLabel);
+%     cd(dataDir{mouse}); % go to the right directory 
+%     % get calcium data    
+%     CAfileList = dir('**/*CAdata_*.mat'); % list data files in current directory 
+%     cDataFullTrace = cell(1);
+%     for vid = 1:length(vidList{mouse})
+%         CAlabel = CAfileList(vid).name;
+%         CAmat = matfile(sprintf(CAlabel,vidList{mouse}(vid)));
+%         CAdata = CAmat.CcellData;       
+%         cDataFullTrace{mouse}{vid} = CAdata;
+%     end 
+% end 
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 % option to downsample the data 
@@ -15894,10 +15894,13 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-%{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+if ETAorSTAq == 1 % ETA data 
+    ccell = 1; 
+end 
 inds = cell(1,max(terminals{mouse}));
 idx = cell(1,max(terminals{mouse}));
 indsV = cell(1,max(terminals{mouse}));
@@ -15914,9 +15917,18 @@ for ccell = 1:length(terminals{mouse})
     % figure out the number of spikes per axon 
     for vid = 1:length(sigLocs)
         if vid == 1 
-            spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
+            if ETAorSTAq == 0 % STA data
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
+            elseif ETAorSTAq == 1 % ETA data 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2);
+            end 
+            
         elseif vid > 1 
-            spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
+            if ETAorSTAq == 0 % STA data
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
+            elseif ETAorSTAq == 1 % ETA data 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2) + spikeCount{terminals{mouse}(ccell)};
+            end                  
         end 
     end 
     count = 1;
@@ -16779,7 +16791,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(32,50,rSquared,'FontSize',20)
+            text(32,10,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
