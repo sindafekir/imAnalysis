@@ -4770,7 +4770,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-%{
+
 mouse = 1;
 termQ = input('Input 1 to update terminal labels. ');
 if termQ == 1 
@@ -4791,6 +4791,40 @@ if termQ == 1
 end 
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
+% option to downsample the data 
+downSampleQ = input('Input 1 to downsample the data. '); 
+while downSampleQ == 1 
+    dwnR = cell(1,length(vidList{mouse})); 
+    dwnG = cell(1,length(vidList{mouse})); 
+    downsampleRate = input("Input the downsample rate. ");
+    for vid = 1:length(greenStacksOrigin)
+        dwnR{vid} = downsample(redStacksOrigin{vid},downsampleRate);
+        dwnR{vid} = permute(dwnR{vid},[2 1 3]);
+        dwnR{vid} = downsample(dwnR{vid},downsampleRate);
+        dwnR{vid} = permute(dwnR{vid},[2 1 3]);       
+        dwnG{vid} = downsample(greenStacksOrigin{vid},downsampleRate);
+        dwnG{vid} = permute(dwnG{vid},[2 1 3]);
+        dwnG{vid} = downsample(dwnG{vid},downsampleRate);
+        dwnG{vid} = permute(dwnG{vid},[2 1 3]);   
+    end 
+    implay(redStacksOrigin{1}); implay(dwnR{1}); implay(greenStacksOrigin{1}); implay(dwnG{1});
+    downSampleQ2 = input('Input 1 if the data looks good and does not need re-downsampling. '); 
+    if downSampleQ2 == 1
+        greenStacksOrigin = dwnG; redStacksOrigin = dwnR; 
+        clearvars dwnG dwnR
+        downSampleQ = 0; 
+    end 
+end 
+if exist('dataScrambleCutOffs','var') == 0 && exist('dataScrambleQ','var') == 0
+    dataScrambleQ = input('Input 1 if there is data scramble. Input 0 otherwise. ');
+    if dataScrambleQ == 1 
+        dataScrambleCutOffs = input('What are the data scramble frame cut offs for all of the raw videos? ');
+        for vid = 1:length(greenStacksOrigin)
+            greenStacksOrigin{vid} = greenStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+            redStacksOrigin{vid} = redStacksOrigin{vid}(:,:,1:dataScrambleCutOffs(vid));
+        end 
+    end 
+end 
 spikeQ = input("Input 0 to use real opto stim locations. Input 1 to use randomized and bootstrapped opto stim locations (based on ITI STD). "); 
 if spikeQ == 1
     itNum = input('Input the number of bootstrap iterations that you want. ');
@@ -5107,8 +5141,8 @@ while workFlow == 1
                     format long 
                     lowBound = 0.025/numPix;                      
                     highBound = 1-lowBound;
-                    ts_High = tinv(highBound,size(avGreenStack,3)-1);% T-Score for 95% CI
-                    ts_Low =  tinv(lowBound,size(avGreenStack,3)-1);% T-Score for 95% CI
+                    ts_High = tinv(highBound,size(avGreenStack,3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel
+                    ts_Low =  tinv(lowBound,size(avGreenStack,3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel
 %                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
 %                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
                     if HighLowQ == 0
@@ -5431,7 +5465,7 @@ while segmentVessel == 1
         BW_perim = nan(size(BW,1),size(BW,2),size(vesChan,3));
         segOverlays = nan(size(BW,1),size(BW,2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
