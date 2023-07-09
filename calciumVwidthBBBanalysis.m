@@ -238,16 +238,32 @@ if STAstackQ == 1 || ETAstackQ == 1
         redMat = matfile(sprintf(redlabel,vidList{mouse}(vid)));       
         redRegStacks = redMat.regStacks;
         if size(redRegStacks,2) > 2 
-            redStacks1{vid} = redRegStacks{2,4};
+            if iscell(redRegStacks{2,4}) == 0
+                redStacks1{vid} = redRegStacks{2,4};
+            elseif iscell(redRegStacks{2,4}) == 1
+                redStacks1{vid} = redRegStacks{2,4}{1};
+            end 
         elseif size(redRegStacks,2) == 2 
-            redStacks1{vid} = redRegStacks{2,2};
+            if iscell(redRegStacks{2,2}) == 0 
+                redStacks1{vid} = redRegStacks{2,2};
+            elseif iscell(redRegStacks{2,2}) == 1 
+                redStacks1{vid} = redRegStacks{2,2}{1};
+            end 
         end 
         greenMat = matfile(sprintf(greenlabel,vidList{mouse}(vid)));       
         greenRegStacks = greenMat.regStacks;        
         if size(greenRegStacks,2) > 2 
-            greenStacks1{vid} = greenRegStacks{2,3};
+            if iscell(greenRegStacks{2,3}) == 0
+                greenStacks1{vid} = greenRegStacks{2,3};
+            elseif iscell(greenRegStacks{2,3}) == 1
+                greenStacks1{vid} = greenRegStacks{2,3}{1};
+            end
         elseif size(greenRegStacks,2) == 2 
-            greenStacks1{vid} = greenRegStacks{2,1};
+            if iscell(greenRegStacks{2,1}) == 0
+                greenStacks1{vid} = greenRegStacks{2,1};
+            elseif iscell(greenRegStacks{2,1}) == 1
+                greenStacks1{vid} = greenRegStacks{2,1}{1};
+            end          
         end                            
         if BGsubQ == 0 
             redStacksBS = redStacks1;
@@ -280,9 +296,16 @@ if STAstackQ == 1 || ETAstackQ == 1
             end 
         end               
         % average registered imaging data across planes in Z 
-        for Z = 1:size(redStacks1{1},2)
-            redStackArray{vid}(:,:,:,Z) = redStacksBS{vid}{Z};
-            greenStackArray{vid}(:,:,:,Z) = greenStacksBS{vid}{Z};
+        if iscell(redStacks1{1}) == 0 
+            for Z = 1%:size(redStacks1{1},2)
+                redStackArray{vid}(:,:,:,Z) = redStacksBS{vid}{Z};
+                greenStackArray{vid}(:,:,:,Z) = greenStacksBS{vid}{Z};
+            end 
+        elseif iscell(redStacks1{1}) == 1 
+            for Z = 1:size(redStacks1{1},2)
+                redStackArray{vid}(:,:,:,Z) = redStacksBS{vid}{Z};
+                greenStackArray{vid}(:,:,:,Z) = greenStacksBS{vid}{Z};
+            end 
         end 
         redStacks{vid} = mean(redStackArray{vid},4);
         greenStacks{vid} = mean(greenStackArray{vid},4);
@@ -13201,9 +13224,6 @@ elseif blackOutCaROIQ == 0
     end   
 end 
 clearvars SNgreenStackAv SNredStackAv
-
-
-
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
 if AVQ == 0 
     segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
@@ -13229,7 +13249,7 @@ if AVQ == 0
             segOverlays = cell(1,length(vesChan));    
             for ccell = 1:length(terminals{mouse})
                 for frame = 1:size(vesChan{terminals{mouse}(ccell)},3)
-                    [BW,~] = segmentImage110_STAvid_20230703zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
+                    [BW,~] = segmentImage112_STAvid_20230706zScored(vesChan{terminals{mouse}(ccell)}(:,:,frame));
                     BWstacks{terminals{mouse}(ccell)}(:,:,frame) = BW; 
                     %get the segmentation boundaries 
                     BW_perim{terminals{mouse}(ccell)}(:,:,frame) = bwperim(BW);
@@ -15839,7 +15859,7 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-
+%{
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -16607,7 +16627,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav.Rsquared.Ordinary,2));
-        text(70,400,rSquared,'FontSize',20)
+        text(20,5000,rSquared,'FontSize',20)
     end 
     ylabel("Size of Cluster")
     xlabel("Distance From Axon") 
@@ -16643,7 +16663,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-        text(70,0.02,rSquared,'FontSize',20)
+        text(20,0.04,rSquared,'FontSize',20)
     end 
     ylabel("Pixel Amplitude of Cluster")
     xlabel("Distance From Axon") 
@@ -16682,7 +16702,7 @@ if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2.Rsquared.Ordinary,2));
-        text(32,150,rSquared,'FontSize',20)
+        text(10,-100,rSquared,'FontSize',20)
     end 
     ylabel("Distance From Axon")
     if clustSpikeQ3 == 0 
@@ -16724,7 +16744,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(32,0.2,rSquared,'FontSize',20)
+            text(32,50,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -16841,7 +16861,6 @@ if clustSpikeQ == 0
 
     % create pie chart showing number of axons that are mostly pre, mostly
     % post, and evenly split 
-    figure;
     totalClusts = numPreSpikeStarts + numPostSpikeStarts;
     preSpikeRatio = numPreSpikeStarts./totalClusts;
     numMostlyPre = sum(preSpikeRatio > 0.5);
@@ -17320,7 +17339,7 @@ if clustSpikeQ == 0
     end 
 end 
 
-%% plot average BBB plume change in size and pixel amplitude over time for however many groups you want
+%% plot average BBB plume change in size and pixel amplitude over time for however many groups you want 
 if clustSpikeQ == 0
     % plot change in cluster size color coded by axon 
     x = 1:size(im,3);

@@ -2,7 +2,11 @@ function [stackOut,BG_ROIboundData,CaROImask] = backgroundSubtraction(reg__Stack
 
 % black out the pixels that are part of calcium ROIs 
 blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
-reg__Stacks2 = reg__Stacks;
+if iscell(reg__Stacks) == 0 
+    reg__Stacks2{1} = reg__Stacks;
+elseif iscell(reg__Stacks) == 1 
+    reg__Stacks2 = reg__Stacks;
+end 
 if blackOutCaROIQ == 1         
     % get the Ca ROI coordinates 
     CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
@@ -27,9 +31,9 @@ if blackOutCaROIQ == 1
 end 
 
 % apply mask to each frame to get background pixel intensity per row 
-BG_ROIboundData = cell(1,length(reg__Stacks));
-BG_ROIstacks = cell(1,length(reg__Stacks));
-for stack = 1:length(reg__Stacks)
+BG_ROIboundData = cell(1,length(reg__Stacks2));
+BG_ROIstacks = cell(1,length(reg__Stacks2));
+for stack = 1:length(reg__Stacks2)
     data = reg__Stacks2{stack};
     if stack == 1
         [ROI_stacks,xmins,ymins,widths,heights] = firstTimeCreateROIs(1,data);
@@ -56,16 +60,20 @@ end
 
 % determine average pixel intensity of each frame and row in the control
 % ROIs
-BGpixInt = cell(1,length(reg__Stacks));
-for stack = 1:length(reg__Stacks)
+BGpixInt = cell(1,length(reg__Stacks2));
+for stack = 1:length(reg__Stacks2)
     BGpixInt{stack} = mean(mean(BG_ROIstacks{stack}{1}));
 end 
 
 % do background subtraction 
-stackOut = cell(1,length(reg__Stacks));
-for stack = 1:length(reg__Stacks) 
+stackOut = cell(1,length(reg__Stacks2));
+for stack = 1:length(reg__Stacks2) 
     for frame = 1:size(BGpixInt{1},3)
-        stackOut{stack}(:,:,frame) = (reg__Stacks{stack}(:,:,frame)-BGpixInt{stack}(:,:,frame));
+        if iscell(reg__Stacks) == 0 
+            stackOut{stack}(:,:,frame) = (reg__Stacks(:,:,frame)-BGpixInt{stack}(:,:,frame));
+        elseif iscell(reg__Stacks) == 1 
+            stackOut{stack}(:,:,frame) = (reg__Stacks{stack}(:,:,frame)-BGpixInt{stack}(:,:,frame));
+        end  
     end 
 end 
 

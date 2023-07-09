@@ -1,5 +1,10 @@
 function [stackOut] = backgroundSubtraction2(stackIn,BG_ROIboundData)
 
+if iscell(stackIn) == 0 
+    data{1} = stackIn;
+    clearvars stackIn; stackIn = data; clearvars data;
+end 
+
 BG_ROIstacks = cell(1,length(stackIn));
 for stack = 1:length(stackIn)
     data = stackIn{stack};
