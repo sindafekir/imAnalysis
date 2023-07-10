@@ -4770,7 +4770,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
+%{
 mouse = 1;
 termQ = input('Input 1 to update terminal labels. ');
 if termQ == 1 
