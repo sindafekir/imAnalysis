@@ -5465,7 +5465,7 @@ while segmentVessel == 1
         BW_perim = nan(size(BW,1),size(BW,2),size(vesChan,3));
         segOverlays = nan(size(BW,1),size(BW,2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
