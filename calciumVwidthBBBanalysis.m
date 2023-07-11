@@ -5556,6 +5556,12 @@ if spikeQ == 1
     clearvars vesChan;
     vesChan{1} = data;
     clearvars data
+    data = sigLocs; 
+    clearvars sigLocs 
+    for vid = 1:length(vidList{mouse}) 
+        sigLocs{vid}{1} = data{vid};
+    end 
+    clearvars data
 end 
 
 %% conditional statement that ensures you checked the other channel
