@@ -4998,197 +4998,146 @@ while workFlow == 1
     for it = 1:size(sigLocs{1},1)
         % sort data 
         % terminals = terminals{1};
-        if tTypeQ == 0 
-            sortedGreenStacks = cell(1,1);
-            sortedRedStacks = cell(1,1);
-            if rightChan == 0     
-                VesSortedGreenStacks = cell(1,1);
-            elseif rightChan == 1
-                VesSortedRedStacks = cell(1,1);
-            end    
-                for vid = 1:length(vidList{mouse})                  
-                    if isempty(sigLocs{vid}) == 0
-                        for peak = 1:size(sigLocs{vid},2)            
+        sortedGreenStacks = cell(1,1);
+        sortedRedStacks = cell(1,1);
+        if rightChan == 0     
+            VesSortedGreenStacks = cell(1,1);
+        elseif rightChan == 1
+            VesSortedRedStacks = cell(1,1);
+        end    
+        for vid = 1:length(vidList{mouse})                  
+            if isempty(sigLocs{vid}) == 0
+                for peak = 1:size(sigLocs{vid},2)            
 %                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
-                                start = sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                                stop = sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
-                                if start == 0 
-                                    start = 1 ;
-                                    stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                                end        
-                                if stop < size(szGreenStack{vid},3) && start > 0 
-                                    sortedGreenStacks{vid}{peak} = szGreenStack{vid}(:,:,start:stop);
-                                    sortedRedStacks{vid}{peak} = szRedStack{vid}(:,:,start:stop);
-                                    if rightChan == 0     
-                                        VesSortedGreenStacks{vid}{peak} = greenStacks{vid}(:,:,start:stop);
-                                    elseif rightChan == 1
-                                        VesSortedRedStacks{vid}{peak} = redStacks{vid}(:,:,start:stop);
-                                    end    
-                                end 
+                        start = sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                        stop = sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                        if start == 0 
+                            start = 1 ;
+                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                        end        
+                        if stop < size(szGreenStack{vid},3) && start > 0 
+                            sortedGreenStacks{vid}{peak} = szGreenStack{vid}(:,:,start:stop);
+                            sortedRedStacks{vid}{peak} = szRedStack{vid}(:,:,start:stop);
+                            if rightChan == 0     
+                                VesSortedGreenStacks{vid}{peak} = greenStacks{vid}(:,:,start:stop);
+                            elseif rightChan == 1
+                                VesSortedRedStacks{vid}{peak} = redStacks{vid}(:,:,start:stop);
+                            end    
+                        end 
 %                             end 
-                        end     
-                    end                  
-                end 
-        elseif tTypeQ == 1
-            %tTypeSigLocs{vid}{CaROI}{1} = blue light
-            %tTypeSigLocs{vid}{CaROI}{2} = red light
-            %tTypeSigLocs{vid}{CaROI}{3} = ISI
-            sortedGreenStacks = cell(1,length(vidList{mouse}));
-            sortedRedStacks = cell(1,length(vidList{mouse}));
-            for vid = 1:length(vidList{mouse})                 
-                for per = 1:3 
-                    for peak = 1:length(tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per})                    
-%                             if tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                                     
-                            start = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)-floor((windSize/2)*FPSstack{mouse});
-                            stop = tTypeSigLocs{vid}{terminals{mouse}(ccell)}{per}(peak)+floor((windSize/2)*FPSstack{mouse}); 
-                            if start == 0 
-                                start = 1 ;
-                                stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                            end                
-                            sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szGreenStack{vid}(:,:,start:stop);
-                            sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak} = szRedStack{vid}(:,:,start:stop);
-%                             end 
-                    end 
-                end               
-            end   
+                end     
+            end                  
         end 
     %     clearvars greenStacks redStacks start stop sigLocs sigPeaks 
     
         % resort and average calcium peak aligned traces across videos 
-        if tTypeQ == 0 
+
 %             greenStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
 %             if rightChan == 0     
 %                 VesGreenStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
 %             end             
-            count = 1;
-            for vid = 1:length(vidList{mouse})     
-                if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
-                    for peak = 1:size(sortedGreenStacks{vid},2)  
-                        if isempty(sortedGreenStacks{vid}{peak}) == 0
-                            greenStackArray2(:,:,:,count) = single(sortedGreenStacks{vid}{peak});
-                            if rightChan == 0
-                                VesGreenStackArray2(:,:,:,count) = single(VesSortedGreenStacks{vid}{peak});
-                            end           
-                            count = count + 1;
-                        end 
-                    end
-                end 
+        count = 1;
+        for vid = 1:length(vidList{mouse})     
+            if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
+                for peak = 1:size(sortedGreenStacks{vid},2)  
+                    if isempty(sortedGreenStacks{vid}{peak}) == 0
+                        greenStackArray2(:,:,:,count) = single(sortedGreenStacks{vid}{peak});
+                        if rightChan == 0
+                            VesGreenStackArray2(:,:,:,count) = single(VesSortedGreenStacks{vid}{peak});
+                        end           
+                        count = count + 1;
+                    end 
+                end
             end 
-           
-    %         clearvars sortedGreenStacks VesSortedGreenStacks
-            clearvars VesSortedGreenStacks
+        end 
+       
+%         clearvars sortedGreenStacks VesSortedGreenStacks
+        clearvars VesSortedGreenStacks
 %             redStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
 %             if rightChan == 1     
 %                 VesRedStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
 %             end  
-            count = 1;
-            for vid = 1:length(vidList{mouse}) 
-                if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
-                    for peak = 1:size(sortedRedStacks{vid},2)  
-                        if isempty(sortedRedStacks{vid}{peak}) == 0
-                            redStackArray2(:,:,:,count) = single(sortedRedStacks{vid}{peak});
-                            if rightChan == 1
-                                VesRedStackArray2(:,:,:,count) = single(VesSortedRedStacks{vid}{peak});
-                            end           
-                            count = count + 1;
-                        end 
-                    end
-                end 
-            end 
-           
-    %         clearvars sortedRedStacks VesSortedRedStacks
-            clearvars VesSortedRedStacks
-            % determine the average 
-            avGreenStack = nanmean(greenStackArray2,4);         
-            clearvars greenStackArray2
-            avRedStack = nanmean(redStackArray2,4);     
-            clearvars redStackArray2
-            if rightChan == 0  
-                % determine the average 
-                VesAvGreenStack = nanmean(VesGreenStackArray2,4);          
-                clearvars VesGreenStackArray2
-            end 
-            if rightChan == 1  
-                % determine the average 
-                VesAvRedStack = nanmean(VesRedStackArray2,4);            
-                clearvars VesRedStackArray2
-            end 
-    
-            % determine 95% or 99% CI of bootstrapped data and av
-            if spikeQ == 1       
-                if rightChan == 0 % BBB data is in green channel 
-                    SEM = (nanstd(avGreenStack,0,3))/(sqrt(size(avGreenStack,3))); % Standard Error 
-                    % calculate bounds for bonferroni correction (per
-                    % extravascular pixel) 
-                   if rightChan == 0 % if BBB data is in green channel 
-                        avZ = nanmean(VesAvGreenStack,3);
-                    elseif rightChan == 1 % if BBB data is in red channel 
-                        avZ = nanmean(VesAvRedStack,3);
+        count = 1;
+        for vid = 1:length(vidList{mouse}) 
+            if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
+                for peak = 1:size(sortedRedStacks{vid},2)  
+                    if isempty(sortedRedStacks{vid}{peak}) == 0
+                        redStackArray2(:,:,:,count) = single(sortedRedStacks{vid}{peak});
+                        if rightChan == 1
+                            VesRedStackArray2(:,:,:,count) = single(VesSortedRedStacks{vid}{peak});
+                        end           
+                        count = count + 1;
                     end 
-                    % figure out how many pixels are roughly in the
-                    % vessel 
-                    % Normalize input data to range in [0,1].
-                    Xmin = min(avZ(:));
-                    Xmax = max(avZ(:));
-                    if isequal(Xmax,Xmin)
-                        avZ = 0*avZ;
-                    else
-                        avZ = (avZ - Xmin) ./ (Xmax - Xmin);
-                    end                 
-                    % Threshold image - global threshold
-                    BW = imbinarize(im2gray(avZ));         
-                    numPix = nnz(~BW);
-                    format long 
-                    lowBound = 0.025/numPix;                      
-                    highBound = 1-lowBound;
-                    ts_High = tinv(highBound,size(avGreenStack,3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel
-                    ts_Low =  tinv(lowBound,size(avGreenStack,3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel
+                end
+            end 
+        end 
+       
+%         clearvars sortedRedStacks VesSortedRedStacks
+        clearvars VesSortedRedStacks
+        % determine the average 
+        avGreenStack = nanmean(greenStackArray2,4);         
+        clearvars greenStackArray2
+        avRedStack = nanmean(redStackArray2,4);     
+        clearvars redStackArray2
+        if rightChan == 0  
+            % determine the average 
+            VesAvGreenStack = nanmean(VesGreenStackArray2,4);          
+            clearvars VesGreenStackArray2
+        end 
+        if rightChan == 1  
+            % determine the average 
+            VesAvRedStack = nanmean(VesRedStackArray2,4);            
+            clearvars VesRedStackArray2
+        end 
+
+        % determine 95% or 99% CI of bootstrapped data and av
+        if spikeQ == 1       
+            if rightChan == 0 % BBB data is in green channel 
+                SEM = (nanstd(avGreenStack,0,3))/(sqrt(size(avGreenStack,3))); % Standard Error 
+                % calculate bounds for bonferroni correction (per
+                % extravascular pixel) 
+               if rightChan == 0 % if BBB data is in green channel 
+                    avZ = nanmean(VesAvGreenStack,3);
+                elseif rightChan == 1 % if BBB data is in red channel 
+                    avZ = nanmean(VesAvRedStack,3);
+                end 
+                % figure out how many pixels are roughly in the
+                % vessel 
+                % Normalize input data to range in [0,1].
+                Xmin = min(avZ(:));
+                Xmax = max(avZ(:));
+                if isequal(Xmax,Xmin)
+                    avZ = 0*avZ;
+                else
+                    avZ = (avZ - Xmin) ./ (Xmax - Xmin);
+                end                 
+                % Threshold image - global threshold
+                BW = imbinarize(im2gray(avZ));         
+                numPix = nnz(~BW);
+                format long 
+                lowBound = 0.025/numPix;                      
+                highBound = 1-lowBound;
+                ts_High = tinv(highBound,size(avGreenStack,3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel
+                ts_Low =  tinv(lowBound,size(avGreenStack,3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel
 %                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
 %                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
-                    if HighLowQ == 0
-                        CI_Low(:,:,:,it) = (avGreenStack) + (ts_Low*SEM); 
-                    elseif HighLowQ == 1 
-                        CI_High(:,:,:,it) = (avGreenStack) + (ts_High*SEM);  % Confidence Intervals  
-                    end 
-                elseif rightChan == 1 % BBB data is in red channel 
-                    SEM = (nanstd(avRedStack,0,3))/(sqrt(size(avRedStack,3))); % Standard Error 
-                    ts_High = tinv(0.975,size(avRedStack,3)-1);% T-Score for 95% CI
-                    ts_Low =  tinv(0.025,size(avRedStack,3)-1);% T-Score for 95% CI
+                if HighLowQ == 0
+                    CI_Low(:,:,:,it) = (avGreenStack) + (ts_Low*SEM); 
+                elseif HighLowQ == 1 
+                    CI_High(:,:,:,it) = (avGreenStack) + (ts_High*SEM);  % Confidence Intervals  
+                end 
+            elseif rightChan == 1 % BBB data is in red channel 
+                SEM = (nanstd(avRedStack,0,3))/(sqrt(size(avRedStack,3))); % Standard Error 
+                ts_High = tinv(0.975,size(avRedStack,3)-1);% T-Score for 95% CI
+                ts_Low =  tinv(0.025,size(avRedStack,3)-1);% T-Score for 95% CI
 %                         ts_High = tinv(0.995,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
 %                         ts_Low =  tinv(0.005,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
-                    if HighLowQ == 0
-                        CI_Low(:,:,:,it) = (avRedStack) + (ts_Low*SEM);   
-                    elseif HighLowQ == 1 
-                        CI_High(:,:,:,it) = (avRedStack) + (ts_High*SEM);  % Confidence Intervals  
-                    end          
-                end              
-            end 
-        elseif tTypeQ == 1
-            per = input('Input lighting condition you care about. Blue = 1. Red = 2. Light off = 3. ');
-            greenStackArray2 = cell(1,length(vidList{mouse}));
-            redStackArray2 = cell(1,length(vidList{mouse}));
-            avGreenStack2 = cell(1,length(sortedGreenStacks{1}));
-            avRedStack2 = cell(1,length(sortedGreenStacks{1}));
-            avGreenStack = cell(1,length(sortedGreenStacks{1}));
-            avRedStack = cell(1,length(sortedGreenStacks{1}));
-            for ccell = 1:length(terminals{mouse})
-                for vid = 1:length(vidList{mouse})    
-                    count = 1;
-                    if length(sortedGreenStacks{vid}) >= terminals{mouse}(ccell) && isempty(sortedGreenStacks{vid}{terminals{mouse}(ccell)}) == 0 
-                        for peak = 1:size(sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per},2)                          
-                            greenStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedGreenStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
-                            redStackArray2{vid}{terminals{mouse}(ccell)}(:,:,:,count) = sortedRedStacks{vid}{terminals{mouse}(ccell)}{per}{peak};
-                            count = count + 1;                           
-                        end
-                    end 
-                    avGreenStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(greenStackArray2{vid}{terminals{mouse}(ccell)},4);
-                    avRedStack2{terminals{mouse}(ccell)}(:,:,:,vid) = nanmean(redStackArray2{vid}{terminals{mouse}(ccell)},4);
-                end 
-                avGreenStack{terminals{mouse}(ccell)} = nanmean(avGreenStack2{terminals{mouse}(ccell)},4);
-                avRedStack{terminals{mouse}(ccell)} = nanmean(avRedStack2{terminals{mouse}(ccell)},4);
-            end 
-    %         clearvars sortedGreenStacks sortedRedStacks greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
-            clearvars greenStackArray2 redStackArray2 avGreenStack2 avRedStack2
+                if HighLowQ == 0
+                    CI_Low(:,:,:,it) = (avRedStack) + (ts_Low*SEM);   
+                elseif HighLowQ == 1 
+                    CI_High(:,:,:,it) = (avRedStack) + (ts_High*SEM);  % Confidence Intervals  
+                end          
+            end              
         end 
     end 
     if spikeQ == 1
@@ -5423,8 +5372,17 @@ if blackOutCaROIQ == 1
     end    
     %make your combined Ca ROI mask the right size for applying to a 3D
     %arrray 
-    ind = length(combo);
-    ThreeDCaMask = logical(repmat(combo{ind},1,1,size(SNredStackAv,3)));
+    ind = length(combo); combo1 = combo{ind};
+    % downsample the Ca ROI mask if necessary 
+    if exist("downsampleRate", 'var') == 1
+        dwnC = downsample(combo1,downsampleRate);
+        dwnC = permute(dwnC,[2 1 3]);
+        dwnC = downsample(dwnC,downsampleRate);
+        dwnC = permute(dwnC,[2 1 3]);  
+        combo1 = dwnC; 
+        clearvars dwnC 
+    end 
+    ThreeDCaMask = logical(repmat(combo1,1,1,size(SNredStackAv,3)));
     %apply new mask to the right channel 
     % this is defined above: rightChan = input('Input 0 if BBB data is in the green chanel. Input 1 if BBB data is in the red channel. ');
     if rightChan == 0     
@@ -5434,7 +5392,7 @@ if blackOutCaROIQ == 1
         RightChan = SNredStackAv;
         otherChan = SNgreenStackAv;
     end     
-    RightChan(ThreeDCaMask) = 0;        
+    RightChan(ThreeDCaMask) = 0;   
 elseif blackOutCaROIQ == 0          
     if rightChan == 0     
         RightChan = SNgreenStackAv;
@@ -5461,11 +5419,11 @@ while segmentVessel == 1
         continu = 1;
     end   
     while continu == 1 
-        BWstacks = nan(size(BW,1),size(BW,2),size(vesChan,3));
-        BW_perim = nan(size(BW,1),size(BW,2),size(vesChan,3));
-        segOverlays = nan(size(BW,1),size(BW,2),3,size(vesChan,3));   
+        BWstacks = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
+        BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
+        segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage111_STAvid_20230705zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -16796,7 +16754,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(32,10,rSquared,'FontSize',20)
+            text(43,5,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
