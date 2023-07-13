@@ -5423,7 +5423,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage111_STAvid_20230705zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage112_STAvid_20230706zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -15857,7 +15857,7 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-%{
+
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -16754,7 +16754,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(43,5,rSquared,'FontSize',20)
+            text(30,5,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -16841,8 +16841,8 @@ if clustSpikeQ == 0
     
     % plot pie chart of before vs after spike cluster start times 
     threshFrame = floor(size(im,3)/2);
-    numPreSpikeStarts = nansum(nansum(avClocFrame < 27));
-    numPostSpikeStarts = nansum(nansum(avClocFrame >= 27));
+    numPreSpikeStarts = nansum(nansum(avClocFrame < threshFrame));
+    numPostSpikeStarts = nansum(nansum(avClocFrame >= threshFrame));
     preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
     figure; 
     p = pie(preVsPostSpikeStarts);
