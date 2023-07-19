@@ -4772,7 +4772,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-%{
+
 mouse = 1;
 % termQ = input('Input 1 to update terminal labels. ');
 % if termQ == 1 
@@ -5179,7 +5179,9 @@ while workFlow == 1
     toc
 end 
 
-% don't normalize because it's z-scored 
+
+
+%% don't normalize because it's z-scored 
 NgreenStackAv = avGreenStack;
 NredStackAv = avRedStack; 
 if spikeQ == 1 
@@ -5438,7 +5440,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage110_ETAvidBehavior_20230718zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage112_STAvid_20230706zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);

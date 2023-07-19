@@ -1,7 +1,7 @@
-function [state_start_f,state_end_f] = behavior_FindStateBounds(state,framePeriod)
+function [state_start_f,state_end_f] = behavior_FindStateBounds(state,framePeriod,vid,mouse)
 
 % parse hdf file      
-[parsedStruct,~]=csParser2;
+[parsedStruct,~]=csParser2(vid,mouse);
 teensyState = parsedStruct.teensyStates; 
 sessionTime = parsedStruct.sessionTime;
 
