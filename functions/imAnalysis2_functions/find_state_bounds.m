@@ -51,6 +51,12 @@ for d = 1:length(state_end)
         elseif sessionTime(state_end(d)+1) ~= 0 
             state_end_t(d) = sessionTime(state_end(d));
         end 
+    elseif teensyState(end) == 2 && d < length(state_end)
+        if sessionTime(state_end(d)+1) == 0 
+            continue 
+        elseif sessionTime(state_end(d)+1) ~= 0 
+            state_end_t(d) = sessionTime(state_end(d));
+        end 
     end 
 end 
 

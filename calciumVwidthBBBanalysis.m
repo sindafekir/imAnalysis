@@ -5438,7 +5438,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage110_ETAvidBehavior_20230718zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage112_ETAvidBehavior_20230719zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -15879,6 +15879,10 @@ vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
 if ETAorSTAq == 1 % ETA data 
     ccell = 1; 
+    ETAtype = input('Input 0 if this is opto data. Input 1 for behavior data. ');
+    if ETAtype == 1
+        ETAtype2 = input('Input 0 if the data is time locked to the stim. Input 1 if time locked to the reward. ');
+    end 
 end 
 inds = cell(1,max(terminals{mouse}));
 idx = cell(1,max(terminals{mouse}));
@@ -16068,8 +16072,17 @@ for ccell = 1:length(terminals{mouse})
         spikeCountLabel = sprintf('%d spikes.',spikeCount{terminals{mouse}(ccell)}); 
         title({axonLabel;spikeCountLabel})
     elseif ETAorSTAq == 1 % ETA data 
-        optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
-        title({'Opto Triggered';optoCountLabel}); 
+        if ETAtype == 0 
+            optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
+            title({'Opto Triggered';optoCountLabel}); 
+        elseif ETAtype == 1 
+            optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
+            if ETAtype2 == 0
+                title({'Behavior Stim Aligned';optoCountLabel}); 
+            elseif ETAtype2 == 1 
+                title({'Behavior Reward Aligned';optoCountLabel}); 
+            end 
+        end 
     end 
 end 
 % remove cluster sizes that are irrelevant 
@@ -16775,7 +16788,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(28,6,rSquared,'FontSize',20)
+            text(28,0.12,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space")
         if clustSpikeQ3 == 0 
@@ -16799,7 +16812,7 @@ if VRQ == 1
 end 
 
 
-%% plot distribution of cluster sizes and pixel amplitudes 
+%% plot distribution of cluster sizes and pixel amplitudes
 figure;
 ax=gca;
 avClustSize = nanmean(sizeDistArray(:,2)); 
@@ -16842,7 +16855,7 @@ end
 ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
 
-%% plot distribution of cluster times 
+%% plot distribution of cluster times
 if clustSpikeQ == 0 
     figure;
     ax=gca;
