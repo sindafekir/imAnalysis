@@ -16072,14 +16072,14 @@ for ccell = 1:length(terminals{mouse})
         spikeCountLabel = sprintf('%d spikes.',spikeCount{terminals{mouse}(ccell)}); 
         title({axonLabel;spikeCountLabel})
     elseif ETAorSTAq == 1 % ETA data 
-        if ETAtype == 0 
+        if ETAtype == 0 % opto data 
             optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
             title({'Opto Triggered';optoCountLabel}); 
-        elseif ETAtype == 1 
+        elseif ETAtype == 1 % behavior data 
             optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
-            if ETAtype2 == 0
+            if ETAtype2 == 0 % stim aligned 
                 title({'Behavior Stim Aligned';optoCountLabel}); 
-            elseif ETAtype2 == 1 
+            elseif ETAtype2 == 1 % reward aligned 
                 title({'Behavior Reward Aligned';optoCountLabel}); 
             end 
         end 
@@ -17043,13 +17043,41 @@ elseif clustSpikeQ == 1
                 title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
             end          
         elseif ETAorSTAq == 1 % ETA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-            end              
+            if ETAtype == 0 % opto data 
+                if clustSpikeQ3 == 0 
+                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});   
+                elseif clustSpikeQ3 == 1
+                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});   
+                end  
+            elseif ETAtype == 1 % behavior data 
+                if ETAtype2 == 0 % stim aligned 
+                    if clustSpikeQ3 == 0 
+                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});   
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});   
+                    end  
+                elseif ETAtype2 == 1 % reward aligned 
+                    if clustSpikeQ3 == 0 
+                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});   
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});   
+                    end                    
+                end 
+            end 
         end 
-        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        if ETAorSTAq == 0 % STA data 
+            legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        elseif ETAorSTAq == 1 % ETA data
+              if ETAtype == 0 % opto data 
+                  legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
+              elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
+                    end 
+              end 
+        end
         xticklabels(labels)   
 
         figure;
@@ -17072,13 +17100,41 @@ elseif clustSpikeQ == 1
                 title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
             end          
         elseif ETAorSTAq == 1 % ETA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-            end       
+            if ETAtype == 0 % opto data 
+                if clustSpikeQ3 == 0 
+                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});   
+                elseif clustSpikeQ3 == 1
+                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});   
+                end      
+            elseif ETAtype == 1 % behavior data 
+                if ETAtype2 == 0 % stim aligned 
+                    if clustSpikeQ3 == 0 
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});   
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});   
+                    end    
+                elseif ETAtype2 == 1 % reward aligned 
+                     if clustSpikeQ3 == 0 
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});   
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});   
+                    end                    
+                end 
+            end 
         end 
-        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        if ETAorSTAq == 0 % STA data 
+            legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+        elseif ETAorSTAq == 1 % ETA data
+              if ETAtype == 0 % opto data 
+                  legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
+              elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
+                    end 
+              end 
+        end
         xticklabels(labels) 
     end 
 end 
@@ -17107,13 +17163,41 @@ if  clustSpikeQ == 1
                 title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
             end     
         elseif ETAorSTAq == 1 % ETA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Size';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-            end                 
+            if ETAtype == 0 % opto data 
+                if clustSpikeQ3 == 0 
+                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+                elseif clustSpikeQ3 == 1
+                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+                end    
+            elseif ETAtype == 1 % behavior data 
+                if ETAtype2 == 0 % stim aligned 
+                    if clustSpikeQ3 == 0 
+                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});  
+                    end  
+                elseif ETAtype2 == 1 % reward aligned 
+                     if clustSpikeQ3 == 0 
+                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});  
+                    end                     
+                end 
+            end          
         end 
-        avLabels = ["Pre-Spike","Post-Spike"];
+        if ETAorSTAq == 0 % STA data 
+            avLabels = ["Pre-Spike","Post-Spike"];
+        elseif ETAorSTAq == 1 % ETA data
+              if ETAtype == 0 % opto data 
+                  avLabels = ["Pre-Opto","Post-Opto"];
+              elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        avLabels = ["Pre-Stim","Post-Stim"];
+                    elseif ETAtype2 == 1 % reward aligned 
+                        avLabels = ["Pre-Reward","Post-Reward"];
+                    end 
+              end 
+        end 
         xticklabels(avLabels)
 
         % reshape data to plot box and whisker plots 
@@ -17139,13 +17223,41 @@ if  clustSpikeQ == 1
                 title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
             end       
         elseif ETAorSTAq == 1 % ETA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-            end     
+            if ETAtype == 0 % opto data 
+                if clustSpikeQ3 == 0 
+                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+                elseif clustSpikeQ3 == 1
+                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+                end   
+            elseif ETAtype == 1 % behavior data 
+                if ETAtype2 == 0 % stim aligned 
+                    if clustSpikeQ3 == 0 
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});  
+                    end                      
+                elseif ETAtype2 == 1 % reward aligned 
+                     if clustSpikeQ3 == 0 
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+                    elseif clustSpikeQ3 == 1
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});  
+                    end                        
+                end 
+            end 
         end 
-        avLabels = ["Pre-Spike","Post-Spike"];
+        if ETAorSTAq == 0 % STA data 
+            avLabels = ["Pre-Spike","Post-Spike"];
+        elseif ETAorSTAq == 1 % ETA data
+              if ETAtype == 0 % opto data 
+                  avLabels = ["Pre-Opto","Post-Opto"];
+              elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        avLabels = ["Pre-Stim","Post-Stim"];
+                    elseif ETAtype2 == 1 % reward aligned 
+                        avLabels = ["Pre-Reward","Post-Reward"];
+                    end 
+              end 
+        end 
         xticklabels(avLabels)
     end 
 end 
