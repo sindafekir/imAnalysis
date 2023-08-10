@@ -17913,21 +17913,42 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-
 mouse = 1;
-% import the data @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-regImDir = uigetdir('*.*',sprintf('WHERE IS THE ETA DATA FOR MOUSE #%d?',mouse));
+% import the data 
+regImDir = uigetdir('*.*',sprintf('WHERE IS THE VESSEL WIDTH DATA FOR MOUSE #%d?',mouse));
 cd(regImDir);
-MatFileName = uigetfile('*.*',sprintf('SELECT THE ETA DATA FOR MOUSE #%d',mouse));
-Mat = matfile(MatFileName);
-Veta{mouse} = Mat.Veta;
+% get vessel width data 
+vDataFullTrace = cell(1,mouseNum);
+vDataFullTrace2 = cell(1,mouseNum);
+vDataFullTrace3 = cell(1,mouseNum);
+VWfileList = dir('**/*VWdata_*.mat'); % list VW data files in current directory 
+for vid = 1:length(vidList{mouse})
+    VWlabel = VWfileList(vid).name;
+    VWmat = matfile(sprintf(VWlabel,vidList{mouse}(vid)));
+    Vdata = VWmat.Vdata;       
+    vDataFullTrace{mouse}{vid} = Vdata; % vDataFullTrace{mouse}{vid}(VWroi)
+    % average the VWrois that you want 
+    if vid == 1 
+        VWrois = input('Input the VW ROIs that you want to average. ');
+    end 
+    for VWroi = 1:length(VWrois)
+        vDataFullTrace2{mouse}{vid}(VWroi,:) = vDataFullTrace{mouse}{vid}{VWroi};
+    end 
+    vDataFullTrace3{mouse}{vid} = nanmean(vDataFullTrace2{mouse}{vid});
+end 
+clearvars vDataFullTrace vDataFullTrace2 
+vDataFullTrace = vDataFullTrace3; clearvars vDataFullTrace3
 
-% sort the data @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% sort the data 
 % resort state_start_f into sigLocs{vid}{terminals{mouse}(ccell)}(peak) 
 sigLocs = cell(1,length(vidList{mouse}));
 for vid = 1:length(vidList{mouse})
     sigLocs{vid}= state_start_f{mouse}{vid}';
 end 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
 % combine the vids to get z score of whole experiment
 frameLens = zeros(1,length(vidList{mouse}));
 for vid = 1:length(vidList{mouse})
@@ -17938,6 +17959,9 @@ for vid = 1:length(vidList{mouse})
     end 
     frameLens(vid) = size(greenStacks{vid},3);
 end 
+
+
+
 combGreenStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
 combRedStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
 for vid = 1:length(vidList{mouse})
