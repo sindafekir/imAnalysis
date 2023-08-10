@@ -17945,11 +17945,7 @@ sigLocs = cell(1,length(vidList{mouse}));
 for vid = 1:length(vidList{mouse})
     sigLocs{vid}= state_start_f{mouse}{vid}';
 end 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-% combine the vids to get z score of whole experiment
+% combine the VW data to get z score of whole experiment
 frameLens = zeros(1,length(vidList{mouse}));
 for vid = 1:length(vidList{mouse})
     if vid == 1 
@@ -17959,41 +17955,37 @@ for vid = 1:length(vidList{mouse})
     end 
     frameLens(vid) = size(greenStacks{vid},3);
 end 
-
-
-
-combGreenStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
-combRedStack = zeros(size(greenStacks{1},1),size(greenStacks{1},2),frameLen);
+combVWdata = zeros(1,frameLen);
 for vid = 1:length(vidList{mouse})
     if vid == 1 
         count = size(greenStacks{vid},3);
     end 
     for frame = 1:size(greenStacks{vid},3) 
         if vid == 1 
-            combGreenStack(:,:,frame) = hpfGreen{vid}(:,:,frame);
-            combRedStack(:,:,frame) = hpfRed{vid}(:,:,frame);
+            combVWdata(:,frame) = vDataFullTrace{mouse}{vid}(:,frame);
         elseif vid > 1 
-            combGreenStack(:,:,count+1) = hpfGreen{vid}(:,:,frame);
-            combRedStack(:,:,count+1) = hpfRed{vid}(:,:,frame);
+            combVWdata(:,count+1) = vDataFullTrace{mouse}{vid}(:,frame);
             count = count + 1;                                      
         end 
     end     
 end 
-% z score the videos 
-zGreenStack = zscore(combGreenStack,0,3);
-zRedStack = zscore(combRedStack,0,3);
-clearvars combGreenStack combRedStack
-% resort videos
-szGreenStack = cell(1,length(vidList{mouse}));
-szRedStack = cell(1,length(vidList{mouse}));
+% z score the VW data  
+zVWdata = zscore(combVWdata,0,2);
+clearvars combVWdata
+% resort data back into videos 
+szVWdata = cell(1,length(vidList{mouse}));
 count = 1;
 for vid = 1:length(vidList{mouse})
     for frame = 1:frameLens(vid)       
-        szGreenStack{vid}(:,:,frame) = zGreenStack(:,:,count); 
-        szRedStack{vid}(:,:,frame) = zRedStack(:,:,count); 
+        szVWdata{vid}(:,frame) = zVWdata(:,count); 
         count = count + 1;
     end 
 end 
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE 
+
 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 windFrames = floor(windSize*FPSstack{mouse});
