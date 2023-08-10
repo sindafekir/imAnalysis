@@ -17912,7 +17912,7 @@ end
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+%remove rows full of 0s if there are any b = a(any(a,2),:)
 mouse = 1;
 % import the data 
 regImDir = uigetdir('*.*',sprintf('WHERE IS THE VESSEL WIDTH DATA FOR MOUSE #%d?',mouse));
@@ -17981,276 +17981,148 @@ for vid = 1:length(vidList{mouse})
         count = count + 1;
     end 
 end 
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE 
-
-
-windSize = input('How big should the window be around Ca peak in seconds? '); %24
+% sort data 
+windSize = input('How big should the window be around the event/spike in seconds? '); %24
 windFrames = floor(windSize*FPSstack{mouse});
-% further sort and average data, get 95% CI bounds 
-CI_High = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
-CI_Low = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
-CIlowAv = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames);
-CIhighAv = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames);
-clearvars zGreenStack zRedStack
-
-
-        lenIts = 1;
-        % make sure sigLocs is organized in the correct orientation: 
-        % sigLocs{vid}(it,peak)
-        [r,c] = size(sigLocs{1});
-        if r ~= lenIts
-            for vid = 1:length(vidList{mouse})  
-                sigLocs{vid} = sigLocs{vid}';
-            end 
-        end 
-
-    for it = 1:lenIts
-        % sort data 
-        % terminals = terminals{1};
-        sortedGreenStacks = cell(1,1);
-        sortedRedStacks = cell(1,1);
-        if rightChan == 0     
-            VesSortedGreenStacks = cell(1,1);
-        elseif rightChan == 1
-            VesSortedRedStacks = cell(1,1);
-        end    
-        for vid = 1:length(vidList{mouse})                  
-            if isempty(sigLocs{vid}) == 0
-                for peak = 1:size(sigLocs{vid},2)            
+lenIts = 1;
+% make sure sigLocs is organized in the correct orientation: 
+% sigLocs{vid}(it,peak)
+[r,c] = size(sigLocs{1});
+if r ~= lenIts
+    for vid = 1:length(vidList{mouse})  
+        sigLocs{vid} = sigLocs{vid}';
+    end 
+end 
+for it = 1:lenIts
+    % terminals = terminals{1};
+    sortedVWdata = cell(1,1);
+    for vid = 1:length(vidList{mouse})                  
+        if isempty(sigLocs{vid}) == 0
+            for peak = 1:size(sigLocs{vid},2)            
 %                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
-                        start = sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                        stop = sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
-                        if start == 0 
-                            start = 1 ;
-                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                        end        
-                        if stop < size(szGreenStack{vid},3) && start > 0 
-                            sortedGreenStacks{vid}{peak} = szGreenStack{vid}(:,:,start:stop);
-                            sortedRedStacks{vid}{peak} = szRedStack{vid}(:,:,start:stop);
-                            if rightChan == 0     
-                                VesSortedGreenStacks{vid}{peak} = greenStacks{vid}(:,:,start:stop);
-                            elseif rightChan == 1
-                                VesSortedRedStacks{vid}{peak} = redStacks{vid}(:,:,start:stop);
-                            end    
-                        end 
+                    start = sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                    stop = sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                    if start == 0 
+                        start = 1 ;
+                        stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                    end        
+                    if stop < size(szVWdata{vid},2) && start > 0 
+                        sortedVWdata{vid}{peak} = szVWdata{vid}(:,start:stop);
+                    end 
 %                             end 
-                end     
-            end                  
-        end 
-    %     clearvars greenStacks redStacks start stop sigLocs sigPeaks 
-    
-        % resort and average calcium peak aligned traces across videos 
-
-%             greenStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
-%             if rightChan == 0     
-%                 VesGreenStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
-%             end             
-        count = 1;
-        for vid = 1:length(vidList{mouse})     
-            if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
-                for peak = 1:size(sortedGreenStacks{vid},2)  
-                    if isempty(sortedGreenStacks{vid}{peak}) == 0
-                        greenStackArray2(:,:,:,count) = single(sortedGreenStacks{vid}{peak});
-                        if rightChan == 0
-                            VesGreenStackArray2(:,:,:,count) = single(VesSortedGreenStacks{vid}{peak});
-                        end           
-                        count = count + 1;
-                    end 
-                end
-            end 
-        end 
-       
-%         clearvars sortedGreenStacks VesSortedGreenStacks
-        clearvars VesSortedGreenStacks
-%             redStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
-%             if rightChan == 1     
-%                 VesRedStackArray2 = nan(size(sortedGreenStacks{1}{1},1),size(sortedGreenStacks{1}{1},2),size(sortedGreenStacks{1}{1},3),size(sortedGreenStacks{1},2));
-%             end  
-        count = 1;
-        for vid = 1:length(vidList{mouse}) 
-            if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
-                for peak = 1:size(sortedRedStacks{vid},2)  
-                    if isempty(sortedRedStacks{vid}{peak}) == 0
-                        redStackArray2(:,:,:,count) = single(sortedRedStacks{vid}{peak});
-                        if rightChan == 1
-                            VesRedStackArray2(:,:,:,count) = single(VesSortedRedStacks{vid}{peak});
-                        end           
-                        count = count + 1;
-                    end 
-                end
-            end 
-        end 
-       
-%         clearvars sortedRedStacks VesSortedRedStacks
-        clearvars VesSortedRedStacks
-        % determine the average 
-        avGreenStack = nanmean(greenStackArray2,4);         
-        clearvars greenStackArray2
-        avRedStack = nanmean(redStackArray2,4);     
-        clearvars redStackArray2
-        if rightChan == 0  
-            % determine the average 
-            VesAvGreenStack = nanmean(VesGreenStackArray2,4);          
-            clearvars VesGreenStackArray2
-        end 
-        if rightChan == 1  
-            % determine the average 
-            VesAvRedStack = nanmean(VesRedStackArray2,4);            
-            clearvars VesRedStackArray2
+            end     
+        end                  
+    end            
+    count = 1;
+    vwStackArray2 = NaN(1,windFrames);
+    for vid = 1:length(vidList{mouse})     
+        if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
+            for peak = 1:size(sortedVWdata{vid},2)  
+                if isempty(sortedVWdata{vid}{peak}) == 0
+                    vwStackArray2(count,:) = single(sortedVWdata{vid}{peak});          
+                    count = count + 1;
+                end 
+            end
         end 
     end 
-
-% don't normalize because it's z-scored 
-NgreenStackAv = avGreenStack;
-NredStackAv = avRedStack; 
-if spikeQ == 1 
-    nCIhighAv = CIhighAv;
-    nCIlowAv = CIlowAv;
-    clearvars CIhighAv CIlowAv
 end 
-
+% determine the average 
+avVWdata = nanmean(vwStackArray2,1);         
 %temporal smoothing option
 smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise. ');
 if smoothQ == 0 
-    SNgreenStackAv = NgreenStackAv;
-    SNredStackAv = NredStackAv;
-    if spikeQ == 1 
-        snCIhighAv = nCIhighAv;
-        snCIlowAv = nCIlowAv;
-    end 
+    SNvwData = avVWdata;
 elseif smoothQ == 1
     filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
     filter_rate = FPSstack{mouse}*filtTime; 
-    tempFiltChanQ= input('Input 0 to temporally smooth both channels. Input 1 otherwise. ');
-    if tempFiltChanQ == 0     
-        SNredStackAv = smoothdata(NredStackAv,3,'movmean',filter_rate);
-        SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);      
-    elseif tempFiltChanQ == 1
-        tempSmoothChanQ = input('Input 0 to temporally smooth green channel. Input 1 for red channel. ');
-        if tempSmoothChanQ == 0
-            SNredStackAv = NredStackAv;
-            SNgreenStackAv = smoothdata(NgreenStackAv,3,'movmean',filter_rate);          
-        elseif tempSmoothChanQ == 1
-            SNgreenStackAv = NgreenStackAv;      
-            SNredStackAv = smoothdata(NredStackAv,3,'movmean',filter_rate);                        
-        end 
-    end 
-    if spikeQ == 1 
-        snCIhighAv = smoothdata(nCIhighAv,3,'movmean',filter_rate);
-        snCIlowAv = smoothdata(nCIlowAv,3,'movmean',filter_rate);         
-    end 
+    SNvwData = smoothdata(avVWdata,2,'movmean',filter_rate);    
+    SNvwStackArray2 = smoothdata(vwStackArray2,2,'movmean',filter_rate);    
 end 
-clearvars NgreenStackAv NredStackAv 
-if spikeQ == 1
-    clearvars nCIhighAv nCIlowAv
+% determine the 95% CI using SNvwStackArray2
+%DETERMINE 95% CI                       
+SEMv = (nanstd(SNvwStackArray2))/(sqrt(size(SNvwStackArray2,1))); %#ok<*NANSTD> % Standard Error            
+tsv_Low = tinv(0.025,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
+tsv_High = tinv(0.975,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
+CIv_Low = (SNvwData) + (tsv_Low*SEMv);  % Confidence Intervals
+CIv_High = (SNvwData) + (tsv_High*SEMv);  % Confidence Intervals 
+% plot data          
+% TO DO LATER, BUT SOON: code in buffer space for plotting and ca data sorting, 
+% z scoring, temporal smoothing, and 95% CI determination for STA data eventually ~ 
+% USE BELOW CODE
+%{
+%determine range of data Ca data
+CaDataRange = max(AVSNCdataPeaks{mouse}{per})-min(AVSNCdataPeaks{mouse}{per});
+%determine plotting buffer space for Ca data 
+CaBufferSpace = CaDataRange;
+%determine first set of plotting min and max values for Ca data
+CaPlotMin = min(AVSNCdataPeaks{mouse}{per})-CaBufferSpace;
+CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
+%determine Ca 0 ratio/location 
+CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
+                           
+%determine range of BBB data 
+BBBdataRange = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})));                                       
+%determine plotting buffer space for BBB data 
+BBBbufferSpace = BBBdataRange;
+%determine first set of plotting min and max values for BBB data
+BBBplotMin = min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-BBBbufferSpace;
+BBBplotMax = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))+BBBbufferSpace;
+%determine BBB 0 ratio/location
+BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
+%determine how much to shift the BBB axis so that the zeros align 
+BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
+BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
+% replace zeros with NaNs 
+ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
+%}
+x = 1:length(avVWdata);                          
+fig = figure;
+Frames = length(x);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+FrameVals = round((1:FPSstack{mouse}:Frames))+4; 
+ax=gca;
+hold all
+plot(SNvwData,'k','LineWidth',2)
+patch([x fliplr(x)],[CIv_Low fliplr(CIv_High)],'k','EdgeColor','none')
+alpha(0.3)
+changePt = floor(windFrames/2);
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;   
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+xlabel('time (s)','FontName','Arial')
+ylabel('z-scored vessel width','FontName','Arial')
+xLimStart = floor(10*FPSstack{mouse});
+xline(changePt,'LineWidth',2)
+% filtTime = round(filtTime,2);
+tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
+if ETAorSTAq == 0 % STA data 
+    title({'Spike-Triggered Average.';tempSmoothLabel})
+elseif ETAorSTAq == 1 % ETA data
+      if ETAtype == 0 % opto data 
+          title({'Opto-Triggered Average.';tempSmoothLabel})
+      elseif ETAtype == 1 % behavior data 
+            if ETAtype2 == 0 % stim aligned 
+                title({'Stim-Triggered Average.';tempSmoothLabel})
+            elseif ETAtype2 == 1 % reward aligned 
+                title({'Reward-Triggered Average.';tempSmoothLabel})
+            end 
+      end 
 end 
-
-% plot @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-    %remove rows full of 0s if there are any b = a(any(a,2),:)
-
-                        %DETERMINE 95% CI                       
-                        SEMc = (nanstd(CTraceArray{mouse}{per}))/(sqrt(size(CTraceArray{mouse}{per},1))); %#ok<*NANSTD> % Standard Error            
-                        ts_cLow = tinv(0.025,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
-                        ts_cHigh = tinv(0.975,size(CTraceArray{mouse}{per},1)-1);% T-Score for 95% CI
-                        CI_cLow{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cLow*SEMc);  % Confidence Intervals
-                        CI_cHigh{mouse}{per} = (nanmean(CTraceArray{mouse}{per},1)) + (ts_cHigh*SEMc);  % Confidence Intervals 
-                        
-                        %get averages
-                        AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);      
-
-
-                            % plot data                                                                           
-                        for BBBroi = 1:BBBtraceNumQ
-                            %determine range of data Ca data
-                            CaDataRange = max(AVSNCdataPeaks{mouse}{per})-min(AVSNCdataPeaks{mouse}{per});
-                            %determine plotting buffer space for Ca data 
-                            CaBufferSpace = CaDataRange;
-                            %determine first set of plotting min and max values for Ca data
-                            CaPlotMin = min(AVSNCdataPeaks{mouse}{per})-CaBufferSpace;
-                            CaPlotMax = max(AVSNCdataPeaks{mouse}{per})+CaBufferSpace; 
-                            %determine Ca 0 ratio/location 
-                            CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
-                                                       
-                            %determine range of BBB data 
-                            BBBdataRange = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})));                                       
-                            %determine plotting buffer space for BBB data 
-                            BBBbufferSpace = BBBdataRange;
-                            %determine first set of plotting min and max values for BBB data
-                            BBBplotMin = min(min(min(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))-BBBbufferSpace;
-                            BBBplotMax = max(max(max(ROIstacks{terminals{mouse}(ccell)}{BBBroi})))+BBBbufferSpace;
-                            %determine BBB 0 ratio/location
-                            BBBzeroRatio = abs(BBBplotMin)/(BBBplotMax-BBBplotMin);
-                            %determine how much to shift the BBB axis so that the zeros align 
-                            BBBbelowZero = (BBBplotMax-BBBplotMin)*CaZeroRatio;
-                            BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
-                            % replace zeros with NaNs 
-                            ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
-                            for frame = 1:size(ROIstacks{terminals{mouse}(ccell)}{BBBroi},3)                                
-                                % convert BBB ROI frames to TS values
-                                BBBdata{terminals{mouse}(ccell)}{BBBroi}(frame) = nanmean(nanmean(ROIstacks{terminals{mouse}(ccell)}{BBBroi}(:,:,frame)));
-                            end 
-                            x = 1:length(BBBdata{terminals{mouse}(ccell)}{1});
-%                             %DETERMINE 95% CI                       
-%                             SEMb = (nanstd(BBBdata{terminals{mouse}(ccell)}{BBBroi}))/(sqrt(size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1))); % Standard Error            
-%                             ts_bLow = tinv(0.025,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
-%                             ts_bHigh = tinv(0.975,size(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)-1);% T-Score for 95% CI
-%                             CI_bLow{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bLow*SEMb);  % Confidence Intervals
-%                             CI_bHigh{mouse}{per} = (nanmean(BBBdata{terminals{mouse}(ccell)}{BBBroi},1)) + (ts_bHigh*SEMb);  % Confidence Intervals 
-%                             %get average
-%                             AVSNCdataPeaks{mouse}{per} = nanmean(CTraceArray{mouse}{per},1);  
-                                                       
-                            fig = figure;
-                            Frames = size(x,2);
-                            Frames_pre_stim_start = -((Frames-1)/2); 
-                            Frames_post_stim_start = (Frames-1)/2; 
-                            sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-                            FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-                            ax=gca;
-                            hold all
-                            Cdata = AVSNCdataPeaks{mouse}{per}(100:152);
-                            plot(Cdata,'blue','LineWidth',4)
-                            CdataCIlow = CI_cLow{mouse}{per}(100:152);
-                            CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
-                            patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
-                            changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
-                            ax.XTick = FrameVals;
-                            ax.XTickLabel = sec_TimeVals;   
-                            ax.FontSize = 25;
-                            ax.FontName = 'Times';
-                            xlabel('time (s)','FontName','Times')
-                            ylabel('calcium signal percent change','FontName','Times')
-                            xLimStart = floor(10*FPSstack{mouse});
-                            xLimEnd = floor(24*FPSstack{mouse}); 
-%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
-                            ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
-                            set(fig,'position', [500 100 900 800])
-                            alpha(0.3)
-                            %add right y axis tick marks for a specific DOD figure. 
-                            yyaxis right 
-                            p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
-%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
-                            ylabel('BBB permeability percent change','FontName','Times')
-                            title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
-                            alpha(0.3)
-%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
-                            set(gca,'YColor',[0 0 0]);   
-                            ylim([-BBBbelowZero BBBaboveZero])
-                        end 
-
-
-
-
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+% set(fig,'position', [500 100 900 800])
+% %add right y axis tick marks for a specific DOD figure. 
+% yyaxis right 
+% p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
+% %                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+% ylabel('BBB permeability percent change','FontName','Times')
+% title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+% alpha(0.3)
+% %                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+% set(gca,'YColor',[0 0 0]);   
+% ylim([-BBBbelowZero BBBaboveZero])
 
 
 % below is first attempt to write my own clustering algorithm ~ TRYING
