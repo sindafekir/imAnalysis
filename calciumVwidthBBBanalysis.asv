@@ -16098,6 +16098,13 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
+%% get the pixel sizes 
+getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
+if getPixSizeQ == 1 
+    XpixDist = input('How many microns per pixel are there in the X direction? '); 
+    YpixDist = input('How many microns per pixel are there in the Y direction? '); 
+end 
+
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
@@ -16543,6 +16550,12 @@ if VRQ == 1
             end 
         end 
         len = size(VRinds,1); 
+        % convert VR inds to microns 
+        if XpixDist == YpixDist 
+            VRinds = VRinds*XpixDist;
+        elseif XpixDist ~= YpixDist
+            disp('X and Y micron pixel sizes are not the same?! Check line 16557');
+        end 
         for frame = 1:size(im,3)
             if frame == 1 
                 indsVR(:,1:2) = VRinds;
@@ -16554,6 +16567,13 @@ if VRQ == 1
             end 
         end 
     end 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % determine inds in microns of VR outlines 
+
+
+
     % determine distance of each cluster from the VR space 
     dists = cell(1,max(terminals{mouse}));
     minVRCdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
@@ -16563,6 +16583,11 @@ if VRQ == 1
             [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
             % identify the x, y, z location of pixels per cluster
             cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+            % convert cLoc X and Y inds to microns 
+            cLocs(1) = cLocs(1)* 
+
+
+            
             for VRpoint = 1:size(indsVR,1)
                 for Cpoint = 1:size(cLocs,1)
                     % get euclidean pixel distance between each Ca ROI pixel
@@ -17815,7 +17840,7 @@ if clustSpikeQ == 0
     title({'Change in BBB Plume Pixel Amplitude Over Time';'Clusters Aligned and Averaged'})
     
     % plot total aligned cluster size average 
-    [r,c] = cellfun(@size,alignedBinClustsSize);
+    [~,c] = cellfun(@size,alignedBinClustsSize);
     maxLen = max(c);
     if clustTimeNumGroups == 2     
         for bin = 1:clustTimeNumGroups           
@@ -18040,11 +18065,11 @@ elseif smoothQ == 1
 end 
 % determine the 95% CI using SNvwStackArray2
 %DETERMINE 95% CI                       
-SEM = (nanstd(SNvwStackArray2))/(sqrt(size(SNvwStackArray2,1))); %#ok<*NANSTD> % Standard Error            
-ts_Low = tinv(0.025,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
-ts_High = tinv(0.975,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
-CI_Low = (avVWdata) + (ts_Low*SEM);  % Confidence Intervals
-CI_High = (avVWdata) + (ts_High*SEM);  % Confidence Intervals 
+SEMv = (nanstd(SNvwStackArray2))/(sqrt(size(SNvwStackArray2,1))); %#ok<*NANSTD> % Standard Error            
+tsv_Low = tinv(0.025,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
+tsv_High = tinv(0.975,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
+CIv_Low = (SNvwData) + (tsv_Low*SEMv);  % Confidence Intervals
+CIv_High = (SNvwData) + (tsv_High*SEMv);  % Confidence Intervals 
 % plot data          
 % TO DO LATER, BUT SOON: code in buffer space for plotting and ca data sorting, 
 % z scoring, temporal smoothing, and 95% CI determination for STA data eventually ~ 
@@ -18075,54 +18100,54 @@ BBBaboveZero = (BBBplotMax-BBBplotMin)-BBBbelowZero;
 % replace zeros with NaNs 
 ROIstacks{terminals{mouse}(ccell)}{BBBroi}(ROIstacks{terminals{mouse}(ccell)}{BBBroi}==0) = NaN;
 %}
-
 x = 1:length(avVWdata);                          
 fig = figure;
 Frames = length(x);
 Frames_pre_stim_start = -((Frames-1)/2); 
 Frames_post_stim_start = (Frames-1)/2; 
 sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+FrameVals = round((1:FPSstack{mouse}:Frames))+4; 
 ax=gca;
 hold all
-plot(Cdata,'blue','LineWidth',4)
-CdataCIlow = CI_cLow{mouse}{per}(100:152);
-CdataCIhigh = CI_cHigh{mouse}{per}(100:152);
-patch([x fliplr(x)],[CdataCIlow fliplr(CdataCIhigh)],Ccolors(1,:),'EdgeColor','none')
-changePt = floor(Frames/2)-floor(0.25*FPSstack{mouse});
+plot(SNvwData,'k','LineWidth',2)
+patch([x fliplr(x)],[CIv_Low fliplr(CIv_High)],'k','EdgeColor','none')
+alpha(0.3)
+changePt = floor(windFrames/2);
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
-ax.FontSize = 25;
-ax.FontName = 'Times';
-xlabel('time (s)','FontName','Times')
-ylabel('calcium signal percent change','FontName','Times')
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+xlabel('time (s)','FontName','Arial')
+ylabel('z-scored vessel width','FontName','Arial')
 xLimStart = floor(10*FPSstack{mouse});
-xLimEnd = floor(24*FPSstack{mouse}); 
-%                             xlim([1 size(AVSNCdataPeaks{mouse}{per},2)])
-ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
-set(fig,'position', [500 100 900 800])
-alpha(0.3)
-%add right y axis tick marks for a specific DOD figure. 
-yyaxis right 
-p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
-%                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
-ylabel('BBB permeability percent change','FontName','Times')
-title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
-alpha(0.3)
-%                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
-set(gca,'YColor',[0 0 0]);   
-ylim([-BBBbelowZero BBBaboveZero])
-
-
-
-
-
-
-
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+xline(changePt,'LineWidth',2)
+% filtTime = round(filtTime,2);
+tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
+if ETAorSTAq == 0 % STA data 
+    title({'Spike-Triggered Average.';tempSmoothLabel})
+elseif ETAorSTAq == 1 % ETA data
+      if ETAtype == 0 % opto data 
+          title({'Opto-Triggered Average.';tempSmoothLabel})
+      elseif ETAtype == 1 % behavior data 
+            if ETAtype2 == 0 % stim aligned 
+                title({'Stim-Triggered Average.';tempSmoothLabel})
+            elseif ETAtype2 == 1 % reward aligned 
+                title({'Reward-Triggered Average.';tempSmoothLabel})
+            end 
+      end 
+end 
+% ylim([min(AVSNCdataPeaks{mouse}{per}-CaBufferSpace) max(AVSNCdataPeaks{mouse}{per}+CaBufferSpace)])
+% set(fig,'position', [500 100 900 800])
+% %add right y axis tick marks for a specific DOD figure. 
+% yyaxis right 
+% p(1) = plot(BBBdata{terminals{mouse}(ccell)}{BBBroi},'green','LineWidth',4);
+% %                             patch([x fliplr(x)],[(close_CI_bLow{mouse}{BBBroi}{per}) (fliplr(close_CI_bHigh{mouse}{BBBroi}{per}))],Bcolors(1,:),'EdgeColor','none')
+% ylabel('BBB permeability percent change','FontName','Times')
+% title(sprintf('Close Terminals. Mouse %d. BBB ROI %d.',mouse,BBBroi))
+% alpha(0.3)
+% %                             legend([p(1) p(2)],'Close Terminals','Far Terminals')
+% set(gca,'YColor',[0 0 0]);   
+% ylim([-BBBbelowZero BBBaboveZero])
 
 
 % below is first attempt to write my own clustering algorithm ~ TRYING

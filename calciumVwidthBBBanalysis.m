@@ -16098,6 +16098,13 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
+%% get the pixel sizes 
+getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
+if getPixSizeQ == 1 
+    XpixDist = input('How many microns per pixel are there in the X direction? '); 
+    YpixDist = input('How many microns per pixel are there in the Y direction? '); 
+end 
+
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
 % not near vessel)
@@ -16543,6 +16550,12 @@ if VRQ == 1
             end 
         end 
         len = size(VRinds,1); 
+        % convert VR inds to microns 
+        if XpixDist == YpixDist 
+            VRinds = VRinds*XpixDist;
+        elseif XpixDist ~= YpixDist
+            disp('X and Y micron pixel sizes are not the same?! Check line 16557');
+        end 
         for frame = 1:size(im,3)
             if frame == 1 
                 indsVR(:,1:2) = VRinds;
@@ -16563,6 +16576,14 @@ if VRQ == 1
             [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
             % identify the x, y, z location of pixels per cluster
             cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+            % convert cLoc X and Y inds to microns 
+            if XpixDist == YpixDist 
+                if isempty(cLocs) == 0 
+                    cLocs(1) = cLocs(1)*XpixDist; cLocs(2) = cLocs(2)*XpixDist; 
+                end 
+            elseif XpixDist ~= YpixDist
+                disp('X and Y micron pixel sizes are not the same?! Check line 16583');
+            end
             for VRpoint = 1:size(indsVR,1)
                 for Cpoint = 1:size(cLocs,1)
                     % get euclidean pixel distance between each Ca ROI pixel
@@ -16572,6 +16593,15 @@ if VRQ == 1
             end 
         end 
     end 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % PICK UP HERE - NEED TO REWRITE EUCLIDEAN DIST CODE BECAUSE THE THIRD
+    % DIMENSION ABOVE IS NOT SPACE, IT'S TIME SO IT NEEDS TO BE REMOVED 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     for ccell = 1:length(terminals{mouse})
         for clust = 1:length(dists{terminals{mouse}(ccell)})
             % determine minimum distance between each Ca ROI and cluster 
@@ -17815,7 +17845,7 @@ if clustSpikeQ == 0
     title({'Change in BBB Plume Pixel Amplitude Over Time';'Clusters Aligned and Averaged'})
     
     % plot total aligned cluster size average 
-    [r,c] = cellfun(@size,alignedBinClustsSize);
+    [~,c] = cellfun(@size,alignedBinClustsSize);
     maxLen = max(c);
     if clustTimeNumGroups == 2     
         for bin = 1:clustTimeNumGroups           
