@@ -15874,6 +15874,14 @@ end
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
 
+%% get the pixel sizes 
+getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
+if getPixSizeQ == 1 
+    XpixDist = input('How many microns per pixel are there in the X direction? '); 
+    YpixDist = input('How many microns per pixel are there in the Y direction? '); 
+end 
+
+%% plot clusters 
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
@@ -15898,20 +15906,22 @@ clustAmp = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)
 spikeCount = cell(1,max(terminals{mouse}));
 for ccell = 1:length(terminals{mouse})
     % figure out the number of spikes per axon 
-    for vid = 1:length(sigLocs)
-        if vid == 1 
-            if ETAorSTAq == 0 % STA data
+    if iscell(sigLocs{1}) == 1 % if siglocs{1} contains another cell 
+        for vid = 1:length(sigLocs)
+            if vid == 1 
                 spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
-            elseif ETAorSTAq == 1 % ETA data 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
-            end             
-        elseif vid > 1 
-            if ETAorSTAq == 0 % STA data
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
-            elseif ETAorSTAq == 1 % ETA data 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
-            end                  
+            elseif vid > 1 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};             
+            end 
         end 
+    elseif iscell(sigLocs{1}) == 0 
+        for vid = 1:length(sigLocs)
+            if vid == 1 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2);
+            elseif vid > 1 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2) + spikeCount{terminals{mouse}(ccell)};             
+            end 
+        end  
     end 
     count = 1;
     term = terminals{mouse}(ccell);
@@ -15987,8 +15997,12 @@ for ccell = 1:length(terminals{mouse})
             CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
             count = count + 1;            
         end 
-        % determine cluster size 
-        clustSize(ccell,clust) = sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust));
+        % determine cluster size in microns 
+        if XpixDist == YpixDist 
+            clustSize(ccell,clust) = (sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust)))*XpixDist*YpixDist;
+        elseif XpixDist ~= YpixDist
+            disp('X and Y micron pixel sizes are not the same?! Check line 16004');
+        end 
         % determine cluster pixel amplitude 
         pixAmp = nan(1,size(cLocs,1));
         for pix = 1:length(pixAmp)
@@ -16063,6 +16077,13 @@ for ccell = 1:length(terminals{mouse})
     if ETAorSTAq == 0 % STA data 
         % plot axon location 
         hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon
+        % convert indsA to microns 
+        if XpixDist == YpixDist 
+            indsA{terminals{mouse}(ccell)}(:,1) = indsA{terminals{mouse}(ccell)}(:,1)*XpixDist;
+            indsA{terminals{mouse}(ccell)}(:,2) = indsA{terminals{mouse}(ccell)}(:,2)*XpixDist;
+        elseif XpixDist ~= YpixDist
+            disp('X and Y micron pixel sizes are not the same?! Check line 16085');
+        end 
     end 
 %     set(gca,'XLim',[0 40],'YLim',[10 65])%,'ZLim',[18.5 19.5])
     % ORIGINAL PLOTTING CODE BELOW 
@@ -16097,13 +16118,6 @@ safeKeptInds = inds;
 safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
-
-%% get the pixel sizes 
-getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
-if getPixSizeQ == 1 
-    XpixDist = input('How many microns per pixel are there in the X direction? '); 
-    YpixDist = input('How many microns per pixel are there in the Y direction? '); 
-end 
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
@@ -16306,8 +16320,12 @@ for ccell = 1:length(terminals{mouse})
                 pixAmp(pix) = RightChan{terminals{mouse}(ccell)}(cLocs(pixelInds(pix),2),cLocs(pixelInds(pix),1),cLocs(pixelInds(pix),3));
             end 
             clustPixAmpTS{terminals{mouse}(ccell)}(clust,frame) = nanmean(pixAmp); %#ok<*NANSUM> 
-            % get change in cluster size 
-            clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame));
+            % determine cluster size in microns over time 
+            if XpixDist == YpixDist 
+                clustSizeTS{terminals{mouse}(ccell)}(clust,frame) = length(find(cLocs(:,3)==frame))*XpixDist*YpixDist;
+            elseif XpixDist ~= YpixDist
+                disp('X and Y micron pixel sizes are not the same?! Check line 16327');
+            end 
         end  
     end 
     % remove clusters that start at the first frame and decrease over
@@ -16352,11 +16370,19 @@ for ccell = 1:length(terminals{mouse})
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+        % convert cLoc X and Y inds to microns 
+        if XpixDist == YpixDist 
+            if isempty(cLocs) == 0 
+                cLocs(1) = cLocs(1)*XpixDist; cLocs(2) = cLocs(2)*XpixDist; 
+            end 
+        elseif XpixDist ~= YpixDist
+            disp('X and Y micron pixel sizes are not the same?! Check line 16583');
+        end
         for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
             for Cpoint = 1:size(cLocs,1)
-                % get euclidean pixel distance between each Ca ROI pixel
+                % get euclidean micron distance between each Ca ROI pixel
                 % and BBB cluster pixel 
-                dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)+((cLocs(Cpoint,3)-indsA{terminals{mouse}(ccell)}(Apoint,3))^2)); 
+                dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)); 
             end 
         end 
     end 
@@ -16586,22 +16612,13 @@ if VRQ == 1
             end
             for VRpoint = 1:size(indsVR,1)
                 for Cpoint = 1:size(cLocs,1)
-                    % get euclidean pixel distance between each Ca ROI pixel
+                    % get euclidean micron distance between each Ca ROI pixel
                     % and BBB cluster pixel 
-                    dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)+((cLocs(Cpoint,3)-indsVR(VRpoint,3))^2)); 
+                    dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)); 
                 end 
             end 
         end 
     end 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % PICK UP HERE - NEED TO REWRITE EUCLIDEAN DIST CODE BECAUSE THE THIRD
-    % DIMENSION ABOVE IS NOT SPACE, IT'S TIME SO IT NEEDS TO BE REMOVED 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
     for ccell = 1:length(terminals{mouse})
         for clust = 1:length(dists{terminals{mouse}(ccell)})
             % determine minimum distance between each Ca ROI and cluster 
@@ -16770,7 +16787,7 @@ if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data
         rSquared = string(round(fav2.Rsquared.Ordinary,2));
         text(27,30,rSquared,'FontSize',20)
     end 
-    ylabel("Distance From Axon")
+    ylabel("Distance From Axon (microns)")
     if clustSpikeQ3 == 0 
         xlabel("Average BBB Plume Timing") 
     elseif clustSpikeQ3 == 1
@@ -16814,9 +16831,9 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(28,0.12,rSquared,'FontSize',20)
+            text(28,30,rSquared,'FontSize',20)
         end 
-        ylabel("Distance From VR space")
+        ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
             xlabel("Average BBB Plume Timing") 
         elseif clustSpikeQ3 == 1
@@ -16839,6 +16856,10 @@ end
 
 
 %% plot distribution of cluster sizes and pixel amplitudes
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 figure;
 ax=gca;
 avClustSize = nanmean(sizeDistArray(:,2)); 
@@ -16858,7 +16879,7 @@ elseif clustSpikeQ == 1
     end 
 end 
 ylabel("Number of BBB Plumes")
-xlabel("Size of BBB Plume") 
+xlabel("Size of BBB Plume (microns squared)") 
 
 figure;
 ax=gca;
@@ -17010,7 +17031,7 @@ if clustSpikeQ == 0
     swarmchart(x,CsizeForPlot,[],'red')  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size")
+    ylabel("BBB Plume Size (microns squared)")
     if ETAorSTAq == 0 % STA data
         xlabel("Axon")  
         title({'BBB Plume Size By Axon';'All Plumes'});
@@ -17064,7 +17085,7 @@ elseif clustSpikeQ == 1
         boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Size")
+        ylabel("BBB Plume Size (microns squared)")
         if ETAorSTAq == 0 % STA data
             xlabel("Axon")
         end 
@@ -17189,7 +17210,7 @@ if  clustSpikeQ == 1
         % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Size") 
+        ylabel("BBB Plume Size (microns squared)") 
         if ETAorSTAq == 0 % STA data
             if clustSpikeQ3 == 0 
                 title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
@@ -17297,7 +17318,11 @@ if  clustSpikeQ == 1
 end 
 
 
-%% plot change in cluster size and pixel amplitude over time for each axon and averaged 
+%% plot change in cluster size and pixel amplitude over time for each axon and averaged
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     if ETAorSTAq == 0 % STA data 
         clr = hsv(length(terminals{mouse}));
@@ -17354,7 +17379,7 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
+    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     title('Change in BBB Plume Size Over Time')
 
@@ -17420,7 +17445,7 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
+    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     if ETAorSTAq == 0 % STA data 
         title({'Average Change in BBB Plume Size Over Time';'Per Axon'})
@@ -17490,7 +17515,7 @@ if clustSpikeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Size") 
+        ylabel("BBB Plume Size (microns squared)") 
         xlabel("Time (s)")
         title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
     end 
@@ -17533,6 +17558,10 @@ if clustSpikeQ == 0
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for however many groups you want
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     % plot change in cluster size color coded by axon 
     x = 1:size(im,3);
@@ -17686,7 +17715,7 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
+    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     title('Change in BBB Plume Size Over Time')
     
@@ -17737,7 +17766,7 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
+    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     title({'Average Change in BBB Plume Size Over Time'})
     
@@ -17805,7 +17834,7 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size") 
+    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     title({'Change in BBB Plume Size Over Time';'Clusters Aligned and Averaged'})
     
@@ -17889,7 +17918,7 @@ if clustSpikeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Size") 
+        ylabel("BBB Plume Size (microns squared)") 
         xlabel("Time (s)")
         title({'Average Aligned Change in BBB Plume Size Over Time';'Across Axons'})
     end 
@@ -17971,9 +18000,9 @@ vDataFullTrace = vDataFullTrace3; clearvars vDataFullTrace3
 
 % sort the data 
 % resort state_start_f into sigLocs{vid}{terminals{mouse}(ccell)}(peak) 
-sigLocs = cell(1,length(vidList{mouse}));
+sigLocs2 = cell(1,length(vidList{mouse}));
 for vid = 1:length(vidList{mouse})
-    sigLocs{vid}= state_start_f{mouse}{vid}';
+    sigLocs2{vid}= state_start_f{mouse}{vid}';
 end 
 % combine the VW data to get z score of whole experiment
 frameLens = zeros(1,length(vidList{mouse}));
@@ -18017,21 +18046,21 @@ windFrames = floor(windSize*FPSstack{mouse});
 lenIts = 1;
 % make sure sigLocs is organized in the correct orientation: 
 % sigLocs{vid}(it,peak)
-[r,c] = size(sigLocs{1});
+[r,c] = size(sigLocs2{1});
 if r ~= lenIts
     for vid = 1:length(vidList{mouse})  
-        sigLocs{vid} = sigLocs{vid}';
+        sigLocs2{vid} = sigLocs2{vid}';
     end 
 end 
 for it = 1:lenIts
     % terminals = terminals{1};
     sortedVWdata = cell(1,1);
     for vid = 1:length(vidList{mouse})                  
-        if isempty(sigLocs{vid}) == 0
-            for peak = 1:size(sigLocs{vid},2)            
+        if isempty(sigLocs2{vid}) == 0
+            for peak = 1:size(sigLocs2{vid},2)            
 %                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
-                    start = sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                    stop = sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                    start = sigLocs2{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                    stop = sigLocs2{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
                     if start == 0 
                         start = 1 ;
                         stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
@@ -18125,7 +18154,7 @@ ax.FontName = 'Arial';
 xlabel('time (s)','FontName','Arial')
 ylabel('z-scored vessel width','FontName','Arial')
 xLimStart = floor(10*FPSstack{mouse});
-xline(changePt,'LineWidth',2)
+% xline(changePt,'LineWidth',2)
 % filtTime = round(filtTime,2);
 tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
 if ETAorSTAq == 0 % STA data 

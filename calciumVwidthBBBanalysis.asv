@@ -15896,21 +15896,39 @@ CsNotNearVessel = cell(1,max(terminals{mouse}));
 clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 clustAmp = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
 spikeCount = cell(1,max(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    % figure out the number of spikes per axon 
+% figure out the number of spikes/events 
+if iscell(sigLocs{1}) == 0 
     for vid = 1:length(sigLocs)
         if vid == 1 
-            if ETAorSTAq == 0 % STA data
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
-            elseif ETAorSTAq == 1 % ETA data 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
-            end             
+            spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2);
         elseif vid > 1 
-            if ETAorSTAq == 0 % STA data
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
-            elseif ETAorSTAq == 1 % ETA data 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};
-            end                  
+            spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};             
+        end 
+    end 
+end 
+for ccell = 1:length(terminals{mouse})
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % EDIT BELOW CODE TO FIGURE OUT NUMBER OF EVENTS IN CASE SIGLOCS LOOKS
+    % LIKE IT CURRENTLY DOES...THEN FINISH UPDATING INDSA TO MICRONS
+    % THEN UPDATE SIGLOCS FOR VESSEL WIDTH PLOTTING TO BE VSIGLOCS 
+
+
+    % figure out the number of spikes per axon 
+    if iscell(sigLocs{1}) == 1 % if siglocs{1} contains another cell 
+        for vid = 1:length(sigLocs)
+            if vid == 1 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
+            elseif vid > 1 
+                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};             
+            end 
         end 
     end 
     count = 1;
@@ -16352,11 +16370,19 @@ for ccell = 1:length(terminals{mouse})
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
         % identify the x, y, z location of pixels per cluster
         cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+        % convert cLoc X and Y inds to microns 
+        if XpixDist == YpixDist 
+            if isempty(cLocs) == 0 
+                cLocs(1) = cLocs(1)*XpixDist; cLocs(2) = cLocs(2)*XpixDist; 
+            end 
+        elseif XpixDist ~= YpixDist
+            disp('X and Y micron pixel sizes are not the same?! Check line 16583');
+        end
         for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
             for Cpoint = 1:size(cLocs,1)
-                % get euclidean pixel distance between each Ca ROI pixel
+                % get euclidean micron distance between each Ca ROI pixel
                 % and BBB cluster pixel 
-                dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)+((cLocs(Cpoint,3)-indsA{terminals{mouse}(ccell)}(Apoint,3))^2)); 
+                dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)); 
             end 
         end 
     end 
@@ -16567,13 +16593,6 @@ if VRQ == 1
             end 
         end 
     end 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % determine inds in microns of VR outlines 
-
-
-
     % determine distance of each cluster from the VR space 
     dists = cell(1,max(terminals{mouse}));
     minVRCdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
@@ -16584,15 +16603,18 @@ if VRQ == 1
             % identify the x, y, z location of pixels per cluster
             cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
             % convert cLoc X and Y inds to microns 
-            cLocs(1) = cLocs(1)* 
-
-
-            
+            if XpixDist == YpixDist 
+                if isempty(cLocs) == 0 
+                    cLocs(1) = cLocs(1)*XpixDist; cLocs(2) = cLocs(2)*XpixDist; 
+                end 
+            elseif XpixDist ~= YpixDist
+                disp('X and Y micron pixel sizes are not the same?! Check line 16583');
+            end
             for VRpoint = 1:size(indsVR,1)
                 for Cpoint = 1:size(cLocs,1)
-                    % get euclidean pixel distance between each Ca ROI pixel
+                    % get euclidean micron distance between each Ca ROI pixel
                     % and BBB cluster pixel 
-                    dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)+((cLocs(Cpoint,3)-indsVR(VRpoint,3))^2)); 
+                    dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)); 
                 end 
             end 
         end 
