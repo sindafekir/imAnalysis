@@ -9,7 +9,7 @@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% get the data you need 
 % includes batch processing (across mice) option for STA/ETA figure generation
-
+%{
 %set the paramaters 
 ETAQ = input('Input 1 if you want to plot event/spike triggered averages. Input 0 if otherwise. '); 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -412,6 +412,9 @@ if ETAQ == 1 || STAstackQ == 1 || ETAstackQ == 1
                     % remove NaNs 
                     state_start_f{mouse}{vid} = state_start_f{mouse}{vid}(~isnan(state_start_f{mouse}{vid}));
                     state_end_f{mouse}{vid} = state_end_f{mouse}{vid}(~isnan(state_end_f{mouse}{vid}));
+                    % remove 0s B = A(A~=)
+                    state_start_f{mouse}{vid} = state_start_f{mouse}{vid}(state_start_f{mouse}{vid}~=0);
+                    state_end_f{mouse}{vid} = state_end_f{mouse}{vid}(state_end_f{mouse}{vid}~=0);
                 end 
             end 
         end 
@@ -4816,6 +4819,9 @@ mouse = 1;
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 % option to downsample the data 
+rows = size(greenStacks{1},1);
+cols = size(greenStacks{1},2);
+fprintf('%d Rows and %d Columns. ', rows,cols);
 downSampleQ = input('Input 1 to downsample the data. '); 
 while downSampleQ == 1 
     dwnR = cell(1,length(vidList{mouse})); 
@@ -4897,6 +4903,26 @@ if spikeQ == 1
         end      
     end 
     sigLocs = randSigLocs;
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % remove full rows/iterations within sigLocs where the peaks + buffer space for
+    % window are greater than the amount of frames per vid
+    for vid = 1:length(vidList{mouse})
+        if isempty(sigLocs{vid}) == 0 
+            % find rows where all the peak+buffer space is greater than the
+            % number of frames in the video 
+            [r,c] = find(sigLocs{vid} > (size(greenStacks{vid},3)+floor((windSize/2)*FPSstack{mouse})));
+            % turn all values in sigLocs greater than our threshold into
+            % nan
+            sigLocs{vid}(r,c) = nan;
+            % find entire rows of nans 
+            r = find(all(isnan(sigLocs{vid},1)));
+        end 
+    end 
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
 end 
 clearvars randSigLocs 
 
@@ -5005,13 +5031,22 @@ end
 
 windSize = input('How big should the window be around Ca peak in seconds? '); %24
 windFrames = floor(windSize*FPSstack{mouse});
+start = sigLocs{1}(1,1)-floor((windSize/2)*FPSstack{mouse});
+stop = sigLocs{1}(1,1)+floor((windSize/2)*FPSstack{mouse});
+frameLens = stop-start+1;
+if windFrames ~= frameLens
+    CI_High = nan(size(zGreenStack,1),size(zGreenStack,2),frameLens,size(sigLocs{1},1));
+    CI_Low = nan(size(zGreenStack,1),size(zGreenStack,2),frameLens,size(sigLocs{1},1));
+    CIlowAv = nan(size(zGreenStack,1),size(zGreenStack,2),frameLens);
+    CIhighAv = nan(size(zGreenStack,1),size(zGreenStack,2),frameLens);    
+elseif windFrames == frameLens
+    CI_High = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
+    CI_Low = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
+    CIlowAv = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames);
+    CIhighAv = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames);
+end 
 % further sort and average data, get 95% CI bounds 
-CI_High = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
-CI_Low = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames,size(sigLocs{1},1));
-CIlowAv = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames);
-CIhighAv = nan(size(zGreenStack,1),size(zGreenStack,2),windFrames);
 clearvars zGreenStack zRedStack
-
 workFlow = 1;
 while workFlow == 1 
     tic
@@ -5045,7 +5080,7 @@ while workFlow == 1
         for vid = 1:length(vidList{mouse})                  
             if isempty(sigLocs{vid}) == 0
                 for peak = 1:size(sigLocs{vid},2)            
-%                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
+                    if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < size(szGreenStack{vid},3)                
                         start = sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
                         stop = sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
                         if start == 0 
@@ -5061,7 +5096,7 @@ while workFlow == 1
                                 VesSortedRedStacks{vid}{peak} = redStacks{vid}(:,:,start:stop);
                             end    
                         end 
-%                             end 
+                    end 
                 end     
             end                  
         end 
@@ -5460,7 +5495,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage112_ETAvidBehavior_20230719zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -15895,7 +15930,7 @@ end
 % cluster start and average time, go through all figures and make sure
 % variables are unique so I can pull variables per mouse for
 % averaging/plotting together 
-
+%{
 %% get the pixel sizes 
 getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
 if getPixSizeQ == 1 
@@ -16853,7 +16888,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(28,30,rSquared,'FontSize',20)
+            text(30,20,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
@@ -17018,6 +17053,7 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
             title({'BBB Plume Timing By Axon';'Cluster Start Time'});
         end     
     elseif ETAorSTAq == 1 % ETA data
+        set(gca,'XTick',[]) % removes x axis ticks
         if clustSpikeQ3 == 0
             title({'BBB Plume Timing';'Average Cluster Time'});
         elseif clustSpikeQ3 == 1
@@ -18039,9 +18075,9 @@ end
 combVWdata = zeros(1,frameLen);
 for vid = 1:length(vidList{mouse})
     if vid == 1 
-        count = size(greenStacks{vid},3);
+        count = length(vDataFullTrace{mouse}{vid});
     end 
-    for frame = 1:size(greenStacks{vid},3) 
+    for frame = 1:length(vDataFullTrace{mouse}{vid}) 
         if vid == 1 
             combVWdata(:,frame) = vDataFullTrace{mouse}{vid}(:,frame);
         elseif vid > 1 
@@ -18095,7 +18131,11 @@ for it = 1:lenIts
         end                  
     end            
     count = 1;
-    vwStackArray2 = NaN(1,windFrames);
+    if windFrames ~= length(sortedVWdata{1}{1})
+        vwStackArray2 = NaN(1,length(sortedVWdata{1}{1}));
+    elseif windFrames == length(sortedVWdata{1}{1})
+        vwStackArray2 = NaN(1,windFrames);
+    end 
     for vid = 1:length(vidList{mouse})     
         if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
             for peak = 1:size(sortedVWdata{vid},2)  
