@@ -399,8 +399,8 @@ end
 % get red opto stim trials only 
 if ETAQ == 1 || STAstackQ == 1 || ETAstackQ == 1
     if optoQ == 1 
-        redTrialsOnlyQ = input('Input 1 if you want the start times for only red opto trials. ');
-        if redTrialsOnlyQ == 1
+        redTrialsOnlyQ = input('Input 0 if you want the start times for only red opto trials. Input 1 for blue only. ');
+        if redTrialsOnlyQ == 0
             for mouse = 1:mouseNum
                 for vid = 1:length(vidList{mouse}) 
                     % find the trials that do not have red opto stims 
@@ -416,7 +416,24 @@ if ETAQ == 1 || STAstackQ == 1 || ETAstackQ == 1
                     state_start_f{mouse}{vid} = state_start_f{mouse}{vid}(state_start_f{mouse}{vid}~=0);
                     state_end_f{mouse}{vid} = state_end_f{mouse}{vid}(state_end_f{mouse}{vid}~=0);
                 end 
-            end 
+            end
+        elseif redTrialsOnlyQ == 1
+            for mouse = 1:mouseNum
+                for vid = 1:length(vidList{mouse}) 
+                    % find the trials that do not have blue opto stims 
+                    [r,~] = find(TrialTypes{mouse}{vid}(:,2) ~= 1);
+                    % remove trials start and end frames that do not have
+                    % red opto stims 
+                    state_start_f{mouse}{vid}(r) = NaN;
+                    state_end_f{mouse}{vid}(r) = NaN;
+                    % remove NaNs 
+                    state_start_f{mouse}{vid} = state_start_f{mouse}{vid}(~isnan(state_start_f{mouse}{vid}));
+                    state_end_f{mouse}{vid} = state_end_f{mouse}{vid}(~isnan(state_end_f{mouse}{vid}));
+                    % remove 0s B = A(A~=)
+                    state_start_f{mouse}{vid} = state_start_f{mouse}{vid}(state_start_f{mouse}{vid}~=0);
+                    state_end_f{mouse}{vid} = state_end_f{mouse}{vid}(state_end_f{mouse}{vid}~=0);
+                end 
+            end
         end 
     end 
 end 
@@ -4797,7 +4814,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
+%{
 mouse = 1;
 % termQ = input('Input 1 to update terminal labels. ');
 % if termQ == 1 
@@ -4903,9 +4920,6 @@ if spikeQ == 1
         end      
     end 
     sigLocs = randSigLocs;
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     % remove full rows/iterations within sigLocs where the peaks + buffer space for
     % window are greater than the amount of frames per vid
     for vid = 1:length(vidList{mouse})
@@ -4915,30 +4929,15 @@ if spikeQ == 1
             [r,c] = find(sigLocs{vid} > (size(greenStacks{vid},3)+floor((windSize/2)*FPSstack{mouse})));
             % turn all values in sigLocs greater than our threshold into
             % nan
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % PICK UP HERE WITH 58 ETA DATA - THE BELOW CODE IS TURNING THE ENTIRE ROW INTO
-            % NANS WHEN WE JUST WANT SPECIFIC VALUES 
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            sigLocs{vid}(r,c) = nan;
+            for loc = 1:length(r)
+                sigLocs{vid}(r(loc),c(loc)) = NaN;
+            end 
             % find entire rows of nans 
             r = find(all(isnan(sigLocs{vid}),2));
             % remove the rows entirely made of NaNs 
             sigLocs{vid}(r,:) = [];
         end 
-    end 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
+    end   
 end 
 clearvars randSigLocs 
 
@@ -5083,7 +5082,7 @@ while workFlow == 1
     elseif spikeQ == 1 
         lenIts = itNum;
     end 
-    for it = 1:lenIts
+    for it = 1:size(sigLocs{1},1)
         % sort data 
         % terminals = terminals{1};
         sortedGreenStacks = cell(1,1);
@@ -16236,6 +16235,7 @@ elseif ETAorSTAq == 1
 end 
 
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
+
 uniqClusts = cell(1,max(terminals{mouse}));
 numPixels = nan(1,length(terminals{mouse}));
 numClusts = nan(1,length(terminals{mouse}));
@@ -16243,7 +16243,7 @@ uniqClustPixNums = nan(1,1);
 count = 1;
 for ccell = 1:length(terminals{mouse})
     % determine the total number of pixels 
-    numPixels(ccell) = length(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})));
+    numPixels(ccell) = length(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})))*XpixDist*YpixDist;
     totalNumPixels = sum(numPixels);
     avNumPixels = mean(numPixels);
     medNumPixels = median(numPixels);
@@ -16255,7 +16255,7 @@ for ccell = 1:length(terminals{mouse})
     medNumClusts = median(numClusts);
     % determine the number of pixels per cluster 
     for clust = 1:numClusts(ccell)
-        uniqClustPixNums(count) = length(find(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})) == uniqClusts{terminals{mouse}(ccell)}(clust)));
+        uniqClustPixNums(count) = length(find(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})) == uniqClusts{terminals{mouse}(ccell)}(clust)))*XpixDist*YpixDist;
         count = count + 1;
     end 
     totalUniqClustPixNums = sum(uniqClustPixNums);
@@ -16263,30 +16263,42 @@ for ccell = 1:length(terminals{mouse})
     medNumUniqClustPixNums = median(uniqClustPixNums);
 end 
 
-subplot(1,3,1)
-histogram(numPixels,10)
-totalPixelNumLabel = sprintf('%.0f pixels total.',totalNumPixels);
-avPixelNumLabel = sprintf('%.0f average pixels per axon.',avNumPixels);
-medPixelNumLabel = sprintf('%.0f median pixels per axon.',medNumPixels);
-title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
-ax = gca;
-ax.FontSize = 15;
-subplot(1,3,2)
-histogram(numClusts,10)
-totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
-avClustNumLabel = sprintf('%.0f average clusters per axon.',avNumClusts);
-medClustNumLabel = sprintf('%.0f median clusters per axon.',medNumClusts);
-title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
-ax = gca;
-ax.FontSize = 15;
-subplot(1,3,3)
-histogram(uniqClustPixNums,10)
-% totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
-avUniqClustPixNumsLabel = sprintf('%.0f average pixels per cluster.',avNumUniqClustPixNums);
-medNumUniqClustPixNumsLabel = sprintf('%.0f median pixels per cluster.',medNumUniqClustPixNums);
-title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
-ax = gca;
-ax.FontSize = 15;
+if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    subplot(1,3,1)
+    histogram(numPixels,10)
+    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
+    avPixelNumLabel = sprintf('%.0f average microns squared per axon.',avNumPixels);
+    medPixelNumLabel = sprintf('%.0f median microns squared per axon.',medNumPixels);
+    title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
+    ax = gca;
+    ax.FontSize = 15;
+    subplot(1,3,2)
+    histogram(numClusts,10)
+    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
+    avClustNumLabel = sprintf('%.0f average clusters per axon.',avNumClusts);
+    medClustNumLabel = sprintf('%.0f median clusters per axon.',medNumClusts);
+    title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
+    ax = gca;
+    ax.FontSize = 15;
+    subplot(1,3,3)
+    histogram(uniqClustPixNums,10)
+    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
+    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
+    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
+    title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+    ax = gca;
+    ax.FontSize = 15;
+elseif ETAorSTAq == 1 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
+    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
+    histogram(uniqClustPixNums,10)
+    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
+    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
+    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
+    title({totalClustNumLabel;totalPixelNumLabel;avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+    ax = gca;
+    ax.FontSize = 15;
+end 
  
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
