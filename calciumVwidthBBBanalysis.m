@@ -4883,6 +4883,7 @@ for vid = 1:length(vidList{mouse})
     sigLocs{vid}= state_start_f{mouse}{vid}';
 end 
 
+windSize = input('How big should the window be around the Ca spike/event in seconds? '); %24
 if spikeQ == 1   
     spikeISIs = cell(1,length(vidList{mouse})); 
     ISIstds = cell(1,length(vidList{mouse})); 
@@ -4924,7 +4925,7 @@ if spikeQ == 1
     % window are greater than the amount of frames per vid
     for vid = 1:length(vidList{mouse})
         if isempty(sigLocs{vid}) == 0 
-            % find rows where all the peak+buffer space is greater than the
+            % find where the peak+buffer space is greater than the
             % number of frames in the video 
             [r,c] = find(sigLocs{vid} > (size(greenStacks{vid},3)+floor((windSize/2)*FPSstack{mouse})));
             % turn all values in sigLocs greater than our threshold into
@@ -4935,7 +4936,39 @@ if spikeQ == 1
             % find entire rows of nans 
             r = find(all(isnan(sigLocs{vid}),2));
             % remove the rows entirely made of NaNs 
-            sigLocs{vid}(r,:) = [];
+            sigLocs{vid}(r,:) = [];      %#ok<FNDSB>
+            % find rows where there is only one spike/event and the rest are NaNs
+            r = find(sum(~isnan(sigLocs{vid}),2) == 1);
+            % remove the rows where there is only one spike/event
+            sigLocs{vid}(r,:) = [];  
+            while size(sigLocs{vid},1) ~= itNum
+                % generate random spike Locs (sigLocs) based on ISI STD using same            
+                for spike = 1:length(spikeISIs{vid})
+                    % generate random ISI
+                    r = random('Exponential',ISImean{vid});
+                    randISIs{vid}(spike) = floor(r);
+                end              
+                % use randISIs to generate randSigLocs 
+                if isempty(randISIs{vid}) == 0 
+                    sigLocs{vid}(size(sigLocs{vid},1)+1,:) = cumsum(randISIs{vid});
+                end  
+                % take another look for sigLocs that are out of range and
+                % remove them  
+                [r,c] = find(sigLocs{vid} > (size(greenStacks{vid},3)+floor((windSize/2)*FPSstack{mouse})));
+                % turn all values in sigLocs greater than our threshold into
+                % nan
+                for loc = 1:length(r)
+                    sigLocs{vid}(r(loc),c(loc)) = NaN;
+                end 
+                % find entire rows of nans 
+                r = find(all(isnan(sigLocs{vid}),2));
+                % remove the rows entirely made of NaNs 
+                sigLocs{vid}(r,:) = [];  %#ok<FNDSB>
+                % find rows where there is only one spike/event and the rest are NaNs
+                r = find(sum(~isnan(sigLocs{vid}),2) == 1);
+                % remove the rows where there is only one spike/event
+                sigLocs{vid}(r,:) = [];  
+            end 
         end 
     end   
 end 
@@ -5044,7 +5077,6 @@ for vid = 1:length(vidList{mouse})
     end 
 end 
 
-windSize = input('How big should the window be around Ca peak in seconds? '); %24
 windFrames = floor(windSize*FPSstack{mouse});
 start = sigLocs{1}(1,1)-floor((windSize/2)*FPSstack{mouse});
 stop = sigLocs{1}(1,1)+floor((windSize/2)*FPSstack{mouse});
@@ -5082,7 +5114,7 @@ while workFlow == 1
     elseif spikeQ == 1 
         lenIts = itNum;
     end 
-    for it = 1:size(sigLocs{1},1)
+    for it = 1:size(sigLocs,1)
         % sort data 
         % terminals = terminals{1};
         sortedGreenStacks = cell(1,1);
@@ -5128,9 +5160,9 @@ while workFlow == 1
             if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
                 for peak = 1:size(sortedGreenStacks{vid},2)  
                     if isempty(sortedGreenStacks{vid}{peak}) == 0
-                        greenStackArray2(:,:,:,count) = single(sortedGreenStacks{vid}{peak});
+                        greenStackArray2(:,:,:,count) = single(sortedGreenStacks{vid}{peak}); %#ok<SAGROW>
                         if rightChan == 0
-                            VesGreenStackArray2(:,:,:,count) = single(VesSortedGreenStacks{vid}{peak});
+                            VesGreenStackArray2(:,:,:,count) = single(VesSortedGreenStacks{vid}{peak}); %#ok<SAGROW>
                         end           
                         count = count + 1;
                     end 
@@ -5149,9 +5181,9 @@ while workFlow == 1
             if length(sortedGreenStacks) >= vid && isempty(sortedGreenStacks{vid}) == 0 
                 for peak = 1:size(sortedRedStacks{vid},2)  
                     if isempty(sortedRedStacks{vid}{peak}) == 0
-                        redStackArray2(:,:,:,count) = single(sortedRedStacks{vid}{peak});
+                        redStackArray2(:,:,:,count) = single(sortedRedStacks{vid}{peak}); %#ok<SAGROW>
                         if rightChan == 1
-                            VesRedStackArray2(:,:,:,count) = single(VesSortedRedStacks{vid}{peak});
+                            VesRedStackArray2(:,:,:,count) = single(VesSortedRedStacks{vid}{peak}); %#ok<SAGROW>
                         end           
                         count = count + 1;
                     end 
@@ -5180,7 +5212,7 @@ while workFlow == 1
         % determine 95% or 99% CI of bootstrapped data and av
         if spikeQ == 1       
             if rightChan == 0 % BBB data is in green channel 
-                SEM = (nanstd(avGreenStack,0,3))/(sqrt(size(avGreenStack,3))); % Standard Error 
+                SEM = (nanstd(avGreenStack,0,3))/(sqrt(size(avGreenStack,3))); %#ok<*NANSTD> % Standard Error 
                 % calculate bounds for bonferroni correction (per
                 % extravascular pixel) 
                if rightChan == 0 % if BBB data is in green channel 
@@ -5510,7 +5542,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -16846,6 +16878,10 @@ if ETAorSTAq == 0 % STA data
 end 
 
 %% plot distance from axon and VR space as a function of cluster timing
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 threshFrame = floor(size(im,3)/2);
 if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data 
     figure;
@@ -16916,7 +16952,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(30,20,rSquared,'FontSize',20)
+            text(30,35,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
@@ -16941,10 +16977,6 @@ end
 
 
 %% plot distribution of cluster sizes and pixel amplitudes
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 figure;
 ax=gca;
 avClustSize = nanmean(sizeDistArray(:,2)); 
@@ -17054,7 +17086,7 @@ if clustSpikeQ == 0
     t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
 end 
 
-%% create scatter over box plot of cluster timing per axon 
+%% create scatter over box plot of cluster timing per axon
 if clustSpikeQ == 0 % if all the spikes are available to look at 
     clear ClocTimeForPlot
     ClocTimeForPlot = avClocFrame';    
@@ -17099,10 +17131,6 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size and pixel amp grouped by pre and post spike
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     clearvars data
     CsizeForPlot = clustSize';
@@ -17405,10 +17433,6 @@ end
 
 
 %% plot change in cluster size and pixel amplitude over time for each axon and averaged
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     if ETAorSTAq == 0 % STA data 
         clr = hsv(length(terminals{mouse}));
@@ -17644,10 +17668,6 @@ if clustSpikeQ == 0
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for however many groups you want
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     % plot change in cluster size color coded by axon 
     x = 1:size(im,3);
@@ -18053,10 +18073,6 @@ if clustSpikeQ == 0
 end 
 
 %% plot change in vessel width 
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %remove rows full of 0s if there are any b = a(any(a,2),:)
 mouse = 1;
 % import the data 
