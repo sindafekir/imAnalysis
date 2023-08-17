@@ -396,7 +396,7 @@ if distQ == 1
 %     clearvars -except redZstack distQ CaROImasks 
 end 
 
-% get red opto stim trials only 
+% get red or blue opto stim trials only 
 if ETAQ == 1 || STAstackQ == 1 || ETAstackQ == 1
     if optoQ == 1 
         redTrialsOnlyQ = input('Input 0 if you want the start times for only red opto trials. Input 1 for blue only. ');
@@ -4936,11 +4936,13 @@ if spikeQ == 1
             % find entire rows of nans 
             r = find(all(isnan(sigLocs{vid}),2));
             % remove the rows entirely made of NaNs 
-            sigLocs{vid}(r,:) = [];      %#ok<FNDSB>
+            sigLocs{vid}(r,:) = [];      
             % find rows where there is only one spike/event and the rest are NaNs
-            r = find(sum(~isnan(sigLocs{vid}),2) == 1);
-            % remove the rows where there is only one spike/event
-            sigLocs{vid}(r,:) = [];  
+            if size(sigLocs{vid},2) > 1
+                r = find(sum(~isnan(sigLocs{vid}),2) == 1);
+                % remove the rows where there is only one spike/event
+                sigLocs{vid}(r,:) = [];  
+            end 
             while size(sigLocs{vid},1) ~= itNum
                 % generate random spike Locs (sigLocs) based on ISI STD using same            
                 for spike = 1:length(spikeISIs{vid})
@@ -4963,11 +4965,13 @@ if spikeQ == 1
                 % find entire rows of nans 
                 r = find(all(isnan(sigLocs{vid}),2));
                 % remove the rows entirely made of NaNs 
-                sigLocs{vid}(r,:) = [];  %#ok<FNDSB>
-                % find rows where there is only one spike/event and the rest are NaNs
-                r = find(sum(~isnan(sigLocs{vid}),2) == 1);
-                % remove the rows where there is only one spike/event
                 sigLocs{vid}(r,:) = [];  
+                % find rows where there is only one spike/event and the rest are NaNs
+                if size(sigLocs{vid},2) > 1
+                    r = find(sum(~isnan(sigLocs{vid}),2) == 1);
+                    % remove the rows where there is only one spike/event
+                    sigLocs{vid}(r,:) = [];  
+                end 
             end 
         end 
     end   
@@ -5542,7 +5546,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage57_STAvid_20230214zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -16803,6 +16807,10 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot cluster size and pixel amplitude as function of distance from axon
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -16878,10 +16886,6 @@ if ETAorSTAq == 0 % STA data
 end 
 
 %% plot distance from axon and VR space as a function of cluster timing
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 threshFrame = floor(size(im,3)/2);
 if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data 
     figure;
@@ -18072,7 +18076,7 @@ if clustSpikeQ == 0
     end 
 end 
 
-%% plot change in vessel width 
+%% plot change in vessel width
 %remove rows full of 0s if there are any b = a(any(a,2),:)
 mouse = 1;
 % import the data 
