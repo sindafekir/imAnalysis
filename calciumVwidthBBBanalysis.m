@@ -5118,7 +5118,7 @@ while workFlow == 1
     elseif spikeQ == 1 
         lenIts = itNum;
     end 
-    for it = 1:size(sigLocs,1)
+    for it = 1:size(sigLocs{1},1)
         % sort data 
         % terminals = terminals{1};
         sortedGreenStacks = cell(1,1);
@@ -5546,7 +5546,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage58_STAvid_20230413zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage56_STAvid_20230411zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -16956,7 +16956,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(30,35,rSquared,'FontSize',20)
+            text(30,25,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
@@ -17068,50 +17068,52 @@ if clustSpikeQ == 0
     t1 = p(4); t2 = p(2);
     t1.FontSize = 15; t2.FontSize = 15;
 
-    for ccell = 1:length(terminals{mouse})
-        % plot pie chart of before vs after spike cluster start times per
-        % axon 
-        threshFrame = floor(size(im,3)/2);
-        numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
-        numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
-        preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
-        figure; 
-        p = pie(preVsPostSpikeStarts);
-        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-        if ETAorSTAq == 0 % STA data
-            legend('Pre-spike clusters','Post-spike clusters')
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
-                legend('Pre-opto clusters','Post-opto clusters')
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    legend('Pre-stim clusters','Post-stim clusters')
-                elseif ETAtype2 == 1 % reward aligned 
-                    legend('Pre-reward clusters','Post-reward clusters')
+    if ETAorSTAq == 0 % STA data
+        for ccell = 1:length(terminals{mouse})
+            % plot pie chart of before vs after spike cluster start times per
+            % axon 
+            threshFrame = floor(size(im,3)/2);
+            numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
+            numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
+            preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
+            figure; 
+            p = pie(preVsPostSpikeStarts);
+            colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+            if ETAorSTAq == 0 % STA data
+                legend('Pre-spike clusters','Post-spike clusters')
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
+                    legend('Pre-opto clusters','Post-opto clusters')
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend('Pre-stim clusters','Post-stim clusters')
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend('Pre-reward clusters','Post-reward clusters')
+                    end 
                 end 
             end 
+            ax=gca; ax.FontSize = 15;
+            t1 = p(4); t2 = p(2);
+            t1.FontSize = 15; t2.FontSize = 15;
+            title(sprintf('Axon %d.',terminals{mouse}(ccell)))
         end 
+    
+        % create pie chart showing number of axons that are mostly pre, mostly
+        % post, and evenly split 
+        figure;
+        totalClusts = numPreSpikeStarts + numPostSpikeStarts;
+        preSpikeRatio = numPreSpikeStarts./totalClusts;
+        numMostlyPre = sum(preSpikeRatio > 0.5);
+        numMostlyPost = sum(preSpikeRatio < 0.5);
+        evenPreAndPost = sum(preSpikeRatio == 0.5);
+        axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
+        p = pie(axonTypes);
+        colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
+        legend('Listener','Even-Split','Controller')
         ax=gca; ax.FontSize = 15;
-        t1 = p(4); t2 = p(2);
-        t1.FontSize = 15; t2.FontSize = 15;
-        title(sprintf('Axon %d.',terminals{mouse}(ccell)))
+        t1 = p(2); t2 = p(4); t3 = p(6);
+        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
     end 
-
-    % create pie chart showing number of axons that are mostly pre, mostly
-    % post, and evenly split 
-    figure;
-    totalClusts = numPreSpikeStarts + numPostSpikeStarts;
-    preSpikeRatio = numPreSpikeStarts./totalClusts;
-    numMostlyPre = sum(preSpikeRatio > 0.5);
-    numMostlyPost = sum(preSpikeRatio < 0.5);
-    evenPreAndPost = sum(preSpikeRatio == 0.5);
-    axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
-    p = pie(axonTypes);
-    colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
-    legend('Listener','Even-Split','Controller')
-    ax=gca; ax.FontSize = 15;
-    t1 = p(2); t2 = p(4); t3 = p(6);
-    t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
 end 
 
 %% create scatter over box plot of cluster timing per axon
@@ -17962,8 +17964,8 @@ if clustSpikeQ == 0
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd-0.5;
-    % FrameVals = round((1:FPSstack{mouse}:Frames)); 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd;
+    FrameVals = round((1:FPSstack{mouse}:Frames));
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
@@ -18046,7 +18048,7 @@ if clustSpikeQ == 0
         Frames = size(im,3);
         Frames_pre_stim_start = -((Frames-1)/2); 
         Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd-0.5;
+        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1+timeEnd;
         % FrameVals = round((1:FPSstack{mouse}:Frames)); 
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
@@ -18091,6 +18093,7 @@ if clustSpikeQ == 0
         v(nanRows,:) = []; f = 1:size(v,1);
         patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
         alpha(0.3)
+        ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Times';
@@ -18281,6 +18284,12 @@ plot(SNvwData,'k','LineWidth',2)
 patch([x fliplr(x)],[CIv_Low fliplr(CIv_High)],'k','EdgeColor','none')
 alpha(0.3)
 changePt = floor(windFrames/2);
+FrameVals(3) = threshFrame;
+FrameVals(2) = threshFrame - (Frames/5);
+FrameVals(1) = FrameVals(2) - (Frames/5);
+FrameVals(4) = threshFrame + (Frames/5);
+FrameVals(5) = FrameVals(4) + (Frames/5);
+ax.XTick = FrameVals;
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;   
 ax.FontSize = 15;
