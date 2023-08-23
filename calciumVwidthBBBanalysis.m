@@ -16480,178 +16480,272 @@ for ccell = 1:length(terminals{mouse})
     clustPixAmpTS{terminals{mouse}(ccell)}(all(isnan(clustPixAmpTS{terminals{mouse}(ccell)}),2),:) = [];
 end   
 
-% determine distance of each cluster from each axon 
-dists = cell(1,max(terminals{mouse}));
-minACdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
-for ccell = 1:length(terminals{mouse})
-    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-       % find what rows each cluster is located in
-        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
-        % identify the x, y, z location of pixels per cluster
-        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
-        % convert cLoc X and Y inds to microns 
-        if isempty(cLocs) == 0 
-            cLocs(1) = cLocs(1)*XpixDist; cLocs(2) = cLocs(2)*YpixDist; 
-        end 
-        for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
-            for Cpoint = 1:size(cLocs,1)
-                % get euclidean micron distance between each Ca ROI pixel
-                % and BBB cluster pixel 
-                dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)); 
+if ETAorSTAq == 0 % STA data 
+    % determine distance of each cluster from each axon 
+    dists = cell(1,max(terminals{mouse}));
+    minACdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+    for ccell = 1:length(terminals{mouse})
+        for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+           % find what rows each cluster is located in
+            [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+            % identify the x, y, z location of pixels per cluster
+            cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+            % convert cLoc X and Y inds to microns 
+            if isempty(cLocs) == 0 
+                cLocs(:,1) = cLocs(:,1)*XpixDist; cLocs(:,2) = cLocs(:,2)*YpixDist; 
+            end 
+            for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
+                for Cpoint = 1:size(cLocs,1)
+                    % get euclidean micron distance between each Ca ROI pixel
+                    % and BBB cluster pixel 
+                    dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsA{terminals{mouse}(ccell)}(Apoint,1))^2)+((cLocs(Cpoint,2)-indsA{terminals{mouse}(ccell)}(Apoint,2))^2)); 
+                end 
             end 
         end 
     end 
-end 
-for ccell = 1:length(terminals{mouse})
-    for clust = 1:length(dists{terminals{mouse}(ccell)})
-        % determine minimum distance between each Ca ROI and cluster 
-        if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
-            minACdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+    for ccell = 1:length(terminals{mouse})
+        for clust = 1:length(dists{terminals{mouse}(ccell)})
+            % determine minimum distance between each Ca ROI and cluster 
+            if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
+                minACdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+            end 
         end 
     end 
-end 
-% make 0s NaNs 
-minACdists(minACdists == 0) = NaN;
-% resort size and distance data for gscatter 
-if size(minACdists,2) < size(clustSize,2)
-    minACdists(:,size(minACdists,2)+1:size(clustSize,2)) = NaN;
-end 
-clear sizeDistArray includeX includY includeXY
-labels = strings(1,length(terminals{mouse}));
-f = cell(1,length(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    if ccell == 1 
-        sizeDistArray(:,1) = minACdists(ccell,:);
-        sizeDistArray(:,2) = clustSize(ccell,:);
-        sizeDistArray(:,3) = ccell;       
-        % determine trend line 
-        includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);  
-        if sum(includeXY) > 1 
-            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
-        end 
-    elseif ccell > 1 
-        if ccell == 2
-            len = size(sizeDistArray,1);   
-        end 
-        len2 = size(sizeDistArray,1);       
-        sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
-        sizeDistArray(len2+1:len2+len,2) = clustSize(ccell,:);
-        sizeDistArray(len2+1:len2+len,3) = ccell;                  
-        % determine trend line 
-        includeX =~ isnan(sizeDistArray(len2+1:len2+len,1)); includeY =~ isnan(sizeDistArray(len2+1:len2+len,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);   
-        if sum(includeXY) > 1 
-            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+    % make 0s NaNs 
+    minACdists(minACdists == 0) = NaN;
+    % resort size and distance data for gscatter 
+    if size(minACdists,2) < size(clustSize,2)
+        minACdists(:,size(minACdists,2)+1:size(clustSize,2)) = NaN;
+    end 
+    
+    % determine distance of each cluster origin from vessel from each axon 
+    dists = cell(1,max(terminals{mouse}));
+    minACOdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+    for ccell = 1:length(terminals{mouse})
+        for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+           % find what rows each cluster is located in
+            [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+            % identify the x, y, z location of pixels per cluster
+            cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+            if isempty(cLocs) == 0 
+                % determine the first frame that the cluster appears in 
+                cFirstFrame = min(cLocs(:,3));
+                [r,~] = find(cLocs(:,3) == cFirstFrame);
+                % only select indices from the first time the cluster appears 
+                cLocs = cLocs(r,:);
+                % only look at axon location where the cluster first appears 
+                [r,~] = find(indsA{terminals{mouse}(ccell)}(:,3) == cFirstFrame);
+                indsAfirst = indsA{terminals{mouse}(ccell)}(r,:);
+                % convert cLoc X and Y inds to microns 
+                cLocs(:,1) = cLocs(:,1)*XpixDist; cLocs(:,2) = cLocs(:,2)*YpixDist; 
+            end 
+            for Apoint = 1:size(indsAfirst,1)
+                for Cpoint = 1:size(cLocs,1)
+                    % get euclidean micron distance between each Ca ROI pixel
+                    % and BBB cluster pixel 
+                    dists{terminals{mouse}(ccell)}{clust}(Apoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsAfirst(Apoint,1))^2)+((cLocs(Cpoint,2)-indsAfirst(Apoint,2))^2)); 
+                end 
+            end 
         end 
     end 
-    labels(ccell) = num2str(terminals{mouse}(ccell));
-end 
-% determine average trend line for size vs distance 
-includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
-% make incude XY that has combined 0 locs 
-[zeroRow, ~] = find(includeY == 0);
-includeX(zeroRow) = 0; includeXY = includeX;                
-sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
-if length(find(includeXY)) > 1
-    fav = fitlm(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
-end 
-
-clear ampDistArray includeX includY includeXY
-fAmp = cell(1,length(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    if ccell == 1 
-        ampDistArray(:,1) = minACdists(ccell,:);
-        ampDistArray(:,2) = clustAmp(ccell,:);
-        ampDistArray(:,3) = ccell;       
-        % determine trend line 
-        includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);  
-        if sum(includeXY) > 1 
-            fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');  
-        end 
-    elseif ccell > 1 
-        if ccell == 2
-            len = size(ampDistArray,1);   
-        end 
-        len2 = size(ampDistArray,1);       
-        ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
-        ampDistArray(len2+1:len2+len,2) = clustAmp(ccell,:);
-        ampDistArray(len2+1:len2+len,3) = ccell;                  
-        % determine trend line 
-        includeX =~ isnan(ampDistArray(len2+1:len2+len,1)); includeY =~ isnan(ampDistArray(len2+1:len2+len,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        ampDistX = ampDistArray(len2+1:len2+len,1); ampDistY = ampDistArray(len2+1:len2+len,2);   
-        if sum(includeXY) > 1 
-            fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+    for ccell = 1:length(terminals{mouse})
+        for clust = 1:length(dists{terminals{mouse}(ccell)})
+            % determine minimum distance between each Ca ROI and cluster 
+            if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
+                minACOdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+            end 
         end 
     end 
-end 
-% determine average trend line for size vs distance 
-includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
-% make incude XY that has combined 0 locs 
-[zeroRow, ~] = find(includeY == 0);
-includeX(zeroRow) = 0; includeXY = includeX;                
-ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);   
-if length(find(includeXY)) > 1
-    fAmpAv = fitlm(ampDistX(includeXY),ampDistY(includeXY),'poly1');
-end 
-
-% resort cluster start time and distance data for gscatter 
-clear timeDistArray includeX2 includY2 includeXY2
-f2 = cell(1,length(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    if ccell == 1 
-        timeDistArray(:,1) = avClocFrame(ccell,:);
-        timeDistArray(:,2) = minACdists(ccell,:);
-        timeDistArray(:,3) = ccell;       
-        % determine trend line 
-        includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY2 == 0);
-        includeX2(zeroRow) = 0; includeXY2 = includeX2;                
-        timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);  
-        if sum(includeXY2) > 1 
-            f2{ccell} = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');  
+    % make 0s NaNs 
+    minACOdists(minACOdists == 0) = NaN;
+    % resort size and distance data for gscatter 
+    if size(minACOdists,2) < size(clustSize,2)
+        minACOdists(:,size(minACOdists,2)+1:size(clustSize,2)) = NaN;
+    end 
+    
+    clear sizeDistArray includeX includY includeXY
+    labels = strings(1,length(terminals{mouse}));
+    f = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            sizeDistArray(:,1) = minACdists(ccell,:);
+            sizeDistArray(:,2) = clustSize(ccell,:);
+            sizeDistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);  
+            if sum(includeXY) > 1 
+                f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(sizeDistArray,1);   
+            end 
+            len2 = size(sizeDistArray,1);       
+            sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            sizeDistArray(len2+1:len2+len,2) = clustSize(ccell,:);
+            sizeDistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX =~ isnan(sizeDistArray(len2+1:len2+len,1)); includeY =~ isnan(sizeDistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);   
+            if sum(includeXY) > 1 
+                f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+            end 
         end 
-    elseif ccell > 1 
-        if ccell == 2
-            len = size(timeDistArray,1);   
-        end 
-        len2 = size(timeDistArray,1);       
-        timeDistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
-        timeDistArray(len2+1:len2+len,2) = minACdists(ccell,:);
-        timeDistArray(len2+1:len2+len,3) = ccell;                  
-        % determine trend line 
-        includeX2 =~ isnan(timeDistArray(len2+1:len2+len,1)); includeY2 =~ isnan(timeDistArray(len2+1:len2+len,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY2 == 0);
-        includeX2(zeroRow) = 0; includeXY2 = includeX2;                
-        timeDistX = timeDistArray(len2+1:len2+len,1); timeDistY = timeDistArray(len2+1:len2+len,2);   
-        if sum(includeXY2) > 1 
-            f2{ccell} = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+        labels(ccell) = num2str(terminals{mouse}(ccell));
+    end 
+    % determine average trend line for size vs distance 
+    includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fav = fitlm(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+    end 
+    
+    clear ampDistArray includeX includY includeXY
+    fAmp = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            ampDistArray(:,1) = minACdists(ccell,:);
+            ampDistArray(:,2) = clustAmp(ccell,:);
+            ampDistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);  
+            if sum(includeXY) > 1 
+                fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(ampDistArray,1);   
+            end 
+            len2 = size(ampDistArray,1);       
+            ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            ampDistArray(len2+1:len2+len,2) = clustAmp(ccell,:);
+            ampDistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX =~ isnan(ampDistArray(len2+1:len2+len,1)); includeY =~ isnan(ampDistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            ampDistX = ampDistArray(len2+1:len2+len,1); ampDistY = ampDistArray(len2+1:len2+len,2);   
+            if sum(includeXY) > 1 
+                fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+            end 
         end 
     end 
-end 
-% determine average trend line for time vs distance 
-includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
-% make incude XY that has combined 0 locs 
-[zeroRow, ~] = find(includeY2 == 0);
-includeX2(zeroRow) = 0; includeXY2 = includeX2;                
-timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);   
-if length(find(includeXY2)) > 1
-    fav2 = fitlm(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+    % determine average trend line for size vs distance 
+    includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fAmpAv = fitlm(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+    end 
+    
+    % resort cluster start time and distance data for gscatter 
+    clear timeDistArray includeX2 includY2 includeXY2
+    f2 = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            timeDistArray(:,1) = avClocFrame(ccell,:);
+            timeDistArray(:,2) = minACdists(ccell,:);
+            timeDistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY2 == 0);
+            includeX2(zeroRow) = 0; includeXY2 = includeX2;                
+            timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);  
+            if sum(includeXY2) > 1 
+                f2{ccell} = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(timeDistArray,1);   
+            end 
+            len2 = size(timeDistArray,1);       
+            timeDistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
+            timeDistArray(len2+1:len2+len,2) = minACdists(ccell,:);
+            timeDistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX2 =~ isnan(timeDistArray(len2+1:len2+len,1)); includeY2 =~ isnan(timeDistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY2 == 0);
+            includeX2(zeroRow) = 0; includeXY2 = includeX2;                
+            timeDistX = timeDistArray(len2+1:len2+len,1); timeDistY = timeDistArray(len2+1:len2+len,2);   
+            if sum(includeXY2) > 1 
+                f2{ccell} = fit(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+            end 
+        end 
+    end 
+    % determine average trend line for time vs distance 
+    includeX2 =~ isnan(timeDistArray(:,1)); includeY2 =~ isnan(timeDistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY2 == 0);
+    includeX2(zeroRow) = 0; includeXY2 = includeX2;                
+    timeDistX = timeDistArray(:,1); timeDistY = timeDistArray(:,2);   
+    if length(find(includeXY2)) > 1
+        fav2 = fitlm(timeDistX(includeXY2),timeDistY(includeXY2),'poly1');
+    end 
+    
+    % resort cluster start time and distance of axon from cluster origin data for gscatter 
+    clear timeODistArray includeX2 includY2 includeXY2
+    f2O = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            timeODistArray(:,1) = avClocFrame(ccell,:);
+            timeODistArray(:,2) = minACOdists(ccell,:);
+            timeODistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX2O =~ isnan(timeODistArray(:,1)); includeY2O =~ isnan(timeODistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY2O == 0);
+            includeX2O(zeroRow) = 0; includeXY2O = includeX2O;                
+            timeDistOX = timeODistArray(:,1); timeDistOY = timeODistArray(:,2);  
+            if sum(includeXY2O) > 1 
+                f2O{ccell} = fit(timeDistOX(includeXY2O),timeDistOY(includeXY2O),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(timeODistArray,1);   
+            end 
+            len2 = size(timeODistArray,1);       
+            timeODistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
+            timeODistArray(len2+1:len2+len,2) = minACOdists(ccell,:);
+            timeODistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX2O =~ isnan(timeODistArray(len2+1:len2+len,1)); includeY2O =~ isnan(timeODistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY2O == 0);
+            includeX2O(zeroRow) = 0; includeXY2O = includeX2O;                
+            timeDistXO = timeODistArray(len2+1:len2+len,1); timeDistOY = timeODistArray(len2+1:len2+len,2);   
+            if sum(includeXY2O) > 1 
+                f2O{ccell} = fit(timeDistXO(includeXY2O),timeDistOY(includeXY2O),'poly1');
+            end 
+        end 
+    end 
+    % determine average trend line for time vs distance 
+    includeX2O =~ isnan(timeODistArray(:,1)); includeY2O =~ isnan(timeODistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY2O == 0);
+    includeX2O(zeroRow) = 0; includeXY2O = includeX2O;                
+    timeDistXO = timeODistArray(:,1); timeDistOY = timeODistArray(:,2);   
+    if length(find(includeXY2O)) > 1
+        fav2O = fitlm(timeDistXO(includeXY2O),timeDistOY(includeXY2O),'poly1');
+    end 
 end 
 
 % determine cluster distance from VR space if you want 
@@ -16716,7 +16810,7 @@ if VRQ == 1
             cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
             % convert cLoc X and Y inds to microns 
             if isempty(cLocs) == 0 
-                cLocs(1) = cLocs(1)*XpixDist; cLocs(2) = cLocs(2)*YpixDist; 
+                cLocs(:,1) = cLocs(:,1)*XpixDist; cLocs(:,2) = cLocs(:,2)*YpixDist; 
             end 
             for VRpoint = 1:size(indsVR,1)
                 for Cpoint = 1:size(cLocs,1)
@@ -16794,10 +16888,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot cluster size and pixel amplitude as function of distance from axon
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -16823,8 +16913,8 @@ if ETAorSTAq == 0 % STA data
         rSquared = string(round(fav.Rsquared.Ordinary,2));
         text(20,5000,rSquared,'FontSize',20)
     end 
-    ylabel("Size of Cluster")
-    xlabel("Distance From Axon") 
+    ylabel("Size of Cluster (microns squared)")
+    xlabel("Distance From Axon (microns)") 
     if clustSpikeQ == 0 
         title('All Clusters');
     elseif clustSpikeQ == 1 
@@ -16860,7 +16950,7 @@ if ETAorSTAq == 0 % STA data
         text(20,0.04,rSquared,'FontSize',20)
     end 
     ylabel("Pixel Amplitude of Cluster")
-    xlabel("Distance From Axon") 
+    xlabel("Distance From Axon (microns)") 
     if clustSpikeQ == 0 
         title('All Clusters');
     elseif clustSpikeQ == 1 
@@ -16883,7 +16973,7 @@ if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     % figure out what axons have clusters to be plotted 
     fullRows = find(~isnan(timeDistArray(:,1)));
-    axons = unique(timeDistArray(fullRows,3));
+    axons = unique(timeDistArray(fullRows,3)); %#ok<FNDSB>
     label = labels(axons);
     legend(label)
     hold on;
@@ -16906,6 +16996,49 @@ if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data
         xlabel("BBB Plume Start Time") 
     end 
     title('BBB Plume Distance From Axon Compared to Timing');
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    FrameVals(3) = threshFrame;
+    FrameVals(2) = threshFrame - (Frames/5);
+    FrameVals(1) = FrameVals(2) - (Frames/5);
+    FrameVals(4) = threshFrame + (Frames/5);
+    FrameVals(5) = FrameVals(4) + (Frames/5); 
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;  
+
+    figure;
+    ax=gca;
+    clr = hsv(length(terminals{mouse}));
+    gscatter(timeODistArray(:,1),timeODistArray(:,2),timeODistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    % figure out what axons have clusters to be plotted 
+    fullRows = find(~isnan(timeODistArray(:,1)));
+    axons = unique(timeODistArray(fullRows,3));
+    label = labels(axons);
+    legend(label)
+    hold on;
+    for ccell = 1:length(terminals{mouse})
+        fitHandle = plot(f2O{ccell});
+        set(fitHandle,'Color',clr(ccell,:));
+    end 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fav2O);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(fav2O.Rsquared.Ordinary,2));
+        text(27,30,rSquared,'FontSize',20)
+    end 
+    ylabel("Distance From Axon (microns)")
+    if clustSpikeQ3 == 0 
+        xlabel("Average BBB Plume Timing") 
+    elseif clustSpikeQ3 == 1
+        xlabel("BBB Plume Start Time") 
+    end 
+    title('BBB Plume Origin Distance From Axon Compared to Timing');
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
@@ -16943,7 +17076,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(35,25.6,rSquared,'FontSize',20)
+            text(30,0.08,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
@@ -18091,6 +18224,10 @@ if clustSpikeQ == 0
 end 
 
 %% plot change in vessel width
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %remove rows full of 0s if there are any b = a(any(a,2),:)
 mouse = 1;
 % import the data 
@@ -18105,7 +18242,6 @@ for vid = 1:length(vidList{mouse})
     VWlabel = VWfileList(vid).name;
     VWmat = matfile(sprintf(VWlabel,vidList{mouse}(vid)));
     Vdata = VWmat.Vdata;       
-    
     if iscell(Vdata{mouse}) == 1
         vDataFullTrace{mouse}{vid} = Vdata; % vDataFullTrace{mouse}{vid}(VWroi)
         % average the VWrois that you want 
@@ -18124,12 +18260,86 @@ if iscell(Vdata{mouse}) == 1
     clearvars vDataFullTrace vDataFullTrace2 
     vDataFullTrace = vDataFullTrace3; clearvars vDataFullTrace3
 end 
-
-% sort the data 
-% resort state_start_f into sigLocs{vid}{terminals{mouse}(ccell)}(peak) 
-sigLocs2 = cell(1,length(vidList{mouse}));
-for vid = 1:length(vidList{mouse})
-    sigLocs2{vid}= state_start_f{mouse}{vid}';
+if ETAorSTAq == 0 % STA data
+    % get the calcium data 
+    regImDir = uigetdir('*.*',sprintf('WHERE IS THE CALCIUM DATA FOR MOUSE #%d?',mouse));
+    cd(regImDir);
+    % get vessel width data 
+    cDataFullTrace = cell(1,mouseNum);
+    CAfileList = dir('**/*CAdata_*.mat'); % list VW data files in current directory 
+    for vid = 1:length(vidList{mouse})
+        CAlabel = CAfileList(vid).name;
+        CAmat = matfile(sprintf(CAlabel,vidList{mouse}(vid)));
+        cDataFullTrace{mouse}{vid} = CAmat.CcellData;  
+    end 
+end 
+% sort the data
+if ETAorSTAq == 0 % STA data
+    % find CA peaks 
+    stdTrace = cell(1,length(vidList{mouse})); 
+    sigLocs2 = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        for ccell = 1:length(terminals{mouse})
+            [peaks, locs] = findpeaks(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
+            %find the sig peaks (peaks above 2 standard deviations from mean) 
+            stdTrace{vid}{terminals{mouse}(ccell)} = std(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});  
+            count = 1 ; 
+            for loc = 1:length(locs)
+                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
+                    sigLocs2{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
+                    count = count + 1;
+                end 
+            end 
+        end 
+    end 
+elseif ETAorSTAq == 1 % ETA data 
+    % resort state_start_f into sigLocs{vid}{terminals{mouse}(ccell)}(peak) 
+    sigLocs2 = cell(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        sigLocs2{vid}= state_start_f{mouse}{vid}';
+    end 
+end 
+% combine data, get z score, reseparate data into vids 
+if ETAorSTAq == 0 % STA data
+    % combine the VW data to get z score of whole experiment
+    frameLens = zeros(1,length(vidList{mouse}));
+    for vid = 1:length(vidList{mouse})
+        if vid == 1 
+            frameLen = size(greenStacks{vid},3);
+        elseif vid > 1 
+            frameLen = frameLen + size(greenStacks{vid},3);
+        end 
+        frameLens(vid) = size(greenStacks{vid},3);
+    end 
+    combCAdata = cell(1,max(terminals{mouse}));
+    zCAdata = cell(1,max(terminals{mouse}));
+    szCAdata = cell(1,length(vidList{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        for vid = 1:length(vidList{mouse})
+            if vid == 1 
+                count = length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});
+            end 
+            for frame = 1:length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}) 
+                if vid == 1 
+                    combCAdata{terminals{mouse}(ccell)}(:,frame) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(:,frame);
+                elseif vid > 1 
+                    combCAdata{terminals{mouse}(ccell)}(:,count+1) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(:,frame);
+                    count = count + 1;                                      
+                end 
+            end     
+        end    
+        % z score the CA data  
+        zCAdata{terminals{mouse}(ccell)} = zscore(combCAdata{terminals{mouse}(ccell)},0,2);
+        clearvars combCAdata
+        % resort data back into videos 
+        count = 1;
+        for vid = 1:length(vidList{mouse})
+            for frame = 1:frameLens(vid)       
+                szCAdata{vid}{terminals{mouse}(ccell)}(:,frame) = zCAdata{terminals{mouse}(ccell)}(:,count); 
+                count = count + 1;
+            end 
+        end 
+    end 
 end 
 % combine the VW data to get z score of whole experiment
 frameLens = zeros(1,length(vidList{mouse}));
@@ -18171,51 +18381,107 @@ end
 windSize = input('How big should the window be around the event/spike in seconds? '); %24
 windFrames = floor(windSize*FPSstack{mouse});
 lenIts = 1;
-% make sure sigLocs is organized in the correct orientation: 
-% sigLocs{vid}(it,peak)
-[r,c] = size(sigLocs2{1});
-if r ~= lenIts
-    for vid = 1:length(vidList{mouse})  
-        sigLocs2{vid} = sigLocs2{vid}';
+if ETAorSTAq == 0 % STA data
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
+    % make sure sigLocs is organized in the correct orientation: 
+    % sigLocs{vid}(it,peak)
+    [r,c] = size(sigLocs2{1});
+    if r ~= lenIts
+        for vid = 1:length(vidList{mouse})  
+            sigLocs2{vid} = sigLocs2{vid}';
+        end 
     end 
-end 
-for it = 1:lenIts
-    % terminals = terminals{1};
-    sortedVWdata = cell(1,1);
-    for vid = 1:length(vidList{mouse})                  
-        if isempty(sigLocs2{vid}) == 0
-            for peak = 1:size(sigLocs2{vid},2)            
-%                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
-                    start = sigLocs2{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                    stop = sigLocs2{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
-                    if start == 0 
-                        start = 1 ;
-                        stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                    end        
-                    if stop < size(szVWdata{vid},2) && start > 0 
-                        sortedVWdata{vid}{peak} = szVWdata{vid}(:,start:stop);
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
+    for it = 1:lenIts
+        % terminals = terminals{1};
+        sortedVWdata = cell(1,1);
+        for vid = 1:length(vidList{mouse})                  
+            if isempty(sigLocs2{vid}) == 0
+                for peak = 1:size(sigLocs2{vid},2)            
+    %                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
+                        start = sigLocs2{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                        stop = sigLocs2{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                        if start == 0 
+                            start = 1 ;
+                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                        end        
+                        if stop < size(szVWdata{vid},2) && start > 0 
+                            sortedVWdata{vid}{peak} = szVWdata{vid}(:,start:stop);
+                        end 
+    %                             end 
+                end     
+            end                  
+        end            
+        count = 1;
+        if windFrames ~= length(sortedVWdata{1}{1})
+            vwStackArray2 = NaN(1,length(sortedVWdata{1}{1}));
+        elseif windFrames == length(sortedVWdata{1}{1})
+            vwStackArray2 = NaN(1,windFrames);
+        end 
+        for vid = 1:length(vidList{mouse})     
+            if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
+                for peak = 1:size(sortedVWdata{vid},2)  
+                    if isempty(sortedVWdata{vid}{peak}) == 0
+                        vwStackArray2(count,:) = single(sortedVWdata{vid}{peak});          
+                        count = count + 1;
                     end 
-%                             end 
-            end     
-        end                  
-    end            
-    count = 1;
-    if windFrames ~= length(sortedVWdata{1}{1})
-        vwStackArray2 = NaN(1,length(sortedVWdata{1}{1}));
-    elseif windFrames == length(sortedVWdata{1}{1})
-        vwStackArray2 = NaN(1,windFrames);
+                end
+            end 
+        end 
     end 
-    for vid = 1:length(vidList{mouse})     
-        if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
-            for peak = 1:size(sortedVWdata{vid},2)  
-                if isempty(sortedVWdata{vid}{peak}) == 0
-                    vwStackArray2(count,:) = single(sortedVWdata{vid}{peak});          
-                    count = count + 1;
-                end 
-            end
+elseif ETAorSTAq == 1 % ETA data 
+    % make sure sigLocs is organized in the correct orientation: 
+    % sigLocs{vid}(it,peak)
+    [r,c] = size(sigLocs2{1});
+    if r ~= lenIts
+        for vid = 1:length(vidList{mouse})  
+            sigLocs2{vid} = sigLocs2{vid}';
+        end 
+    end 
+    for it = 1:lenIts
+        % terminals = terminals{1};
+        sortedVWdata = cell(1,1);
+        for vid = 1:length(vidList{mouse})                  
+            if isempty(sigLocs2{vid}) == 0
+                for peak = 1:size(sigLocs2{vid},2)            
+    %                             if sigLocs{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse}) > 0 && sigLocs{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse}) < length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)})                
+                        start = sigLocs2{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
+                        stop = sigLocs2{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
+                        if start == 0 
+                            start = 1 ;
+                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
+                        end        
+                        if stop < size(szVWdata{vid},2) && start > 0 
+                            sortedVWdata{vid}{peak} = szVWdata{vid}(:,start:stop);
+                        end 
+    %                             end 
+                end     
+            end                  
+        end            
+        count = 1;
+        if windFrames ~= length(sortedVWdata{1}{1})
+            vwStackArray2 = NaN(1,length(sortedVWdata{1}{1}));
+        elseif windFrames == length(sortedVWdata{1}{1})
+            vwStackArray2 = NaN(1,windFrames);
+        end 
+        for vid = 1:length(vidList{mouse})     
+            if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
+                for peak = 1:size(sortedVWdata{vid},2)  
+                    if isempty(sortedVWdata{vid}{peak}) == 0
+                        vwStackArray2(count,:) = single(sortedVWdata{vid}{peak});          
+                        count = count + 1;
+                    end 
+                end
+            end 
         end 
     end 
 end 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 % determine the average 
 avVWdata = nanmean(vwStackArray2,1);         
 %temporal smoothing option
