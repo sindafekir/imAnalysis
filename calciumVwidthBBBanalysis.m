@@ -16915,7 +16915,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav.Rsquared.Ordinary,2));
-        text(20,30000,rSquared,'FontSize',20)
+        text(20,500,rSquared,'FontSize',20)
     end 
     ylabel("Size of Cluster (microns squared)")
     xlabel("Distance From Axon (microns)") 
@@ -16951,7 +16951,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-        text(20,0.04,rSquared,'FontSize',20)
+        text(20,0.02,rSquared,'FontSize',20)
     end 
     ylabel("Pixel Amplitude of Cluster")
     xlabel("Distance From Axon (microns)") 
