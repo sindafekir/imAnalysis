@@ -18806,10 +18806,25 @@ end
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % PICK UP HERE-LOAD THE NEW VARIABLES AND THEN VISUALIZE WHAT I WANT
+    % THE NEW FIG TO LOOK LIKE ACROSS MICE 
     mouseNum = input('How many animals would you like to average? ');
     mouseNumLabel = input('What are the mouse identifaction numbers? ');
     terminals = cell(1,mouseNum);
     nearVsFarPlotData = cell(1,mouseNum);
+    numPixels = cell(1,mouseNum);
+    numClusts = cell(1,mouseNum);
+    totalNumPixels = nan(1,mouseNum);
+    avNumPixels = nan(1,mouseNum);
+    medNumPixels = nan(1,mouseNum);
+    totalNumClusts = nan(1,mouseNum);
+    avNumClusts = nan(1,mouseNum);
+    medNumClusts = nan(1,mouseNum);
+    uniqClustPixNums = nan(1,mouseNum);
+    totalUniqClustPixNums = nan(1,mouseNum);
+    avNumUniqClustPixNums = nan(1,mouseNum);
+    medNumUniqClustPixNums = nan(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18830,7 +18845,20 @@ if exist('mouseNum','var') == 0
         % near the vessel out of total # of clusters 
         terms = dataMat.terminals; 
         terminals{mouse} = terms{1}; clearvars terms; 
-        nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;        
+        nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;   
+        % import data needed to plot the number of pixels per cluster, the number of total pixels and the number of total clusters
+        numPixels{mouse} = dataMat.numPixels; 
+        totalNumPixels(mouse) = dataMat.totalNumPixels;
+        avNumPixels(mouse) = dataMat.avNumPixels;
+        medNumPixels(mouse) = dataMat.medNumPixels;        
+        numClusts{mouse} = dataMat.numClusts;
+        totalNumClusts(mouse) = dataMat.totalNumClusts;
+        avNumClusts(mouse) = dataMat.avNumClusts;
+        medNumClusts(mouse) = dataMat.medNumClusts;        
+        uniqClustPixNums(mouse) = dataMat.uniqClustPixNums;
+        totalUniqClustPixNums(mouse) = dataMat.totalUniqClustPixNums;
+        avNumUniqClustPixNums(mouse) = dataMat.avNumUniqClustPixNums;
+        medNumUniqClustPixNums(mouse) = dataMat.medNumUniqClustPixNums;        
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -18872,7 +18900,46 @@ totalAvNearVsFarPlotData = mean(AvNearVsFarPlotData,1);
 pie(totalAvNearVsFarPlotData);
 colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 
+%% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    subplot(1,3,1)
+    histogram(numPixels,10)
+    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
+    avPixelNumLabel = sprintf('%.0f average microns squared per axon.',avNumPixels);
+    medPixelNumLabel = sprintf('%.0f median microns squared per axon.',medNumPixels);
+    title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
+    ax = gca;
+    ax.FontSize = 15;
+    subplot(1,3,2)
+    histogram(numClusts,10)
+    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
+    avClustNumLabel = sprintf('%.0f average clusters per axon.',avNumClusts);
+    medClustNumLabel = sprintf('%.0f median clusters per axon.',medNumClusts);
+    title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
+    ax = gca;
+    ax.FontSize = 15;
+    subplot(1,3,3)
+    histogram(uniqClustPixNums,10)
+    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
+    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
+    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
+    title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+    ax = gca;
+    ax.FontSize = 15;
+elseif ETAorSTAq == 1 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
+    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
+    histogram(uniqClustPixNums,10)
+    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
+    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
+    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
+    title({totalClustNumLabel;totalPixelNumLabel;avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+    ax = gca;
+    ax.FontSize = 15;
+end 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -19115,72 +19182,6 @@ safeKeptInds = inds;
 safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
-
-%% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
-
-uniqClusts = cell(1,max(terminals{mouse}));
-numPixels = nan(1,length(terminals{mouse}));
-numClusts = nan(1,length(terminals{mouse}));
-uniqClustPixNums = nan(1,1);
-count = 1;
-for ccell = 1:length(terminals{mouse})
-    % determine the total number of pixels 
-    numPixels(ccell) = length(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})))*XpixDist*YpixDist;
-    totalNumPixels = sum(numPixels);
-    avNumPixels = mean(numPixels);
-    medNumPixels = median(numPixels);
-    % determine the total number of clusters 
-    uniqClusts{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})));
-    numClusts(ccell) = length(uniqClusts{terminals{mouse}(ccell)});
-    totalNumClusts = sum(numClusts);
-    avNumClusts = mean(numClusts);
-    medNumClusts = median(numClusts);
-    % determine the number of pixels per cluster 
-    for clust = 1:numClusts(ccell)
-        uniqClustPixNums(count) = length(find(idx{terminals{mouse}(ccell)}(~isnan(idx{terminals{mouse}(ccell)})) == uniqClusts{terminals{mouse}(ccell)}(clust)))*XpixDist*YpixDist;
-        count = count + 1;
-    end 
-    totalUniqClustPixNums = sum(uniqClustPixNums);
-    avNumUniqClustPixNums = mean(uniqClustPixNums);
-    medNumUniqClustPixNums = median(uniqClustPixNums);
-end 
-
-if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
-    subplot(1,3,1)
-    histogram(numPixels,10)
-    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
-    avPixelNumLabel = sprintf('%.0f average microns squared per axon.',avNumPixels);
-    medPixelNumLabel = sprintf('%.0f median microns squared per axon.',medNumPixels);
-    title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
-    ax = gca;
-    ax.FontSize = 15;
-    subplot(1,3,2)
-    histogram(numClusts,10)
-    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
-    avClustNumLabel = sprintf('%.0f average clusters per axon.',avNumClusts);
-    medClustNumLabel = sprintf('%.0f median clusters per axon.',medNumClusts);
-    title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
-    ax = gca;
-    ax.FontSize = 15;
-    subplot(1,3,3)
-    histogram(uniqClustPixNums,10)
-    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
-    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
-    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
-    title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
-    ax = gca;
-    ax.FontSize = 15;
-elseif ETAorSTAq == 1 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
-    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
-    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
-    histogram(uniqClustPixNums,10)
-    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
-    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
-    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
-    title({totalClustNumLabel;totalPixelNumLabel;avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
-    ax = gca;
-    ax.FontSize = 15;
-end 
  
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
