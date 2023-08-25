@@ -18810,6 +18810,14 @@ if exist('mouseNum','var') == 0
     mouseNumLabel = input('What are the mouse identifaction numbers? ');
     terminals = cell(1,mouseNum);
     nearVsFarPlotData = cell(1,mouseNum);
+    numPixels = cell(1,mouseNum);
+    numClusts = cell(1,mouseNum);
+    totalNumPixels = nan(1,mouseNum);
+    totalNumClusts = nan(1,mouseNum);
+    uniqClustPixNums = cell(1,mouseNum);
+    totalUniqClustPixNums = nan(1,mouseNum);
+    avNumUniqClustPixNums = nan(1,mouseNum);
+    medNumUniqClustPixNums = nan(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18833,17 +18841,10 @@ if exist('mouseNum','var') == 0
         nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;   
         % import data needed to plot the number of pixels per cluster, the number of total pixels and the number of total clusters
         numPixels{mouse} = dataMat.numPixels; 
-        totalNumPixels(mouse) = dataMat.totalNumPixels;
-        avNumPixels(mouse) = dataMat.avNumPixels;
-        medNumPixels(mouse) = dataMat.medNumPixels;        
+        totalNumPixels(mouse) = dataMat.totalNumPixels;       
         numClusts{mouse} = dataMat.numClusts;
-        totalNumClusts(mouse) = dataMat.totalNumClusts;
-        avNumClusts(mouse) = dataMat.avNumClusts;
-        medNumClusts(mouse) = dataMat.medNumClusts;        
-        uniqClustPixNums(mouse) = dataMat.uniqClustPixNums;
-        totalUniqClustPixNums(mouse) = dataMat.;
-        avNumUniqClustPixNums(mouse) = dataMat.;
-        medNumUniqClustPixNums(mouse) = dataMat.;        
+        totalNumClusts(mouse) = dataMat.totalNumClusts;      
+        uniqClustPixNums{mouse} = dataMat.uniqClustPixNums;      
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -18889,42 +18890,48 @@ colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
-    subplot(1,3,1)
-    histogram(numPixels,10)
-    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
-    avPixelNumLabel = sprintf('%.0f average microns squared per axon.',avNumPixels);
-    medPixelNumLabel = sprintf('%.0f median microns squared per axon.',medNumPixels);
-    title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
-    ax = gca;
-    ax.FontSize = 15;
-    subplot(1,3,2)
-    histogram(numClusts,10)
-    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
-    avClustNumLabel = sprintf('%.0f average clusters per axon.',avNumClusts);
-    medClustNumLabel = sprintf('%.0f median clusters per axon.',medNumClusts);
-    title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
-    ax = gca;
-    ax.FontSize = 15;
-    subplot(1,3,3)
-    histogram(uniqClustPixNums,10)
-    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
-    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
-    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
-    title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
-    ax = gca;
-    ax.FontSize = 15;
-elseif ETAorSTAq == 1 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
-    totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
-    totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
-    histogram(uniqClustPixNums,10)
-    % totalUniqClustPixNumsLabel = sprintf('%.0f pixels total.',totalUniqClustPixNums);
-    avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
-    medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
-    title({totalClustNumLabel;totalPixelNumLabel;avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
-    ax = gca;
-    ax.FontSize = 15;
+
+% resort data for plotting 
+for mouse = 1:mouseNum
+    if mouse == 1 
+        NumPixels = numPixels{1};
+        NumClusts = numClusts{1};
+        UniqClustPixNums = uniqClustPixNums{1};
+    elseif mouse > 1
+        len = length(NumPixels);
+        NumPixels(len+1:length(numPixels{mouse})+len) = numPixels{mouse};
+        len2 = length(NumClusts);
+        NumClusts(len2+1:length(numClusts{mouse})+len2) = numClusts{mouse};
+        len3 = length(UniqClustPixNums);
+        UniqClustPixNums(len3+1:length(uniqClustPixNums{mouse})+len3) = uniqClustPixNums{mouse};
+    end 
 end 
+subplot(1,3,1)
+histogram(NumPixels,10)
+totalPixelNumLabel = sprintf('%.0f microns squared total.',sum(totalNumPixels));
+avPixelNumLabel = sprintf('%.0f average microns squared per animal.',mean(totalNumPixels));
+medPixelNumLabel = sprintf('%.0f median microns squared per animal.',median(totalNumPixels));
+title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
+ax = gca;
+ax.FontSize = 15;
+subplot(1,3,2)
+histogram(NumClusts,10)
+totalClustNumLabel = sprintf('%.0f clusters total.',sum(totalNumClusts));
+avClustNumLabel = sprintf('%.0f average clusters per animal.',mean(totalNumClusts));
+medClustNumLabel = sprintf('%.0f median clusters per animal.',median(totalNumClusts));
+title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
+ax = gca;
+ax.FontSize = 15;
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+subplot(1,3,3)
+histogram(UniqClustPixNums,10)
+avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',avNumUniqClustPixNums);
+medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',medNumUniqClustPixNums);
+title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+ax = gca;
+ax.FontSize = 15;
+
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
