@@ -18819,21 +18819,18 @@ if exist('mouseNum','var') == 0
         % know what kind of data set you have 
         if mouse == 1 
             ETAorSTAq = dataMat.ETAorSTAq;
-            if ETAorSTAq == 1 % if it's ETA data 
-                ETAtype = dataMat.ETAtype; % input('Input 0 if this is opto data. Input 1 for behavior data. ');
-                if ETAtype == 1 
-                    ETAtype2 = dataMat.ETAtype2; %  input('Input 0 if the data is time locked to the stim. Input 1 if time locked to the reward. ');
-                end 
-            end 
+            if ETAorSTAq == 0 
+        
         end 
         % import data needed to plot the porportion of clusters that are
         % near the vessel out of total # of clusters 
         terms = dataMat.terminals; 
         terminals{mouse} = terms{1}; clearvars terms; 
-        nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;        
+        nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;
+        
     end 
 elseif exist('mouseNum','var') == 1
-    % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
+    % FINISH CODING THIS IN LATER WHEN RELEVANT, RIGHT NOW THE LOGIC IS
     % CORRECT 
     fprintf("There is data from %d animals: ", mouseNum);
     disp(mouseNumLabel);
@@ -18847,31 +18844,37 @@ elseif exist('mouseNum','var') == 1
 end 
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
-% resort the data for plotting 
-AvNearVsFarPlotData = nan(mouseNum,2);
-for mouse = 1:mouseNum
-    AvNearVsFarPlotData(mouse,:) = mean(nearVsFarPlotData{mouse},1);
-end 
-% plot stacked bar plot
-figure;
-subplot(1,2,1)
-ax=gca;
-ba = bar(AvNearVsFarPlotData,'stacked','FaceColor','flat');
-ba(1).CData = [0 0.4470 0.7410];
-ba(2).CData = [0.8500 0.3250 0.0980];
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("Number of Clusters")
-xlabel('Mouse')
-legend("Clusters Near Vessel","Clusters Far from Vessel")
-xticklabels(mouseNumLabel)
-% plot pie chart 
-subplot(1,2,2)
-% resort data for averaged pie chart 
-totalAvNearVsFarPlotData = mean(AvNearVsFarPlotData,1);
-pie(totalAvNearVsFarPlotData);
-colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 
+
+% plot stacked bar plot
+if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    figure;
+    subplot(1,2,1)
+    ax=gca;
+    ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
+    ba(1).CData = [0 0.4470 0.7410];
+    ba(2).CData = [0.8500 0.3250 0.0980];
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("Number of Clusters")
+    xlabel("Axon")
+    legend("Clusters Near Vessel","Clusters Far from Vessel")
+    xticklabels(labels)
+    % plot pie chart 
+    subplot(1,2,2)
+    % resort data for averaged pie chart 
+    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+    pie(AvNearVsFarPlotData);
+    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+elseif ETAorSTAq == 1 
+    figure;
+    % plot pie chart 
+    % resort data for averaged pie chart 
+    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+    pie(AvNearVsFarPlotData);
+    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+    legend("Clusters Near Vessel","Clusters Far from Vessel")
+end 
 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
