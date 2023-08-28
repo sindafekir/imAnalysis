@@ -18824,6 +18824,7 @@ if exist('mouseNum','var') == 0
     timeODistArray = cell(1,mouseNum);
     timeVRDistArray = cell(1,mouseNum);
     FPS = cell(1,mouseNum);
+    mouseNumLabelString = strings(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18844,6 +18845,7 @@ if exist('mouseNum','var') == 0
                 clustSpikeQ2 = dataMat.clustSpikeQ2; % clustSpikeQ2 == 0 (pre event spikes) clustSpikeQ2 == 1 (post event spikes)
             end 
             clustSpikeQ3 = dataMat.clustSpikeQ3; % clustSpikeQ3 == 0 (average time of BBB plume) clustSpikeQ3 == 1 (BBB plume start time)
+            windSize = dataMat.windSize; 
         end 
         % import data needed to plot the porportion of clusters that are
         % near the vessel out of total # of clusters 
@@ -18870,6 +18872,8 @@ if exist('mouseNum','var') == 0
         % import data needed to do time conversion (relative to FPS
         % differences across mice) 
         FPS{mouse} = dataMat.FPS; 
+        % create legend labels 
+        mouseNumLabelString(mouse) = num2str(mouseNumLabel(mouse));
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -18954,7 +18958,6 @@ if ETAorSTAq == 0 % STA data
     figure;
     ax=gca;
     clr = hsv(mouseNum);
-    mouseNumLabelString = strings(1,mouseNum);
     if exist('allSizeDistArray','var') == 0
         for mouse = 1:mouseNum
             % resort sizeDistArray into one array where column variables relate to
@@ -18973,8 +18976,6 @@ if ETAorSTAq == 0 % STA data
     end 
     f = cell(1,mouseNum);
     for mouse = 1:mouseNum
-        % create legend labels 
-        mouseNumLabelString(mouse) = num2str(mouseNumLabel(mouse));
         % calculate f (trend line) for each mouse 
         includeX =~ isnan(sizeDistArray{mouse}(:,1)); includeY =~ isnan(sizeDistArray{mouse}(:,2)); 
         [zeroRow, ~] = find(includeY == 0);
@@ -19100,12 +19101,12 @@ if ETAorSTAq == 0 % STA data
             % resort DistArray into one array where column variables relate to
             % animal number not terminal 
             if mouse == 1 
-                allTimeDistArray(:,1) = (timeDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice 
+                allTimeDistArray(:,1) = ((timeDistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
                 allTimeDistArray(:,2) = timeDistArray{mouse}(:,2);
                 allTimeDistArray(:,3) = mouse;
             elseif mouse > 1
                 len = size(allTimeDistArray,1);
-                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,1) = (timeDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice 
+                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,1) = ((timeDistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
                 allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,2) = timeDistArray{mouse}(:,2);
                 allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,3) = mouse;
             end 
@@ -19164,12 +19165,12 @@ if ETAorSTAq == 0 % STA data
             % resort DistArray into one array where column variables relate to
             % animal number not terminal 
             if mouse == 1 
-                allTimeODistArray(:,1) = (timeODistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice 
+                allTimeODistArray(:,1) = ((timeODistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
                 allTimeODistArray(:,2) = timeODistArray{mouse}(:,2);
                 allTimeODistArray(:,3) = mouse;
             elseif mouse > 1
                 len = size(allTimeODistArray,1);
-                allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,1) = (timeODistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice ;
+                allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,1) = ((timeODistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
                 allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,2) = timeODistArray{mouse}(:,2);
                 allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,3) = mouse;
             end 
@@ -19229,12 +19230,12 @@ if exist('allTimeVRDistArray','var') == 0
         % resort DistArray into one array where column variables relate to
         % animal number not terminal 
         if mouse == 1 
-            allTimeVRDistArray(:,1) = (timeVRDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice ;
+            allTimeVRDistArray(:,1) = ((timeVRDistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
             allTimeVRDistArray(:,2) = timeVRDistArray{mouse}(:,2);
             allTimeVRDistArray(:,3) = mouse;
         elseif mouse > 1
             len = size(allTimeVRDistArray,1);
-            allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,1) = (timeVRDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice ;
+            allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,1) = ((timeVRDistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
             allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,2) = timeVRDistArray{mouse}(:,2);
             allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,3) = mouse;
         end 
@@ -19276,7 +19277,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fav3.Rsquared.Ordinary,2));
-    text(1,130,rSquared,'FontSize',20)
+    text(1,170,rSquared,'FontSize',20)
 end 
 ylabel("Distance From VR space (microns)")
 if clustSpikeQ3 == 0 
