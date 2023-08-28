@@ -18859,10 +18859,9 @@ if exist('mouseNum','var') == 0
         totalNumClusts(mouse) = dataMat.totalNumClusts;      
         uniqClustPixNums{mouse} = dataMat.uniqClustPixNums;
         % import data needed to plot cluster size and pixel amplitude as function of distance from axon
-        if ETAorSTAq == 0 % STA data 
-            sizeDistArray{mouse} = dataMat.sizeDistArray;           
-            ampDistArray{mouse} = dataMat.ampDistArray;
-        end 
+        % this data is also needed to plot the distribution of BBB cluster pixel amplitudes and sizes
+        sizeDistArray{mouse} = dataMat.sizeDistArray;           
+        ampDistArray{mouse} = dataMat.ampDistArray;
         % import data needed to plot distance from axon and VR space as a function of cluster timing
         if ETAorSTAq == 0 % STA data
             timeDistArray{mouse} = dataMat.timeDistArray;   
@@ -18954,26 +18953,42 @@ title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
 ax = gca;
 ax.FontSize = 15;
 %% plot cluster size and pixel amplitude as function of distance from axon
+if exist('allSizeDistArray','var') == 0
+    for mouse = 1:mouseNum
+        % resort sizeDistArray into one array where column variables relate to
+        % animal number not terminal 
+        if mouse == 1 
+            allSizeDistArray(:,1) = sizeDistArray{mouse}(:,1);
+            allSizeDistArray(:,2) = sizeDistArray{mouse}(:,2);
+            allSizeDistArray(:,3) = mouse;
+        elseif mouse > 1
+            len = size(allSizeDistArray,1);
+            allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,1) = sizeDistArray{mouse}(:,1);
+            allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,2) = sizeDistArray{mouse}(:,2);
+            allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,3) = mouse;
+        end 
+    end 
+end 
+if exist('allAmpDistArray','var') == 0
+    for mouse = 1:mouseNum
+        % resort sizeDistArray into one array where column variables relate to
+        % animal number not terminal 
+        if mouse == 1 
+            allAmpDistArray(:,1) = ampDistArray{mouse}(:,1);
+            allAmpDistArray(:,2) = ampDistArray{mouse}(:,2);
+            allAmpDistArray(:,3) = mouse;
+        elseif mouse > 1
+            len = size(allAmpDistArray,1);
+            allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,1) = ampDistArray{mouse}(:,1);
+            allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,2) = ampDistArray{mouse}(:,2);
+            allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,3) = mouse;
+        end 
+    end 
+end 
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
     clr = hsv(mouseNum);
-    if exist('allSizeDistArray','var') == 0
-        for mouse = 1:mouseNum
-            % resort sizeDistArray into one array where column variables relate to
-            % animal number not terminal 
-            if mouse == 1 
-                allSizeDistArray(:,1) = sizeDistArray{mouse}(:,1);
-                allSizeDistArray(:,2) = sizeDistArray{mouse}(:,2);
-                allSizeDistArray(:,3) = mouse;
-            elseif mouse > 1
-                len = size(allSizeDistArray,1);
-                allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,1) = sizeDistArray{mouse}(:,1);
-                allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,2) = sizeDistArray{mouse}(:,2);
-                allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,3) = mouse;
-            end 
-        end 
-    end 
     f = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % calculate f (trend line) for each mouse 
@@ -19026,22 +19041,6 @@ if ETAorSTAq == 0 % STA data
 
     figure;
     ax=gca;
-    if exist('allAmpDistArray','var') == 0
-        for mouse = 1:mouseNum
-            % resort sizeDistArray into one array where column variables relate to
-            % animal number not terminal 
-            if mouse == 1 
-                allAmpDistArray(:,1) = ampDistArray{mouse}(:,1);
-                allAmpDistArray(:,2) = ampDistArray{mouse}(:,2);
-                allAmpDistArray(:,3) = mouse;
-            elseif mouse > 1
-                len = size(allAmpDistArray,1);
-                allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,1) = ampDistArray{mouse}(:,1);
-                allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,2) = ampDistArray{mouse}(:,2);
-                allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,3) = mouse;
-            end 
-        end 
-    end 
     fAmp = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % calculate f (trend line) for each mouse 
@@ -19286,13 +19285,6 @@ elseif clustSpikeQ3 == 1
     xlabel("BBB Plume Start Time (sec)") 
 end 
 title('BBB Plume Distance From VR Space Compared to Timing');
-
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot distribution of cluster sizes and pixel amplitudes
 figure;
 ax=gca;
@@ -19335,6 +19327,12 @@ elseif clustSpikeQ == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
