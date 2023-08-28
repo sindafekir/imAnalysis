@@ -18802,7 +18802,7 @@ end
 % DIFFERENCES IN FPS FOR ALL VARIABLES NEEDED (make sure to write this so
 % that it's easy to add more mice in the future, instead of having to rerun
 % and select all mice)
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -18826,6 +18826,7 @@ if exist('mouseNum','var') == 0
     FPS = cell(1,mouseNum);
     mouseNumLabelString = strings(1,mouseNum);
     avClocFrame = cell(1,mouseNum);
+    axonTypes = nan(mouseNum,3);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18876,6 +18877,9 @@ if exist('mouseNum','var') == 0
         mouseNumLabelString(mouse) = num2str(mouseNumLabel(mouse));
         % import data needed to plot distribution of cluster times 
         avClocFrame{mouse} = dataMat.avClocFrame;
+        if ETAorSTAq == 0 % STA data
+            axonTypes(mouse,:) = dataMat.axonTypes;
+        end
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -19330,16 +19334,7 @@ elseif clustSpikeQ == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot distribution of cluster times
-% PICK UP BELOW- RUN AND DEBUG THEN MOVE ON TO NEXT SUBSECTION OF THIS
-% PLOTTING CODE 
-
 % resort avClocFrame and convert to seconds centered around 0 
 if exist('allAvClocFrame','var') == 0
     for mouse = 1:mouseNum
@@ -19363,16 +19358,9 @@ elseif clustSpikeQ3 == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("Time (s)") 
-Frames = size(im,3);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-% FrameVals = round((1:FPSstack{mouse}:Frames))+5;
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;  
 % plot pie chart of before vs after spike cluster start times
-numPreSpikeStarts = nansum(nansum(avClocFrame < threshFrame));
-numPostSpikeStarts = nansum(nansum(avClocFrame >= threshFrame));
+numPreSpikeStarts = nansum(nansum(allAvClocFrame < 0));
+numPostSpikeStarts = nansum(nansum(allAvClocFrame >= 0));
 preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
 figure; 
 p = pie(preVsPostSpikeStarts);
@@ -19394,49 +19382,12 @@ ax=gca; ax.FontSize = 15;
 t1 = p(4); t2 = p(2);
 t1.FontSize = 15; t2.FontSize = 15;
 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 if ETAorSTAq == 0 % STA data
-    for ccell = 1:length(terminals{mouse})
-        % plot pie chart of before vs after spike cluster start times per
-        % axon 
-        threshFrame = floor(size(im,3)/2);
-        numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
-        numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
-        preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
-        figure; 
-        p = pie(preVsPostSpikeStarts);
-        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-        if ETAorSTAq == 0 % STA data
-            legend('Pre-spike clusters','Post-spike clusters')
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
-                legend('Pre-opto clusters','Post-opto clusters')
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    legend('Pre-stim clusters','Post-stim clusters')
-                elseif ETAtype2 == 1 % reward aligned 
-                    legend('Pre-reward clusters','Post-reward clusters')
-                end 
-            end 
-        end 
-        ax=gca; ax.FontSize = 15;
-        t1 = p(4); t2 = p(2);
-        t1.FontSize = 15; t2.FontSize = 15;
-        title(sprintf('Axon %d.',terminals{mouse}(ccell)))
-    end 
-
     % create pie chart showing number of axons that are mostly pre, mostly
     % post, and evenly split 
+    allAxonTypes = sum(axonTypes,1);
     figure;
-    totalClusts = numPreSpikeStarts + numPostSpikeStarts;
-    preSpikeRatio = numPreSpikeStarts./totalClusts;
-    numMostlyPre = sum(preSpikeRatio > 0.5);
-    numMostlyPost = sum(preSpikeRatio < 0.5);
-    evenPreAndPost = sum(preSpikeRatio == 0.5);
-    axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
-    p = pie(axonTypes);
+    p = pie(allAxonTypes);
     colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
     legend('Listener','Even-Split','Controller')
     ax=gca; ax.FontSize = 15;
@@ -19444,7 +19395,56 @@ if ETAorSTAq == 0 % STA data
     t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
 end 
 
-
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% create scatter over box plot of cluster timing per axon
+% PICK UP HERE - ALL BELOW CODE IS SO FAR UNEDITED. GET AVERAGE CLUSTER
+% START TIME PER AXON IF THERE ARE MULTIPLE AXONS (CHECK REFERENCE DRAWING)
+if clustSpikeQ == 0 % if all the spikes are available to look at 
+    clear ClocTimeForPlot
+    ClocTimeForPlot = avClocFrame';    
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(ClocTimeForPlot,'MarkerStyle','none');
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,ClocTimeForPlot,[],'red')  
+    yline(threshFrame)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("Average BBB Plume Timing")
+    if ETAorSTAq == 0 % STA data
+        xlabel("Axon")
+    end 
+    if ETAorSTAq == 0 % STA data
+        if clustSpikeQ3 == 0
+            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
+        end     
+    elseif ETAorSTAq == 1 % ETA data
+        set(gca,'XTick',[]) % removes x axis ticks
+        if clustSpikeQ3 == 0
+            title({'BBB Plume Timing';'Average Cluster Time'});
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Timing';'Cluster Start Time'});
+        end   
+    end 
+    xticklabels(labels)
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    % FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    ax.YTick = FrameVals;
+    ax.YTickLabel = sec_TimeVals;  
+end 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -19999,50 +19999,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
-%% create scatter over box plot of cluster timing per axon
-if clustSpikeQ == 0 % if all the spikes are available to look at 
-    clear ClocTimeForPlot
-    ClocTimeForPlot = avClocFrame';    
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(ClocTimeForPlot,'MarkerStyle','none');
-    % create the x data needed to overlay the swarmchart on the boxchart 
-    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
-    % plot swarm chart on top of box plot 
-    hold all;
-    swarmchart(x,ClocTimeForPlot,[],'red')  
-    yline(threshFrame)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("Average BBB Plume Timing")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")
-    end 
-    if ETAorSTAq == 0 % STA data
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
-        end     
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing';'Cluster Start Time'});
-        end   
-    end 
-    xticklabels(labels)
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    % FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-    ax.YTick = FrameVals;
-    ax.YTickLabel = sec_TimeVals;  
-end 
-
 %% plot cluster size and pixel amp grouped by pre and post spike
 if clustSpikeQ == 0
     clearvars data
