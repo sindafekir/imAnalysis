@@ -19293,7 +19293,48 @@ title('BBB Plume Distance From VR Space Compared to Timing');
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% plot distribution of cluster sizes and pixel amplitudes
+figure;
+ax=gca;
+avClustSize = nanmean(allSizeDistArray(:,2)); 
+medClustSize = nanmedian(allSizeDistArray(:,2)); %#ok<*NANMEDIAN> 
+avClustSizeLabel = sprintf('Average cluster size: %.0f',avClustSize);
+medClustSizeLabel = sprintf('Median cluster size: %.0f',medClustSize);
+histogram(allSizeDistArray(:,2),100)
+ax.FontSize = 15;
+% ax.FontName = 'Times';
+if clustSpikeQ == 0 
+    title({'Distribution of BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+    elseif clustSpikeQ2 == 1
+        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+    end 
+end 
+ylabel("Number of BBB Plumes")
+xlabel("Size of BBB Plume (microns squared)") 
 
+figure;
+ax=gca;
+histogram(allAmpDistArray(:,2),100)
+avClustAmp = nanmean(allAmpDistArray(:,2)); 
+medClustAmp = nanmedian(allAmpDistArray(:,2)); %#ok<*NANMEDIAN> 
+avClustAmpLabel = sprintf('Average cluster pixel amplitude: %.3f',avClustAmp);
+medClustAmpLabel = sprintf('Median cluster pixel amplitude: %.3f',medClustAmp);
+ax.FontSize = 15;
+% ax.FontName = 'Times';
+if clustSpikeQ == 0 
+    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+    elseif clustSpikeQ2 == 1
+        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+    end 
+end 
+ylabel("Number of BBB Plumes")
+xlabel("BBB Plume Pixel Amplitudes") 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -19849,49 +19890,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
-%% plot distribution of cluster sizes and pixel amplitudes
-figure;
-ax=gca;
-avClustSize = nanmean(sizeDistArray(:,2)); 
-medClustSize = nanmedian(sizeDistArray(:,2)); %#ok<*NANMEDIAN> 
-avClustSizeLabel = sprintf('Average cluster size: %.0f',avClustSize);
-medClustSizeLabel = sprintf('Median cluster size: %.0f',medClustSize);
-histogram(sizeDistArray(:,2),100)
-ax.FontSize = 15;
-% ax.FontName = 'Times';
-if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
-elseif clustSpikeQ == 1 
-    if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
-    elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
-    end 
-end 
-ylabel("Number of BBB Plumes")
-xlabel("Size of BBB Plume (microns squared)") 
-
-figure;
-ax=gca;
-histogram(ampDistArray(:,2),100)
-avClustAmp = nanmean(ampDistArray(:,2)); 
-medClustAmp = nanmedian(ampDistArray(:,2)); %#ok<*NANMEDIAN> 
-avClustAmpLabel = sprintf('Average cluster pixel amplitude: %.3f',avClustAmp);
-medClustAmpLabel = sprintf('Median cluster pixel amplitude: %.3f',medClustAmp);
-ax.FontSize = 15;
-% ax.FontName = 'Times';
-if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
-elseif clustSpikeQ == 1 
-    if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
-    elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
-    end 
-end 
-ylabel("Number of BBB Plumes")
-xlabel("BBB Plume Pixel Amplitudes") 
-
 %% plot distribution of cluster times
 if clustSpikeQ == 0 
     figure;
