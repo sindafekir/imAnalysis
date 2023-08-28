@@ -18818,6 +18818,12 @@ if exist('mouseNum','var') == 0
     totalUniqClustPixNums = nan(1,mouseNum);
     avNumUniqClustPixNums = nan(1,mouseNum);
     medNumUniqClustPixNums = nan(1,mouseNum);
+    sizeDistArray = cell(1,mouseNum);
+    ampDistArray = cell(1,mouseNum);
+    timeDistArray = cell(1,mouseNum);
+    timeODistArray = cell(1,mouseNum);
+    timeVRDistArray = cell(1,mouseNum);
+    FPS = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18833,6 +18839,11 @@ if exist('mouseNum','var') == 0
                     ETAtype2 = dataMat.ETAtype2; %  input('Input 0 if the data is time locked to the stim. Input 1 if time locked to the reward. ');
                 end 
             end 
+            clustSpikeQ = dataMat.clustSpikeQ; % clustSpikeQ == 0 (all spikes)
+            if clustSpikeQ == 1 % clustSpikeQ == 1 (either pre or post event spikes)
+                clustSpikeQ2 = dataMat.clustSpikeQ2; % clustSpikeQ2 == 0 (pre event spikes) clustSpikeQ2 == 1 (post event spikes)
+            end 
+            clustSpikeQ3 = dataMat.clustSpikeQ3; % clustSpikeQ3 == 0 (average time of BBB plume) clustSpikeQ3 == 1 (BBB plume start time)
         end 
         % import data needed to plot the porportion of clusters that are
         % near the vessel out of total # of clusters 
@@ -18844,7 +18855,21 @@ if exist('mouseNum','var') == 0
         totalNumPixels(mouse) = dataMat.totalNumPixels;       
         numClusts{mouse} = dataMat.numClusts;
         totalNumClusts(mouse) = dataMat.totalNumClusts;      
-        uniqClustPixNums{mouse} = dataMat.uniqClustPixNums;      
+        uniqClustPixNums{mouse} = dataMat.uniqClustPixNums;
+        % import data needed to plot cluster size and pixel amplitude as function of distance from axon
+        if ETAorSTAq == 0 % STA data 
+            sizeDistArray{mouse} = dataMat.sizeDistArray;           
+            ampDistArray{mouse} = dataMat.ampDistArray;
+        end 
+        % import data needed to plot distance from axon and VR space as a function of cluster timing
+        if ETAorSTAq == 0 % STA data
+            timeDistArray{mouse} = dataMat.timeDistArray;   
+            timeODistArray{mouse} = dataMat.timeODistArray;   
+        end 
+        timeVRDistArray{mouse} = dataMat.timeVRDistArray;   
+        % import data needed to do time conversion (relative to FPS
+        % differences across mice) 
+        FPS{mouse} = dataMat.FPS; 
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -18924,6 +18949,342 @@ medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.'
 title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
 ax = gca;
 ax.FontSize = 15;
+%% plot cluster size and pixel amplitude as function of distance from axon
+if ETAorSTAq == 0 % STA data 
+    figure;
+    ax=gca;
+    clr = hsv(mouseNum);
+    mouseNumLabelString = strings(1,mouseNum);
+    if exist('allSizeDistArray','var') == 0
+        for mouse = 1:mouseNum
+            % resort sizeDistArray into one array where column variables relate to
+            % animal number not terminal 
+            if mouse == 1 
+                allSizeDistArray(:,1) = sizeDistArray{mouse}(:,1);
+                allSizeDistArray(:,2) = sizeDistArray{mouse}(:,2);
+                allSizeDistArray(:,3) = mouse;
+            elseif mouse > 1
+                len = size(allSizeDistArray,1);
+                allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,1) = sizeDistArray{mouse}(:,1);
+                allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,2) = sizeDistArray{mouse}(:,2);
+                allSizeDistArray(len+1:size(sizeDistArray{mouse},1)+len,3) = mouse;
+            end 
+        end 
+    end 
+    f = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        % create legend labels 
+        mouseNumLabelString(mouse) = num2str(mouseNumLabel(mouse));
+        % calculate f (trend line) for each mouse 
+        includeX =~ isnan(sizeDistArray{mouse}(:,1)); includeY =~ isnan(sizeDistArray{mouse}(:,2)); 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;           
+        sizeDistX = sizeDistArray{mouse}(:,1); sizeDistY = sizeDistArray{mouse}(:,2);  
+        if sum(includeXY) > 1 
+            f{mouse} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
+        end 
+    end    
+    gscatter(allSizeDistArray(:,1),allSizeDistArray(:,2),allSizeDistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    legend(mouseNumLabelString)
+    hold all;
+    % plot the trend line for each mouse 
+    for mouse = 1:mouseNum
+        fitHandle = plot(f{mouse});
+        set(fitHandle,'Color',clr(mouse,:));
+    end 
+    % calculate fav (trend line) of all data 
+    includeX =~ isnan(allSizeDistArray(:,1)); includeY =~ isnan(allSizeDistArray(:,2));
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    sizeDistX = allSizeDistArray(:,1); sizeDistY = allSizeDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fav = fitlm(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+    end 
+    % plot trend line for all data 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fav);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(fav.Rsquared.Ordinary,2));
+        text(100,20000,rSquared,'FontSize',20)
+    end 
+    ylabel("Size of Cluster (microns squared)")
+    xlabel("Distance From Axon (microns)") 
+    if clustSpikeQ == 0 
+        title('All Clusters');
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title('Pre Spike Clusters');
+        elseif clustSpikeQ2 == 1
+            title('Post Spike Clusters');
+        end 
+    end 
+
+    figure;
+    ax=gca;
+    if exist('allAmpDistArray','var') == 0
+        for mouse = 1:mouseNum
+            % resort sizeDistArray into one array where column variables relate to
+            % animal number not terminal 
+            if mouse == 1 
+                allAmpDistArray(:,1) = ampDistArray{mouse}(:,1);
+                allAmpDistArray(:,2) = ampDistArray{mouse}(:,2);
+                allAmpDistArray(:,3) = mouse;
+            elseif mouse > 1
+                len = size(allAmpDistArray,1);
+                allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,1) = ampDistArray{mouse}(:,1);
+                allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,2) = ampDistArray{mouse}(:,2);
+                allAmpDistArray(len+1:size(ampDistArray{mouse},1)+len,3) = mouse;
+            end 
+        end 
+    end 
+    fAmp = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        % calculate f (trend line) for each mouse 
+        includeX =~ isnan(ampDistArray{mouse}(:,1)); includeY =~ isnan(ampDistArray{mouse}(:,2)); 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;           
+        ampDistX = ampDistArray{mouse}(:,1); ampDistY = ampDistArray{mouse}(:,2);  
+        if sum(includeXY) > 1 
+            fAmp{mouse} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');  
+        end 
+    end  
+    gscatter(allAmpDistArray(:,1),allAmpDistArray(:,2),allAmpDistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    legend(mouseNumLabelString)
+    hold all;
+    % plot the trend line for each mouse 
+    for mouse = 1:mouseNum
+        fitHandle = plot(fAmp{mouse});
+        set(fitHandle,'Color',clr(mouse,:));
+    end 
+    % calculate favAmp (trend line) of all data 
+    includeX =~ isnan(allAmpDistArray(:,1)); includeY =~ isnan(allAmpDistArray(:,2));
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    ampDistX = allAmpDistArray(:,1); ampDistY = allAmpDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        favAmp = fitlm(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+    end 
+    % plot trend line for all data 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(favAmp);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(favAmp.Rsquared.Ordinary,2));
+        text(50,0.05,rSquared,'FontSize',20)
+    end 
+    ylabel("Pixel Amplitude of Cluster")
+    xlabel("Distance From Axon (microns)") 
+    if clustSpikeQ == 0 
+        title('All Clusters');
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title('Pre Spike Clusters');
+        elseif clustSpikeQ2 == 1
+            title('Post Spike Clusters');
+        end 
+    end 
+end 
+%% plot distance from axon and VR space as a function of cluster timing
+if ETAorSTAq == 0 % STA data 
+    figure;
+    ax=gca;
+    if exist('allTimeDistArray','var') == 0
+        for mouse = 1:mouseNum
+            % resort DistArray into one array where column variables relate to
+            % animal number not terminal 
+            if mouse == 1 
+                allTimeDistArray(:,1) = (timeDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice 
+                allTimeDistArray(:,2) = timeDistArray{mouse}(:,2);
+                allTimeDistArray(:,3) = mouse;
+            elseif mouse > 1
+                len = size(allTimeDistArray,1);
+                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,1) = (timeDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice 
+                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,2) = timeDistArray{mouse}(:,2);
+                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,3) = mouse;
+            end 
+        end 
+    end 
+    f2 = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        % calculate f (trend line) for each mouse 
+        includeX =~ isnan(timeDistArray{mouse}(:,1)); includeY =~ isnan(timeDistArray{mouse}(:,2)); 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;           
+        timeDistX = timeDistArray{mouse}(:,1); timeDistY = timeDistArray{mouse}(:,2);  
+        if sum(includeXY) > 1 
+            f2{mouse} = fit(timeDistX(includeXY),timeDistY(includeXY),'poly1');  
+        end 
+    end  
+    gscatter(allTimeDistArray(:,1),allTimeDistArray(:,2),allTimeDistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    legend(mouseNumLabelString)
+    hold all;
+    % plot the trend line for each mouse 
+    for mouse = 1:mouseNum
+        fitHandle = plot(f2{mouse});
+        set(fitHandle,'Color',clr(mouse,:));
+    end 
+    % calculate fav2 (trend line) of all data 
+    includeX =~ isnan(allTimeDistArray(:,1)); includeY =~ isnan(allTimeDistArray(:,2));
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    timeDistX = allTimeDistArray(:,1); timeDistY = allTimeDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fav2 = fitlm(timeDistX(includeXY),timeDistY(includeXY),'poly1');
+    end 
+    % plot trend line for all data 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fav2);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(fav2.Rsquared.Ordinary,2));
+        text(1,120,rSquared,'FontSize',20)
+    end    
+    ylabel("Distance From Axon (microns)")
+    if clustSpikeQ3 == 0 
+        xlabel("Average BBB Plume Timing (sec)") 
+    elseif clustSpikeQ3 == 1
+        xlabel("BBB Plume Start Time (sec)") 
+    end 
+    title('BBB Plume Distance From Axon Compared to Timing'); 
+
+    figure;
+    ax=gca;
+    if exist('allTimeODistArray','var') == 0
+        for mouse = 1:mouseNum
+            % resort DistArray into one array where column variables relate to
+            % animal number not terminal 
+            if mouse == 1 
+                allTimeODistArray(:,1) = (timeODistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice 
+                allTimeODistArray(:,2) = timeODistArray{mouse}(:,2);
+                allTimeODistArray(:,3) = mouse;
+            elseif mouse > 1
+                len = size(allTimeODistArray,1);
+                allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,1) = (timeODistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice ;
+                allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,2) = timeODistArray{mouse}(:,2);
+                allTimeODistArray(len+1:size(timeODistArray{mouse},1)+len,3) = mouse;
+            end 
+        end 
+    end 
+    f2O = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        % calculate f (trend line) for each mouse 
+        includeX =~ isnan(timeODistArray{mouse}(:,1)); includeY =~ isnan(timeODistArray{mouse}(:,2)); 
+        [zeroRow, ~] = find(includeY == 0);
+        includeX(zeroRow) = 0; includeXY = includeX;           
+        timeODistX = timeODistArray{mouse}(:,1); timeODistY = timeODistArray{mouse}(:,2);  
+        if sum(includeXY) > 1 
+            f2O{mouse} = fit(timeODistX(includeXY),timeODistY(includeXY),'poly1');  
+        end 
+    end  
+    gscatter(allTimeODistArray(:,1),allTimeODistArray(:,2),allTimeODistArray(:,3),clr)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    legend(mouseNumLabelString)
+    hold all;
+    % plot the trend line for each mouse 
+    for mouse = 1:mouseNum
+        fitHandle = plot(f2O{mouse});
+        set(fitHandle,'Color',clr(mouse,:));
+    end 
+    % calculate fav2O (trend line) of all data 
+    includeX =~ isnan(allTimeODistArray(:,1)); includeY =~ isnan(allTimeODistArray(:,2));
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    timeODistX = allTimeODistArray(:,1); timeODistY = allTimeODistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fav2O = fitlm(timeODistX(includeXY),timeODistY(includeXY),'poly1');
+    end 
+    % plot trend line for all data 
+    if length(find(includeXY)) > 1
+        fitHandle = plot(fav2O);
+        leg = legend('show');
+        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+        leg.String(end) = [];
+        rSquared = string(round(fav2O.Rsquared.Ordinary,2));
+        text(1,130,rSquared,'FontSize',20)
+    end     
+    ylabel("Distance From Axon (microns)")
+    if clustSpikeQ3 == 0 
+        xlabel("Average BBB Plume Timing (sec)") 
+    elseif clustSpikeQ3 == 1
+        xlabel("BBB Plume Start Time (sec)") 
+    end 
+    title('BBB Plume Origin Distance From Axon Compared to Timing'); 
+end 
+
+figure;
+ax=gca;
+if exist('allTimeVRDistArray','var') == 0
+    for mouse = 1:mouseNum
+        % resort DistArray into one array where column variables relate to
+        % animal number not terminal 
+        if mouse == 1 
+            allTimeVRDistArray(:,1) = (timeVRDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice ;
+            allTimeVRDistArray(:,2) = timeVRDistArray{mouse}(:,2);
+            allTimeVRDistArray(:,3) = mouse;
+        elseif mouse > 1
+            len = size(allTimeVRDistArray,1);
+            allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,1) = (timeVRDistArray{mouse}(:,1))/FPS{mouse}; % converts frame to time in sec for comparison across mice ;
+            allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,2) = timeVRDistArray{mouse}(:,2);
+            allTimeVRDistArray(len+1:size(timeVRDistArray{mouse},1)+len,3) = mouse;
+        end 
+    end 
+end 
+f3 = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    % calculate f (trend line) for each mouse 
+    includeX =~ isnan(timeVRDistArray{mouse}(:,1)); includeY =~ isnan(timeVRDistArray{mouse}(:,2)); 
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;           
+    timeVRDistX = timeVRDistArray{mouse}(:,1); timeVRDistY = timeVRDistArray{mouse}(:,2);  
+    if sum(includeXY) > 1 
+        f3{mouse} = fit(timeVRDistX(includeXY),timeVRDistY(includeXY),'poly1');  
+    end 
+end  
+gscatter(allTimeVRDistArray(:,1),allTimeVRDistArray(:,2),allTimeVRDistArray(:,3),clr)
+ax.FontSize = 15;
+ax.FontName = 'Times';
+legend(mouseNumLabelString)
+hold all;
+% plot the trend line for each mouse 
+for mouse = 1:mouseNum
+    fitHandle = plot(f3{mouse});
+    set(fitHandle,'Color',clr(mouse,:));
+end 
+% calculate fav3 (trend line) of all data 
+includeX =~ isnan(allTimeVRDistArray(:,1)); includeY =~ isnan(allTimeVRDistArray(:,2));
+[zeroRow, ~] = find(includeY == 0);
+includeX(zeroRow) = 0; includeXY = includeX;                
+timeVRDistX = allTimeVRDistArray(:,1); timeVRDistY = allTimeVRDistArray(:,2);   
+if length(find(includeXY)) > 1
+    fav3 = fitlm(timeVRDistX(includeXY),timeVRDistY(includeXY),'poly1');
+end 
+% plot trend line for all data 
+if length(find(includeXY)) > 1
+    fitHandle = plot(fav3);
+    leg = legend('show');
+    set(fitHandle,'Color',[0 0 0],'LineWidth',3);
+    leg.String(end) = [];
+    rSquared = string(round(fav3.Rsquared.Ordinary,2));
+    text(1,130,rSquared,'FontSize',20)
+end 
+ylabel("Distance From VR space (microns)")
+if clustSpikeQ3 == 0 
+    xlabel("Average BBB Plume Timing (sec)") 
+elseif clustSpikeQ3 == 1
+    xlabel("BBB Plume Start Time (sec)") 
+end 
+title('BBB Plume Distance From VR Space Compared to Timing');
 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -18931,243 +19292,13 @@ ax.FontSize = 15;
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%% get the pixel sizes 
-getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
-if getPixSizeQ == 1 
-    XpixDist = input('How many microns per pixel are there in the X direction? '); 
-    YpixDist = input('How many microns per pixel are there in the Y direction? '); 
-end 
 
-%% plot clusters 
-mouse = 1;
-vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
-ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
-if ETAorSTAq == 1 % ETA data 
-    ccell = 1; 
-    ETAtype = input('Input 0 if this is opto data. Input 1 for behavior data. ');
-    if ETAtype == 1
-        ETAtype2 = input('Input 0 if the data is time locked to the stim. Input 1 if time locked to the reward. ');
-    end 
-end 
-inds = cell(1,max(terminals{mouse}));
-idx = cell(1,max(terminals{mouse}));
-indsV = cell(1,max(terminals{mouse}));
-maskNearVessel = cell(1,max(terminals{mouse}));
-indsV2 = cell(1,max(terminals{mouse}));
-indsA = cell(1,max(terminals{mouse}));
-indsA2 = cell(1,size(RightChan{ terminals{mouse}(1)},3));
-unIdxVals = cell(1,max(terminals{mouse}));
-CsNotNearVessel = cell(1,max(terminals{mouse}));
-clustSize = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
-clustAmp = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
-spikeCount = cell(1,max(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    % figure out the number of spikes per axon 
-    if iscell(sigLocs{1}) == 1 % if siglocs{1} contains another cell 
-        for vid = 1:length(sigLocs)
-            if vid == 1 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2);
-            elseif vid > 1 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid}{terminals{mouse}(ccell)},2) + spikeCount{terminals{mouse}(ccell)};             
-            end 
-        end 
-    elseif iscell(sigLocs{1}) == 0 
-        for vid = 1:length(sigLocs)
-            if vid == 1 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2);
-            elseif vid > 1 
-                spikeCount{terminals{mouse}(ccell)} = size(sigLocs{vid},2) + spikeCount{terminals{mouse}(ccell)};             
-            end 
-        end  
-    end 
-    count = 1;
-    term = terminals{mouse}(ccell);
-    % use dbscan to find clustered pixels 
-%     im = RightChan{term}; % input image for % change vids
-    im = binarySTA{term}; % input image for binarized z scored vids 
-    vesselMask = BW_perim{term};
-    % convert im to binary matrix where 1 = pixels that are positive going %
-    % below code is for binarized z-score vids where 
-    % 1 means greater than 95% CI and 2 means lower than 95% CI 
-    im(im>1) = 0;
-    % remove noise pixels that are there in all the frames 
-    noise = all(im,3);
-    noise = repelem(noise,1,1,size(im,3));
-    im(noise) = 0;
-    % remove columnar noise 
-    for frame = 1:size(im,3)
-        im(:,:,frame) = bwareaopen(im(:,:,frame),3);
-    end 
-    % below code is for % change videos 
-%     maxPerc = max(max(max(im))); minPerc = min(min(min(im)));
-%     thresh = maxPerc/10;
-%     % thresh = 0;
-%     % change 
-%     im(im < thresh) = 0; im(im > thresh) = 1;
-    % black out pixels inside of vessel     
-    if vidQ2 == 1 
-        im(BWstacks{terminals{mouse}(ccell)}) = 0;
-    end 
-    % get x and y and z coordinates of 1s (pixels that are positive going)
-    [row, col, frame] = ind2sub(size(im),find(im > 0));
-    inds{terminals{mouse}(ccell)}(:,1) = col; inds{terminals{mouse}(ccell)}(:,2) = row; inds{terminals{mouse}(ccell)}(:,3) = frame;
-    % plot these x y coordinates for sanity check 
-    % figure;scatter3(inds(:,1),inds(:,2),inds(:,3))
-    % feed these x y coordinates into dbscan 
-%     numP = 3; % number of points a cluster needs to be considered valid
-%     fixRad = 1; % fixed radius for the search of neighbors 
-    numP = 1; % number of points a cluster needs to be considered valid
-    fixRad = 1; % fixed radius for the search of neighbors 
-    [idx{terminals{mouse}(ccell)},corepts] = dbscan(inds{terminals{mouse}(ccell)},fixRad,numP);
-    % need to convert cluster group identifiers into positive going values only
-    % for scatter3
-    unIdxVals{terminals{mouse}(ccell)} = unique(idx{terminals{mouse}(ccell)}); minIdxVal = min(unIdxVals{terminals{mouse}(ccell)});
-    idx{terminals{mouse}(ccell)}(idx{terminals{mouse}(ccell)}<0) = NaN;
-    unIdxVals{terminals{mouse}(ccell)}(unIdxVals{terminals{mouse}(ccell)}<0) = NaN;
-    % get vessel outline coordinates 
-    [rowV, colV, frameV] = ind2sub(size(vesselMask),find(vesselMask > 0));
-    indsV{terminals{mouse}(ccell)}(:,1) = colV; indsV{terminals{mouse}(ccell)}(:,2) = rowV; indsV{terminals{mouse}(ccell)}(:,3) = frameV;  
-    % figure out pixel locations just outside of vessel 
-    for frame = 1:size(im,3)
-        radius = 1;
-        decomposition = 0;
-        se = strel('disk', radius, decomposition);               
-        maskNearVessel{terminals{mouse}(ccell)}(:,:,frame) = imdilate(BWstacks{terminals{mouse}(ccell)}(:,:,frame),se);               
-    end 
-    idx2 = idx;
-    % get outline coordinates just outside of vessel 
-    [rowV2, colV2, frameV2] = ind2sub(size(maskNearVessel{terminals{mouse}(ccell)}),find(maskNearVessel{terminals{mouse}(ccell)} > 0));
-    indsV2{terminals{mouse}(ccell)}(:,1) = colV2; indsV2{terminals{mouse}(ccell)}(:,2) = rowV2; indsV2{terminals{mouse}(ccell)}(:,3) = frameV2;  
-    % for each cluster, if one pixel is next to the vessel, keep that
-    % cluster, otherwise clear that cluster
-    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-        % find what rows each cluster is located in
-        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
-        % identify the x, y, z location of pixels per cluster
-        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);        
-        % determine if cLocs are near the vessel 
-        cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
-        if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
-            % delete cluster that is not near the vessel 
-            inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
-            idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
-            CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
-            count = count + 1;            
-        end 
-        % determine cluster size in microns 
-        clustSize(ccell,clust) = (sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust)))*XpixDist*YpixDist;
-        % determine cluster pixel amplitude 
-        pixAmp = nan(1,size(cLocs,1));
-        for pix = 1:length(pixAmp)
-            pixAmp(pix) = RightChan{terminals{mouse}(ccell)}(cLocs(pix,2),cLocs(pix,1),cLocs(pix,3));
-        end 
-        clustAmp(ccell,clust) =  nanmean(pixAmp); %#ok<*NANSUM> 
-    end         
-end 
-CsTooSmall = cell(1,max(terminals{mouse}));
-% remove clusters that are not big enough in size and plot 
-for ccell = 1:length(terminals{mouse})
-    count = 1;
-    % make 0s NaNs 
-    clustSize(clustSize == 0) = NaN;
-    clustAmp(clustAmp == 0) = NaN;
-    % find the top 10 % of cluster sizes (this will be 100 or more
-    % for 57)
-    numClusts = nnz(~isnan(clustSize));
-    numTopClusts = ceil(numClusts*0.1);
-    reshapedSizes = reshape(clustSize,1,size(clustSize,1)*size(clustSize,2));
-    % remove NaNs 
-    reshapedSizes(isnan(reshapedSizes)) = [];
-    % sort sizes 
-    sortedSize = sort(reshapedSizes);
-    % get the largest 10 % of cluster sizes 
-    topClusts = sortedSize(end-numTopClusts+1:end);
-    % get the locations of the topClusts 
-    topClusts2 = ismember(clustSize,topClusts);       
-    [topCx_A, topCy_C] = find(topClusts2);
-    % determine what clusters are big enough to be included 
-    bigClustAlocs = find(topCx_A == ccell); % find what rows the axon is in to determine what clusters are big enough per axon 
-    bigClustLocs = topCy_C(bigClustAlocs);
-    bigClusts = unIdxVals{terminals{mouse}(ccell)}(bigClustLocs);
-    % remove clusters that do not include the top 10 % of sizes 
-    for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-        % find what rows each cluster is located in
-        [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust));  
-        % remove clusters if they're too small 
-        if sum(ismember(bigClusts,unIdxVals{terminals{mouse}(ccell)}(clust))) == 0 
-            inds{terminals{mouse}(ccell)}(Crow,:) = NaN;
-            idx{terminals{mouse}(ccell)}(Crow,:) = NaN;
-            idx2{terminals{mouse}(ccell)}(Crow,:) = NaN;
-            CsTooSmall{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
-            count = count + 1;  
-        end 
-    end 
-    % plot the grouped pixels 
-    figure;scatter3(inds{terminals{mouse}(ccell)}(:,1),inds{terminals{mouse}(ccell)}(:,2),inds{terminals{mouse}(ccell)}(:,3),30,idx{terminals{mouse}(ccell)},'filled'); % plot clusters 
-    % plot vessel outline 
-    hold on; scatter3(indsV{terminals{mouse}(ccell)}(:,1),indsV{terminals{mouse}(ccell)}(:,2),indsV{terminals{mouse}(ccell)}(:,3),30,'k','filled'); % plot vessel outline 
-    % get the x-y coordinates of the Ca ROI         
-    clearvars CAy CAx
-    if ismember("ROIorders", variableInfo) == 1 && sum(unique(ROIorders{1})) > 1
-        [CAyf, CAxf] = find(ROIorders{1} == terminals{mouse}(ccell));  % x and y are column vectors.
-    elseif ismember("ROIorders", variableInfo) == 0 % returns true
-        [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));  % x and y are column vectors.
-    elseif ismember("ROIorders", variableInfo) == 1 && sum(unique(ROIorders{1})) <= 1
-        [CAyf, CAxf] = find(CaROImasks{1} == terminals{mouse}(ccell));
-    end   
-    % create axon x, y, z matrix 
-    for frame = 1:size(im,3)
-        if frame == 1 
-            indsA{terminals{mouse}(ccell)}(:,1) = CAxf; indsA{terminals{mouse}(ccell)}(:,2) = CAyf; indsA{terminals{mouse}(ccell)}(:,3) = frame;
-        elseif frame > 1 
-            if frame == 2
-                len = size(indsA{terminals{mouse}(ccell)},1);
-            end 
-            len2 = size(indsA{terminals{mouse}(ccell)},1);
-            indsA{terminals{mouse}(ccell)}(len2+1:len2+len,1) = CAxf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,2) = CAyf; indsA{terminals{mouse}(ccell)}(len2+1:len2+len,3) = frame;
-        end 
-    end 
-    if ETAorSTAq == 0 % STA data 
-        % plot axon location 
-        hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon
-        % convert indsA to microns 
-        indsA{terminals{mouse}(ccell)}(:,1) = indsA{terminals{mouse}(ccell)}(:,1)*XpixDist;
-        indsA{terminals{mouse}(ccell)}(:,2) = indsA{terminals{mouse}(ccell)}(:,2)*YpixDist;
-    end 
-%     set(gca,'XLim',[0 40],'YLim',[10 65])%,'ZLim',[18.5 19.5])
-    % ORIGINAL PLOTTING CODE BELOW 
-%     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
-    if ETAorSTAq == 0 % STA data 
-        axonLabel = sprintf('Axon %d.',terminals{mouse}(ccell)); 
-        spikeCountLabel = sprintf('%d spikes.',spikeCount{terminals{mouse}(ccell)}); 
-        title({axonLabel;spikeCountLabel})
-    elseif ETAorSTAq == 1 % ETA data 
-        if ETAtype == 0 % opto data 
-            optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
-            title({'Opto Triggered';optoCountLabel}); 
-        elseif ETAtype == 1 % behavior data 
-            optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
-            if ETAtype2 == 0 % stim aligned 
-                title({'Behavior Stim Aligned';optoCountLabel}); 
-            elseif ETAtype2 == 1 % reward aligned 
-                title({'Behavior Reward Aligned';optoCountLabel}); 
-            end 
-        end 
-    end 
-end 
-% remove cluster sizes that are irrelevant 
-removeClustSizes = ~ismember(clustSize,topClusts);
-clustSize(removeClustSizes) = NaN;
-% make sure clustAmp shows the same clusts as clustSize 
-clustsToRemove = isnan(clustSize);
-clustAmp(clustsToRemove) = NaN;
 
-% safekeep some variables 
-safeKeptInds = inds; 
-safeKeptIdx = idx;
-safeKeptClustSize = clustSize;
-safeKeptClustAmp = clustAmp;
- 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% below code takes the clusters made and plotted above to make figures out of 
 % asks if you want to separate clusters based off of their timing relative
 % to spike 
@@ -19717,223 +19848,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
-%% plot cluster size and pixel amplitude as function of distance from axon
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-if ETAorSTAq == 0 % STA data 
-    figure;
-    ax=gca;
-    clr = hsv(length(terminals{mouse}));
-    gscatter(sizeDistArray(:,1),sizeDistArray(:,2),sizeDistArray(:,3),clr)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    % figure out what axons have clusters to be plotted 
-    fullRows = ~isnan(sizeDistArray(:,1));
-    axons = unique(sizeDistArray(fullRows,3));
-    label = labels(axons);
-    legend(label)
-    hold all;
-    for ccell = 1:length(terminals{mouse})
-        fitHandle = plot(f{ccell});
-        set(fitHandle,'Color',clr(ccell,:));
-    end 
-    if length(find(includeXY)) > 1
-        fitHandle = plot(fav);
-        leg = legend('show');
-        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-        leg.String(end) = [];
-        rSquared = string(round(fav.Rsquared.Ordinary,2));
-        text(60,3000,rSquared,'FontSize',20)
-    end 
-    ylabel("Size of Cluster (microns squared)")
-    xlabel("Distance From Axon (microns)") 
-    if clustSpikeQ == 0 
-        title('All Clusters');
-    elseif clustSpikeQ == 1 
-        if clustSpikeQ2 == 0 
-            title('Pre Spike Clusters');
-        elseif clustSpikeQ2 == 1
-            title('Post Spike Clusters');
-        end 
-    end 
-    
-    figure;
-    ax=gca;
-    clr = hsv(length(terminals{mouse}));
-    gscatter(ampDistArray(:,1),ampDistArray(:,2),ampDistArray(:,3),clr)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    % figure out what axons have clusters to be plotted 
-    fullRows = find(~isnan(ampDistArray(:,1)));
-    axons = unique(ampDistArray(fullRows,3));
-    label = labels(axons);
-    legend(label)
-    hold all;
-    for ccell = 1:length(terminals{mouse})
-        fitHandle = plot(fAmp{ccell});
-        set(fitHandle,'Color',clr(ccell,:));
-    end 
-    if length(find(includeXY)) > 1
-        fitHandle = plot(fAmpAv);
-        leg = legend('show');
-        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-        leg.String(end) = [];
-        rSquared = string(round(fAmpAv.Rsquared.Ordinary,2));
-        text(80,0.03,rSquared,'FontSize',20)
-    end 
-    ylabel("Pixel Amplitude of Cluster")
-    xlabel("Distance From Axon (microns)") 
-    if clustSpikeQ == 0 
-        title('All Clusters');
-    elseif clustSpikeQ == 1 
-        if clustSpikeQ2 == 0 
-            title('Pre Spike Clusters');
-        elseif clustSpikeQ2 == 1
-            title('Post Spike Clusters');
-        end 
-    end 
-end 
-
-%% plot distance from axon and VR space as a function of cluster timing
-threshFrame = floor(size(im,3)/2);
-if clustSpikeQ == 0 && ETAorSTAq == 0 % STA data 
-    figure;
-    ax=gca;
-    clr = hsv(length(terminals{mouse}));
-    gscatter(timeDistArray(:,1),timeDistArray(:,2),timeDistArray(:,3),clr)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    % figure out what axons have clusters to be plotted 
-    fullRows = find(~isnan(timeDistArray(:,1)));
-    axons = unique(timeDistArray(fullRows,3)); %#ok<FNDSB>
-    label = labels(axons);
-    legend(label)
-    hold on;
-    for ccell = 1:length(terminals{mouse})
-        fitHandle = plot(f2{ccell});
-        set(fitHandle,'Color',clr(ccell,:));
-    end 
-    if length(find(includeXY)) > 1
-        fitHandle = plot(fav2);
-        leg = legend('show');
-        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-        leg.String(end) = [];
-        rSquared = string(round(fav2.Rsquared.Ordinary,2));
-        text(27,130,rSquared,'FontSize',20)
-    end 
-    ylabel("Distance From Axon (microns)")
-    if clustSpikeQ3 == 0 
-        xlabel("Average BBB Plume Timing") 
-    elseif clustSpikeQ3 == 1
-        xlabel("BBB Plume Start Time") 
-    end 
-    title('BBB Plume Distance From Axon Compared to Timing');
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    FrameVals(3) = threshFrame;
-    FrameVals(2) = threshFrame - (Frames/5);
-    FrameVals(1) = FrameVals(2) - (Frames/5);
-    FrameVals(4) = threshFrame + (Frames/5);
-    FrameVals(5) = FrameVals(4) + (Frames/5); 
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-
-    figure;
-    ax=gca;
-    clr = hsv(length(terminals{mouse}));
-    gscatter(timeODistArray(:,1),timeODistArray(:,2),timeODistArray(:,3),clr)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    % figure out what axons have clusters to be plotted 
-    fullRows = find(~isnan(timeODistArray(:,1)));
-    axons = unique(timeODistArray(fullRows,3));
-    label = labels(axons);
-    legend(label)
-    hold on;
-    for ccell = 1:length(terminals{mouse})
-        fitHandle = plot(f2O{ccell});
-        set(fitHandle,'Color',clr(ccell,:));
-    end 
-    if length(find(includeXY)) > 1
-        fitHandle = plot(fav2O);
-        leg = legend('show');
-        set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-        leg.String(end) = [];
-        rSquared = string(round(fav2O.Rsquared.Ordinary,2));
-        text(27,130,rSquared,'FontSize',20)
-    end 
-    ylabel("Distance From Axon (microns)")
-    if clustSpikeQ3 == 0 
-        xlabel("Average BBB Plume Timing") 
-    elseif clustSpikeQ3 == 1
-        xlabel("BBB Plume Start Time") 
-    end 
-    title('BBB Plume Origin Distance From Axon Compared to Timing');
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    FrameVals(3) = threshFrame;
-    FrameVals(2) = threshFrame - (Frames/5);
-    FrameVals(1) = FrameVals(2) - (Frames/5);
-    FrameVals(4) = threshFrame + (Frames/5);
-    FrameVals(5) = FrameVals(4) + (Frames/5); 
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-end 
-
-if VRQ == 1
-    if clustSpikeQ == 0 
-        figure;
-        ax=gca;
-        clr = hsv(length(terminals{mouse}));
-        gscatter(timeVRDistArray(:,1),timeVRDistArray(:,2),timeVRDistArray(:,3),clr)
-        ax.FontSize = 15;
-        ax.FontName = 'Times';
-        % figure out what axons have clusters to be plotted 
-        fullRows = find(~isnan(timeVRDistArray(:,1)));
-        axons = unique(timeVRDistArray(fullRows,3));
-        label = labels(axons);
-        legend(label)
-        hold all;
-        for ccell = 1:length(terminals{mouse})
-            fitHandle = plot(f3{ccell});
-            set(fitHandle,'Color',clr(ccell,:));
-        end 
-        if length(find(includeXY3)) > 1
-            fitHandle = plot(fav3);
-            leg = legend('show');
-            set(fitHandle,'Color',[0 0 0],'LineWidth',3);
-            leg.String(end) = [];
-            rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(30,20,rSquared,'FontSize',20)
-        end 
-        ylabel("Distance From VR space (microns)")
-        if clustSpikeQ3 == 0 
-            xlabel("Average BBB Plume Timing") 
-        elseif clustSpikeQ3 == 1
-            xlabel("BBB Plume Start Time") 
-        end 
-        title('BBB Plume Distance From VR Space Compared to Timing');
-        Frames = size(im,3);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-        FrameVals(3) = threshFrame;
-        FrameVals(2) = threshFrame - (Frames/5);
-        FrameVals(1) = FrameVals(2) - (Frames/5);
-        FrameVals(4) = threshFrame + (Frames/5);
-        FrameVals(5) = FrameVals(4) + (Frames/5);
-        ax.XTick = FrameVals;
-        ax.XTickLabel = sec_TimeVals;  
-    end 
-end 
-
-
 %% plot distribution of cluster sizes and pixel amplitudes
 figure;
 ax=gca;
