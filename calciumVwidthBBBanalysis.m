@@ -16737,6 +16737,58 @@ if ETAorSTAq == 0 % STA data
     if length(find(includeXY2O)) > 1
         fav2O = fitlm(timeDistXO(includeXY2O),timeDistOY(includeXY2O),'poly1');
     end 
+
+    % determine distance of each axon to the vessel 
+    VAdistQ = input('Input 1 to get axon distances from the vessel. ');
+    drawVQ = input('Input 1 to draw vessel outline for determining axon distance from vessel. ');
+    if VAdistQ == 1 
+        if drawVQ == 1 
+            clearvars indsV Vinds
+            vesIm = nanmean(vesChan{terminals{mouse}(1)},3);
+            figure;
+            imshow(vesIm,[0 500])
+            disp('Draw the vessel outline.');
+            Vdata = drawfreehand(gca);  % manually draw vessel outline
+            % get VR outline coordinates 
+            Vinds = Vdata.Position;  
+            outLineQ = input('Input 1 if you are done drawing the vessel outline. ');
+            if outLineQ == 1
+                close all
+            end 
+        end 
+        len = size(Vinds,1); 
+        % convert Vinds to microns 
+        Vinds(:,1) = Vinds(:,1)*XpixDist; Vinds(:,2) = Vinds(:,2)*YpixDist;
+        for frame = 1:size(im,3)
+            if frame == 1 
+                indsV(:,1:2) = Vinds;
+                indsV(:,3) = frame;
+            elseif frame > 1 
+                len2 = size(indsV,1);
+                indsV(len2+1:len2+len,1:2) = Vinds;
+                indsV(len2+1:len2+len,3) = frame;
+            end 
+        end 
+    end 
+    % determine distance of axon to the vessel 
+    dists = cell(1,max(terminals{mouse}));
+    minVAdists = NaN(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        for Vpoint = 1:size(indsV,1)
+            for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
+                % get euclidean micron distance between each Ca ROI and the vessel  
+                dists{terminals{mouse}(ccell)}(Vpoint,Apoint) = sqrt(((indsA{terminals{mouse}(ccell)}(Apoint,1)-indsV(Vpoint,1))^2)+((indsA{terminals{mouse}(ccell)}(Apoint,2)-indsV(Vpoint,2))^2)); 
+            end 
+        end 
+    end 
+    for ccell = 1:length(terminals{mouse})
+        % determine minimum distance between each Ca ROI and cluster 
+        if isempty(dists{terminals{mouse}(ccell)}) == 0
+            minVAdists(ccell) = min(min(dists{terminals{mouse}(ccell)}));
+        end 
+    end 
+    % make 0s NaNs 
+    minVAdists(minVAdists == 0) = NaN;
 end 
 
 % determine cluster distance from VR space if you want 
@@ -16878,11 +16930,26 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
+%% plot distribution of axon distances from the vessel 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+if ETAorSTAq == 0 % STA data 
+    figure;
+    ax=gca;
+    histogram(minVAdists,10)
+    avVAdists = nanmean(minVAdists); 
+    medVAdists = nanmedian(minVAdists); %#ok<*NANMEDIAN>
+    avVAdistsLabel = sprintf('Average axon distance from vessel: %.3f',avVAdists);
+    medVAdistsLabel = sprintf('Median axon distance from vessel: %.3f',medVAdists);
+    ax.FontSize = 15;
+    % ax.FontName = 'Times';
+    title({'Distribution of Axon Distance from Vessel';avVAdistsLabel;medVAdistsLabel});
+    ylabel("Number of Axons")
+    xlabel("Distance (microns)") 
+end 
 %% plot cluster size and pixel amplitude as function of distance from axon
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -18827,6 +18894,7 @@ if exist('mouseNum','var') == 0
     mouseNumLabelString = strings(1,mouseNum);
     avClocFrame = cell(1,mouseNum);
     axonTypes = nan(mouseNum,3);
+    minVAdists = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18860,6 +18928,10 @@ if exist('mouseNum','var') == 0
         numClusts{mouse} = dataMat.numClusts;
         totalNumClusts(mouse) = dataMat.totalNumClusts;      
         uniqClustPixNums{mouse} = dataMat.uniqClustPixNums;
+        % import data needed to plot the distribution of axon distances from the vessel 
+        if ETAorSTAq == 0 % STA data
+            minVAdists{mouse} = dataMat.minVAdists;
+        end 
         % import data needed to plot cluster size and pixel amplitude as function of distance from axon
         % this data is also needed to plot the distribution of BBB cluster pixel amplitudes and sizes
         sizeDistArray{mouse} = dataMat.sizeDistArray;           
@@ -18939,9 +19011,21 @@ end
 subplot(1,3,1)
 histogram(NumPixels,10)
 totalPixelNumLabel = sprintf('%.0f microns squared total.',sum(totalNumPixels));
-avPixelNumLabel = sprintf('%.0f average microns squared per animal.',mean(totalNumPixels));
-medPixelNumLabel = sprintf('%.0f median microns squared per animal.',median(totalNumPixels));
+if ETAorSTAq == 0 % STA data
+    avPixelNumLabel = sprintf('%.0f average microns squared per axon.',mean(totalNumPixels));
+    medPixelNumLabel = sprintf('%.0f median microns squared per axon.',median(totalNumPixels));
+elseif  ETAorSTAq == 1 % ETA data
+    avPixelNumLabel = sprintf('%.0f average microns squared per animal.',mean(totalNumPixels));
+    medPixelNumLabel = sprintf('%.0f median microns squared per animal.',median(totalNumPixels));    
+end 
 title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
+if ETAorSTAq == 0 % STA data 
+    xlabel('microns squared per axon')
+    ylabel('number of axons')
+elseif ETAorSTAq == 1 % if it's ETA data 
+    xlabel('microns squared per animal')
+    ylabel('number of animals')   
+end 
 ax = gca;
 ax.FontSize = 15;
 subplot(1,3,2)
@@ -18950,6 +19034,8 @@ totalClustNumLabel = sprintf('%.0f clusters total.',sum(totalNumClusts));
 avClustNumLabel = sprintf('%.0f average clusters per animal.',mean(totalNumClusts));
 medClustNumLabel = sprintf('%.0f median clusters per animal.',median(totalNumClusts));
 title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
+xlabel('number of BBB clusters per animal')
+ylabel('number of animals')
 ax = gca;
 ax.FontSize = 15;
 subplot(1,3,3)
@@ -18957,8 +19043,37 @@ histogram(UniqClustPixNums,10)
 avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',mean(UniqClustPixNums));
 medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',median(UniqClustPixNums));
 title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+xlabel('microns squared per cluster')
+ylabel('number of clusters')
 ax = gca;
 ax.FontSize = 15;
+%% plot distribution of axon distances from the vessel 
+if ETAorSTAq == 0 % STA data 
+    if exist('allMinVAdists','var') == 0
+        for mouse = 1:mouseNum
+            % resort sizeDistArray into one array where column variables relate to
+            % animal number not terminal 
+            if mouse == 1 
+                allMinVAdists(1,:) = minVAdists{mouse};
+            elseif mouse > 1
+                len = length(allMinVAdists);
+                allMinVAdists(1,len+1:length(minVAdists{mouse})+len) = minVAdists{mouse};
+            end 
+        end 
+    end 
+    figure;
+    ax=gca;
+    histogram(allMinVAdists,20)
+    avVAdists = nanmean(allMinVAdists); 
+    medVAdists = nanmedian(allMinVAdists); %#ok<*NANMEDIAN>
+    avVAdistsLabel = sprintf('Average axon distance from vessel: %.3f',avVAdists);
+    medVAdistsLabel = sprintf('Median axon distance from vessel: %.3f',medVAdists);
+    ax.FontSize = 15;
+    % ax.FontName = 'Times';
+    title({'Distribution of Axon Distance from Vessel';avVAdistsLabel;medVAdistsLabel});
+    ylabel("Number of Axons")
+    xlabel("Distance (microns)") 
+end 
 %% plot cluster size and pixel amplitude as function of distance from axon
 if exist('allSizeDistArray','var') == 0
     for mouse = 1:mouseNum

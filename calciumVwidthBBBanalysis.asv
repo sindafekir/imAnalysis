@@ -16737,6 +16737,58 @@ if ETAorSTAq == 0 % STA data
     if length(find(includeXY2O)) > 1
         fav2O = fitlm(timeDistXO(includeXY2O),timeDistOY(includeXY2O),'poly1');
     end 
+
+    % determine distance of each axon to the vessel 
+    VAdistQ = input('Input 1 to get axon distances from the vessel. ');
+    drawVQ = input('Input 1 to draw vessel outline for determining axon distance from vessel. ');
+    if VAdistQ == 1 
+        if drawVQ == 1 
+            clearvars indsV Vinds
+            vesIm = nanmean(vesChan{terminals{mouse}(1)},3);
+            figure;
+            imshow(vesIm,[0 500])
+            disp('Draw the vessel outline.');
+            Vdata = drawfreehand(gca);  % manually draw vessel outline
+            % get VR outline coordinates 
+            Vinds = Vdata.Position;  
+            outLineQ = input('Input 1 if you are done drawing the vessel outline. ');
+            if outLineQ == 1
+                close all
+            end 
+        end 
+        len = size(Vinds,1); 
+        % convert Vinds to microns 
+        Vinds(:,1) = Vinds(:,1)*XpixDist; Vinds(:,2) = Vinds(:,2)*YpixDist;
+        for frame = 1:size(im,3)
+            if frame == 1 
+                indsV(:,1:2) = Vinds;
+                indsV(:,3) = frame;
+            elseif frame > 1 
+                len2 = size(indsV,1);
+                indsV(len2+1:len2+len,1:2) = Vinds;
+                indsV(len2+1:len2+len,3) = frame;
+            end 
+        end 
+    end 
+    % determine distance of axon to the vessel 
+    dists = cell(1,max(terminals{mouse}));
+    minVAdists = NaN(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        for Vpoint = 1:size(indsV,1)
+            for Apoint = 1:size(indsA{terminals{mouse}(ccell)},1)
+                % get euclidean micron distance between each Ca ROI and the vessel  
+                dists{terminals{mouse}(ccell)}(Vpoint,Apoint) = sqrt(((indsA{terminals{mouse}(ccell)}(Apoint,1)-indsV(Vpoint,1))^2)+((indsA{terminals{mouse}(ccell)}(Apoint,2)-indsV(Vpoint,2))^2)); 
+            end 
+        end 
+    end 
+    for ccell = 1:length(terminals{mouse})
+        % determine minimum distance between each Ca ROI and cluster 
+        if isempty(dists{terminals{mouse}(ccell)}) == 0
+            minVAdists(ccell) = min(min(dists{terminals{mouse}(ccell)}));
+        end 
+    end 
+    % make 0s NaNs 
+    minVAdists(minVAdists == 0) = NaN;
 end 
 
 % determine cluster distance from VR space if you want 
@@ -16878,11 +16930,26 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
+%% plot distribution of axon distances from the vessel 
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+if ETAorSTAq == 0 % STA data 
+    figure;
+    ax=gca;
+    histogram(minVAdists,10)
+    avVAdists = nanmean(minVAdists); 
+    medVAdists = nanmedian(minVAdists); %#ok<*NANMEDIAN>
+    avVAdistsLabel = sprintf('Average axon distance from vessel: %.3f',avVAdists);
+    medVAdistsLabel = sprintf('Median axon distance from vessel: %.3f',medVAdists);
+    ax.FontSize = 15;
+    % ax.FontName = 'Times';
+    title({'Distribution of Axon Distance from Vessel';avVAdistsLabel;medVAdistsLabel});
+    ylabel("Number of Axons")
+    xlabel("Distance (microns)") 
+end 
 %% plot cluster size and pixel amplitude as function of distance from axon
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -18826,6 +18893,8 @@ if exist('mouseNum','var') == 0
     FPS = cell(1,mouseNum);
     mouseNumLabelString = strings(1,mouseNum);
     avClocFrame = cell(1,mouseNum);
+    axonTypes = nan(mouseNum,3);
+    minVAdists = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18859,6 +18928,10 @@ if exist('mouseNum','var') == 0
         numClusts{mouse} = dataMat.numClusts;
         totalNumClusts(mouse) = dataMat.totalNumClusts;      
         uniqClustPixNums{mouse} = dataMat.uniqClustPixNums;
+        % import data needed to plot the distribution of axon distances from the vessel 
+        if ETAorSTAq == 0 % STA data
+            minVAdists{mouse} = dataMat.minVAdists;
+        end 
         % import data needed to plot cluster size and pixel amplitude as function of distance from axon
         % this data is also needed to plot the distribution of BBB cluster pixel amplitudes and sizes
         sizeDistArray{mouse} = dataMat.sizeDistArray;           
@@ -18876,6 +18949,9 @@ if exist('mouseNum','var') == 0
         mouseNumLabelString(mouse) = num2str(mouseNumLabel(mouse));
         % import data needed to plot distribution of cluster times 
         avClocFrame{mouse} = dataMat.avClocFrame;
+        if ETAorSTAq == 0 % STA data
+            axonTypes(mouse,:) = dataMat.axonTypes;
+        end
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -18935,9 +19011,21 @@ end
 subplot(1,3,1)
 histogram(NumPixels,10)
 totalPixelNumLabel = sprintf('%.0f microns squared total.',sum(totalNumPixels));
-avPixelNumLabel = sprintf('%.0f average microns squared per animal.',mean(totalNumPixels));
-medPixelNumLabel = sprintf('%.0f median microns squared per animal.',median(totalNumPixels));
+if ETAorSTAq == 0 % STA data
+    avPixelNumLabel = sprintf('%.0f average microns squared per axon.',mean(totalNumPixels));
+    medPixelNumLabel = sprintf('%.0f median microns squared per axon.',median(totalNumPixels));
+elseif  ETAorSTAq == 1 % ETA data
+    avPixelNumLabel = sprintf('%.0f average microns squared per animal.',mean(totalNumPixels));
+    medPixelNumLabel = sprintf('%.0f median microns squared per animal.',median(totalNumPixels));    
+end 
 title({totalPixelNumLabel;avPixelNumLabel;medPixelNumLabel})
+if ETAorSTAq == 0 % STA data 
+    xlabel('microns squared per axon')
+    ylabel('number of axons')
+elseif ETAorSTAq == 1 % if it's ETA data 
+    xlabel('microns squared per animal')
+    ylabel('number of axons')   
+end 
 ax = gca;
 ax.FontSize = 15;
 subplot(1,3,2)
@@ -18946,6 +19034,8 @@ totalClustNumLabel = sprintf('%.0f clusters total.',sum(totalNumClusts));
 avClustNumLabel = sprintf('%.0f average clusters per animal.',mean(totalNumClusts));
 medClustNumLabel = sprintf('%.0f median clusters per animal.',median(totalNumClusts));
 title({totalClustNumLabel;avClustNumLabel;medClustNumLabel})
+xlabel('number of BBB clusters per animal')
+ylabel('number of animals')
 ax = gca;
 ax.FontSize = 15;
 subplot(1,3,3)
@@ -18953,8 +19043,37 @@ histogram(UniqClustPixNums,10)
 avUniqClustPixNumsLabel = sprintf('%.0f average microns squared per cluster.',mean(UniqClustPixNums));
 medNumUniqClustPixNumsLabel = sprintf('%.0f median microns squared per cluster.',median(UniqClustPixNums));
 title({avUniqClustPixNumsLabel;medNumUniqClustPixNumsLabel})
+xlabel('microns squared per cluster')
+ylabel('number of clusters')
 ax = gca;
 ax.FontSize = 15;
+%% plot distribution of axon distances from the vessel 
+if ETAorSTAq == 0 % STA data 
+    if exist('allMinVAdists','var') == 0
+        for mouse = 1:mouseNum
+            % resort sizeDistArray into one array where column variables relate to
+            % animal number not terminal 
+            if mouse == 1 
+                allMinVAdists(1,:) = minVAdists{mouse};
+            elseif mouse > 1
+                len = length(allMinVAdists);
+                allMinVAdists(1,len+1:length(minVAdists{mouse})+len) = minVAdists{mouse};
+            end 
+        end 
+    end 
+    figure;
+    ax=gca;
+    histogram(allMinVAdists,20)
+    avVAdists = nanmean(allMinVAdists); 
+    medVAdists = nanmedian(allMinVAdists); %#ok<*NANMEDIAN>
+    avVAdistsLabel = sprintf('Average axon distance from vessel: %.3f',avVAdists);
+    medVAdistsLabel = sprintf('Median axon distance from vessel: %.3f',medVAdists);
+    ax.FontSize = 15;
+    % ax.FontName = 'Times';
+    title({'Distribution of Axon Distance from Vessel';avVAdistsLabel;medVAdistsLabel});
+    ylabel("Number of Axons")
+    xlabel("Distance (microns)") 
+end 
 %% plot cluster size and pixel amplitude as function of distance from axon
 if exist('allSizeDistArray','var') == 0
     for mouse = 1:mouseNum
@@ -19330,32 +19449,21 @@ elseif clustSpikeQ == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("BBB Plume Pixel Amplitudes") 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot distribution of cluster times
-
 % resort avClocFrame and convert to seconds centered around 0 
 if exist('allAvClocFrame','var') == 0
     for mouse = 1:mouseNum
-        % resort sizeDistArray into one array where column variables relate to
-        % animal number not terminal 
         if mouse == 1 
-            allAvClocFrame = (reshape(avClocFrame{mouse},size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
+            allAvClocFrame = (reshape(avClocFrame{mouse},1,size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
         elseif mouse > 1
-            len = size(allAvClocFrame,1);
-            allAvClocFrame(len+1:size(avClocFrame{mouse},1)+len,:) = (avClocFrame{mouse}/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
+            len = length(allAvClocFrame);
+            allAvClocFrame(:,len+1:size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2)+len) = (reshape(avClocFrame{mouse},1,size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
         end 
     end 
 end 
-
-
 figure;
 ax=gca;
-histogram(avClocFrame,20)
+histogram(allAvClocFrame,20)
 ax.FontSize = 15;
 %     ax.FontName = 'Times';
 if clustSpikeQ3 == 0 
@@ -19365,16 +19473,9 @@ elseif clustSpikeQ3 == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("Time (s)") 
-Frames = size(im,3);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-% FrameVals = round((1:FPSstack{mouse}:Frames))+5;
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;  
 % plot pie chart of before vs after spike cluster start times
-numPreSpikeStarts = nansum(nansum(avClocFrame < threshFrame));
-numPostSpikeStarts = nansum(nansum(avClocFrame >= threshFrame));
+numPreSpikeStarts = nansum(nansum(allAvClocFrame < 0));
+numPostSpikeStarts = nansum(nansum(allAvClocFrame >= 0));
 preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
 figure; 
 p = pie(preVsPostSpikeStarts);
@@ -19396,49 +19497,12 @@ ax=gca; ax.FontSize = 15;
 t1 = p(4); t2 = p(2);
 t1.FontSize = 15; t2.FontSize = 15;
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 if ETAorSTAq == 0 % STA data
-    for ccell = 1:length(terminals{mouse})
-        % plot pie chart of before vs after spike cluster start times per
-        % axon 
-        threshFrame = floor(size(im,3)/2);
-        numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
-        numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
-        preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
-        figure; 
-        p = pie(preVsPostSpikeStarts);
-        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-        if ETAorSTAq == 0 % STA data
-            legend('Pre-spike clusters','Post-spike clusters')
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
-                legend('Pre-opto clusters','Post-opto clusters')
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    legend('Pre-stim clusters','Post-stim clusters')
-                elseif ETAtype2 == 1 % reward aligned 
-                    legend('Pre-reward clusters','Post-reward clusters')
-                end 
-            end 
-        end 
-        ax=gca; ax.FontSize = 15;
-        t1 = p(4); t2 = p(2);
-        t1.FontSize = 15; t2.FontSize = 15;
-        title(sprintf('Axon %d.',terminals{mouse}(ccell)))
-    end 
-
     % create pie chart showing number of axons that are mostly pre, mostly
     % post, and evenly split 
+    allAxonTypes = sum(axonTypes,1);
     figure;
-    totalClusts = numPreSpikeStarts + numPostSpikeStarts;
-    preSpikeRatio = numPreSpikeStarts./totalClusts;
-    numMostlyPre = sum(preSpikeRatio > 0.5);
-    numMostlyPost = sum(preSpikeRatio < 0.5);
-    evenPreAndPost = sum(preSpikeRatio == 0.5);
-    axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
-    p = pie(axonTypes);
+    p = pie(allAxonTypes);
     colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
     legend('Listener','Even-Split','Controller')
     ax=gca; ax.FontSize = 15;
@@ -19446,7 +19510,56 @@ if ETAorSTAq == 0 % STA data
     t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
 end 
 
-
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% create scatter over box plot of cluster timing per axon
+% PICK UP HERE - ALL BELOW CODE IS SO FAR UNEDITED. GET AVERAGE CLUSTER
+% START TIME PER AXON IF THERE ARE MULTIPLE AXONS (CHECK REFERENCE DRAWING)
+if clustSpikeQ == 0 % if all the spikes are available to look at 
+    clear ClocTimeForPlot
+    ClocTimeForPlot = avClocFrame';    
+    figure;
+    ax=gca;
+    % plot box plot 
+    boxchart(ClocTimeForPlot,'MarkerStyle','none');
+    % create the x data needed to overlay the swarmchart on the boxchart 
+    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
+    % plot swarm chart on top of box plot 
+    hold all;
+    swarmchart(x,ClocTimeForPlot,[],'red')  
+    yline(threshFrame)
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("Average BBB Plume Timing")
+    if ETAorSTAq == 0 % STA data
+        xlabel("Axon")
+    end 
+    if ETAorSTAq == 0 % STA data
+        if clustSpikeQ3 == 0
+            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
+        end     
+    elseif ETAorSTAq == 1 % ETA data
+        set(gca,'XTick',[]) % removes x axis ticks
+        if clustSpikeQ3 == 0
+            title({'BBB Plume Timing';'Average Cluster Time'});
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Timing';'Cluster Start Time'});
+        end   
+    end 
+    xticklabels(labels)
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    % FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    ax.YTick = FrameVals;
+    ax.YTickLabel = sec_TimeVals;  
+end 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -20001,50 +20114,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
-%% create scatter over box plot of cluster timing per axon
-if clustSpikeQ == 0 % if all the spikes are available to look at 
-    clear ClocTimeForPlot
-    ClocTimeForPlot = avClocFrame';    
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(ClocTimeForPlot,'MarkerStyle','none');
-    % create the x data needed to overlay the swarmchart on the boxchart 
-    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
-    % plot swarm chart on top of box plot 
-    hold all;
-    swarmchart(x,ClocTimeForPlot,[],'red')  
-    yline(threshFrame)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("Average BBB Plume Timing")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")
-    end 
-    if ETAorSTAq == 0 % STA data
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
-        end     
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing';'Cluster Start Time'});
-        end   
-    end 
-    xticklabels(labels)
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    % FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-    ax.YTick = FrameVals;
-    ax.YTickLabel = sec_TimeVals;  
-end 
-
 %% plot cluster size and pixel amp grouped by pre and post spike
 if clustSpikeQ == 0
     clearvars data
