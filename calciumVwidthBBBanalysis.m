@@ -18825,6 +18825,7 @@ if exist('mouseNum','var') == 0
     timeVRDistArray = cell(1,mouseNum);
     FPS = cell(1,mouseNum);
     mouseNumLabelString = strings(1,mouseNum);
+    avClocFrame = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18873,6 +18874,8 @@ if exist('mouseNum','var') == 0
         FPS{mouse} = dataMat.FPS; 
         % create legend labels 
         mouseNumLabelString(mouse) = num2str(mouseNumLabel(mouse));
+        % import data needed to plot distribution of cluster times 
+        avClocFrame{mouse} = dataMat.avClocFrame;
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -19333,6 +19336,114 @@ xlabel("BBB Plume Pixel Amplitudes")
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% plot distribution of cluster times
+% PICK UP BELOW- RUN AND DEBUG THEN MOVE ON TO NEXT SUBSECTION OF THIS
+% PLOTTING CODE 
+
+% resort avClocFrame and convert to seconds centered around 0 
+if exist('allAvClocFrame','var') == 0
+    for mouse = 1:mouseNum
+        if mouse == 1 
+            allAvClocFrame = (reshape(avClocFrame{mouse},1,size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
+        elseif mouse > 1
+            len = length(allAvClocFrame);
+            allAvClocFrame(:,len+1:size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2)+len) = (reshape(avClocFrame{mouse},1,size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
+        end 
+    end 
+end 
+figure;
+ax=gca;
+histogram(allAvClocFrame,20)
+ax.FontSize = 15;
+%     ax.FontName = 'Times';
+if clustSpikeQ3 == 0 
+    title({'Distribution of BBB Plume Timing';'Average Time'});
+elseif clustSpikeQ3 == 1
+    title({'Distribution of BBB Plume Timing';'Start Time'});
+end 
+ylabel("Number of BBB Plumes")
+xlabel("Time (s)") 
+Frames = size(im,3);
+Frames_pre_stim_start = -((Frames-1)/2); 
+Frames_post_stim_start = (Frames-1)/2; 
+sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+% FrameVals = round((1:FPSstack{mouse}:Frames))+5;
+ax.XTick = FrameVals;
+ax.XTickLabel = sec_TimeVals;  
+% plot pie chart of before vs after spike cluster start times
+numPreSpikeStarts = nansum(nansum(avClocFrame < threshFrame));
+numPostSpikeStarts = nansum(nansum(avClocFrame >= threshFrame));
+preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
+figure; 
+p = pie(preVsPostSpikeStarts);
+colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+if ETAorSTAq == 0 % STA data
+    legend('Pre-spike clusters','Post-spike clusters')
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
+        legend('Pre-opto clusters','Post-opto clusters')
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
+            legend('Pre-stim clusters','Post-stim clusters')
+        elseif ETAtype2 == 1 % reward aligned 
+            legend('Pre-reward clusters','Post-reward clusters')
+        end 
+    end 
+end 
+ax=gca; ax.FontSize = 15;
+t1 = p(4); t2 = p(2);
+t1.FontSize = 15; t2.FontSize = 15;
+
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+if ETAorSTAq == 0 % STA data
+    for ccell = 1:length(terminals{mouse})
+        % plot pie chart of before vs after spike cluster start times per
+        % axon 
+        threshFrame = floor(size(im,3)/2);
+        numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
+        numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
+        preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
+        figure; 
+        p = pie(preVsPostSpikeStarts);
+        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+        if ETAorSTAq == 0 % STA data
+            legend('Pre-spike clusters','Post-spike clusters')
+        elseif ETAorSTAq == 1 % ETA data
+            if ETAtype == 0 % opto data 
+                legend('Pre-opto clusters','Post-opto clusters')
+            elseif ETAtype == 1 % behavior data 
+                if ETAtype2 == 0 % stim aligned 
+                    legend('Pre-stim clusters','Post-stim clusters')
+                elseif ETAtype2 == 1 % reward aligned 
+                    legend('Pre-reward clusters','Post-reward clusters')
+                end 
+            end 
+        end 
+        ax=gca; ax.FontSize = 15;
+        t1 = p(4); t2 = p(2);
+        t1.FontSize = 15; t2.FontSize = 15;
+        title(sprintf('Axon %d.',terminals{mouse}(ccell)))
+    end 
+
+    % create pie chart showing number of axons that are mostly pre, mostly
+    % post, and evenly split 
+    figure;
+    totalClusts = numPreSpikeStarts + numPostSpikeStarts;
+    preSpikeRatio = numPreSpikeStarts./totalClusts;
+    numMostlyPre = sum(preSpikeRatio > 0.5);
+    numMostlyPost = sum(preSpikeRatio < 0.5);
+    evenPreAndPost = sum(preSpikeRatio == 0.5);
+    axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
+    p = pie(axonTypes);
+    colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
+    legend('Listener','Even-Split','Controller')
+    ax=gca; ax.FontSize = 15;
+    t1 = p(2); t2 = p(4); t3 = p(6);
+    t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
+end 
+
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -19888,99 +19999,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
-%% plot distribution of cluster times
-if clustSpikeQ == 0 
-    figure;
-    ax=gca;
-    histogram(avClocFrame,20)
-    ax.FontSize = 15;
-%     ax.FontName = 'Times';
-    if clustSpikeQ3 == 0 
-        title({'Distribution of BBB Plume Timing';'Average Time'});
-    elseif clustSpikeQ3 == 1
-        title({'Distribution of BBB Plume Timing';'Start Time'});
-    end 
-    ylabel("Number of BBB Plumes")
-    xlabel("Time (s)") 
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    % FrameVals = round((1:FPSstack{mouse}:Frames))+5;
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    % plot pie chart of before vs after spike cluster start times
-    numPreSpikeStarts = nansum(nansum(avClocFrame < threshFrame));
-    numPostSpikeStarts = nansum(nansum(avClocFrame >= threshFrame));
-    preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
-    figure; 
-    p = pie(preVsPostSpikeStarts);
-    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-    if ETAorSTAq == 0 % STA data
-        legend('Pre-spike clusters','Post-spike clusters')
-    elseif ETAorSTAq == 1 % ETA data
-        if ETAtype == 0 % opto data 
-            legend('Pre-opto clusters','Post-opto clusters')
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                legend('Pre-stim clusters','Post-stim clusters')
-            elseif ETAtype2 == 1 % reward aligned 
-                legend('Pre-reward clusters','Post-reward clusters')
-            end 
-        end 
-    end 
-    ax=gca; ax.FontSize = 15;
-    t1 = p(4); t2 = p(2);
-    t1.FontSize = 15; t2.FontSize = 15;
-
-    if ETAorSTAq == 0 % STA data
-        for ccell = 1:length(terminals{mouse})
-            % plot pie chart of before vs after spike cluster start times per
-            % axon 
-            threshFrame = floor(size(im,3)/2);
-            numPreSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) < 27));
-            numPostSpikeStarts(ccell) = nansum(nansum(avClocFrame(ccell,:) >= 27));
-            preVsPostSpikeStarts = [numPreSpikeStarts(ccell),numPostSpikeStarts(ccell)];
-            figure; 
-            p = pie(preVsPostSpikeStarts);
-            colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-            if ETAorSTAq == 0 % STA data
-                legend('Pre-spike clusters','Post-spike clusters')
-            elseif ETAorSTAq == 1 % ETA data
-                if ETAtype == 0 % opto data 
-                    legend('Pre-opto clusters','Post-opto clusters')
-                elseif ETAtype == 1 % behavior data 
-                    if ETAtype2 == 0 % stim aligned 
-                        legend('Pre-stim clusters','Post-stim clusters')
-                    elseif ETAtype2 == 1 % reward aligned 
-                        legend('Pre-reward clusters','Post-reward clusters')
-                    end 
-                end 
-            end 
-            ax=gca; ax.FontSize = 15;
-            t1 = p(4); t2 = p(2);
-            t1.FontSize = 15; t2.FontSize = 15;
-            title(sprintf('Axon %d.',terminals{mouse}(ccell)))
-        end 
-    
-        % create pie chart showing number of axons that are mostly pre, mostly
-        % post, and evenly split 
-        figure;
-        totalClusts = numPreSpikeStarts + numPostSpikeStarts;
-        preSpikeRatio = numPreSpikeStarts./totalClusts;
-        numMostlyPre = sum(preSpikeRatio > 0.5);
-        numMostlyPost = sum(preSpikeRatio < 0.5);
-        evenPreAndPost = sum(preSpikeRatio == 0.5);
-        axonTypes = [numMostlyPre,evenPreAndPost,numMostlyPost];
-        p = pie(axonTypes);
-        colormap([0 0.4470 0.7410; 0.4250 0.386 0.4195; 0.8500 0.3250 0.0980])
-        legend('Listener','Even-Split','Controller')
-        ax=gca; ax.FontSize = 15;
-        t1 = p(2); t2 = p(4); t3 = p(6);
-        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
-    end 
-end 
-
 %% create scatter over box plot of cluster timing per axon
 if clustSpikeQ == 0 % if all the spikes are available to look at 
     clear ClocTimeForPlot
