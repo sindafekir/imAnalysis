@@ -19548,12 +19548,6 @@ elseif clustSpikeQ3 == 1
     title({'BBB Plume Timing Per Cluster';'Cluster Start Time'});
 end     
 xticklabels(mouseNumLabelString)
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot cluster size and pixel amp grouped by pre and post spike
 if exist('allCsizeForPlot','var') == 0
     % resort clustSize
@@ -19602,260 +19596,258 @@ xlabel("Mouse")
 title({'BBB Plume Pixel Amplitude Per Cluster';'All Plumes'});
 xticklabels(mouseNumLabelString)
 
+[r,c] = find(allAvClocFrameBoxPlot < 0); % find pre event clusters 
+% create new variables for pre and post event clusters
+PreAllCampForPlot = allCampForPlot; PostAllCampForPlot = allCampForPlot;
+PreAllCsizeForPlot = allCsizeForPlot; PostAllCsizeForPlot = allCsizeForPlot;
+PostAllCampForPlot(r,c) = NaN; PostAllCsizeForPlot(r,c) = NaN;
+[r,c] = find(allAvClocFrameBoxPlot >= 0); % find post event clusters 
+PreAllCampForPlot(r,c) = NaN; PreAllCsizeForPlot(r,c) = NaN;
 
-%% ABOVE: all data 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% BELOW: pre vs post event 
-
-preOrPost = input('Input 0 to update pre-spike array. Input 1 to update post-spike array. ');
-if preOrPost == 0
-    CsizeForPlotPre = clustSize'; 
-    CampForPlotPre = clustAmp'; 
-elseif preOrPost == 1 
-    CsizeForPlotPost = clustSize'; 
-    CampForPlotPost = clustAmp'; 
-end 
-preAndPostQ = input('Are both pre and post-spike arrays updated? Input 1 for yes. 0 for no. ');
-if preAndPostQ == 1 
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(CsizeForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
-    % plot swarm chart on top of box plot 
-    hold all;
-    boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")
-    end 
-    if ETAorSTAq == 0 % STA data
+figure;
+ax=gca;
+% plot box plot 
+boxchart(PreAllCsizeForPlot,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
+% plot swarm chart on top of box plot 
+hold all;
+boxchart(PostAllCsizeForPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Size (microns squared)")
+xlabel("Mouse")
+if ETAorSTAq == 0 % STA data
+    if clustSpikeQ3 == 0 
+        title({'BBB Plume Size';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Size';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+    end          
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
         if clustSpikeQ3 == 0 
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+            title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});   
         elseif clustSpikeQ3 == 1
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-        end          
-    elseif ETAorSTAq == 1 % ETA data
-        if ETAtype == 0 % opto data 
+            title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});   
+        end  
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
             if clustSpikeQ3 == 0 
-                title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});   
+                title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});   
             elseif clustSpikeQ3 == 1
-                title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});   
+                title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});   
             end  
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                if clustSpikeQ3 == 0 
-                    title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});   
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});   
-                end  
-            elseif ETAtype2 == 1 % reward aligned 
-                if clustSpikeQ3 == 0 
-                    title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});   
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});   
-                end                    
-            end 
-        end 
-    end 
-    if ETAorSTAq == 0 % STA data 
-        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks 
-        if ETAtype == 0 % opto data 
-          legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
-            elseif ETAtype2 == 1 % reward aligned 
-                legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
-            end 
-        end 
-    end
-    xticklabels(labels)   
-
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(CampForPlotPre,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
-    % plot swarm chart on top of box plot 
-    hold all;
-    boxchart(CampForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")
-    end 
-    if ETAorSTAq == 0 % STA data
-        if clustSpikeQ3 == 0 
-            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-        end          
-    elseif ETAorSTAq == 1 % ETA data
-        if ETAtype == 0 % opto data 
+        elseif ETAtype2 == 1 % reward aligned 
             if clustSpikeQ3 == 0 
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});   
+                title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});   
             elseif clustSpikeQ3 == 1
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});   
-            end      
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                if clustSpikeQ3 == 0 
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});   
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});   
-                end    
-            elseif ETAtype2 == 1 % reward aligned 
-                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});   
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});   
-                end                    
-            end 
+                title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});   
+            end                    
         end 
     end 
-    if ETAorSTAq == 0 % STA data 
-        legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        if ETAtype == 0 % opto data 
-          legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
-            elseif ETAtype2 == 1 % reward aligned 
-                legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
-            end 
-        end 
-    end
-    xticklabels(labels) 
 end 
+if ETAorSTAq == 0 % STA data 
+    legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
+      legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
+            legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
+        elseif ETAtype2 == 1 % reward aligned 
+            legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
+        end 
+    end 
+end
+xticklabels(mouseNumLabelString)   
+set(gca, 'YScale', 'log')
 
-if preAndPostQ == 1 
-    % reshape data to plot box and whisker plots 
-    reshapedPrePlot = reshape(CsizeForPlotPre,size(CsizeForPlotPre,1)*size(CsizeForPlotPre,2),1);
-    reshapedPostPlot = reshape(CsizeForPlotPost,size(CsizeForPlotPost,1)*size(CsizeForPlotPost,2),1);
-    data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
-    % plot swarm chart on top of box plot 
-    hold all;
-    x = repmat(1:size(data,2),size(data,1),1);
-    swarmchart(x,data,[],'red') 
-    % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
-    if ETAorSTAq == 0 % STA data
+figure;
+ax=gca;
+% plot box plot 
+boxchart(PreAllCampForPlot,'MarkerStyle','none','BoxFaceColor','r','WhiskerLineColor','r');
+% plot swarm chart on top of box plot 
+hold all;
+boxchart(PostAllCampForPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Pixel Amplitude")
+xlabel("Mouse")
+if ETAorSTAq == 0 % STA data
+    if clustSpikeQ3 == 0 
+        title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Average Cluster Time'});   
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Pixel Amplitude';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+    end          
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
         if clustSpikeQ3 == 0 
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
+            title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});   
         elseif clustSpikeQ3 == 1
-            title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-        end     
-    elseif ETAorSTAq == 1 % ETA data
-        if ETAtype == 0 % opto data 
+            title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});   
+        end      
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
             if clustSpikeQ3 == 0 
-                title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});   
             elseif clustSpikeQ3 == 1
-                title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});   
             end    
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                if clustSpikeQ3 == 0 
-                    title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});  
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});  
-                end  
-            elseif ETAtype2 == 1 % reward aligned 
-                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});  
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});  
-                end                     
-            end 
-        end          
-    end 
-    if ETAorSTAq == 0 % STA data 
-        avLabels = ["Pre-Spike","Post-Spike"];
-    elseif ETAorSTAq == 1 % ETA data
-          if ETAtype == 0 % opto data 
-              avLabels = ["Pre-Opto","Post-Opto"];
-          elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    avLabels = ["Pre-Stim","Post-Stim"];
-                elseif ETAtype2 == 1 % reward aligned 
-                    avLabels = ["Pre-Reward","Post-Reward"];
-                end 
-          end 
-    end 
-    xticklabels(avLabels)
-
-    % reshape data to plot box and whisker plots 
-    reshapedPrePlot = reshape(CampForPlotPre,size(CampForPlotPre,1)*size(CampForPlotPre,2),1);
-    reshapedPostPlot = reshape(CampForPlotPost,size(CampForPlotPost,1)*size(CampForPlotPost,2),1);
-    data(:,1) = reshapedPrePlot; data(:,2) = reshapedPostPlot;
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
-    % plot swarm chart on top of box plot 
-    hold all;
-    x = repmat(1:size(data,2),size(data,1),1);
-    swarmchart(x,data,[],'red') 
-    % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
-    if ETAorSTAq == 0 % STA data
-        if clustSpikeQ3 == 0 
-            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-        end       
-    elseif ETAorSTAq == 1 % ETA data
-        if ETAtype == 0 % opto data 
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+        elseif ETAtype2 == 1 % reward aligned 
+             if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});   
             elseif clustSpikeQ3 == 1
-                title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});  
-            end   
-        elseif ETAtype == 1 % behavior data 
-            if ETAtype2 == 0 % stim aligned 
-                if clustSpikeQ3 == 0 
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});  
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});  
-                end                      
-            elseif ETAtype2 == 1 % reward aligned 
-                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});  
-                elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});  
-                end                        
-            end 
+                title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});   
+            end                    
         end 
     end 
-    if ETAorSTAq == 0 % STA data 
-        avLabels = ["Pre-Spike","Post-Spike"];
-    elseif ETAorSTAq == 1 % ETA data
-          if ETAtype == 0 % opto data 
-              avLabels = ["Pre-Opto","Post-Opto"];
-          elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    avLabels = ["Pre-Stim","Post-Stim"];
-                elseif ETAtype2 == 1 % reward aligned 
-                    avLabels = ["Pre-Reward","Post-Reward"];
-                end 
-          end 
-    end 
-    xticklabels(avLabels)
 end 
+if ETAorSTAq == 0 % STA data 
+    legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
+      legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
+            legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
+        elseif ETAtype2 == 1 % reward aligned 
+            legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
+        end 
+    end 
+end
+xticklabels(mouseNumLabelString) 
+
+clearvars data 
+% reshape data for plotting 
+dataRsize = size(allCsizeForPlot,1); dataCsize = size(allCsizeForPlot,2);
+reshapedPre = reshape(PreAllCsizeForPlot,dataRsize*dataCsize,1);
+reshapedPost = reshape(PostAllCsizeForPlot,dataRsize*dataCsize,1);
+data(:,1) = reshapedPre; data(:,2) = reshapedPost; 
+figure;
+ax=gca;
+% plot box plot 
+boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+% plot swarm chart on top of box plot 
+hold all;
+x = repmat(1:size(data,2),size(data,1),1);
+swarmchart(x,data,[],'red') 
+% boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+ylabel("BBB Plume Size (microns squared)") 
+if ETAorSTAq == 0 % STA data
+    if clustSpikeQ3 == 0 
+        title({'BBB Plume Size Across Animals';'Pre And Post Spike Plumes';'Average Cluster Time'});  
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Size Across Animals';'Pre And Post Spike Plumes';'Cluster Start Time'});  
+    end     
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
+        if clustSpikeQ3 == 0 
+            title({'BBB Plume Size Across Animals';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Size Across Animals';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+        end    
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Size Across Animals';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Size Across Animals';'Pre And Post Stim Plumes';'Cluster Start Time'});  
+            end  
+        elseif ETAtype2 == 1 % reward aligned 
+             if clustSpikeQ3 == 0 
+                title({'BBB Plume Size Across Animals';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Size Across Animals';'Pre And Post Reward Plumes';'Cluster Start Time'});  
+            end                     
+        end 
+    end          
+end 
+if ETAorSTAq == 0 % STA data 
+    avLabels = ["Pre-Spike","Post-Spike"];
+elseif ETAorSTAq == 1 % ETA data
+      if ETAtype == 0 % opto data 
+          avLabels = ["Pre-Opto","Post-Opto"];
+      elseif ETAtype == 1 % behavior data 
+            if ETAtype2 == 0 % stim aligned 
+                avLabels = ["Pre-Stim","Post-Stim"];
+            elseif ETAtype2 == 1 % reward aligned 
+                avLabels = ["Pre-Reward","Post-Reward"];
+            end 
+      end 
+end 
+xticklabels(avLabels)
+set(gca, 'YScale', 'log')
+
+clearvars data 
+% reshape data for plotting 
+dataRsize = size(allCsizeForPlot,1); dataCsize = size(allCsizeForPlot,2);
+reshapedPre = reshape(PreAllCampForPlot,dataRsize*dataCsize,1);
+reshapedPost = reshape(PostAllCampForPlot,dataRsize*dataCsize,1);
+data(:,1) = reshapedPre; data(:,2) = reshapedPost; 
+figure;
+ax=gca;
+% plot box plot 
+boxchart(data,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+% plot swarm chart on top of box plot 
+hold all;
+x = repmat(1:size(data,2),size(data,1),1);
+swarmchart(x,data,[],'red') 
+% boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+ylabel("BBB Plume Pixel Amplitude") 
+if ETAorSTAq == 0 % STA data
+    if clustSpikeQ3 == 0 
+        title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Spike Plumes';'Average Cluster Time'});  
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Spike Plumes';'Cluster Start Time'});  
+    end     
+elseif ETAorSTAq == 1 % ETA data
+    if ETAtype == 0 % opto data 
+        if clustSpikeQ3 == 0 
+            title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+        elseif clustSpikeQ3 == 1
+            title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+        end    
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
+            if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Stim Plumes';'Cluster Start Time'});  
+            end  
+        elseif ETAtype2 == 1 % reward aligned 
+             if clustSpikeQ3 == 0 
+                title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Pixel Amplitude Across Animals';'Pre And Post Reward Plumes';'Cluster Start Time'});  
+            end                     
+        end 
+    end          
+end 
+if ETAorSTAq == 0 % STA data 
+    avLabels = ["Pre-Spike","Post-Spike"];
+elseif ETAorSTAq == 1 % ETA data
+      if ETAtype == 0 % opto data 
+          avLabels = ["Pre-Opto","Post-Opto"];
+      elseif ETAtype == 1 % behavior data 
+            if ETAtype2 == 0 % stim aligned 
+                avLabels = ["Pre-Stim","Post-Stim"];
+            elseif ETAtype2 == 1 % reward aligned 
+                avLabels = ["Pre-Reward","Post-Reward"];
+            end 
+      end 
+end 
+xticklabels(avLabels)
+
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
