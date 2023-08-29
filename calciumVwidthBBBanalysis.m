@@ -18869,7 +18869,7 @@ end
 % DIFFERENCES IN FPS FOR ALL VARIABLES NEEDED (make sure to write this so
 % that it's easy to add more mice in the future, instead of having to rerun
 % and select all mice)
-%{
+
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -19516,50 +19516,53 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% create scatter over box plot of cluster timing per axon
-% PICK UP HERE - ALL BELOW CODE IS SO FAR UNEDITED. GET AVERAGE CLUSTER
-% START TIME PER AXON IF THERE ARE MULTIPLE AXONS (CHECK REFERENCE DRAWING)
-if clustSpikeQ == 0 % if all the spikes are available to look at 
-    clear ClocTimeForPlot
-    ClocTimeForPlot = avClocFrame';    
-    figure;
-    ax=gca;
-    % plot box plot 
-    boxchart(ClocTimeForPlot,'MarkerStyle','none');
-    % create the x data needed to overlay the swarmchart on the boxchart 
-    x = repmat(1:size(ClocTimeForPlot,2),size(ClocTimeForPlot,1),1);
-    % plot swarm chart on top of box plot 
-    hold all;
-    swarmchart(x,ClocTimeForPlot,[],'red')  
-    yline(threshFrame)
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("Average BBB Plume Timing")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")
+
+
+if exist('allAvClocFrameBoxPlot','var') == 0
+    % determine the max length of the data per mouse 
+    avClocFrameMouseLen = nan(1,mouseNum);
+    for mouse = 1:mouseNum
+        avClocFrameMouseLen(mouse) = size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2);
     end 
-    if ETAorSTAq == 0 % STA data
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
-        end     
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing';'Cluster Start Time'});
-        end   
+    maxClocFrameMouseLen = max(avClocFrameMouseLen);
+    % resort avClocFrame and convert to seconds centered around 0 
+    allAvClocFrameBoxPlot = nan(maxClocFrameMouseLen,mouseNum);
+    for mouse = 1:mouseNum 
+        allAvClocFrameBoxPlot(1:avClocFrameMouseLen(mouse),mouse) = (reshape(avClocFrame{mouse},1,avClocFrameMouseLen(mouse))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
     end 
-    xticklabels(labels)
-    Frames = size(im,3);
-    Frames_pre_stim_start = -((Frames-1)/2); 
-    Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    % FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-    ax.YTick = FrameVals;
-    ax.YTickLabel = sec_TimeVals;  
+end  
+figure;
+ax = gca;
+% plot box plot 
+boxchart(allAvClocFrameBoxPlot,'MarkerStyle','none');
+% create the x data needed to overlay the swarmchart on the boxchart 
+x = repmat(1:size(allAvClocFrameBoxPlot,2),size(allAvClocFrameBoxPlot,1),1);
+% plot swarm chart on top of box plot 
+hold all;
+swarmchart(x,allAvClocFrameBoxPlot,[],'red')  
+yline(0)
+ax.FontSize = 15;
+ax.FontName = 'Times';
+ylabel("BBB Plume Timing")
+if ETAorSTAq == 0 % STA data
+    xlabel("Mouse")
 end 
+if ETAorSTAq == 0 % STA data
+    if clustSpikeQ3 == 0
+        title({'BBB Plume Timing Per Cluster';'Average Cluster Time'});
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Timing Per Cluster';'Cluster Start Time'});
+    end     
+elseif ETAorSTAq == 1 % ETA data
+    set(gca,'XTick',[]) % removes x axis ticks
+    if clustSpikeQ3 == 0
+        title({'BBB Plume Timing';'Average Cluster Time'});
+    elseif clustSpikeQ3 == 1
+        title({'BBB Plume Timing';'Cluster Start Time'});
+    end   
+end 
+xticklabels(mouseNumLabelString)
+
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
