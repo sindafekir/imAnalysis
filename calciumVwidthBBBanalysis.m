@@ -19509,15 +19509,7 @@ if ETAorSTAq == 0 % STA data
     t1 = p(2); t2 = p(4); t3 = p(6);
     t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
 end 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% create scatter over box plot of cluster timing per axon
-
-
 if exist('allAvClocFrameBoxPlot','var') == 0
     % determine the max length of the data per mouse 
     avClocFrameMouseLen = nan(1,mouseNum);
@@ -19544,24 +19536,19 @@ yline(0)
 ax.FontSize = 15;
 ax.FontName = 'Times';
 ylabel("BBB Plume Timing")
-if ETAorSTAq == 0 % STA data
-    xlabel("Mouse")
-end 
-if ETAorSTAq == 0 % STA data
-    if clustSpikeQ3 == 0
-        title({'BBB Plume Timing Per Cluster';'Average Cluster Time'});
-    elseif clustSpikeQ3 == 1
-        title({'BBB Plume Timing Per Cluster';'Cluster Start Time'});
-    end     
-elseif ETAorSTAq == 1 % ETA data
-    set(gca,'XTick',[]) % removes x axis ticks
-    if clustSpikeQ3 == 0
-        title({'BBB Plume Timing';'Average Cluster Time'});
-    elseif clustSpikeQ3 == 1
-        title({'BBB Plume Timing';'Cluster Start Time'});
-    end   
-end 
+xlabel("Mouse")
+if clustSpikeQ3 == 0
+    title({'BBB Plume Timing Per Cluster';'Average Cluster Time'});
+elseif clustSpikeQ3 == 1
+    title({'BBB Plume Timing Per Cluster';'Cluster Start Time'});
+end     
 xticklabels(mouseNumLabelString)
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
