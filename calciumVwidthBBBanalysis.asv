@@ -18869,7 +18869,7 @@ end
 % DIFFERENCES IN FPS FOR ALL VARIABLES NEEDED (make sure to write this so
 % that it's easy to add more mice in the future, instead of having to rerun
 % and select all mice)
-%{
+
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -19928,7 +19928,7 @@ xlim([1 minFrameLen])
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% REPLAY ABOVE CODE TO GET IDEA OF WHAT TO DO NEXT BELOW 
+% 
 
 % plot change in plume pixel amplitude per cluster color coded by axon 
 figure;
