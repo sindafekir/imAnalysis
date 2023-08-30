@@ -19852,6 +19852,8 @@ xticklabels(avLabels)
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot change in cluster size and pixel amplitude over time
+% plot change in cluster size over time for all clusters, color coded by
+% mouse 
 if exist('allAxonsClustSizeTS','var') == 0 && exist('allAxonsClustAmpTS','var') == 0
     allAxonsClustSizeTS = cell(1,mouseNum);
     allAxonsClustAmpTS = cell(1,mouseNum);
@@ -19889,8 +19891,6 @@ if exist('allAxonsClustSizeTS','var') == 0 && exist('allAxonsClustAmpTS','var') 
     end 
 end 
 x = 1:minFrameLen;
-% plot change in plume size per cluster color coded by axon (STA) or
-% cluster (ETA)
 figure;
 hold all;
 ax=gca;
@@ -19913,7 +19913,12 @@ Frames_pre_stim_start = -((minFrameLen-1)/2);
 Frames_post_stim_start = (minFrameLen-1)/2; 
 fps = minFrameLen/windSize;
 sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
-FrameVals = round((1:fps:minFrameLen))+5; 
+threshFrame = floor((minFrameLen-1)/2);
+FrameVals(3) = threshFrame;
+FrameVals(2) = threshFrame - (minFrameLen/5);
+FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+FrameVals(4) = threshFrame + (minFrameLen/5);
+FrameVals(5) = FrameVals(4) + (minFrameLen/5);
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -19924,36 +19929,15 @@ title('Change in BBB Plume Size Over Time')
 xlim([1 minFrameLen])
 % set(gca, 'YScale', 'log')
 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% 
-
-% plot change in plume pixel amplitude per cluster color coded by axon 
+% plot change in cluster size over time for all clusters, color coded by
+% mouse 
 figure;
 hold all;
 ax=gca;
-for ccell = 1:length(terminals{mouse})
-    if isempty(clustPixAmpTS{terminals{mouse}(ccell)}) == 0 
-        for clust = 1:size(clustSizeTS{terminals{mouse}(ccell)},1)
-            if ETAorSTAq == 1 % ETA data
-                h = plot(x,clustPixAmpTS{terminals{mouse}(ccell)}(clust,:),'Color',clr(clust,:),'LineWidth',2);  
-            end 
-        end 
-        if ETAorSTAq == 0 % STA data 
-            h = plot(x,clustPixAmpTS{terminals{mouse}(ccell)},'Color',clr(ccell,:),'LineWidth',2);  
-        end 
-    end 
+for mouse = 1:mouseNum
+    h = plot(x,downAllAxonsClustAmpTS{mouse},'Color',clr(mouse,:),'LineWidth',2);   
 end     
-if ETAorSTAq == 0 % STA data 
-    legend(axonLabel)
-end 
-Frames = size(im,3);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-% FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+legend(mouseTSlabel)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -19961,33 +19945,18 @@ ax.FontName = 'Times';
 ylabel("BBB Plume Pixel Amplitude") 
 xlabel("Time (s)")
 title('Change in BBB Plume Pixel Amplitude Over Time')
+xlim([1 minFrameLen])
 
-% resort data to plot change in average cluster size per axon
+% plot change in average cluster size per mouse
 figure;
 hold all;
 ax=gca;
-avAxonClustSizeTS = NaN(length(terminals{mouse}),size(im,3));
-count = 1;
-for ccell = 1:length(terminals{mouse})
-    avAxonClustSizeTS(count,:) = nanmean(clustSizeTS{terminals{mouse}(ccell)},1);  %#ok<*NANMEAN> 
-    plot(x,avAxonClustSizeTS(count,:),'Color',clr(ccell,:),'LineWidth',2);      
-    count = count + 1;
+avAxonClustSizeTS = nan(mouseNum,minFrameLen);
+for mouse = 1:mouseNum
+    avAxonClustSizeTS(mouse,:) = nanmean(downAllAxonsClustSizeTS{mouse},1);  %#ok<*NANMEAN> 
+    plot(x,avAxonClustSizeTS(mouse,:),'Color',clr(mouse,:),'LineWidth',2);      
 end 
-% get the legend labels set up right 
-axons = str2double(axonString);
-[presentAxons,~] = ismember(terminals{mouse},axons);
-presentAxons = ~presentAxons;
-axons = terminals{mouse};
-axons(presentAxons) = NaN;
-axonString = string(axons);
-if ETAorSTAq == 0 % STA data 
-    legend(axonString)
-end 
-Frames = size(im,3);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-% FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+legend(mouseNumLabelString)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -19999,37 +19968,11 @@ if ETAorSTAq == 0 % STA data
 elseif ETAorSTAq == 1 % ETA data 
     title('Average Change in BBB Plume Size Over Time')
 end 
+xlim([1 minFrameLen])
+% set(gca, 'YScale', 'log')
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
- % resort data to plot change in average cluster pixel amplitude per axon
-figure;
-hold all;
-ax=gca;
-avAxonClustPixAmpTS = NaN(length(terminals{mouse}),size(im,3));
-count = 1;
-for ccell = 1:length(terminals{mouse})
-    avAxonClustPixAmpTS(count,:) = nanmean(clustPixAmpTS{terminals{mouse}(ccell)},1);  %#ok<*NANMEAN> 
-    plot(x,avAxonClustPixAmpTS(count,:),'Color',clr(ccell,:),'LineWidth',2);      
-    count = count + 1;
-end 
-if ETAorSTAq == 0 % STA data 
-    legend(axonString)
-end 
-Frames = size(im,3);
-Frames_pre_stim_start = -((Frames-1)/2); 
-Frames_post_stim_start = (Frames-1)/2; 
-sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-% FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
-ax.XTick = FrameVals;
-ax.XTickLabel = sec_TimeVals;  
-ax.FontSize = 15;
-ax.FontName = 'Times';
-ylabel("BBB Plume Pixel Amplitude") 
-xlabel("Time (s)")
-if ETAorSTAq == 0 % STA data 
-    title({'Average Change in';'BBB Plume Pixel Amplitude Over Time';'Per Axon'})   
-elseif ETAorSTAq == 1 % ETA data 
-    title({'Average Change in';'BBB Plume Pixel Amplitude Over Time'}) 
-end 
 
 if ETAorSTAq == 0 % STA data 
     % plot average change in cluster size of all axons w/95% CI 
@@ -21406,7 +21349,6 @@ if ETAorSTAq == 0 % STA data
         Frames_pre_stim_start = -((Frames-1)/2); 
         Frames_post_stim_start = (Frames-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-        FrameVals = round((1:FPSstack{mouse}:Frames))+4; 
         ax=gca;
         hold all
         plot(SNvwData{terminals{mouse}(ccell)},'k','LineWidth',2)
