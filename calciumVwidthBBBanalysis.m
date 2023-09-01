@@ -18859,17 +18859,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% BELOW CODE IS COPY AND PASTED OVER FROM SINGLE ANIMAL DBSCAN CODE ABOVE
-% GO THROUGH EACH FIGURE AND MAKE SURE TO IMPORT/CONVERT ACCOINTING FOR
-% DIFFERENCES IN FPS FOR ALL VARIABLES NEEDED (make sure to write this so
-% that it's easy to add more mice in the future, instead of having to rerun
-% and select all mice)
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -18966,7 +18956,7 @@ if exist('mouseNum','var') == 0
         clustSizeTS{mouse} = dataMat.clustSizeTS;
         clustPixAmpTS{mouse} = dataMat.clustPixAmpTS;
         % import data to plot change in vessel width 
-        avVWdata{mouse} = dataMat.avVWdata;
+        avVWdata{mouse} = dataMat.SNvwData;
         if ETAorSTAq == 0 % STA data
             avCAdata{mouse} = dataMat.avCAdata;
         end 
@@ -19381,6 +19371,7 @@ if exist('allTimeVRDistArray','var') == 0
     end 
 end 
 f3 = cell(1,mouseNum);
+clr = hsv(mouseNum);
 for mouse = 1:mouseNum
     % calculate f (trend line) for each mouse 
     includeX =~ isnan(timeVRDistArray{mouse}(:,1)); includeY =~ isnan(timeVRDistArray{mouse}(:,2)); 
@@ -19416,7 +19407,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fav3.Rsquared.Ordinary,2));
-    text(1,170,rSquared,'FontSize',20)
+    text(0,-30,rSquared,'FontSize',20)
 end 
 ylabel("Distance From VR space (microns)")
 if clustSpikeQ3 == 0 
@@ -20834,14 +20825,7 @@ if ETAorSTAq == 0 % STA data
     title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons'})
     xlim([1 minFrameLen])
 end 
-    
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot change in vessel width
-
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
 % depending on type) 
@@ -20879,29 +20863,23 @@ if ETAorSTAq == 0 % STA data
     CIv_Low = (AllAvDownVwData) + (tsv_Low*SEMv);  % Confidence Intervals
     CIv_High = (AllAvDownVwData) + (tsv_High*SEMv);  % Confidence Intervals   
 elseif ETAorSTAq == 1 % ETA data  
-    downCaData = cell(1,mouseNum);
     downVwData = cell(1,mouseNum);
-    avDownCaData = nan(mouseNum,minFrameLen);
     avDownVwData = nan(mouseNum,minFrameLen);
     for mouse = 1:mouseNum
         % resample data 
-        downCaData{mouse} = resample(allAxonCaData{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
-        downVwData{mouse} = resample(allAxonVwData{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
+        downVwData{mouse} = resample(avVWdata{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
         % average within mice
-        avDownCaData(mouse,:) = nanmean(downCaData{mouse},1);
         avDownVwData(mouse,:) = nanmean(downVwData{mouse},1);
     end 
     % average across mice
-    AllAvDownCaData = nanmean(avDownCaData,1);
     AllAvDownVwData = nanmean(avDownVwData,1);
     % determine the 95% CI 
     SEMv = (nanstd(avDownVwData))/(sqrt(size(avDownVwData,1))); %#ok<*NANSTD> % Standard Error  
-    tsc_Low = tinv(0.025,size(avDownVwData,1)-1);% T-Score for 95% CI
+    tsv_Low = tinv(0.025,size(avDownVwData,1)-1);% T-Score for 95% CI
     tsv_High = tinv(0.975,size(avDownVwData,1)-1);% T-Score for 95% CI
     CIv_Low = (AllAvDownVwData) + (tsv_Low*SEMv);  % Confidence Intervals
     CIv_High = (AllAvDownVwData) + (tsv_High*SEMv);  % Confidence Intervals  
 end 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % plot data 
 if ETAorSTAq == 0 % STA data     
     % code in buffer space for plotting          
@@ -20989,7 +20967,6 @@ if ETAorSTAq == 0 % STA data
     set(gca,'YColor','b');   
     ylim([-CAbelowZero CAaboveZero])  
     xlim([1 minFrameLen])
-
 elseif ETAorSTAq == 1 % if it's ETA data 
     % plot data  
     x = 1:length(AllAvDownVwData);                          
@@ -21018,12 +20995,12 @@ elseif ETAorSTAq == 1 % if it's ETA data
     tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
     ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
     if ETAtype == 0 % opto data 
-      title({'Vessel Width Time-Locked to Ca Spikes';'Opto-Triggered Average.'})
+      title({'Vessel Width Opto-Triggered Average.'})
     elseif ETAtype == 1 % behavior data 
         if ETAtype2 == 0 % stim aligned 
-            title({'Vessel Width Time-Locked to Ca Spikes';'Stim-Triggered Average.'})
+            title({'Vessel Width Stim-Triggered Average.'})
         elseif ETAtype2 == 1 % reward aligned 
-            title({'Vessel Width Time-Locked to Ca Spikes';'Reward-Triggered Average.'})
+            title({'Vessel Width Reward-Triggered Average.'})
         end 
     end  
     xlim([1 minFrameLen])
@@ -21045,23 +21022,16 @@ elseif ETAorSTAq == 1 % if it's ETA data
     ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
     % set(fig,'position', [500 100 900 800])  
     if ETAtype == 0 % opto data 
-      title({'Vessel Width Time-Locked to Ca Spikes';'Opto-Triggered Average.';'Across Animals'})
+      title({'Vessel Width Opto-Triggered Average.';'Across Animals'})
     elseif ETAtype == 1 % behavior data 
         if ETAtype2 == 0 % stim aligned 
-            title({'Vessel Width Time-Locked to Ca Spikes';'Stim-Triggered Average.';'Across Animals'})
+            title({'Vessel Width Stim-Triggered Average.';'Across Animals'})
         elseif ETAtype2 == 1 % reward aligned 
-            title({'Vessel Width Time-Locked to Ca Spikes';'Reward-Triggered Average.';'Across Animals'})
+            title({'Vessel Width Reward-Triggered Average.';'Across Animals'})
         end 
     end   
     xlim([1 minFrameLen])
 end 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
 % use non-smoothed, but high pass filtered and z-scored STA vid data 
