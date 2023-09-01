@@ -18899,6 +18899,8 @@ if exist('mouseNum','var') == 0
     clustAmp = cell(1,mouseNum); 
     clustSizeTS = cell(1,mouseNum); 
     clustPixAmpTS = cell(1,mouseNum); 
+    avVWdata = cell(1,mouseNum);
+    avCAdata = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % import the data for each mouse 
         dir = uigetdir('*.*',sprintf('SELECT FILE LOCATION FOR MOUSE %d?',mouseNumLabel(mouse)));
@@ -18920,6 +18922,7 @@ if exist('mouseNum','var') == 0
             end 
             clustSpikeQ3 = dataMat.clustSpikeQ3; % clustSpikeQ3 == 0 (average time of BBB plume) clustSpikeQ3 == 1 (BBB plume start time)
             windSize = dataMat.windSize; 
+            filtTime = dataMat.filtTime;
         end 
         % import data needed to plot the porportion of clusters that are
         % near the vessel out of total # of clusters 
@@ -18962,6 +18965,11 @@ if exist('mouseNum','var') == 0
         % import data to plot change in cluster size and pixel amplitude over time
         clustSizeTS{mouse} = dataMat.clustSizeTS;
         clustPixAmpTS{mouse} = dataMat.clustPixAmpTS;
+        % import data to plot change in vessel width 
+        avVWdata{mouse} = dataMat.avVWdata;
+        if ETAorSTAq == 0 % STA data
+            avCAdata{mouse} = dataMat.avCAdata;
+        end 
     end 
 elseif exist('mouseNum','var') == 1
     % FINISH CODING THIS IN LATER WHEN RELEVANT (WHEN I NEED TO ADD ANIMALS TO THE DATA SET), RIGHT NOW THE LOGIC IS
@@ -19875,7 +19883,7 @@ if exist('allAxonsClustSizeTS','var') == 0 && exist('allAxonsClustAmpTS','var') 
     downAllAxonsClustSizeTS = cell(1,mouseNum);
     downAllAxonsClustAmpTS = cell(1,mouseNum);
     for mouse = 1:mouseNum
-        % up sample data 
+        % down sample data 
         downAllAxonsClustSizeTS{mouse} = resample(allAxonsClustSizeTS{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
         downAllAxonsClustAmpTS{mouse} = resample(allAxonsClustAmpTS{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
         % replace 0s and negative going values with nans 
@@ -20241,7 +20249,7 @@ for bin = 1:clustTimeNumGroups
 end 
 % remove empty strings 
 emptyStrings = find(binLabel == '');
-binLabel(emptyStrings) = []; %#ok<FNDSB>
+binLabel(emptyStrings) = [];
 legend(binLabel)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
@@ -20447,11 +20455,6 @@ if clustTimeNumGroups == 2
     xlim([1 minFrameLen])
 end 
  %% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data  
     % identify what specific axons are listeners, controllers, or both 
     axonTypeList = cell(1,mouseNum);
@@ -20560,10 +20563,7 @@ if ETAorSTAq == 0 % STA data
                 end 
             end 
         end 
-    end 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
-    % BELOW IS OLD CODE - NEEDS EDITING BUT START WITH FIRST PRINCIPALS
-    % ABOVE 
+    end  
     count = 1 ;
     for bin = 1:3
         % determine bin labels 
@@ -20584,7 +20584,6 @@ if ETAorSTAq == 0 % STA data
             h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
         end 
     end
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
     sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
     FrameVals(3) = threshFrame;
     FrameVals(2) = threshFrame - (minFrameLen/5);
@@ -20842,434 +20841,104 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot change in vessel width
-%remove rows full of 0s if there are any b = a(any(a,2),:)
-mouse = 1;
-% import the data 
-regImDir = uigetdir('*.*',sprintf('WHERE IS THE VESSEL WIDTH DATA FOR MOUSE #%d?',mouse));
-cd(regImDir);
-% get vessel width data 
-vDataFullTrace = cell(1,mouseNum);
-vDataFullTrace2 = cell(1,mouseNum);
-vDataFullTrace3 = cell(1,mouseNum);
-VWfileList = dir('**/*VWdata_*.mat'); % list VW data files in current directory 
-for vid = 1:length(vidList{mouse})
-    VWlabel = VWfileList(vid).name;
-    VWmat = matfile(sprintf(VWlabel,vidList{mouse}(vid)));
-    Vdata = VWmat.Vdata;       
-    if iscell(Vdata{mouse}) == 1
-        vDataFullTrace{mouse}{vid} = Vdata; % vDataFullTrace{mouse}{vid}(VWroi)
-        % average the VWrois that you want 
-        if vid == 1 
-            VWrois = input('Input the VW ROIs that you want to average. ');
-        end 
-        for VWroi = 1:length(VWrois)
-            vDataFullTrace2{mouse}{vid}(VWroi,:) = vDataFullTrace{mouse}{vid}{VWroi};
-        end 
-        vDataFullTrace3{mouse}{vid} = nanmean(vDataFullTrace2{mouse}{vid});
-    elseif iscell(Vdata{mouse}) == 0
-        vDataFullTrace{mouse}{vid} = Vdata{1}; % vDataFullTrace{mouse}{vid}(VWroi)
-    end 
-end 
-if iscell(Vdata{mouse}) == 1
-    clearvars vDataFullTrace vDataFullTrace2 
-    vDataFullTrace = vDataFullTrace3; clearvars vDataFullTrace3
-end 
-if ETAorSTAq == 0 % STA data
-    % get the calcium data 
-    regImDir = uigetdir('*.*',sprintf('WHERE IS THE CALCIUM DATA FOR MOUSE #%d?',mouse));
-    cd(regImDir);
-    % get vessel width data 
-    cDataFullTrace = cell(1,mouseNum);
-    CAfileList = dir('**/*CAdata_*.mat'); % list VW data files in current directory 
-    for vid = 1:length(vidList{mouse})
-        CAlabel = CAfileList(vid).name;
-        CAmat = matfile(sprintf(CAlabel,vidList{mouse}(vid)));
-        cDataFullTrace{mouse}{vid} = CAmat.CcellData;  
-    end 
-end 
-% sort the data
-if ETAorSTAq == 0 % STA data
-    % find CA peaks 
-    stdTrace = cell(1,length(vidList{mouse})); 
-    sigLocs2 = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        for ccell = 1:length(terminals{mouse})
-            [peaks, locs] = findpeaks(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)},'MinPeakProminence',0.1,'MinPeakWidth',2); %0.6,0.8,0.9,1\
-            %find the sig peaks (peaks above 2 standard deviations from mean) 
-            stdTrace{vid}{terminals{mouse}(ccell)} = std(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});  
-            count = 1 ; 
-            for loc = 1:length(locs)
-                if peaks(loc) > stdTrace{vid}{terminals{mouse}(ccell)}*2
-                    sigLocs2{vid}{terminals{mouse}(ccell)}(count) = locs(loc);
-                    count = count + 1;
-                end 
-            end 
-        end 
-    end 
-elseif ETAorSTAq == 1 % ETA data 
-    % resort state_start_f into sigLocs{vid}{terminals{mouse}(ccell)}(peak) 
-    sigLocs2 = cell(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        sigLocs2{vid}= state_start_f{mouse}{vid}';
-    end 
-end 
-% combine data, get z score, reseparate data into vids 
-if ETAorSTAq == 0 % STA data
-    % combine the VW data to get z score of whole experiment
-    frameLens = zeros(1,length(vidList{mouse}));
-    for vid = 1:length(vidList{mouse})
-        if vid == 1 
-            frameLen = size(greenStacks{vid},3);
-        elseif vid > 1 
-            frameLen = frameLen + size(greenStacks{vid},3);
-        end 
-        frameLens(vid) = size(greenStacks{vid},3);
-    end 
-    combCAdata = cell(1,max(terminals{mouse}));
-    zCAdata = cell(1,max(terminals{mouse}));
-    szCAdata = cell(1,length(vidList{mouse}));
-    for ccell = 1:length(terminals{mouse})
-        for vid = 1:length(vidList{mouse})
-            if vid == 1 
-                count = length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)});
-            end 
-            for frame = 1:length(cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}) 
-                if vid == 1 
-                    combCAdata{terminals{mouse}(ccell)}(:,frame) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(:,frame);
-                elseif vid > 1 
-                    combCAdata{terminals{mouse}(ccell)}(:,count+1) = cDataFullTrace{mouse}{vid}{terminals{mouse}(ccell)}(:,frame);
-                    count = count + 1;                                      
-                end 
-            end     
-        end    
-        % z score the CA data  
-        zCAdata{terminals{mouse}(ccell)} = zscore(combCAdata{terminals{mouse}(ccell)},0,2);
-        clearvars combCAdata
-        % resort data back into videos 
-        count = 1;
-        for vid = 1:length(vidList{mouse})
-            for frame = 1:frameLens(vid)  
-                if count <= length(zCAdata{terminals{mouse}(ccell)})
-                    szCAdata{vid}{terminals{mouse}(ccell)}(:,frame) = zCAdata{terminals{mouse}(ccell)}(:,count); 
-                    count = count + 1;
-                end 
-            end 
-        end 
-    end 
-end 
-% combine the VW data to get z score of whole experiment
-frameLens = zeros(1,length(vidList{mouse}));
-for vid = 1:length(vidList{mouse})
-    if vid == 1 
-        frameLen = size(greenStacks{vid},3);
-    elseif vid > 1 
-        frameLen = frameLen + size(greenStacks{vid},3);
-    end 
-    frameLens(vid) = size(greenStacks{vid},3);
-end 
-combVWdata = zeros(1,frameLen);
-for vid = 1:length(vidList{mouse})
-    if vid == 1 
-        count = length(vDataFullTrace{mouse}{vid});
-    end 
-    for frame = 1:length(vDataFullTrace{mouse}{vid}) 
-        if vid == 1 
-            combVWdata(:,frame) = vDataFullTrace{mouse}{vid}(:,frame);
-        elseif vid > 1 
-            combVWdata(:,count+1) = vDataFullTrace{mouse}{vid}(:,frame);
-            count = count + 1;                                      
-        end 
-    end     
-end 
-% z score the VW data  
-zVWdata = zscore(combVWdata,0,2);
-clearvars combVWdata
-% resort data back into videos 
-szVWdata = cell(1,length(vidList{mouse}));
-count = 1;
-for vid = 1:length(vidList{mouse})
-    for frame = 1:frameLens(vid)       
-        szVWdata{vid}(:,frame) = zVWdata(:,count); 
-        count = count + 1;
-    end 
-end 
-% sort data 
-windSize = input('How big should the window be around the event/spike in seconds? '); %24
-windFrames = floor(windSize*FPSstack{mouse});
-lenIts = 1;
+
+% resort data to plot all average change in vessel width per mouse and
+% average change in vessel width across mice (data is sorted differently
+% depending on type) 
 if ETAorSTAq == 0 % STA data  
-    sortedVWdata = cell(1,length(vidList{mouse}));
-    sortedCAdata = cell(1,length(vidList{mouse}));
-    vwStackArray2 = cell(1,max(terminals{mouse}));
-    caStackArray2 = cell(1,max(terminals{mouse}));
-    for ccell = 1:length(terminals{mouse})
-        % make sure sigLocs is organized in the correct orientation: 
-        % sigLocs{vid}(it,peak)
-        [r,c] = size(sigLocs2{1}{terminals{mouse}(ccell)});
-        if r ~= lenIts
-            for vid = 1:length(vidList{mouse})  
-                sigLocs2{vid}{terminals{mouse}(ccell)} = sigLocs2{vid}{terminals{mouse}(ccell)}';
-            end 
-        end   
-        for it = 1:lenIts
-            % terminals = terminals{1};
-            for vid = 1:length(vidList{mouse})                  
-                if isempty(sigLocs2{vid}{terminals{mouse}(ccell)}) == 0 && isempty(szCAdata{vid}) == 0
-                    for peak = 1:size(sigLocs2{vid}{terminals{mouse}(ccell)},2)                        
-                        start = sigLocs2{vid}{terminals{mouse}(ccell)}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                        stop = sigLocs2{vid}{terminals{mouse}(ccell)}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
-                        if start == 0 
-                            start = 1 ;
-                            stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                        end        
-                        if stop < size(szVWdata{vid},2) && start > 0 && stop < size(szCAdata{vid}{terminals{mouse}(ccell)},2)
-                            sortedVWdata{vid}{terminals{mouse}(ccell)}{peak} = szVWdata{vid}(:,start:stop);
-                            sortedCAdata{vid}{terminals{mouse}(ccell)}{peak} = szCAdata{vid}{terminals{mouse}(ccell)}(:,start:stop);
-                        end 
-                    end     
-                end                  
-            end           
-            count = 1;
-            for vid = 1:length(vidList{mouse})     
-                if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
-                    for peak = 1:size(sortedVWdata{vid}{terminals{mouse}(ccell)},2)  
-                        if isempty(sortedVWdata{vid}{terminals{mouse}(ccell)}{peak}) == 0
-                            vwStackArray2{terminals{mouse}(ccell)}(count,:) = single(sortedVWdata{vid}{terminals{mouse}(ccell)}{peak});   
-                            caStackArray2{terminals{mouse}(ccell)}(count,:) = single(sortedCAdata{vid}{terminals{mouse}(ccell)}{peak}); 
-                            count = count + 1;
-                        end 
-                    end
-                end 
-            end 
-        end        
-    end 
-elseif ETAorSTAq == 1 % ETA data 
-    % make sure sigLocs is organized in the correct orientation: 
-    % sigLocs{vid}(it,peak)
-    [r,c] = size(sigLocs2{1});
-    if r ~= lenIts
-        for vid = 1:length(vidList{mouse})  
-            sigLocs2{vid} = sigLocs2{vid}';
+    allAxonCaData = cell(1,mouseNum);
+    allAxonVwData = cell(1,mouseNum);
+    downCaData = cell(1,mouseNum);
+    downVwData = cell(1,mouseNum);
+    avDownCaData = nan(mouseNum,minFrameLen);
+    avDownVwData = nan(mouseNum,minFrameLen);
+    for mouse = 1:mouseNum
+        for ccell = 1:length(terminals{mouse})
+            allAxonCaData{mouse}(ccell,:) = avCAdata{mouse}{terminals{mouse}(ccell)};
+            allAxonVwData{mouse}(ccell,:) = avVWdata{mouse}{terminals{mouse}(ccell)};
         end 
+        % resample data 
+        downCaData{mouse} = resample(allAxonCaData{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
+        downVwData{mouse} = resample(allAxonVwData{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
+        % average within mice 
+        avDownCaData(mouse,:) = nanmean(downCaData{mouse},1);
+        avDownVwData(mouse,:) = nanmean(downVwData{mouse},1);
     end 
-    for it = 1:lenIts
-        % terminals = terminals{1};
-        sortedVWdata = cell(1,1);
-        for vid = 1:length(vidList{mouse})                  
-            if isempty(sigLocs2{vid}) == 0
-                for peak = 1:size(sigLocs2{vid},2)                        
-                    start = sigLocs2{vid}(it,peak)-floor((windSize/2)*FPSstack{mouse});
-                    stop = sigLocs2{vid}(it,peak)+floor((windSize/2)*FPSstack{mouse});                
-                    if start == 0 
-                        start = 1 ;
-                        stop = start + floor((windSize/2)*FPSstack{mouse}) + floor((windSize/2)*FPSstack{mouse});
-                    end        
-                    if stop < size(szVWdata{vid},2) && start > 0 
-                        sortedVWdata{vid}{peak} = szVWdata{vid}(:,start:stop);
-                    end 
-                end     
-            end                  
-        end            
-        count = 1;
-        if windFrames ~= length(sortedVWdata{1}{1})
-            vwStackArray2 = NaN(1,length(sortedVWdata{1}{1}));
-        elseif windFrames == length(sortedVWdata{1}{1})
-            vwStackArray2 = NaN(1,windFrames);
-        end 
-        for vid = 1:length(vidList{mouse})     
-            if length(sortedVWdata) >= vid && isempty(sortedVWdata{vid}) == 0 
-                for peak = 1:size(sortedVWdata{vid},2)  
-                    if isempty(sortedVWdata{vid}{peak}) == 0
-                        vwStackArray2(count,:) = single(sortedVWdata{vid}{peak});          
-                        count = count + 1;
-                    end 
-                end
-            end 
-        end 
+    % average across mice
+    AllAvDownCaData = nanmean(avDownCaData,1);
+    AllAvDownVwData = nanmean(avDownVwData,1);
+    % determine the 95% CI 
+    SEMc = (nanstd(avDownCaData))/(sqrt(size(avDownCaData,1))); %#ok<*NANSTD> % Standard Error  
+    tsc_Low = tinv(0.025,size(avDownCaData,1)-1);% T-Score for 95% CI
+    tsc_High = tinv(0.975,size(avDownCaData,1)-1);% T-Score for 95% CI
+    CIc_Low = (AllAvDownCaData) + (tsc_Low*SEMc);  % Confidence Intervals
+    CIc_High = (AllAvDownCaData) + (tsc_High*SEMc);  % Confidence Intervals   
+    SEMv = (nanstd(avDownVwData))/(sqrt(size(avDownVwData,1))); %#ok<*NANSTD> % Standard Error  
+    tsv_Low = tinv(0.025,size(avDownVwData,1)-1);% T-Score for 95% CI
+    tsv_High = tinv(0.975,size(avDownVwData,1)-1);% T-Score for 95% CI
+    CIv_Low = (AllAvDownVwData) + (tsv_Low*SEMv);  % Confidence Intervals
+    CIv_High = (AllAvDownVwData) + (tsv_High*SEMv);  % Confidence Intervals   
+elseif ETAorSTAq == 1 % ETA data  
+    downCaData = cell(1,mouseNum);
+    downVwData = cell(1,mouseNum);
+    avDownCaData = nan(mouseNum,minFrameLen);
+    avDownVwData = nan(mouseNum,minFrameLen);
+    for mouse = 1:mouseNum
+        % resample data 
+        downCaData{mouse} = resample(allAxonCaData{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
+        downVwData{mouse} = resample(allAxonVwData{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
+        % average within mice
+        avDownCaData(mouse,:) = nanmean(downCaData{mouse},1);
+        avDownVwData(mouse,:) = nanmean(downVwData{mouse},1);
     end 
+    % average across mice
+    AllAvDownCaData = nanmean(avDownCaData,1);
+    AllAvDownVwData = nanmean(avDownVwData,1);
+    % determine the 95% CI 
+    SEMv = (nanstd(avDownVwData))/(sqrt(size(avDownVwData,1))); %#ok<*NANSTD> % Standard Error  
+    tsc_Low = tinv(0.025,size(avDownVwData,1)-1);% T-Score for 95% CI
+    tsv_High = tinv(0.975,size(avDownVwData,1)-1);% T-Score for 95% CI
+    CIv_Low = (AllAvDownVwData) + (tsv_Low*SEMv);  % Confidence Intervals
+    CIv_High = (AllAvDownVwData) + (tsv_High*SEMv);  % Confidence Intervals  
 end 
-% prep data for plotting 
-if ETAorSTAq == 0 % STA data
-    avVWdata = cell(1,max(terminals{mouse}));
-    avCAdata = cell(1,max(terminals{mouse}));
-    SNvwStackArray2 = cell(1,max(terminals{mouse}));
-    CIv_Low = cell(1,max(terminals{mouse}));
-    CIv_High = cell(1,max(terminals{mouse}));
-    CIc_Low = cell(1,max(terminals{mouse}));
-    CIc_High = cell(1,max(terminals{mouse}));    
-    for ccell = 1:length(terminals{mouse})
-        % determine the average 
-        avVWdata{terminals{mouse}(ccell)} = nanmean(vwStackArray2{terminals{mouse}(ccell)},1); 
-        avCAdata{terminals{mouse}(ccell)} = nanmean(caStackArray2{terminals{mouse}(ccell)},1); 
-    end 
-    smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise. ');
-    if smoothQ == 0 
-        SNvwData = avVWdata;
-    end 
-    SNcaData = avCAdata;
-    for ccell = 1:length(terminals{mouse})
-        %temporal smoothing option
-        if smoothQ == 1
-            if ccell == 1 
-                filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec
-            end 
-            filter_rate = FPSstack{mouse}*filtTime; 
-            SNvwData{terminals{mouse}(ccell)} = smoothdata(avVWdata{terminals{mouse}(ccell)},2,'movmean',filter_rate);    
-            SNvwStackArray2{terminals{mouse}(ccell)} = smoothdata(vwStackArray2{terminals{mouse}(ccell)},2,'movmean',filter_rate);  
-        end        
-        %DETERMINE 95% CI                       
-        SEMv = (nanstd(SNvwStackArray2{terminals{mouse}(ccell)}))/(sqrt(size(SNvwStackArray2{terminals{mouse}(ccell)},1))); %#ok<*NANSTD> % Standard Error            
-        tsv_Low = tinv(0.025,size(SNvwStackArray2{terminals{mouse}(ccell)},1)-1);% T-Score for 95% CI
-        tsv_High = tinv(0.975,size(SNvwStackArray2{terminals{mouse}(ccell)},1)-1);% T-Score for 95% CI
-        CIv_Low{terminals{mouse}(ccell)} = (SNvwData{terminals{mouse}(ccell)}) + (tsv_Low*SEMv);  % Confidence Intervals
-        CIv_High{terminals{mouse}(ccell)} = (SNvwData{terminals{mouse}(ccell)}) + (tsv_High*SEMv);  % Confidence Intervals 
-        SEMc = (nanstd(caStackArray2{terminals{mouse}(ccell)}))/(sqrt(size(caStackArray2{terminals{mouse}(ccell)},1))); %#ok<*NANSTD> % Standard Error                    
-        tsc_Low = tinv(0.025,size(caStackArray2{terminals{mouse}(ccell)},1)-1);% T-Score for 95% CI
-        tsc_High = tinv(0.975,size(caStackArray2{terminals{mouse}(ccell)},1)-1);% T-Score for 95% CI
-        CIc_Low{terminals{mouse}(ccell)} = (SNcaData{terminals{mouse}(ccell)}) + (tsc_Low*SEMc);  % Confidence Intervals
-        CIc_High{terminals{mouse}(ccell)} = (SNcaData{terminals{mouse}(ccell)}) + (tsc_High*SEMc);  % Confidence Intervals         
-    end 
-elseif ETAorSTAq == 1 % ETA data 
-    % determine the average 
-    avVWdata = nanmean(vwStackArray2,1);         
-    %temporal smoothing option
-    smoothQ = input('Input 0 if you do not want to do temporal smoothing. Input 1 otherwise. ');
-    if smoothQ == 0 
-        SNvwData = avVWdata;
-    elseif smoothQ == 1
-        filtTime = input('How many seconds do you want to smooth your data by? '); % our favorite STA trace is smoothed by 0.7 sec 
-        filter_rate = FPSstack{mouse}*filtTime; 
-        SNvwData = smoothdata(avVWdata,2,'movmean',filter_rate);    
-        SNvwStackArray2 = smoothdata(vwStackArray2,2,'movmean',filter_rate);    
-    end 
-    %DETERMINE 95% CI                       
-    SEMv = (nanstd(SNvwStackArray2))/(sqrt(size(SNvwStackArray2,1))); %#ok<*NANSTD> % Standard Error            
-    tsv_Low = tinv(0.025,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
-    tsv_High = tinv(0.975,size(SNvwStackArray2,1)-1);% T-Score for 95% CI
-    CIv_Low = (SNvwData) + (tsv_Low*SEMv);  % Confidence Intervals
-    CIv_High = (SNvwData) + (tsv_High*SEMv);  % Confidence Intervals    
-end 
-% plot 
-if ETAorSTAq == 0 % STA data    
-    % allCAdata(ccell,:) = SNcaData{terminals{mouse}(ccell)};
-    allCAdata = nan(length(terminals{mouse}),length(SNcaData{terminals{mouse}(1)}));
-    allVWdata = nan(length(terminals{mouse}),length(SNcaData{terminals{mouse}(1)}));
-    for ccell = 1:length(terminals{mouse})       
-        % code in buffer space for plotting          
-        %determine range of data Ca data
-        CaDataRange = max(avCAdata{terminals{mouse}(ccell)})-min(avCAdata{terminals{mouse}(ccell)});
-        %determine plotting buffer space for Ca data 
-        CaBufferSpace = CaDataRange;
-        %determine first set of plotting min and max values for Ca data
-        CaPlotMin = min(avCAdata{terminals{mouse}(ccell)})-CaBufferSpace;
-        CaPlotMax = max(avCAdata{terminals{mouse}(ccell)})+CaBufferSpace; 
-        %determine Ca 0 ratio/location 
-        % CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
-        %determine range of VW data 
-        VWdataRange = max(avVWdata{terminals{mouse}(ccell)})-min(avVWdata{terminals{mouse}(ccell)}); 
-        %determine plotting buffer space for BBB data 
-        VWbufferSpace = VWdataRange;
-        %determine first set of plotting min and max values for BBB data
-        VWplotMin = min(avVWdata{terminals{mouse}(ccell)})-VWbufferSpace;
-        VWplotMax = max(avVWdata{terminals{mouse}(ccell)})+VWbufferSpace; 
-        %determine VW 0 ratio/location
-        VWzeroRatio = abs(VWplotMin)/(VWplotMax-VWplotMin);
-        %determine how much to shift the CA axis so that the zeros align 
-        CAbelowZero = (CaPlotMax-CaPlotMin)*VWzeroRatio;
-        CAaboveZero = (CaPlotMax-CaPlotMin)-CAbelowZero;
-        % plot data  
-        x = 1:length(avVWdata{terminals{mouse}(ccell)});                          
-        figure;
-        Frames = length(x);
-        Frames_pre_stim_start = -((Frames-1)/2); 
-        Frames_post_stim_start = (Frames-1)/2; 
-        sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-        ax=gca;
-        hold all
-        plot(SNvwData{terminals{mouse}(ccell)},'k','LineWidth',2)
-        patch([x fliplr(x)],[CIv_Low{terminals{mouse}(ccell)} fliplr(CIv_High{terminals{mouse}(ccell)})],'k','EdgeColor','none')
-        alpha(0.3)
-        % changePt = floor(windFrames/2);
-        FrameVals(3) = threshFrame;
-        FrameVals(2) = threshFrame - (Frames/5);
-        FrameVals(1) = FrameVals(2) - (Frames/5);
-        FrameVals(4) = threshFrame + (Frames/5);
-        FrameVals(5) = FrameVals(4) + (Frames/5);
-        ax.XTick = FrameVals;
-        ax.XTick = FrameVals;
-        ax.XTickLabel = sec_TimeVals;   
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
-        xlabel('time (s)','FontName','Arial')
-        tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
-        ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
-        % xLimStart = floor(10*FPSstack{mouse});
-        % set(fig,'position', [500 100 900 800])  
-        yyaxis right
-        plot(SNcaData{terminals{mouse}(ccell)},'b','LineWidth',2)
-        patch([x fliplr(x)],[CIc_Low{terminals{mouse}(ccell)} fliplr(CIc_High{terminals{mouse}(ccell)})],'b','EdgeColor','none')
-        alpha(0.3)
-        ylabel('z-scored calcium','FontName','Arial')
-        axonLabel = sprintf('Axon %d.',terminals{mouse}(ccell));
-        title({'Spike-Triggered Average.';axonLabel})
-        set(gca,'YColor','b');   
-        ylim([-CAbelowZero CAaboveZero])  
-        xlim([1 length(SNcaData{terminals{mouse}(ccell)})])
-        % put data together for averaged figure 
-        allCAdata(ccell,:) = SNcaData{terminals{mouse}(ccell)};
-        allVWdata(ccell,:) = SNvwData{terminals{mouse}(ccell)};
-    end 
-    % plot average change in VW and CA data across axons 
-    avAllCAdata = nanmean(allCAdata,1);  
-    avAllVWdata = nanmean(allVWdata,1);
-    %DETERMINE 95% CI                       
-    SEMvAv = (nanstd(allVWdata))/(sqrt(size(allVWdata,1))); %#ok<*NANSTD> % Standard Error     
-    tsvAv_Low = tinv(0.025,size(allVWdata,1)-1);% T-Score for 95% CI
-    tsvAv_High = tinv(0.975,size(allVWdata,1)-1);% T-Score for 95% CI
-    CIvAv_Low = (avAllVWdata) + (tsvAv_Low*SEMvAv);  % Confidence Intervals
-    CIvAv_High = (avAllVWdata) + (tsvAv_High*SEMvAv);  % Confidence Intervals 
-    SEMcAv = (nanstd(allCAdata))/(sqrt(size(allCAdata,1))); %#ok<*NANSTD> % Standard Error     
-    tscAv_Low = tinv(0.025,size(allCAdata,1)-1);% T-Score for 95% CI
-    tscAv_High = tinv(0.975,size(allCAdata,1)-1);% T-Score for 95% CI
-    CIcAv_Low = (avAllCAdata) + (tscAv_Low*SEMcAv);  % Confidence Intervals
-    CIcAv_High = (avAllCAdata) + (tscAv_High*SEMcAv);  % Confidence Intervals     
-    % plot 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% plot data 
+if ETAorSTAq == 0 % STA data     
     % code in buffer space for plotting          
     %determine range of data Ca data
-    CaDataRange = max(avAllCAdata)-min(avAllCAdata);
+    CaDataRange = max(AllAvDownCaData)-min(AllAvDownCaData);
     %determine plotting buffer space for Ca data 
     CaBufferSpace = CaDataRange;
     %determine first set of plotting min and max values for Ca data
-    CaPlotMin = min(avAllCAdata)-CaBufferSpace;
-    CaPlotMax = max(avAllCAdata)+CaBufferSpace; 
+    CaPlotMin = min(AllAvDownCaData)-CaBufferSpace;
+    CaPlotMax = max(AllAvDownCaData)+CaBufferSpace; 
     %determine Ca 0 ratio/location 
-    CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);  
+    % CaZeroRatio = abs(CaPlotMin)/(CaPlotMax-CaPlotMin);
     %determine range of VW data 
-    VWdataRange = max(avAllVWdata)-min(avAllVWdata); 
+    VWdataRange = max(AllAvDownVwData)-min(AllAvDownVwData); 
     %determine plotting buffer space for BBB data 
     VWbufferSpace = VWdataRange;
     %determine first set of plotting min and max values for BBB data
-    VWplotMin = min(avAllVWdata)-VWbufferSpace;
-    VWplotMax = max(avAllVWdata)+VWbufferSpace; 
+    VWplotMin = min(AllAvDownVwData)-VWbufferSpace;
+    VWplotMax = max(AllAvDownVwData)+VWbufferSpace; 
     %determine VW 0 ratio/location
     VWzeroRatio = abs(VWplotMin)/(VWplotMax-VWplotMin);
     %determine how much to shift the CA axis so that the zeros align 
     CAbelowZero = (CaPlotMax-CaPlotMin)*VWzeroRatio;
-    CAaboveZero = (CaPlotMax-CaPlotMin)-CAbelowZero; 
+    CAaboveZero = (CaPlotMax-CaPlotMin)-CAbelowZero;
     % plot data  
-    x = 1:length(avVWdata{terminals{mouse}(ccell)});                          
-    fig = figure;
+    x = 1:length(AllAvDownVwData);                          
+    figure;
     Frames = length(x);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    FrameVals = round((1:FPSstack{mouse}:Frames))+4; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
     ax=gca;
     hold all
-    plot(avAllVWdata,'k','LineWidth',2)
-    patch([x fliplr(x)],[CIvAv_Low fliplr(CIvAv_High)],'k','EdgeColor','none')
-    alpha(0.3)
-    changePt = floor(windFrames/2);
+    for mouse = 1:mouseNum
+        plot(avDownVwData(mouse,:),'k','LineWidth',2)
+    end 
+    threshFrame = floor(minFrameLen/2);
     FrameVals(3) = threshFrame;
     FrameVals(2) = threshFrame - (Frames/5);
     FrameVals(1) = FrameVals(2) - (Frames/5);
@@ -21283,36 +20952,58 @@ if ETAorSTAq == 0 % STA data
     xlabel('time (s)','FontName','Arial')
     tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
     ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
-    xLimStart = floor(10*FPSstack{mouse});
+    % xLimStart = floor(10*FPSstack{mouse});
     % set(fig,'position', [500 100 900 800])  
     yyaxis right
-    plot(avAllCAdata,'b','LineWidth',2)
-    patch([x fliplr(x)],[CIcAv_Low fliplr(CIcAv_High)],'b','EdgeColor','none')
-    alpha(0.3)
+    for mouse = 1:mouseNum
+        plot(avDownCaData(mouse,:),'b-','LineWidth',2)
+    end 
     ylabel('z-scored calcium','FontName','Arial')
-    axonLabel = 'Averaged across axons.';
-    title({'Spike-Triggered Average.';axonLabel})
+    title('Vessel Width Time-Locked to Ca Spikes')
     set(gca,'YColor','b');   
     ylim([-CAbelowZero CAaboveZero])  
-    xlim([1 length(SNcaData{terminals{mouse}(ccell)})])
-    % put data together for averaged figure 
-    allCAdata(ccell,:) = SNcaData{terminals{mouse}(ccell)};
-    allVWdata(ccell,:) = SNvwData{terminals{mouse}(ccell)};
-elseif ETAorSTAq == 1 % ETA data 
-    % plot data          
-    x = 1:length(avVWdata);                          
-    fig = figure;
+    xlim([1 minFrameLen])
+        
+    % plot average change in VW and CA data across mice  
+    figure;
+    ax=gca;
+    hold all
+    plot(AllAvDownVwData,'k','LineWidth',2)
+    patch([x fliplr(x)],[CIv_Low fliplr(CIv_High)],'k','EdgeColor','none')
+    alpha(0.3)
+    ax.XTick = FrameVals;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;   
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    xlabel('time (s)','FontName','Arial')
+    tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
+    ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
+    % set(fig,'position', [500 100 900 800])  
+    yyaxis right
+    plot(AllAvDownCaData,'b','LineWidth',2)
+    patch([x fliplr(x)],[CIc_Low fliplr(CIc_High)],'b','EdgeColor','none')
+    alpha(0.3)
+    ylabel('z-scored calcium','FontName','Arial')
+    title({'Vessel Width Time-Locked to Ca Spikes';'Across Animals'})
+    set(gca,'YColor','b');   
+    ylim([-CAbelowZero CAaboveZero])  
+    xlim([1 minFrameLen])
+
+elseif ETAorSTAq == 1 % if it's ETA data 
+    % plot data  
+    x = 1:length(AllAvDownVwData);                          
+    figure;
     Frames = length(x);
     Frames_pre_stim_start = -((Frames-1)/2); 
     Frames_post_stim_start = (Frames-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
-    FrameVals = round((1:FPSstack{mouse}:Frames))+4; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
     ax=gca;
     hold all
-    plot(SNvwData,'k','LineWidth',2)
-    patch([x fliplr(x)],[CIv_Low fliplr(CIv_High)],'k','EdgeColor','none')
-    alpha(0.3)
-    changePt = floor(windFrames/2);
+    for mouse = 1:mouseNum
+        plot(avDownVwData(mouse,:),'k','LineWidth',2)
+    end 
+    threshFrame = floor(minFrameLen/2);
     FrameVals(3) = threshFrame;
     FrameVals(2) = threshFrame - (Frames/5);
     FrameVals(1) = FrameVals(2) - (Frames/5);
@@ -21324,19 +21015,53 @@ elseif ETAorSTAq == 1 % ETA data
     ax.FontSize = 15;
     ax.FontName = 'Arial';
     xlabel('time (s)','FontName','Arial')
-    ylabel('z-scored vessel width','FontName','Arial')
-    xLimStart = floor(10*FPSstack{mouse});
     tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
+    ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
     if ETAtype == 0 % opto data 
-      title({'Opto-Triggered Average.';tempSmoothLabel})
+      title({'Vessel Width Time-Locked to Ca Spikes';'Opto-Triggered Average.'})
     elseif ETAtype == 1 % behavior data 
         if ETAtype2 == 0 % stim aligned 
-            title({'Stim-Triggered Average.';tempSmoothLabel})
+            title({'Vessel Width Time-Locked to Ca Spikes';'Stim-Triggered Average.'})
         elseif ETAtype2 == 1 % reward aligned 
-            title({'Reward-Triggered Average.';tempSmoothLabel})
+            title({'Vessel Width Time-Locked to Ca Spikes';'Reward-Triggered Average.'})
         end 
-    end 
+    end  
+    xlim([1 minFrameLen])
+        
+    % plot average change in VW across mice  
+    figure;
+    ax=gca;
+    hold all
+    plot(AllAvDownVwData,'k','LineWidth',2)
+    patch([x fliplr(x)],[CIv_Low fliplr(CIv_High)],'k','EdgeColor','none')
+    alpha(0.3)
+    ax.XTick = FrameVals;
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;   
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    xlabel('time (s)','FontName','Arial')
+    tempSmoothLabel = sprintf('%.2f second smoothing.',filtTime);
+    ylabel({'z-scored vessel width';tempSmoothLabel},'FontName','Arial')
+    % set(fig,'position', [500 100 900 800])  
+    if ETAtype == 0 % opto data 
+      title({'Vessel Width Time-Locked to Ca Spikes';'Opto-Triggered Average.';'Across Animals'})
+    elseif ETAtype == 1 % behavior data 
+        if ETAtype2 == 0 % stim aligned 
+            title({'Vessel Width Time-Locked to Ca Spikes';'Stim-Triggered Average.';'Across Animals'})
+        elseif ETAtype2 == 1 % reward aligned 
+            title({'Vessel Width Time-Locked to Ca Spikes';'Reward-Triggered Average.';'Across Animals'})
+        end 
+    end   
+    xlim([1 minFrameLen])
 end 
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
 % use non-smoothed, but high pass filtered and z-scored STA vid data 
