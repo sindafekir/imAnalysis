@@ -16935,6 +16935,10 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot distribution of axon distances from the vessel 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -17138,7 +17142,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(20,0.15,rSquared,'FontSize',20)
+            text(30,20,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
@@ -17342,10 +17346,6 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size and pixel amp grouped by pre and post spike
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     clearvars data
     CsizeForPlot = clustSize';
@@ -17645,7 +17645,6 @@ if  clustSpikeQ == 1
         xticklabels(avLabels)
     end 
 end 
-
 
 %% plot change in cluster size and pixel amplitude over time for each axon and averaged
 if clustSpikeQ == 0
@@ -18596,7 +18595,8 @@ elseif ETAorSTAq == 1 % ETA data
     CIv_Low = (SNvwData) + (tsv_Low*SEMv);  % Confidence Intervals
     CIv_High = (SNvwData) + (tsv_High*SEMv);  % Confidence Intervals    
 end 
-%% plot 
+
+% plot 
 if ETAorSTAq == 0 % STA data    
     % allCAdata(ccell,:) = SNcaData{terminals{mouse}(ccell)};
     allCAdata = nan(length(terminals{mouse}),length(SNcaData{terminals{mouse}(1)}));
@@ -18862,7 +18862,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-%{
+
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -19074,7 +19074,8 @@ if ETAorSTAq == 0 % STA data
     end 
     figure;
     ax=gca;
-    histogram(allMinVAdists,20)
+    histogram(allMinVAdists,61)
+    set(gca,'XTick',0:10:310,'XTickLabelRotation',45)
     avVAdists = nanmean(allMinVAdists); 
     medVAdists = nanmedian(allMinVAdists); %#ok<*NANMEDIAN>
     avVAdistsLabel = sprintf('Average axon distance from vessel: %.3f',avVAdists);
@@ -19280,7 +19281,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2.Rsquared.Ordinary,2));
-        text(1,120,rSquared,'FontSize',20)
+        text(1,200,rSquared,'FontSize',20)
     end    
     ylabel("Distance From Axon (microns)")
     if clustSpikeQ3 == 0 
@@ -19344,7 +19345,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2O.Rsquared.Ordinary,2));
-        text(1,130,rSquared,'FontSize',20)
+        text(1,200,rSquared,'FontSize',20)
     end     
     ylabel("Distance From Axon (microns)")
     if clustSpikeQ3 == 0 
@@ -19410,7 +19411,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fav3.Rsquared.Ordinary,2));
-    text(0,-30,rSquared,'FontSize',20)
+    text(0,130,rSquared,'FontSize',20)
 end 
 ylabel("Distance From VR space (microns)")
 if clustSpikeQ3 == 0 
@@ -19578,7 +19579,7 @@ ylabel("BBB Plume Size (microns squared)")
 xlabel("Mouse")  
 title({'BBB Plume Size Per Cluster';'All Plumes'});
 xticklabels(mouseNumLabelString)
-set(gca, 'YScale', 'log')
+% set(gca, 'YScale', 'log')
 
 if exist('allCampForPlot','var') == 0
     % resort clustSize
@@ -19665,7 +19666,7 @@ elseif ETAorSTAq == 1 % ETA data
     end 
 end
 xticklabels(mouseNumLabelString)   
-set(gca, 'YScale', 'log')
+% set(gca, 'YScale', 'log')
 
 figure;
 ax=gca;
@@ -19783,7 +19784,7 @@ elseif ETAorSTAq == 1 % ETA data
       end 
 end 
 xticklabels(avLabels)
-set(gca, 'YScale', 'log')
+% set(gca, 'YScale', 'log')
 
 clearvars data 
 % reshape data for plotting 

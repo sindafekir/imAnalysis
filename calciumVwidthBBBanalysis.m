@@ -19074,7 +19074,8 @@ if ETAorSTAq == 0 % STA data
     end 
     figure;
     ax=gca;
-    histogram(allMinVAdists,20)
+    histogram(allMinVAdists,61)
+    set(gca,'XTick',0:10:310,'XTickLabelRotation',45)
     avVAdists = nanmean(allMinVAdists); 
     medVAdists = nanmedian(allMinVAdists); %#ok<*NANMEDIAN>
     avVAdistsLabel = sprintf('Average axon distance from vessel: %.3f',avVAdists);
@@ -19280,7 +19281,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2.Rsquared.Ordinary,2));
-        text(1,120,rSquared,'FontSize',20)
+        text(1,200,rSquared,'FontSize',20)
     end    
     ylabel("Distance From Axon (microns)")
     if clustSpikeQ3 == 0 
@@ -19344,7 +19345,7 @@ if ETAorSTAq == 0 % STA data
         set(fitHandle,'Color',[0 0 0],'LineWidth',3);
         leg.String(end) = [];
         rSquared = string(round(fav2O.Rsquared.Ordinary,2));
-        text(1,130,rSquared,'FontSize',20)
+        text(1,200,rSquared,'FontSize',20)
     end     
     ylabel("Distance From Axon (microns)")
     if clustSpikeQ3 == 0 
@@ -19410,7 +19411,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fav3.Rsquared.Ordinary,2));
-    text(0,-30,rSquared,'FontSize',20)
+    text(0,130,rSquared,'FontSize',20)
 end 
 ylabel("Distance From VR space (microns)")
 if clustSpikeQ3 == 0 
