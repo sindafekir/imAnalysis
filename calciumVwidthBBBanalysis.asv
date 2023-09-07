@@ -15982,7 +15982,7 @@ end
                
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (one animal at a time) 
-%{
+
 %% get the pixel sizes 
 getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
 if getPixSizeQ == 1 
@@ -16935,10 +16935,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot distribution of axon distances from the vessel 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -17142,7 +17138,7 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(30,20,rSquared,'FontSize',20)
+            text(20,0.15,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
         if clustSpikeQ3 == 0 
@@ -17346,6 +17342,10 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size and pixel amp grouped by pre and post spike
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     clearvars data
     CsizeForPlot = clustSize';
@@ -17645,6 +17645,7 @@ if  clustSpikeQ == 1
         xticklabels(avLabels)
     end 
 end 
+
 
 %% plot change in cluster size and pixel amplitude over time for each axon and averaged
 if clustSpikeQ == 0
@@ -18595,8 +18596,7 @@ elseif ETAorSTAq == 1 % ETA data
     CIv_Low = (SNvwData) + (tsv_Low*SEMv);  % Confidence Intervals
     CIv_High = (SNvwData) + (tsv_High*SEMv);  % Confidence Intervals    
 end 
-
-% plot 
+%% plot 
 if ETAorSTAq == 0 % STA data    
     % allCAdata(ccell,:) = SNcaData{terminals{mouse}(ccell)};
     allCAdata = nan(length(terminals{mouse}),length(SNcaData{terminals{mouse}(1)}));
