@@ -20859,53 +20859,37 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% AFTER CODING IN CLOSE VS FAR FIGURES, MAKE IT POSSIBLE TO SELECT SPECIFIC
-% DISTANCE METRICS FOR SPECIFIC FIGURES 
-
 if ETAorSTAq == 0 % STA data  
-    distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set different distance metrics.');
-    if distQ == 0
-        closeAxons = cell(1,mouseNum);
-        farAxons  = cell(1,mouseNum);
-        closeAxonLoc = cell(1,mouseNum);
-        farAxonLoc = cell(1,mouseNum);
-        clustDistsAndAxon = cell(1,mouseNum);
-        closeClusts = cell(1,mouseNum);
-        farClusts = cell(1,mouseNum);
-        closeClustLoc = cell(1,mouseNum);
-        farClustLoc = cell(1,mouseNum);
-        listenerAxonLoc = cell(1,mouseNum);
-        controllerAxonLoc = cell(1,mouseNum);
-        bothAxonLoc = cell(1,mouseNum);
-        closeListenerAxonLocs = cell(1,mouseNum);
-        for mouse = 1:mouseNum
-            % identify what axons are close (<10 microns) and far (>10 microns)
-            % from vessel
-            closeAxons{mouse} = find(minVAdists{mouse} < 10);
-            farAxons{mouse} = find(minVAdists{mouse} > 10);
-            closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
-            farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
-            % identify what clusters are close (<10 microns) and far (>10 microns)
-            % from axon 
-            [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
-            clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
-            clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
-            closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) < 10; 
-            farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
-            % identify the locs for listener, controller, and both axons 
-            listenerAxonLoc{mouse} = ismember(axonInds{mouse},listenerAxons{mouse});
-            controllerAxonLoc{mouse} = ismember(axonInds{mouse},controllerAxons{mouse});
-            bothAxonLoc{mouse} = ismember(axonInds{mouse},bothAxons{mouse});
-            % identify close vs far listeners, controllers, and both axons 
-            closeListenerAxonLocs{mouse} = (closeAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            % PICK UP HERE- THE ABOVE CODE WORKS- JUST NEED TO MAKE THE
-            % OTHER 5 VARIABLES 
-        end 
-    elseif distQ == 1
+    distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). ')
+    % identify what axons are close (<10 microns) and far (>10 microns)
+    % from vessel
+    closeAxons = cell(1,mouseNum);
+    farAxons  = cell(1,mouseNum);
+    closeAxonLoc = cell(1,mouseNum);
+    farAxonLoc = cell(1,mouseNum);
+    clustDistsAndAxon = cell(1,mouseNum);
+    closeClusts = cell(1,mouseNum);
+    farClusts = cell(1,mouseNum);
+    closeClustLoc = cell(1,mouseNum);
+    farClustLoc = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        closeAxons{mouse} = find(minVAdists{mouse} < 10);
+        farAxons{mouse} = find(minVAdists{mouse} > 10);
+        closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
+        farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
+        % identify what clusters are close (<10 microns) and far (>10 microns)
+        % from axon 
+        [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
+        clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
+        clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
+        closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) < 10; 
+        farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10; 
     end 
 
+
+
+% AFTER CODING IN THE LOGIC ABOVE, SOFT CODE IN DISTANCE VALUES THAT YOU
+% WANT TO SEE 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -20917,14 +20901,20 @@ if ETAorSTAq == 0 % STA data
         for mouse = 1:mouseNum
             if mouse == 1 
                 if bin == 1 % sort listeners
+                    % find the indeces for the specific axons needed by type 
+                    loc = ismember(axonInds{mouse},listenerAxons{mouse});
                     % sort data 
                     binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
                     binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
                 elseif bin == 2 % sort controllers 
+                    % find the indeces for the specific axons needed by type 
+                    loc = ismember(axonInds{mouse},controllerAxons{mouse});
                     % sort data 
                     binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
                     binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
                 elseif bin == 3 % sort bothers  
+                    % find the indeces for the specific axons needed by type 
+                    loc = ismember(axonInds{mouse},bothAxons{mouse});
                     % sort data 
                     binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
                     binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
