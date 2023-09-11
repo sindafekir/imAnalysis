@@ -20859,12 +20859,10 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% FIRST: ADD IN ABILITY TO THRESHOLD BASED ON MAX CLUSTER SIZE 
-% LATER: MAKE IT POSSIBLE TO SELECT SPECIFIC
+% AFTER CODING IN CLOSE VS FAR FIGURES, MAKE IT POSSIBLE TO SELECT SPECIFIC
 % DISTANCE METRICS FOR SPECIFIC FIGURES 
 
 if ETAorSTAq == 0 % STA data  
-    x = 1:minFrameLen;
     distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set different distance metrics.');
     if distQ == 0
         closeAxons = cell(1,mouseNum);
@@ -21160,6 +21158,9 @@ if ETAorSTAq == 0 % STA data
     xlabel("Time (s)")
     title({'Average Change in';'BBB Plume Pixel Amplitude'})
     xlim([1 minFrameLen])
+
+    %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     
     % plot aligned cluster change in size per bin and total average 
     % determine cluster start frame per bin  
@@ -21218,27 +21219,23 @@ if ETAorSTAq == 0 % STA data
     figure;
     hold all;
     ax=gca;
-    count = 1;
-    for bin = 1:3 % listener, controller, both  
-        for loc = 1:2 % close axons, far axons
-            % align clusters
-            % determine longest cluster 
-            [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-            arrayLen = minFrameLen-longestClustStart+1;
-            for clust = 1:size(binClustTSpixAmpData{bin}{loc},1)
-                % get data and buffer end as needed 
-                data = binClustTSpixAmpData{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                data(:,length(data)+1:arrayLen) = NaN;
-                % align data 
-                alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
-            end 
-            x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
-            % averaged the aligned clusters 
-            avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
-            if isempty(binClustTSpixAmpData{bin}) == 0 
-                h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-            end 
-            count = count + 1;
+    for bin = 1:3             
+        % align clusters
+        % determine longest cluster 
+        [longestClustStart,longestClust] = min(binClustStartFrame{bin});
+        arrayLen = minFrameLen-longestClustStart+1;
+        for clust = 1:size(binClustTSpixAmpData{bin},1)
+            % get data and buffer end as needed 
+            data = binClustTSpixAmpData{bin}(clust,binClustStartFrame{bin}(clust):end);
+            data(:,length(data)+1:arrayLen) = NaN;
+            % align data 
+            alignedBinClustsPixAmp{bin}(clust,:) = data;
+        end 
+        x = 1:size(alignedBinClustsPixAmp{bin},2);
+        % averaged the aligned clusters 
+        avAlignedClustsPixAmp{bin} = nanmean(alignedBinClustsPixAmp{bin},1);
+        if isempty(binClustTSpixAmpData{bin}) == 0 
+            h = plot(x,avAlignedClustsPixAmp{bin},'Color',clr(bin,:),'LineWidth',2); 
         end 
     end 
     legend(binLabel)
@@ -21249,6 +21246,95 @@ if ETAorSTAq == 0 % STA data
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
     title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
+    xlim([1 minFrameLen])
+
+    %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+    % plot total aligned cluster size average 
+    [~,c] = cellfun(@size,alignedBinClustsSize);
+    maxLen = max(c);
+    for bin = 1:3           
+        % put data together with appropriate buffering to get total average 
+        data = alignedBinClustsSize{bin};
+        data(:,size(data,2)+1:maxLen) = NaN;        
+        if bin == 1 
+            allClusts = data;
+        elseif bin > 1 
+            allClusts(size(allClusts,1)+1:size(allClusts,1)+size(data,1),:) = data;
+        end 
+    end 
+    % plot average of all axons w/95% CI 
+    figure;
+    hold all;
+    ax=gca;
+    % determine average 
+    avAllClustSizeTS = nanmean(allClusts);
+    x = 1:length(avAllClustSizeTS);
+    % determine 95% CI 
+    SEM = (nanstd(allClusts))/(sqrt(size(allClusts,1))); %#ok<*NANSTD> % Standard Error            
+    ts_Low = tinv(0.025,size(allClusts,1)-1);% T-Score for 95% CI
+    ts_High = tinv(0.975,size(allClusts,1)-1);% T-Score for 95% CI
+    CI_Low = (nanmean(allClusts,1)) + (ts_Low*SEM);  % Confidence Intervals
+    CI_High = (nanmean(allClusts,1)) + (ts_High*SEM);  % Confidence Intervals
+    plot(x,avAllClustSizeTS,'k','LineWidth',2);   
+    clear v f 
+    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+    % remove NaNs so face can be made and colored 
+    nanRows = isnan(v(:,2));
+    v(nanRows,:) = []; f = 1:size(v,1);
+    patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+    alpha(0.3)
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;  
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("BBB Plume Size (microns squared)") 
+    xlabel("Time (s)")
+    title({'Average Aligned Change in BBB Plume Size';'Across Axons'})
+    xlim([1 minFrameLen]) 
+    
+    % plot total aligned cluster pixel amplitude average 
+    for bin = 1:3           
+        % put data together with appropriate buffering to get total average 
+        data = alignedBinClustsPixAmp{bin};
+        data(:,size(data,2)+1:maxLen) = NaN;        
+        if bin == 1 
+            allClusts = data;
+        elseif bin > 1 
+            allClusts(size(allClusts,1)+1:size(allClusts,1)+size(data,1),:) = data;
+        end 
+    end 
+    % plot average of all axons w/95% CI 
+    figure;
+    hold all;
+    ax=gca;
+    % determine average 
+    avAllClustSizeTS = nanmean(allClusts);
+    x = 1:length(avAllClustSizeTS);
+    % determine 95% CI 
+    SEM = (nanstd(allClusts))/(sqrt(size(allClusts,1))); %#ok<*NANSTD> % Standard Error            
+    ts_Low = tinv(0.025,size(allClusts,1)-1);% T-Score for 95% CI
+    ts_High = tinv(0.975,size(allClusts,1)-1);% T-Score for 95% CI
+    CI_Low = (nanmean(allClusts,1)) + (ts_Low*SEM);  % Confidence Intervals
+    CI_High = (nanmean(allClusts,1)) + (ts_High*SEM);  % Confidence Intervals
+    plot(x,avAllClustSizeTS,'k','LineWidth',2);   
+    clear v f 
+    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+    % remove NaNs so face can be made and colored 
+    nanRows = isnan(v(:,2));
+    v(nanRows,:) = []; f = 1:size(v,1);
+    patch('Faces',f,'Vertices',v,'FaceColor','black','EdgeColor','none');
+    alpha(0.3)
+    ax.XTick = FrameVals;
+    ax.XTickLabel = sec_TimeVals;  
+    ax.FontSize = 15;
+    ax.FontName = 'Times';
+    ylabel("BBB Plume Pixel Amplitude") 
+    xlabel("Time (s)")
+    title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons'})
     xlim([1 minFrameLen])
 end 
 
