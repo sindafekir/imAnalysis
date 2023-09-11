@@ -20865,7 +20865,7 @@ end
 
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
-    distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set different distance metrics.');
+    distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set different distance metrics. ');
     if distQ == 0
         closeAxons = cell(1,mouseNum);
         farAxons  = cell(1,mouseNum);
@@ -20996,260 +20996,764 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
     end  
-    % plot pie chart showing proportion of close vs far listeners, controllers,
-    % and bothers there are 
-    count = 1;
-    axonTypePieData = nan(1);
-    % resort data for the pie chart 
-    for bin = 1:3 % listener, controller, both
-        for loc = 1:2 % close axons, far axons 
-            axonTypePieData(count) = size(binClustTSsizeData{bin}{loc},1);
-            count = count + 1;
+    clustSizeQ = input('Input 1 to set a size threshold for plotting TS data grouped by axon type and distance. Input 0 otherwise. ');   
+    if clustSizeQ == 1 
+        clustSizeThresh = input('What is the cluster size threshold? ');
+        % remove all cluster data that does not reach the size threshold 
+        binClustTSsizeDataHigh = cell(1,3);
+        binClustTSsizeDataLow = cell(1,3);
+        binClustTSpixAmpDataHigh = cell(1,3);
+        binClustTSpixAmpDataLow = cell(1,3);
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons
+                % find the clusters that meet and exceed the threshold 
+                highClusts = any(binClustTSsizeData{bin}{loc} >= clustSizeThresh,2);
+                % create data arrays for high and low clusts 
+                binClustTSsizeDataHigh{bin}{loc} = binClustTSsizeData{bin}{loc}(highClusts,:);
+                binClustTSsizeDataLow{bin}{loc} = binClustTSsizeData{bin}{loc}(~highClusts,:);
+                binClustTSpixAmpDataHigh{bin}{loc} = binClustTSpixAmpData{bin}{loc}(highClusts,:);
+                binClustTSpixAmpDataLow{bin}{loc} = binClustTSpixAmpData{bin}{loc}(~highClusts,:);
+            end 
         end 
     end 
-
-    % create pie chart for pre, post, and evenly split axons separated by
-    % distance from vessel  
-    figure;
-    p = pie(axonTypePieData);
-    customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
-    colormap(customColors)
-    axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
-    legend(axonClusterTypeLabels)
-    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel'})
-    ax=gca; ax.FontSize = 15;
-    t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
-    t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
-
-    % create pie chart showing number of axons that are mostly pre, mostly
-    % post, and evenly split
-    allAxonTypes = sum(axonTypes,1);
-    reSortedAllAxonTypes(1) = allAxonTypes(1); reSortedAllAxonTypes(2) = allAxonTypes(3); reSortedAllAxonTypes(3) = allAxonTypes(2);
-    figure;
-    p = pie(reSortedAllAxonTypes);
-    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195])
-    legend('Listener','Controller','Both')
-    title('Axon Type')
-    ax=gca; ax.FontSize = 15;
-    t1 = p(2); t2 = p(4); t3 = p(6);
-    t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
-
-    % plot change in cluster size grouped by axon type and distance 
-    count = 1 ;
-    count2 = 1; 
-    figure;
-    ax=gca;
-    hold all;
-    for bin = 1:3 % listener, controller, both
-        % determine bin labels 
-        for loc = 1:2 % close axons, far axons
-            for clust = 1:size(binClustTSsizeData{bin}{loc},1)
-                if clust == 1 
-                    if isempty(binClustTSsizeData{bin}{loc}) == 0                     
-                        binLabel(count) = axonClusterTypeLabels(count2);
-                        count = count + 1;
-                    end 
-                elseif clust > 1
-                    if isempty(binClustTSsizeData{bin}{loc}) == 0 
-                        binLabel(count) = '';
-                        count = count + 1;                        
-                    end                 
-                end             
+ 
+    if clustSizeQ == 0
+        % plot pie chart showing proportion of close vs far listeners, controllers,
+        % and bothers there are 
+        count = 1;
+        axonTypePieData = nan(1);
+        % resort data for the pie chart 
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons 
+                axonTypePieData(count) = size(binClustTSsizeData{bin}{loc},1);
+                count = count + 1;
             end 
-            % plot change in cluster size color coded by axon 
-            if isempty(binClustTSsizeData{bin}{loc}) == 0 
-                h = plot(x,binClustTSsizeData{bin}{loc},'Color',customColors(count2,:),'LineWidth',2); 
-            end 
-            count2 = count2 + 1;
         end 
-    end
-    sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
-    FrameVals(3) = threshFrame;
-    FrameVals(2) = threshFrame - (minFrameLen/5);
-    FrameVals(1) = FrameVals(2) - (minFrameLen/5);
-    FrameVals(4) = threshFrame + (minFrameLen/5);
-    FrameVals(5) = FrameVals(4) + (minFrameLen/5);
-    legend(binLabel) 
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Arial';
-    ylabel("BBB Plume Size (microns squared)") 
-    xlabel("Time (s)")
-    title('Change in BBB Plume Size')
-    xlim([1 minFrameLen])
-
-    % plot change in cluster pixel amplitude grouped by axon type and distance 
-    count = 1; 
-    figure;
-    ax=gca;
-    hold all;
-    for bin = 1:3 % listener, controller, both
-        % determine bin labels 
-        for loc = 1:2 % close axons, far axons
-            % plot change in cluster size color coded by axon 
-            if isempty(binClustTSpixAmpData{bin}{loc}) == 0 
-                h = plot(x,binClustTSpixAmpData{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-            end 
-            count = count + 1;
-        end 
-    end
-    sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
-    FrameVals(3) = threshFrame;
-    FrameVals(2) = threshFrame - (minFrameLen/5);
-    FrameVals(1) = FrameVals(2) - (minFrameLen/5);
-    FrameVals(4) = threshFrame + (minFrameLen/5);
-    FrameVals(5) = FrameVals(4) + (minFrameLen/5);
-    legend(binLabel) 
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Arial';
-    ylabel("BBB Plume Pixel Amplitude") 
-    xlabel("Time (s)")
-    title('Change in BBB Plume Pixel Amplitude')
-    xlim([1 minFrameLen])
-       
-    % plot average change in cluster size 
-    figure;
-    hold all;
-    ax=gca;
-    avBinClustSizeTS = NaN(3,minFrameLen);
-    count = 1;
-    for bin = 1:3 % listener, controller, both
-        % determine bin labels 
-        for loc = 1:2 % close axons, far axons
-            avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin}{loc},1);  
-            plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
-            count = count + 1;
-        end 
-    end 
-    % remove empty strings 
-    emptyStrings = find(binLabel == '');
-    binLabel(emptyStrings) = [];
-    legend(binLabel)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
-    xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size'})
-    xlim([1 minFrameLen])
     
-    % plot average change in cluster size 
-    figure;
-    hold all;
-    ax=gca;
-    avBinClustPixAmpTS = NaN(3,minFrameLen);
-    count = 1;
-    for bin = 1:3 % listener, controller, both
-        % determine bin labels 
-        for loc = 1:2 % close axons, far axons
-            avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin}{loc},1);  
-            plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
-            count = count + 1;
+        % create pie chart for pre, post, and evenly split axons separated by
+        % distance from vessel  
+        figure;
+        p = pie(axonTypePieData);
+        customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
+        colormap(customColors)
+        axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        legend(axonClusterTypeLabels)
+        title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel'})
+        ax=gca; ax.FontSize = 12;
+        t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
+        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
+
+        % create pie chart showing number of axons that are mostly pre, mostly
+        % post, and evenly split
+        allAxonTypes = sum(axonTypes,1);
+        reSortedAllAxonTypes(1) = allAxonTypes(1); reSortedAllAxonTypes(2) = allAxonTypes(3); reSortedAllAxonTypes(3) = allAxonTypes(2);
+        figure;
+        p = pie(reSortedAllAxonTypes);
+        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195])
+        legend('Listener','Controller','Both')
+        title('Axon Type')
+        ax=gca; ax.FontSize = 12;
+        t1 = p(2); t2 = p(4); t3 = p(6);
+        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
+    elseif clustSizeQ == 1  
+        % plot pie chart showing proportion of close vs far listeners, controllers,
+        % and bothers there are 
+        count = 1;
+        axonTypePieDataHigh = nan(1);
+        axonTypePieDataLow = nan(1);
+        % resort data for the pie chart 
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons 
+                axonTypePieDataHigh(count) = size(binClustTSsizeDataHigh{bin}{loc},1);
+                axonTypePieDataLow(count) = size(binClustTSsizeDataLow{bin}{loc},1);
+                count = count + 1;
+            end 
         end 
-    end 
-    legend(binLabel)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
-    xlabel("Time (s)")
-    title({'Average Change in';'BBB Plume Pixel Amplitude'})
-    xlim([1 minFrameLen])
     
-    % plot aligned cluster change in size per bin and total average 
-    % determine cluster start frame per bin  
-    binClustStartFrame = cell(1,3);
-    alignedBinClustsSize = cell(1,3);
-    avAlignedClustsSize = cell(1,3);
-    figure;
-    hold all;
-    ax=gca;
-    count = 1;
-    for bin = 1:3 % listener, controller, both   
-        for loc = 1:2 % close axons, far axons
-            [clustLocX, clustLocY] = find(~isnan(binClustTSsizeData{bin}{loc}));
-            clusts = unique(clustLocX);              
-            for clust = 1:length(clusts)
-                binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+        % create pie chart for pre, post, and evenly split axons separated by
+        % distance from vessel for plumes that exceed the size threshold
+        % and those that do not 
+        figure;
+        p = pie(axonTypePieDataHigh);
+        customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
+        colormap(customColors)
+        axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        legend(axonClusterTypeLabels)
+        titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+        title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+        ax=gca; ax.FontSize = 12;
+        t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
+        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
+
+        figure;
+        p = pie(axonTypePieDataLow);
+        customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
+        colormap(customColors)
+        axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        legend(axonClusterTypeLabels)
+        titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+        title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+        ax=gca; ax.FontSize = 12;
+        t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
+        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
+    end  
+    if clustSizeQ == 0
+        % plot change in cluster size grouped by axon type and distance 
+        count = 1 ;
+        count2 = 1; 
+        figure;
+        ax=gca;
+        hold all;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                for clust = 1:size(binClustTSsizeData{bin}{loc},1)
+                    if clust == 1 
+                        if isempty(binClustTSsizeData{bin}{loc}) == 0                     
+                            binLabel(count) = axonClusterTypeLabels(count2);
+                            count = count + 1;
+                        end 
+                    elseif clust > 1
+                        if isempty(binClustTSsizeData{bin}{loc}) == 0 
+                            binLabel(count) = '';
+                            count = count + 1;                        
+                        end                 
+                    end             
+                end 
+                % plot change in cluster size color coded by axon 
+                if isempty(binClustTSsizeData{bin}{loc}) == 0 
+                    h = plot(x,binClustTSsizeData{bin}{loc},'Color',customColors(count2,:),'LineWidth',2); 
+                end 
+                count2 = count2 + 1;
             end 
-            % align clusters
-            % determine longest cluster 
-            [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-            arrayLen = minFrameLen-longestClustStart+1;
-            for clust = 1:size(binClustTSsizeData{bin}{loc},1)
-                % get data and buffer end as needed 
-                data = binClustTSsizeData{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                data(:,length(data)+1:arrayLen) = NaN;
-                % align data 
-                alignedBinClustsSize{bin}{loc}(clust,:) = data;
-            end 
-            x = 1:size(alignedBinClustsSize{bin}{loc},2);
-            % averaged the aligned clusters 
-            avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
-            if isempty(binClustTSsizeData{bin}{loc}) == 0 
-                h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-            end 
-            count = count + 1;
-        end 
-    end 
-    legend(binLabel)
-    Frames_pre_stim_start = -((minFrameLen-1)/2); 
-    Frames_post_stim_start = (minFrameLen-1)/2; 
-    sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
-    FrameVals = round((1:fps:minFrameLen));
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
-    xlabel("Time (s)")
-    title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
-    xlim([1 minFrameLen])
+        end
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (minFrameLen/5);
+        FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+        FrameVals(4) = threshFrame + (minFrameLen/5);
+        FrameVals(5) = FrameVals(4) + (minFrameLen/5);
+        legend(binLabel) 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title('Change in BBB Plume Size')
+        xlim([1 minFrameLen])
     
-    % plot aligned cluster change in pixel amplitude per bin and total average 
-    % determine cluster start frame per bin  
-    alignedBinClustsPixAmp = cell(1,3);
-    avAlignedClustsPixAmp = cell(1,3);
-    figure;
-    hold all;
-    ax=gca;
-    count = 1;
-    for bin = 1:3 % listener, controller, both  
-        for loc = 1:2 % close axons, far axons
-            % align clusters
-            % determine longest cluster 
-            [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-            arrayLen = minFrameLen-longestClustStart+1;
-            for clust = 1:size(binClustTSpixAmpData{bin}{loc},1)
-                % get data and buffer end as needed 
-                data = binClustTSpixAmpData{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                data(:,length(data)+1:arrayLen) = NaN;
-                % align data 
-                alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+        % plot change in cluster pixel amplitude grouped by axon type and distance 
+        count = 1; 
+        figure;
+        ax=gca;
+        hold all;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                % plot change in cluster size color coded by axon 
+                if isempty(binClustTSpixAmpData{bin}{loc}) == 0 
+                    h = plot(x,binClustTSpixAmpData{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
             end 
-            x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
-            % averaged the aligned clusters 
-            avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
-            if isempty(binClustTSpixAmpData{bin}) == 0 
-                h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+        end
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (minFrameLen/5);
+        FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+        FrameVals(4) = threshFrame + (minFrameLen/5);
+        FrameVals(5) = FrameVals(4) + (minFrameLen/5);
+        legend(binLabel) 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title('Change in BBB Plume Pixel Amplitude')
+        xlim([1 minFrameLen])
+           
+        % plot average change in cluster size 
+        figure;
+        hold all;
+        ax=gca;
+        avBinClustSizeTS = NaN(3,minFrameLen);
+        count = 1;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin}{loc},1);  
+                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                count = count + 1;
             end 
-            count = count + 1;
         end 
+        % remove empty strings 
+        emptyStrings = find(binLabel == '');
+        binLabel(emptyStrings) = [];
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title({'Average Change in BBB Plume Size'})
+        xlim([1 minFrameLen])
+        
+        % plot average change in cluster size 
+        figure;
+        hold all;
+        ax=gca;
+        avBinClustPixAmpTS = NaN(3,minFrameLen);
+        count = 1;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin}{loc},1);  
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Average Change in';'BBB Plume Pixel Amplitude'})
+        xlim([1 minFrameLen])
+        
+        % plot aligned cluster change in size per bin and total average 
+        % determine cluster start frame per bin  
+        binClustStartFrame = cell(1,3);
+        alignedBinClustsSize = cell(1,3);
+        avAlignedClustsSize = cell(1,3);
+        figure;
+        hold all;
+        ax=gca;
+        count = 1;
+        for bin = 1:3 % listener, controller, both   
+            for loc = 1:2 % close axons, far axons
+                [clustLocX, clustLocY] = find(~isnan(binClustTSsizeData{bin}{loc}));
+                clusts = unique(clustLocX);              
+                for clust = 1:length(clusts)
+                    binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+                end 
+                % align clusters
+                % determine longest cluster 
+                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                arrayLen = minFrameLen-longestClustStart+1;
+                for clust = 1:size(binClustTSsizeData{bin}{loc},1)
+                    % get data and buffer end as needed 
+                    data = binClustTSsizeData{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                    data(:,length(data)+1:arrayLen) = NaN;
+                    % align data 
+                    alignedBinClustsSize{bin}{loc}(clust,:) = data;
+                end 
+                x = 1:size(alignedBinClustsSize{bin}{loc},2);
+                % averaged the aligned clusters 
+                avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
+                if isempty(binClustTSsizeData{bin}{loc}) == 0 
+                    h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        Frames_pre_stim_start = -((minFrameLen-1)/2); 
+        Frames_post_stim_start = (minFrameLen-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
+        FrameVals = round((1:fps:minFrameLen));
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
+        xlim([1 minFrameLen])
+        
+        % plot aligned cluster change in pixel amplitude per bin and total average 
+        % determine cluster start frame per bin  
+        alignedBinClustsPixAmp = cell(1,3);
+        avAlignedClustsPixAmp = cell(1,3);
+        figure;
+        hold all;
+        ax=gca;
+        count = 1;
+        for bin = 1:3 % listener, controller, both  
+            for loc = 1:2 % close axons, far axons
+                % align clusters
+                % determine longest cluster 
+                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                arrayLen = minFrameLen-longestClustStart+1;
+                for clust = 1:size(binClustTSpixAmpData{bin}{loc},1)
+                    % get data and buffer end as needed 
+                    data = binClustTSpixAmpData{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                    data(:,length(data)+1:arrayLen) = NaN;
+                    % align data 
+                    alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+                end 
+                x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
+                % averaged the aligned clusters 
+                avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
+                if isempty(binClustTSpixAmpData{bin}) == 0 
+                    h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
+        xlim([1 minFrameLen])
+    elseif clustSizeQ == 1 
+        % plot the clusters that meet or exceed the threshold 
+        % plot change in cluster size grouped by axon type and distance 
+        count = 1 ;
+        count2 = 1; 
+        figure;
+        ax=gca;
+        hold all;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                for clust = 1:size(binClustTSsizeDataHigh{bin}{loc},1)
+                    if clust == 1 
+                        if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0                     
+                            binLabel(count) = axonClusterTypeLabels(count2);
+                            count = count + 1;
+                        end 
+                    elseif clust > 1
+                        if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
+                            binLabel(count) = '';
+                            count = count + 1;                        
+                        end                 
+                    end             
+                end 
+                % plot change in cluster size color coded by axon 
+                if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
+                    h = plot(x,binClustTSsizeDataHigh{bin}{loc},'Color',customColors(count2,:),'LineWidth',2); 
+                end 
+                count2 = count2 + 1;
+            end 
+        end
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (minFrameLen/5);
+        FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+        FrameVals(4) = threshFrame + (minFrameLen/5);
+        FrameVals(5) = FrameVals(4) + (minFrameLen/5);
+        legend(binLabel) 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        titleLabel = sprintf('BBB plumes that exceed %d microns squared.',clustSizeThresh);
+        title({'Change in BBB Plume Size';titleLabel})
+        xlim([1 minFrameLen])
+    
+        % plot change in cluster pixel amplitude grouped by axon type and distance 
+        count = 1; 
+        figure;
+        ax=gca;
+        hold all;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                % plot change in cluster size color coded by axon 
+                if isempty(binClustTSpixAmpDataHigh{bin}{loc}) == 0 
+                    h = plot(x,binClustTSpixAmpDataHigh{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (minFrameLen/5);
+        FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+        FrameVals(4) = threshFrame + (minFrameLen/5);
+        FrameVals(5) = FrameVals(4) + (minFrameLen/5);
+        legend(binLabel) 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Pixel Amplitude';titleLabel})
+        xlim([1 minFrameLen])
+           
+        % plot average change in cluster size 
+        figure;
+        hold all;
+        ax=gca;
+        avBinClustSizeTS = NaN(3,minFrameLen);
+        count = 1;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataHigh{bin}{loc},1);  
+                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                count = count + 1;
+            end 
+        end 
+        % remove empty strings 
+        emptyStrings = find(binLabel == '');
+        binLabel(emptyStrings) = [];
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title({'Average Change in BBB Plume Size';titleLabel})
+        xlim([1 minFrameLen])
+        
+        % plot average change in cluster size 
+        figure;
+        hold all;
+        ax=gca;
+        avBinClustPixAmpTS = NaN(3,minFrameLen);
+        count = 1;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataHigh{bin}{loc},1);  
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
+        xlim([1 minFrameLen])
+        
+        % plot aligned cluster change in size per bin and total average 
+        % determine cluster start frame per bin  
+        binClustStartFrame = cell(1,3);
+        alignedBinClustsSize = cell(1,3);
+        avAlignedClustsSize = cell(1,3);
+        figure;
+        hold all;
+        ax=gca;
+        count = 1;
+        for bin = 1:3 % listener, controller, both   
+            for loc = 1:2 % close axons, far axons
+                [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataHigh{bin}{loc}));
+                clusts = unique(clustLocX);              
+                for clust = 1:length(clusts)
+                    binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+                end 
+                % align clusters
+                % determine longest cluster 
+                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                arrayLen = minFrameLen-longestClustStart+1;
+                for clust = 1:size(binClustTSsizeDataHigh{bin}{loc},1)
+                    % get data and buffer end as needed 
+                    data = binClustTSsizeDataHigh{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                    data(:,length(data)+1:arrayLen) = NaN;
+                    % align data 
+                    alignedBinClustsSize{bin}{loc}(clust,:) = data;
+                end 
+                x = 1:size(alignedBinClustsSize{bin}{loc},2);
+                % averaged the aligned clusters 
+                avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
+                if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
+                    h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        Frames_pre_stim_start = -((minFrameLen-1)/2); 
+        Frames_post_stim_start = (minFrameLen-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
+        FrameVals = round((1:fps:minFrameLen));
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel})
+        xlim([1 minFrameLen])
+        
+        % plot aligned cluster change in pixel amplitude per bin and total average 
+        % determine cluster start frame per bin  
+        alignedBinClustsPixAmp = cell(1,3);
+        avAlignedClustsPixAmp = cell(1,3);
+        figure;
+        hold all;
+        ax=gca;
+        count = 1;
+        for bin = 1:3 % listener, controller, both  
+            for loc = 1:2 % close axons, far axons
+                % align clusters
+                % determine longest cluster 
+                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                arrayLen = minFrameLen-longestClustStart+1;
+                for clust = 1:size(binClustTSpixAmpDataHigh{bin}{loc},1)
+                    % get data and buffer end as needed 
+                    data = binClustTSpixAmpDataHigh{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                    data(:,length(data)+1:arrayLen) = NaN;
+                    % align data 
+                    alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+                end 
+                x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
+                % averaged the aligned clusters 
+                avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
+                if isempty(binClustTSpixAmpDataHigh{bin}) == 0 
+                    h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
+        xlim([1 minFrameLen])
+ 
+        % plot the clusters that are below the threshold 
+        % plot change in cluster size grouped by axon type and distance 
+        x = 1:minFrameLen;
+        count = 1 ;
+        count2 = 1; 
+        figure;
+        ax=gca;
+        hold all;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                for clust = 1:size(binClustTSsizeDataLow{bin}{loc},1)
+                    if clust == 1 
+                        if isempty(binClustTSsizeDataLow{bin}{loc}) == 0                     
+                            binLabel(count) = axonClusterTypeLabels(count2);
+                            count = count + 1;
+                        end 
+                    elseif clust > 1
+                        if isempty(binClustTSsizeDataLow{bin}{loc}) == 0 
+                            binLabel(count) = '';
+                            count = count + 1;                        
+                        end                 
+                    end             
+                end 
+                % plot change in cluster size color coded by axon 
+                if isempty(binClustTSsizeDataLow{bin}{loc}) == 0 
+                    h = plot(x,binClustTSsizeDataLow{bin}{loc},'Color',customColors(count2,:),'LineWidth',2); 
+                end 
+                count2 = count2 + 1;
+            end 
+        end
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (minFrameLen/5);
+        FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+        FrameVals(4) = threshFrame + (minFrameLen/5);
+        FrameVals(5) = FrameVals(4) + (minFrameLen/5);
+        legend(binLabel) 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        titleLabel = sprintf('BBB plumes that do not exceed %d microns squared.',clustSizeThresh);
+        title({'Change in BBB Plume Size';titleLabel})
+        xlim([1 minFrameLen])
+    
+        % plot change in cluster pixel amplitude grouped by axon type and distance 
+        count = 1; 
+        figure;
+        ax=gca;
+        hold all;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                % plot change in cluster size color coded by axon 
+                if isempty(binClustTSpixAmpDataLow{bin}{loc}) == 0 
+                    h = plot(x,binClustTSpixAmpDataLow{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (minFrameLen/5);
+        FrameVals(1) = FrameVals(2) - (minFrameLen/5);
+        FrameVals(4) = threshFrame + (minFrameLen/5);
+        FrameVals(5) = FrameVals(4) + (minFrameLen/5);
+        legend(binLabel) 
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Pixel Amplitude';titleLabel})
+        xlim([1 minFrameLen])
+           
+        % plot average change in cluster size 
+        figure;
+        hold all;
+        ax=gca;
+        avBinClustSizeTS = NaN(3,minFrameLen);
+        count = 1;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataLow{bin}{loc},1);  
+                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                count = count + 1;
+            end 
+        end 
+        % remove empty strings 
+        emptyStrings = find(binLabel == '');
+        binLabel(emptyStrings) = [];
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title({'Average Change in BBB Plume Size';titleLabel})
+        xlim([1 minFrameLen])
+        
+        % plot average change in cluster size 
+        figure;
+        hold all;
+        ax=gca;
+        avBinClustPixAmpTS = NaN(3,minFrameLen);
+        count = 1;
+        for bin = 1:3 % listener, controller, both
+            % determine bin labels 
+            for loc = 1:2 % close axons, far axons
+                avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataLow{bin}{loc},1);  
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
+        xlim([1 minFrameLen])
+        
+        % plot aligned cluster change in size per bin and total average 
+        % determine cluster start frame per bin  
+        binClustStartFrame = cell(1,3);
+        alignedBinClustsSize = cell(1,3);
+        avAlignedClustsSize = cell(1,3);
+        figure;
+        hold all;
+        ax=gca;
+        count = 1;
+        for bin = 1:3 % listener, controller, both   
+            for loc = 1:2 % close axons, far axons
+                [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataLow{bin}{loc}));
+                clusts = unique(clustLocX);              
+                for clust = 1:length(clusts)
+                    binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+                end 
+                % align clusters
+                % determine longest cluster 
+                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                arrayLen = minFrameLen-longestClustStart+1;
+                for clust = 1:size(binClustTSsizeDataLow{bin}{loc},1)
+                    % get data and buffer end as needed 
+                    data = binClustTSsizeDataLow{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                    data(:,length(data)+1:arrayLen) = NaN;
+                    % align data 
+                    alignedBinClustsSize{bin}{loc}(clust,:) = data;
+                end 
+                x = 1:size(alignedBinClustsSize{bin}{loc},2);
+                % averaged the aligned clusters 
+                avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
+                if isempty(binClustTSsizeDataLow{bin}{loc}) == 0 
+                    h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        Frames_pre_stim_start = -((minFrameLen-1)/2); 
+        Frames_post_stim_start = (minFrameLen-1)/2; 
+        sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
+        FrameVals = round((1:fps:minFrameLen));
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Size (microns squared)") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel})
+        xlim([1 minFrameLen])
+        
+        % plot aligned cluster change in pixel amplitude per bin and total average 
+        % determine cluster start frame per bin  
+        alignedBinClustsPixAmp = cell(1,3);
+        avAlignedClustsPixAmp = cell(1,3);
+        figure;
+        hold all;
+        ax=gca;
+        count = 1;
+        for bin = 1:3 % listener, controller, both  
+            for loc = 1:2 % close axons, far axons
+                % align clusters
+                % determine longest cluster 
+                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                arrayLen = minFrameLen-longestClustStart+1;
+                for clust = 1:size(binClustTSpixAmpDataLow{bin}{loc},1)
+                    % get data and buffer end as needed 
+                    data = binClustTSpixAmpDataLow{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                    data(:,length(data)+1:arrayLen) = NaN;
+                    % align data 
+                    alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+                end 
+                x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
+                % averaged the aligned clusters 
+                avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
+                if isempty(binClustTSpixAmpDataLow{bin}) == 0 
+                    h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                end 
+                count = count + 1;
+            end 
+        end 
+        legend(binLabel)
+        ax.XTick = FrameVals;
+        ax.XTickLabel = sec_TimeVals;  
+        ax.FontSize = 12;
+        ax.FontName = 'Arial';
+        ylabel("BBB Plume Pixel Amplitude") 
+        xlabel("Time (s)")
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
+        xlim([1 minFrameLen])    
     end 
-    legend(binLabel)
-    ax.XTick = FrameVals;
-    ax.XTickLabel = sec_TimeVals;  
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
-    xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
-    xlim([1 minFrameLen])
 end 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
