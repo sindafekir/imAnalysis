@@ -20469,6 +20469,16 @@ if clustTimeNumGroups == 2
     xlim([1 minFrameLen])
 end 
 %% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% IMPORTANT: REMAKE THESE FIGURES BECAUSE I FORGOT TO CONVERT AVCLOCFRAMES
+% TO SECONDS 
+
 if ETAorSTAq == 0 % STA data  
     % identify what specific axons are listeners, controllers, or both 
     axonTypeList = cell(1,mouseNum);
@@ -20477,9 +20487,9 @@ if ETAorSTAq == 0 % STA data
     bothAxons = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % identify clusters that come before the spike 
-        [rPre,~] = find(avClocFrame{mouse} < threshFrame);
+        [rPre,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) < 0);
         % identify clusters that come after the spike 
-        [rPost,~] = find(avClocFrame{mouse} >= threshFrame);
+        [rPost,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) >= threshFrame);
         % figure out what axon the clusters belong to 
         count1 = 1; count2 = 1; count3 = 1;
         for ccell = 1:length(terminals{mouse})
@@ -20885,14 +20895,26 @@ if ETAorSTAq == 0 % STA data
     farBothAxonLocs = cell(1,mouseNum);
     avClocFrameClose = cell(1,mouseNum);
     avClocFrameFar = cell(1,mouseNum);
+    closeListenerAxons = cell(1,mouseNum);
+    closeControllerAxons = cell(1,mouseNum);
+    closeBothAxons= cell(1,mouseNum);
+    farListenerAxons = cell(1,mouseNum);
+    farControllerAxons = cell(1,mouseNum);
+    farBothAxons = cell(1,mouseNum);
+    avClocFrameCloseListener = cell(1,mouseNum); 
+    avClocFrameCloseController = cell(1,mouseNum);
+    avClocFrameCloseBoth = cell(1,mouseNum);
+    avClocFrameFarListener = cell(1,mouseNum); 
+    avClocFrameFarController = cell(1,mouseNum);
+    avClocFrameFarBoth = cell(1,mouseNum);
     for mouse = 1:mouseNum
         % identify what axons are close (<10 microns) and far (>10 microns)
         % from vessel
         if distQ == 0
             closeAxons{mouse} = find(minVAdists{mouse} <= 10);
             farAxons{mouse} = find(minVAdists{mouse} > 10);
-            avClocFrameClose{mouse} = avClocFrame{mouse}((minVAdists{mouse} <= 10),:);
-            avClocFrameFar{mouse} = avClocFrame{mouse}((minVAdists{mouse} > 10),:);
+            avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} <= 10),:))/FPS{mouse})-windSize/2;
+            avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} > 10),:))/FPS{mouse})-windSize/2;
         elseif distQ == 1
             % specify what distance range you want to look at specifically 
             if mouse == 1 
@@ -20900,8 +20922,8 @@ if ETAorSTAq == 0 % STA data
             end 
             closeAxons{mouse} = find(minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2));
             farAxons{mouse} = find(minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2));
-            avClocFrameClose{mouse} = avClocFrame{mouse}((minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2)),:);
-            avClocFrameFar{mouse} = avClocFrame{mouse}((minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2)),:);
+            avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2)),:))/FPS{mouse})-windSize/2;
+            avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2)),:))/FPS{mouse})-windSize/2;
         end     
         closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
         farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
@@ -20923,11 +20945,23 @@ if ETAorSTAq == 0 % STA data
         farControllerAxonLocs{mouse} = (farAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2; 
         closeBothAxonLocs{mouse} = (closeAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
         farBothAxonLocs{mouse} = (farAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+        closeListenerAxons{mouse} = intersect(closeAxons{mouse},listenerAxons{mouse});
+        closeControllerAxons{mouse} = intersect(closeAxons{mouse},controllerAxons{mouse});
+        closeBothAxons{mouse} = intersect(closeAxons{mouse},bothAxons{mouse}); 
+        farListenerAxons{mouse} = intersect(farAxons{mouse},listenerAxons{mouse});
+        farControllerAxons{mouse} = intersect(farAxons{mouse},controllerAxons{mouse});
+        farBothAxons{mouse} = intersect(farAxons{mouse},bothAxons{mouse}); 
+        avClocFrameCloseListener{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeListenerAxons{mouse}),:);
+        avClocFrameCloseController{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeControllerAxons{mouse}),:);
+        avClocFrameCloseBoth{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeBothAxons{mouse}),:);
+        avClocFrameFarListener{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farListenerAxons{mouse}),:);
+        avClocFrameFarController{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farControllerAxons{mouse}),:);
+        avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farBothAxons{mouse}),:);
     end 
-
     % sort data 
     binClustTSsizeData = cell(1,3);
     binClustTSpixAmpData = cell(1,3);
+    binClocFrame = cell(1,3);
     for bin = 1:3
         for loc = 1:2 
             for mouse = 1:mouseNum
@@ -20937,71 +20971,88 @@ if ETAorSTAq == 0 % STA data
                             % sort data 
                             binClustTSsizeData{bin}{loc} = downAllAxonsClustSizeTS{mouse}(closeListenerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc} = downAllAxonsClustAmpTS{mouse}(closeListenerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc} = reshape(avClocFrameCloseListener{mouse},1,size(avClocFrameCloseListener{mouse},1)*size(avClocFrameCloseListener{mouse},2));
                         elseif bin == 2 % sort controllers 
                             % sort data 
                             binClustTSsizeData{bin}{loc} = downAllAxonsClustSizeTS{mouse}(closeControllerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc} = downAllAxonsClustAmpTS{mouse}(closeControllerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc} = reshape(avClocFrameCloseController{mouse},1,size(avClocFrameCloseController{mouse},1)*size(avClocFrameCloseController{mouse},2));
                         elseif bin == 3 % sort bothers  
                             % sort data 
                             binClustTSsizeData{bin}{loc} = downAllAxonsClustSizeTS{mouse}(closeBothAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc} = downAllAxonsClustAmpTS{mouse}(closeBothAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc} = reshape(avClocFrameCloseBoth{mouse},1,size(avClocFrameCloseBoth{mouse},1)*size(avClocFrameCloseBoth{mouse},2));
                         end 
                     elseif loc == 2 % sort far axons
                         if bin == 1 % sort listeners
                             % sort data 
                             binClustTSsizeData{bin}{loc} = downAllAxonsClustSizeTS{mouse}(farListenerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc} = downAllAxonsClustAmpTS{mouse}(farListenerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc} = reshape(avClocFrameFarListener{mouse},1,size(avClocFrameFarListener{mouse},1)*size(avClocFrameFarListener{mouse},2));
                         elseif bin == 2 % sort controllers 
                             % sort data 
                             binClustTSsizeData{bin}{loc} = downAllAxonsClustSizeTS{mouse}(farControllerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc} = downAllAxonsClustAmpTS{mouse}(farControllerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc} = reshape(avClocFrameFarController{mouse},1,size(avClocFrameFarController{mouse},1)*size(avClocFrameFarController{mouse},2));
                         elseif bin == 3 % sort bothers  
                             % sort data 
                             binClustTSsizeData{bin}{loc} = downAllAxonsClustSizeTS{mouse}(farBothAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc} = downAllAxonsClustAmpTS{mouse}(farBothAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc} = reshape(avClocFrameFarBoth{mouse},1,size(avClocFrameFarBoth{mouse},1)*size(avClocFrameFarBoth{mouse},2));
                         end 
-
                     end 
                 elseif mouse > 1
                     if loc == 1 % sort close axons
                         if bin == 1 % sort listeners
                             len1 = size(binClustTSsizeData{bin}{loc},1);
                             len2 = nnz(closeListenerAxonLocs{mouse});
+                            len3 = length(binClocFrame{bin}{loc});
                             % sort data 
                             binClustTSsizeData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(closeListenerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(closeListenerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc}(len3+1:len3+size(avClocFrameCloseListener{mouse},1)*size(avClocFrameCloseListener{mouse},2)) = reshape(avClocFrameCloseListener{mouse},1,size(avClocFrameCloseListener{mouse},1)*size(avClocFrameCloseListener{mouse},2));
                         elseif bin == 2 % sort controllers 
                             len1 = size(binClustTSsizeData{bin}{loc},1);
                             len2 = nnz(closeControllerAxonLocs{mouse});
+                            len3 = length(binClocFrame{bin}{loc});
                             % sort data 
                             binClustTSsizeData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(closeControllerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(closeControllerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc}(len3+1:len3+size(avClocFrameCloseController{mouse},1)*size(avClocFrameCloseController{mouse},2)) = reshape(avClocFrameCloseController{mouse},1,size(avClocFrameCloseController{mouse},1)*size(avClocFrameCloseController{mouse},2));
                         elseif bin == 3 % sort bothers  
                             len1 = size(binClustTSsizeData{bin}{loc},1);
                             len2 = nnz(closeBothAxonLocs{mouse});
+                            len3 = length(binClocFrame{bin}{loc});
                             % sort data 
                             binClustTSsizeData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(closeBothAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(closeBothAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc}(len3+1:len3+size(avClocFrameCloseBoth{mouse},1)*size(avClocFrameCloseBoth{mouse},2)) = reshape(avClocFrameCloseBoth{mouse},1,size(avClocFrameCloseBoth{mouse},1)*size(avClocFrameCloseBoth{mouse},2));
                         end 
                     elseif loc == 2 % sort far axons
                         if bin == 1 % sort listeners
                             len1 = size(binClustTSsizeData{bin}{loc},1);
                             len2 = nnz(farListenerAxonLocs{mouse});
+                            len3 = length(binClocFrame{bin}{loc});
                             % sort data 
                             binClustTSsizeData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(farListenerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(farListenerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc}(len3+1:len3+size(avClocFrameFarListener{mouse},1)*size(avClocFrameFarListener{mouse},2)) =  reshape(avClocFrameFarListener{mouse},1,size(avClocFrameFarListener{mouse},1)*size(avClocFrameFarListener{mouse},2));
                         elseif bin == 2 % sort controllers 
                             len1 = size(binClustTSsizeData{bin}{loc},1);
                             len2 = nnz(farControllerAxonLocs{mouse});
+                            len3 = length(binClocFrame{bin}{loc});
                             % sort data 
                             binClustTSsizeData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(farControllerAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(farControllerAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc}(len3+1:len3+size(avClocFrameFarController{mouse},1)*size(avClocFrameFarController{mouse},2)) = reshape(avClocFrameFarController{mouse},1,size(avClocFrameFarController{mouse},1)*size(avClocFrameFarController{mouse},2));
                         elseif bin == 3 % sort bothers  
                             len1 = size(binClustTSsizeData{bin}{loc},1);
                             len2 = nnz(farBothAxonLocs{mouse});
+                            len3 = length(binClocFrame{bin}{loc});
                             % sort data 
                             binClustTSsizeData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(farBothAxonLocs{mouse},:);
                             binClustTSpixAmpData{bin}{loc}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(farBothAxonLocs{mouse},:);
+                            binClocFrame{bin}{loc}(len3+1:len3+size(avClocFrameFarBoth{mouse},1)*size(avClocFrameFarBoth{mouse},2)) = reshape(avClocFrameFarBoth{mouse},1,size(avClocFrameFarBoth{mouse},1)*size(avClocFrameFarBoth{mouse},2));
                         end 
                     end 
                 end 
@@ -21009,7 +21060,7 @@ if ETAorSTAq == 0 % STA data
         end 
     end  
     clustSizeQ = input('Input 1 to set a size threshold for plotting TS data grouped by axon type and distance. Input 0 otherwise. ');   
-    if clustSizeQ == 1 
+    if clustSizeQ == 1
         clustSizeThresh = input('What is the cluster size threshold? ');
         % remove all cluster data that does not reach the size threshold 
         binClustTSsizeDataHigh = cell(1,3);
@@ -21028,29 +21079,20 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
         % sort cluster start frame data by size threshold
-        avClocFrameCloseHigh = avClocFrameClose;
-        avClocFrameCloseLow = avClocFrameClose;
-        avClocFrameFarHigh = avClocFrameFar;
-        avClocFrameFarLow = avClocFrameFar;
-        for mouse = 1:mouseNum
-            for ccell = 1,size(avClocFrameClose{mouse},1)      
-                % figure out index of cluster start frames 
-                clustIndClose = find(~isnan(avClocFrameClose{mouse}(ccell,:)));
-                % determine what clusters meet or exceed the threshold 
-                theseClustsClose = any(clustSizeTS{mouse}{terminals{mouse}(closeAxons{mouse}(ccell))} >= clustSizeThresh,2);
-                avClocFrameCloseHigh{mouse}(ccell,clustIndClose(~theseClustsClose)) = NaN;
-                avClocFrameCloseLow{mouse}(ccell,clustIndClose(theseClustsClose)) = NaN;
-            end 
-            for ccell = 1,size(avClocFrameFar{mouse},1)      
-                % figure out index of cluster start frames 
-                clustIndFar = find(~isnan(avClocFrameFar{mouse}(ccell,:)));
-                % determine what clusters meet or exceed the threshold 
-                theseClustsFar = any(clustSizeTS{mouse}{terminals{mouse}(farAxons{mouse}(ccell))} >= clustSizeThresh,2);
-                avClocFrameFarHigh{mouse}(ccell,clustIndFar(~theseClustsFar)) = NaN;
-                avClocFrameFarLow{mouse}(ccell,clustIndFar(theseClustsFar)) = NaN;
+        binClocFrameHigh = cell(1,3);
+        binClocFrameLow = cell(1,3);
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons  
+                % find the clusters that meet or exceed the threshold 
+                highClusts = any(binClustTSsizeData{bin}{loc} >= clustSizeThresh,2);
+                % create data arrays for high and low clusts 
+                cLocs = find(~isnan(binClocFrame{bin}{loc})); 
+                binClocFrameHigh{bin}{loc} = binClocFrame{bin}{loc}(cLocs(highClusts));
+                binClocFrameLow{bin}{loc} = binClocFrame{bin}{loc}(cLocs(~highClusts));
             end 
         end 
     end 
+
  
     if clustSizeQ == 0
         % plot pie chart showing proportion of close vs far listeners, controllers,
@@ -21842,61 +21884,202 @@ if ETAorSTAq == 0 % STA data
         title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
         xlim([1 minFrameLen])    
     end 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    for mouse = 1:mouseNum
-        if mouse == 1 
-            allAvClocFrameClose = (reshape(avClocFrameClose{mouse},1,size(avClocFrameClose{mouse},1)*size(avClocFrameClose{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-            allAvClocFrameFar = (reshape(avClocFrameFar{mouse},1,size(avClocFrameFar{mouse},1)*size(avClocFrameFar{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-        elseif mouse > 1
-            len = length(allAvClocFrameClose);
-            len2 = length(allAvClocFrameFar);
-            allAvClocFrameClose(:,len+1:size(avClocFrameClose{mouse},1)*size(avClocFrameClose{mouse},2)+len) = (reshape(avClocFrameClose{mouse},1,size(avClocFrameClose{mouse},1)*size(avClocFrameClose{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-            allAvClocFrameFar(:,len2+1:size(avClocFrameFar{mouse},1)*size(avClocFrameFar{mouse},2)+len2) = (reshape(avClocFrameFar{mouse},1,size(avClocFrameFar{mouse},1)*size(avClocFrameFar{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
+
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+          % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    for bin = 1:3 % listener, controller, both
+        for loc = 1:2 % close axons, far axons
+            % plot distribution of cluster start times
+            figure;
+            ax=gca;
+            histogram(binClocFrame{bin}{loc},20)
+            ax.FontSize = 15;
+            ax.FontName = 'Arial';
+            if bin == 1 
+                binLabel = 'Listener Axons';
+            elseif bin == 2
+                binLabel = 'Controller Axons';
+            elseif bin == 3
+                binLabel = 'Both Axons';
+            end 
+            if distQ == 0
+                if loc == 1
+                    locLabel = 'Close Axons';
+                elseif loc == 2
+                    locLabel = 'Far Axons';
+                end 
+            elseif distQ == 1
+                if loc == 1
+                    locLabel = 'In Range Axons';
+                elseif loc == 2
+                    locLabel = 'Out of Range Axons';
+                end                 
+            end 
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel});
+                end          
+            end 
+            ylabel("Number of BBB Plumes")
+            xlabel("Time (s)") 
         end 
     end 
-    if clustSizeQ == 1
-        for mouse = 1:mouseNum
-            if mouse == 1 
-                allAvClocFrameCloseHigh = (reshape(avClocFrameCloseHigh{mouse},1,size(avClocFrameCloseHigh{mouse},1)*size(avClocFrameCloseHigh{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-                allAvClocFrameFarHigh = (reshape(avClocFrameFarHigh{mouse},1,size(avClocFrameFarHigh{mouse},1)*size(avClocFrameFarHigh{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-                allAvClocFrameCloseLow = (reshape(avClocFrameCloseLow{mouse},1,size(avClocFrameCloseLow{mouse},1)*size(avClocFrameCloseLow{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-                allAvClocFrameFarLow = (reshape(avClocFrameFarLow{mouse},1,size(avClocFrameFarLow{mouse},1)*size(avClocFrameFarLow{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;       
-            elseif mouse > 1
-                len = length(allAvClocFrameCloseHigh);
-                len2 = length(allAvClocFrameFarHigh);
-                allAvClocFrameCloseHigh(:,len+1:size(avClocFrameCloseHigh{mouse},1)*size(avClocFrameCloseHigh{mouse},2)+len) = (reshape(avClocFrameCloseHigh{mouse},1,size(avClocFrameCloseHigh{mouse},1)*size(avClocFrameCloseHigh{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-                allAvClocFrameFarHigh(:,len2+1:size(avClocFrameFarHigh{mouse},1)*size(avClocFrameFarHigh{mouse},2)+len2) = (reshape(avClocFrameFarHigh{mouse},1,size(avClocFrameFarHigh{mouse},1)*size(avClocFrameFarHigh{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-                len3 = length(allAvClocFrameCloseLow);
-                len4 = length(allAvClocFrameFarLow);
-                allAvClocFrameCloseLow(:,len3+1:size(avClocFrameCloseLow{mouse},1)*size(avClocFrameCloseLow{mouse},2)+len3) = (reshape(avClocFrameCloseLow{mouse},1,size(avClocFrameCloseLow{mouse},1)*size(avClocFrameCloseLow{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
-                allAvClocFrameFarLow(:,len4+1:size(avClocFrameFarLow{mouse},1)*size(avClocFrameFarLow{mouse},2)+len4) = (reshape(avClocFrameFarLow{mouse},1,size(avClocFrameFarLow{mouse},1)*size(avClocFrameFarLow{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;        
+    % combine across a
+    closeFarBinClocFrame = cell(1,2);
+    for bin = 1:3 % listener, controller, both
+        for loc = 1:2 % close axons, far axons
+            if bin == 1 
+                closeFarBinClocFrame{loc} = binClocFrame{bin}{loc};
+            elseif bin > 1 
+                len = length(closeFarBinClocFrame{loc});
+                closeFarBinClocFrame{loc}(len+1:len+length(binClocFrame{bin}{loc})) = binClocFrame{bin}{loc};
             end 
         end 
     end 
-    % plot distribution of cluster start times
-    figure;
-    ax=gca;
-    histogram(allAvClocFrameClose,20)
-    ax.FontSize = 15;
-    ax.FontName = 'Arial';
-    if distQ == 0
-        if clustSpikeQ3 == 0 
-            title({'Distribution of BBB Plume Timing';'Average Time';'Close Axons'});
-        elseif clustSpikeQ3 == 1
-            title({'Distribution of BBB Plume Timing';'Start Time';'Close Axons'});
-        end         
-    elseif distQ == 1 
-        if clustSpikeQ3 == 0 
-            title({'Distribution of BBB Plume Timing';'Average Time';'In Range Axons'';rangeLabe});
-        elseif clustSpikeQ3 == 1
-            title({'Distribution of BBB Plume Timing';'Start Time';'Close Axons'});
-        end          
+    for loc = 1:2 % close axons, far axons
+        % plot distribution of cluster start times
+        figure;
+        ax=gca;
+        histogram(closeFarBinClocFrame{loc},20)
+        ax.FontSize = 15;
+        ax.FontName = 'Arial';
+        if distQ == 0
+            if loc == 1
+                locLabel = 'Close Axons';
+            elseif loc == 2
+                locLabel = 'Far Axons';
+            end 
+        elseif distQ == 1
+            if loc == 1
+                locLabel = 'In Range Axons';
+            elseif loc == 2
+                locLabel = 'Out of Range Axons';
+            end                 
+        end 
+        if distQ == 0
+            if clustSpikeQ3 == 0 
+                title({'Distribution of BBB Plume Timing';'Average Time';locLabel});
+            elseif clustSpikeQ3 == 1
+                title({'Distribution of BBB Plume Timing';'Start Time';locLabel});
+            end         
+        elseif distQ == 1 
+            if clustSpikeQ3 == 0 
+                title({'Distribution of BBB Plume Timing';'Average Time';rangeLabel});
+            elseif clustSpikeQ3 == 1
+                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel});
+            end          
+        end 
+        ylabel("Number of BBB Plumes")
+        xlabel("Time (s)") 
     end 
 
 
-    ylabel("Number of BBB Plumes")
-    xlabel("Time (s)") 
+
+    if clustSizeQ == 1
+        titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons
+                % plot distribution of cluster start times
+                figure;
+                ax=gca;
+                histogram(binClocFrameHigh{bin}{loc},20)
+                ax.FontSize = 15;
+                ax.FontName = 'Arial';
+                if bin == 1 
+                    binLabel = 'Listener Axons';
+                elseif bin == 2
+                    binLabel = 'Controller Axons';
+                elseif bin == 3
+                    binLabel = 'Both Axons';
+                end 
+                if distQ == 0
+                    if loc == 1
+                        locLabel = 'Close Axons';
+                    elseif loc == 2
+                        locLabel = 'Far Axons';
+                    end 
+                elseif distQ == 1
+                    if loc == 1
+                        locLabel = 'In Range Axons';
+                    elseif loc == 2
+                        locLabel = 'Out of Range Axons';
+                    end                 
+                end 
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel});
+                    end          
+                end 
+                ylabel("Number of BBB Plumes")
+                xlabel("Time (s)") 
+            end 
+        end 
+
+        titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons
+                % plot distribution of cluster start times
+                figure;
+                ax=gca;
+                histogram(binClocFrameLow{bin}{loc},20)
+                ax.FontSize = 15;
+                ax.FontName = 'Arial';
+                if bin == 1 
+                    binLabel = 'Listener Axons';
+                elseif bin == 2
+                    binLabel = 'Controller Axons';
+                elseif bin == 3
+                    binLabel = 'Both Axons';
+                end 
+                if distQ == 0
+                    if loc == 1
+                        locLabel = 'Close Axons';
+                    elseif loc == 2
+                        locLabel = 'Far Axons';
+                    end 
+                elseif distQ == 1
+                    if loc == 1
+                        locLabel = 'In Range Axons';
+                    elseif loc == 2
+                        locLabel = 'Out of Range Axons';
+                    end                 
+                end 
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel});
+                    end          
+                end 
+                ylabel("Number of BBB Plumes")
+                xlabel("Time (s)") 
+            end 
+        end 
+    end 
 end 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
