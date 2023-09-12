@@ -18862,7 +18862,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -21092,7 +21092,6 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
     end 
-
  
     if clustSizeQ == 0
         % plot pie chart showing proportion of close vs far listeners, controllers,
@@ -21207,11 +21206,11 @@ if ETAorSTAq == 0 % STA data
         clearvars binLabel
         % plot change in cluster size grouped by axon type and distance 
         count = 1 ;
-        count2 = 1; 
+        count2 = 3;%1; 
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeData{bin}{loc},1)
@@ -21255,11 +21254,11 @@ if ETAorSTAq == 0 % STA data
         xlim([1 minFrameLen])
     
         % plot change in cluster pixel amplitude grouped by axon type and distance 
-        count = 1; 
+        count = 3;%1; 
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -21294,8 +21293,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
-        count = 1;
-        for bin = 1:3 % listener, controller, both
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin}{loc},1);  
@@ -21325,8 +21324,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
-        count = 1;
-        for bin = 1:3 % listener, controller, both
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin}{loc},1);  
@@ -21356,8 +21355,8 @@ if ETAorSTAq == 0 % STA data
         figure;
         hold all;
         ax=gca;
-        count = 1;
-        for bin = 1:3 % listener, controller, both   
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both   
             for loc = 1:2 % close axons, far axons
                 [clustLocX, clustLocY] = find(~isnan(binClustTSsizeData{bin}{loc}));
                 clusts = unique(clustLocX);              
@@ -21409,8 +21408,8 @@ if ETAorSTAq == 0 % STA data
         figure;
         hold all;
         ax=gca;
-        count = 1;
-        for bin = 1:3 % listener, controller, both  
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
                 % align clusters
                 % determine longest cluster 
@@ -21449,11 +21448,12 @@ if ETAorSTAq == 0 % STA data
         % plot the clusters that meet or exceed the threshold 
         % plot change in cluster size grouped by axon type and distance 
         count = 1 ;
-        count2 = 1; 
+        count2 = 3;%1; 
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        clearvars binLabel
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeDataHigh{bin}{loc},1)
@@ -21494,11 +21494,11 @@ if ETAorSTAq == 0 % STA data
         xlim([1 minFrameLen])
     
         % plot change in cluster pixel amplitude grouped by axon type and distance 
-        count = 1; 
+        count = 3;%1; 
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -21529,8 +21529,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
-        count = 1;
-        for bin = 1:3 % listener, controller, both
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataHigh{bin}{loc},1);  
@@ -21556,8 +21556,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
-        count = 1;
-        for bin = 1:3 % listener, controller, both
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataHigh{bin}{loc},1);  
@@ -21583,8 +21583,8 @@ if ETAorSTAq == 0 % STA data
         figure;
         hold all;
         ax=gca;
-        count = 1;
-        for bin = 1:3 % listener, controller, both   
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both   
             for loc = 1:2 % close axons, far axons
                 [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataHigh{bin}{loc}));
                 clusts = unique(clustLocX);              
@@ -21632,8 +21632,8 @@ if ETAorSTAq == 0 % STA data
         figure;
         hold all;
         ax=gca;
-        count = 1;
-        for bin = 1:3 % listener, controller, both  
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
                 % align clusters
                 % determine longest cluster 
@@ -21669,11 +21669,11 @@ if ETAorSTAq == 0 % STA data
         % plot change in cluster size grouped by axon type and distance 
         x = 1:minFrameLen;
         count = 1 ;
-        count2 = 1; 
+        count2 = 3;%1; 
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeDataLow{bin}{loc},1)
@@ -21714,11 +21714,11 @@ if ETAorSTAq == 0 % STA data
         xlim([1 minFrameLen])
     
         % plot change in cluster pixel amplitude grouped by axon type and distance 
-        count = 1; 
+        count = 3;%1; 
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -21749,8 +21749,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
-        count = 1;
-        for bin = 1:3 % listener, controller, both
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataLow{bin}{loc},1);  
@@ -21776,8 +21776,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
-        count = 1;
-        for bin = 1:3 % listener, controller, both
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataLow{bin}{loc},1);  
@@ -21803,8 +21803,8 @@ if ETAorSTAq == 0 % STA data
         figure;
         hold all;
         ax=gca;
-        count = 1;
-        for bin = 1:3 % listener, controller, both   
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both   
             for loc = 1:2 % close axons, far axons
                 [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataLow{bin}{loc}));
                 clusts = unique(clustLocX);              
@@ -21852,8 +21852,8 @@ if ETAorSTAq == 0 % STA data
         figure;
         hold all;
         ax=gca;
-        count = 1;
-        for bin = 1:3 % listener, controller, both  
+        count = 3;%1;
+        for bin = 2%1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
                 % align clusters
                 % determine longest cluster 
@@ -21886,10 +21886,6 @@ if ETAorSTAq == 0 % STA data
         xlim([1 minFrameLen])    
     end 
 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-          % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     for bin = 1:3 % listener, controller, both
         for loc = 1:2 % close axons, far axons
             % plot distribution of cluster start times
@@ -22173,10 +22169,6 @@ if ETAorSTAq == 0 % STA data
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
         end         
-
-
-
-
     end 
 end 
 
