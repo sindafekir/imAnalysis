@@ -21033,23 +21033,21 @@ if ETAorSTAq == 0 % STA data
         avClocFrameFarHigh = avClocFrameFar;
         avClocFrameFarLow = avClocFrameFar;
         for mouse = 1:mouseNum
-            if isempty(avClocFrameClose{mouse}) == 0 
-                for ccell = 1,size(avClocFrameClose{mouse},1)      
-                    % figure out index of cluster start frames 
-                    clustIndClose = find(~isnan(avClocFrameClose{mouse}(ccell,:)));
-                    % determine what clusters meet or exceed the threshold 
-                    theseClustsClose = any(clustSizeTS{mouse}{terminals{mouse}(closeAxons{mouse}(ccell))} >= clustSizeThresh,2);
-                    avClocFrameCloseHigh{mouse}(ccell,clustIndClose(~theseClustsClose)) = NaN;
-                    avClocFrameCloseLow{mouse}(ccell,clustIndClose(theseClustsClose)) = NaN;
-                end 
-                for ccell = 1,size(avClocFrameFar{mouse},1)      
-                    % figure out index of cluster start frames 
-                    clustIndFar = find(~isnan(avClocFrameFar{mouse}(ccell,:)));
-                    % determine what clusters meet or exceed the threshold 
-                    theseClustsFar = any(clustSizeTS{mouse}{terminals{mouse}(farAxons{mouse}(ccell))} >= clustSizeThresh,2);
-                    avClocFrameFarHigh{mouse}(ccell,clustIndFar(~theseClustsFar)) = NaN;
-                    avClocFrameFarLow{mouse}(ccell,clustIndFar(theseClustsFar)) = NaN;
-                end 
+            for ccell = 1,size(avClocFrameClose{mouse},1)      
+                % figure out index of cluster start frames 
+                clustIndClose = find(~isnan(avClocFrameClose{mouse}(ccell,:)));
+                % determine what clusters meet or exceed the threshold 
+                theseClustsClose = any(clustSizeTS{mouse}{terminals{mouse}(closeAxons{mouse}(ccell))} >= clustSizeThresh,2);
+                avClocFrameCloseHigh{mouse}(ccell,clustIndClose(~theseClustsClose)) = NaN;
+                avClocFrameCloseLow{mouse}(ccell,clustIndClose(theseClustsClose)) = NaN;
+            end 
+            for ccell = 1,size(avClocFrameFar{mouse},1)      
+                % figure out index of cluster start frames 
+                clustIndFar = find(~isnan(avClocFrameFar{mouse}(ccell,:)));
+                % determine what clusters meet or exceed the threshold 
+                theseClustsFar = any(clustSizeTS{mouse}{terminals{mouse}(farAxons{mouse}(ccell))} >= clustSizeThresh,2);
+                avClocFrameFarHigh{mouse}(ccell,clustIndFar(~theseClustsFar)) = NaN;
+                avClocFrameFarLow{mouse}(ccell,clustIndFar(theseClustsFar)) = NaN;
             end 
         end 
     end 
@@ -21844,7 +21842,8 @@ if ETAorSTAq == 0 % STA data
         title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
         xlim([1 minFrameLen])    
     end 
-    clearvars allAvClocFrameClose allAvClocFrameFar allAvClocFrameCloseHigh allAvClocFrameFarHigh allAvClocFrameCloseLow allAvClocFrameFarLow
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     for mouse = 1:mouseNum
         if mouse == 1 
             allAvClocFrameClose = (reshape(avClocFrameClose{mouse},1,size(avClocFrameClose{mouse},1)*size(avClocFrameClose{mouse},2))/fps)-windSize/2; % converts frame to time in sec for comparison across mice ;
@@ -21889,121 +21888,15 @@ if ETAorSTAq == 0 % STA data
         end         
     elseif distQ == 1 
         if clustSpikeQ3 == 0 
-            title({'Distribution of BBB Plume Timing';'Average Time';'In Range Axons';rangeLabel});
+            title({'Distribution of BBB Plume Timing';'Average Time';'In Range Axons'';rangeLabe});
         elseif clustSpikeQ3 == 1
-            title({'Distribution of BBB Plume Timing';'Start Time';'In Range Axons';rangeLabel});
+            title({'Distribution of BBB Plume Timing';'Start Time';'Close Axons'});
         end          
     end 
+
+
     ylabel("Number of BBB Plumes")
     xlabel("Time (s)") 
-
-    figure;
-    ax=gca;
-    histogram(allAvClocFrameFar,20)
-    ax.FontSize = 15;
-    ax.FontName = 'Arial';
-    if distQ == 0
-        if clustSpikeQ3 == 0 
-            title({'Distribution of BBB Plume Timing';'Average Time';'Far Axons'});
-        elseif clustSpikeQ3 == 1
-            title({'Distribution of BBB Plume Timing';'Start Time';'Far Axons'});
-        end         
-    elseif distQ == 1 
-        if clustSpikeQ3 == 0 
-            title({'Distribution of BBB Plume Timing';'Average Time';'Out of Range Axons';rangeLabel});
-        elseif clustSpikeQ3 == 1
-            title({'Distribution of BBB Plume Timing';'Start Time';'Out of Range Axons';rangeLabel});
-        end          
-    end 
-    ylabel("Number of BBB Plumes")
-    xlabel("Time (s)") 
-    if clustSizeQ == 1
-        figure;
-        ax=gca;
-        histogram(allAvClocFrameCloseHigh,20)
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
-        titleLabel = sprintf('BBB plumes that exceed %d microns squared.',clustSizeThresh);
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'Close Axons';titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'Close Axons';titleLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'In Range Axons';rangeLabe;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'In Range Axons';rangeLabe;titleLabel});
-            end          
-        end 
-        ylabel("Number of BBB Plumes")
-        xlabel("Time (s)") 
-    
-        figure;
-        ax=gca;
-        histogram(allAvClocFrameFarHigh,20)
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'Far Axons';titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'Far Axons';titleLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'Out of Range Axons';rangeLabe;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'Out of Range Axons';rangeLabe;titleLabel});
-            end          
-        end 
-        ylabel("Number of BBB Plumes")
-        xlabel("Time (s)") 
-
-        figure;
-        ax=gca;
-        histogram(allAvClocFrameCloseLow,20)
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
-        titleLabel = sprintf('BBB plumes that do not exceed %d microns squared.',clustSizeThresh);
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'Close Axons';titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'Close Axons';titleLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'In Range Axons';rangeLabe;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'In Range Axons';rangeLabe;titleLabel});
-            end          
-        end 
-        ylabel("Number of BBB Plumes")
-        xlabel("Time (s)") 
-    
-        figure;
-        ax=gca;
-        histogram(allAvClocFrameFarLow,20)
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'Far Axons';titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'Far Axons';titleLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';'Out of Range Axons';rangeLabe;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';'Out of Range Axons';rangeLabe;titleLabel});
-            end          
-        end 
-        ylabel("Number of BBB Plumes")
-        xlabel("Time (s)") 
-    end 
 end 
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
