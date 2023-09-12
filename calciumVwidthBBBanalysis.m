@@ -18862,7 +18862,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -20859,60 +20859,66 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% FIRST: ADD IN ABILITY TO THRESHOLD BASED ON MAX CLUSTER SIZE 
 % LATER: MAKE IT POSSIBLE TO SELECT SPECIFIC
 % DISTANCE METRICS FOR SPECIFIC FIGURES 
 
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
     distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set different distance metrics. ');
-    if distQ == 0
-        closeAxons = cell(1,mouseNum);
-        farAxons  = cell(1,mouseNum);
-        closeAxonLoc = cell(1,mouseNum);
-        farAxonLoc = cell(1,mouseNum);
-        clustDistsAndAxon = cell(1,mouseNum);
-        closeClusts = cell(1,mouseNum);
-        farClusts = cell(1,mouseNum);
-        closeClustLoc = cell(1,mouseNum);
-        farClustLoc = cell(1,mouseNum);
-        listenerAxonLoc = cell(1,mouseNum);
-        controllerAxonLoc = cell(1,mouseNum);
-        bothAxonLoc = cell(1,mouseNum);
-        closeListenerAxonLocs = cell(1,mouseNum);
-        farListenerAxonLocs = cell(1,mouseNum);
-        closeControllerAxonLocs = cell(1,mouseNum);
-        farControllerAxonLocs = cell(1,mouseNum);
-        closeBothAxonLocs = cell(1,mouseNum);
-        farBothAxonLocs = cell(1,mouseNum);
-        for mouse = 1:mouseNum
-            % identify what axons are close (<10 microns) and far (>10 microns)
-            % from vessel
+    closeAxons = cell(1,mouseNum);
+    farAxons  = cell(1,mouseNum);
+    closeAxonLoc = cell(1,mouseNum);
+    farAxonLoc = cell(1,mouseNum);
+    clustDistsAndAxon = cell(1,mouseNum);
+    closeClusts = cell(1,mouseNum);
+    farClusts = cell(1,mouseNum);
+    closeClustLoc = cell(1,mouseNum);
+    farClustLoc = cell(1,mouseNum);
+    listenerAxonLoc = cell(1,mouseNum);
+    controllerAxonLoc = cell(1,mouseNum);
+    bothAxonLoc = cell(1,mouseNum);
+    closeListenerAxonLocs = cell(1,mouseNum);
+    farListenerAxonLocs = cell(1,mouseNum);
+    closeControllerAxonLocs = cell(1,mouseNum);
+    farControllerAxonLocs = cell(1,mouseNum);
+    closeBothAxonLocs = cell(1,mouseNum);
+    farBothAxonLocs = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        % identify what axons are close (<10 microns) and far (>10 microns)
+        % from vessel
+        if distQ == 0
             closeAxons{mouse} = find(minVAdists{mouse} <= 10);
             farAxons{mouse} = find(minVAdists{mouse} > 10);
-            closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
-            farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
-            % identify what clusters are close (<10 microns) and far (>10 microns)
-            % from axon 
-            [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
-            clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
-            clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
-            closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
-            farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
-            % identify the locs for listener, controller, and both axons 
-            listenerAxonLoc{mouse} = ismember(axonInds{mouse},listenerAxons{mouse});
-            controllerAxonLoc{mouse} = ismember(axonInds{mouse},controllerAxons{mouse});
-            bothAxonLoc{mouse} = ismember(axonInds{mouse},bothAxons{mouse});
-            % identify close vs far listeners, controllers, and both axons 
-            closeListenerAxonLocs{mouse} = (closeAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
-            farListenerAxonLocs{mouse} = (farAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
-            closeControllerAxonLocs{mouse} = (closeAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2;
-            farControllerAxonLocs{mouse} = (farAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2; 
-            closeBothAxonLocs{mouse} = (closeAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
-            farBothAxonLocs{mouse} = (farAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
-        end 
-    elseif distQ == 1
-    end
+        elseif distQ == 1
+            % specify what distance range you want to look at specifically 
+            if mouse == 1 
+                distRange = input('What is the range of distances (in microns) that you specifically want to see? Input [min,max]. ');
+            end 
+            closeAxons{mouse} = find(minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2));
+            farAxons{mouse} = find(minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2));
+        end     
+        closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
+        farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
+        % identify what clusters are close (<10 microns) and far (>10 microns)
+        % from axon 
+        [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
+        clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
+        clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
+        closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
+        farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
+        % identify the locs for listener, controller, and both axons 
+        listenerAxonLoc{mouse} = ismember(axonInds{mouse},listenerAxons{mouse});
+        controllerAxonLoc{mouse} = ismember(axonInds{mouse},controllerAxons{mouse});
+        bothAxonLoc{mouse} = ismember(axonInds{mouse},bothAxons{mouse});
+        % identify close vs far listeners, controllers, and both axons 
+        closeListenerAxonLocs{mouse} = (closeAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
+        farListenerAxonLocs{mouse} = (farAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
+        closeControllerAxonLocs{mouse} = (closeAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2;
+        farControllerAxonLocs{mouse} = (farAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2; 
+        closeBothAxonLocs{mouse} = (closeAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+        farBothAxonLocs{mouse} = (farAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+    end 
+
     % sort data 
     binClustTSsizeData = cell(1,3);
     binClustTSpixAmpData = cell(1,3);
@@ -21036,9 +21042,18 @@ if ETAorSTAq == 0 % STA data
         p = pie(axonTypePieData);
         customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
         colormap(customColors)
-        axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        if distQ == 0
+            axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        elseif distQ == 1 
+            axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
+        end        
         legend(axonClusterTypeLabels)
-        title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel'})
+        if distQ == 0
+            title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel'})
+        elseif distQ == 1 
+            rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+            title({'Proportion of BBB Plumes by Axon Type';rangeLabel})
+        end
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
         t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
@@ -21076,11 +21091,21 @@ if ETAorSTAq == 0 % STA data
         figure;
         p = pie(axonTypePieDataHigh);
         customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
-        colormap(customColors)
-        axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        colormap(customColors)  
+        if distQ == 0
+            axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        elseif distQ == 1 
+            axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
+        end 
         legend(axonClusterTypeLabels)
-        titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-        title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+        if distQ == 0
+            titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+            title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+        elseif distQ == 1 
+            titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+            rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+            title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
+        end
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
         t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
@@ -21089,10 +21114,20 @@ if ETAorSTAq == 0 % STA data
         p = pie(axonTypePieDataLow);
         customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
         colormap(customColors)
-        axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        if distQ == 0
+            axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+        elseif distQ == 1 
+            axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
+        end 
         legend(axonClusterTypeLabels)
-        titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-        title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+        if distQ == 0
+            titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+            title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+        elseif distQ == 1 
+            rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+            titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+            title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
+        end
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
         t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
@@ -21140,7 +21175,11 @@ if ETAorSTAq == 0 % STA data
         ax.FontName = 'Arial';
         ylabel("BBB Plume Size (microns squared)") 
         xlabel("Time (s)")
-        title('Change in BBB Plume Size')
+        if distQ == 0
+            title('Change in BBB Plume Size')
+        elseif distQ == 1 
+            title({'Change in BBB Plume Size';rangeLabel})
+        end        
         xlim([1 minFrameLen])
     
         % plot change in cluster pixel amplitude grouped by axon type and distance 
@@ -21171,7 +21210,11 @@ if ETAorSTAq == 0 % STA data
         ax.FontName = 'Arial';
         ylabel("BBB Plume Pixel Amplitude") 
         xlabel("Time (s)")
-        title('Change in BBB Plume Pixel Amplitude')
+        if distQ == 0
+            title('Change in BBB Plume Pixel Amplitude')
+        elseif distQ == 1 
+            title({'Change in BBB Plume Pixel Amplitude';rangeLabel})
+        end                   
         xlim([1 minFrameLen])
            
         % plot average change in cluster size 
@@ -21198,7 +21241,11 @@ if ETAorSTAq == 0 % STA data
         ax.FontName = 'Arial';
         ylabel("BBB Plume Size (microns squared)") 
         xlabel("Time (s)")
-        title({'Average Change in BBB Plume Size'})
+        if distQ == 0
+            title('Average Change in BBB Plume Size')
+        elseif distQ == 1 
+            title({'Average Change in BBB Plume Size';rangeLabel})
+        end   
         xlim([1 minFrameLen])
         
         % plot average change in cluster size 
@@ -21222,7 +21269,11 @@ if ETAorSTAq == 0 % STA data
         ax.FontName = 'Arial';
         ylabel("BBB Plume Pixel Amplitude") 
         xlabel("Time (s)")
-        title({'Average Change in';'BBB Plume Pixel Amplitude'})
+        if distQ == 0
+            title('Average Change in BBB Plume Pixel Amplitude')
+        elseif distQ == 1 
+            title({'Average Change in BBB Plume Pixel Amplitude';rangeLabel})
+        end           
         xlim([1 minFrameLen])
         
         % plot aligned cluster change in size per bin and total average 
@@ -21272,7 +21323,11 @@ if ETAorSTAq == 0 % STA data
         ax.FontName = 'Arial';
         ylabel("BBB Plume Size (microns squared)") 
         xlabel("Time (s)")
-        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
+        if distQ == 0
+            title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';rangeLabel})
+        end           
         xlim([1 minFrameLen])
         
         % plot aligned cluster change in pixel amplitude per bin and total average 
@@ -21312,7 +21367,11 @@ if ETAorSTAq == 0 % STA data
         ax.FontName = 'Arial';
         ylabel("BBB Plume Pixel Amplitude") 
         xlabel("Time (s)")
-        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
+        if distQ == 0
+            title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';rangeLabel})
+        end          
         xlim([1 minFrameLen])
     elseif clustSizeQ == 1 
         % plot the clusters that meet or exceed the threshold 
@@ -21409,7 +21468,7 @@ if ETAorSTAq == 0 % STA data
         end 
         % remove empty strings 
         emptyStrings = find(binLabel == '');
-        binLabel(emptyStrings) = [];
+        binLabel(emptyStrings) = []; %#ok<FNDSB>
         legend(binLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
