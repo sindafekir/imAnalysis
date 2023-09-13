@@ -20945,8 +20945,8 @@ if ETAorSTAq == 0 % STA data
             avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farBothAxons{mouse}),:);
         end 
     elseif distQ2 == 1 % group data by BBB plume distance from axon 
-        dists = cell(1,mouseNum);
-        reshapedClocFrame = cell(1,mouseNum);
+        closeClustLocPerAxon = cell(1,mouseNum);
+        farClustLocPerAxon = cell(1,mouseNum);
         for mouse = 1:mouseNum
             [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
             clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
@@ -20957,23 +20957,42 @@ if ETAorSTAq == 0 % STA data
                 % the below locs organize the cluster by axon 
                 closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
                 farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                % select close and far clusters, but keep avClocFrameClose and Far rows organized by axon
-                % PICK UP HERE: resort avClocFrame so that non-NaNs are organized by axon
-                count = 1;
+                % sort close/farClustLoc so that each row is per axon
                 for ccell = 1:size(avClocFrame{mouse},1)
-                    reshapedClocFrame()
+                    closeClustLocPerAxon{mouse}{ccell} = closeClustLoc{mouse}(axonInds{mouse} == ccell);
+                    farClustLocPerAxon{mouse}{ccell} = farClustLoc{mouse}(axonInds{mouse} == ccell);
                 end 
-
-                
-                
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     
+                % identify the cluster start frame associated with close
+                % and far cluster locs; keep avClocFrameClose/Far with rows per axon
 
+
+
+
+
+
+                % select close and far clusters, but keep avClocFrameClose and Far rows organized by axon
+                for ccell = 1:size(avClocFrame{mouse},1)
+                    % resort avClocFrame so that non-NaNs are organized by axon
+                    if ccell == 1 
+                        reshapedClocFrame{mouse} = avClocFrame{mouse}(ccell,:);
+                    elseif ccell > 1
+                        len = length(reshapedClocFrame{mouse});
+                        reshapedClocFrame{mouse}(len+1:len+length(avClocFrame{mouse}(ccell,:))) = avClocFrame{mouse}(ccell,:);
+                    end 
+                end 
                 % remove NaNs B = A(~isnan(A))
+                reshapedClocFrame{mouse} = reshapedClocFrame{mouse}(~isnan(reshapedClocFrame{mouse}));
+
+                
                 avClocFrameClose{mouse} = ((reshapedClocFrame{mouse}(closeClustLoc{mouse}))/FPS{mouse})-windSize/2;
                 avClocFrameFar{mouse} = ((reshapedClocFrame{mouse}(farClustLoc{mouse}))/FPS{mouse})-windSize/2;
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                
             elseif distQ == 1
 
                 % specify what distance range you want to look at specifically 
@@ -20985,10 +21004,6 @@ if ETAorSTAq == 0 % STA data
                 avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2)),:))/FPS{mouse})-windSize/2;
                 avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2)),:))/FPS{mouse})-windSize/2;
             end     
-
-
-
-
 
             closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
             farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
