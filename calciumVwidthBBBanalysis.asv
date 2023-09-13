@@ -20469,15 +20469,6 @@ if clustTimeNumGroups == 2
     xlim([1 minFrameLen])
 end 
 %% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE- CHANGE THE COLOR CODE TO MATCH 
-
 if ETAorSTAq == 0 % STA data  
     % identify what specific axons are listeners, controllers, or both 
     axonTypeList = cell(1,mouseNum);
@@ -20514,7 +20505,7 @@ if ETAorSTAq == 0 % STA data
 
     % plot change in cluster size color coded by axon 
     x = 1:minFrameLen;
-    clr = hsv(3);   
+    clr = [0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195];   
     binString = ["Listener","Controller","Both"];
     figure;
     hold all;
@@ -20874,7 +20865,8 @@ end
 
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
-    distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set different distance metrics. ');
+    distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set a distance range . ');
+    distQ2 = input('Input 0 to sort by axon distance from vessel. Insert 1 to sort by BBB plume distance from axon. ');
     closeAxons = cell(1,mouseNum);
     farAxons  = cell(1,mouseNum);
     closeAxonLoc = cell(1,mouseNum);
@@ -20907,56 +20899,129 @@ if ETAorSTAq == 0 % STA data
     avClocFrameFarListener = cell(1,mouseNum); 
     avClocFrameFarController = cell(1,mouseNum);
     avClocFrameFarBoth = cell(1,mouseNum);
-    for mouse = 1:mouseNum
-        % identify what axons are close (<10 microns) and far (>10 microns)
-        % from vessel
-        if distQ == 0
-            closeAxons{mouse} = find(minVAdists{mouse} <= 10);
-            farAxons{mouse} = find(minVAdists{mouse} > 10);
-            avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} <= 10),:))/FPS{mouse})-windSize/2;
-            avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} > 10),:))/FPS{mouse})-windSize/2;
-        elseif distQ == 1
-            % specify what distance range you want to look at specifically 
-            if mouse == 1 
-                distRange = input('What is the range of distances (in microns) that you specifically want to see? Input [min,max]. ');
-            end 
-            closeAxons{mouse} = find(minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2));
-            farAxons{mouse} = find(minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2));
-            avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2)),:))/FPS{mouse})-windSize/2;
-            avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2)),:))/FPS{mouse})-windSize/2;
-        end     
-        closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
-        farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
-        % identify what clusters are close (<10 microns) and far (>10 microns)
-        % from axon 
-        [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
-        clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
-        clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
-        closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
-        farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
-        % identify the locs for listener, controller, and both axons 
-        listenerAxonLoc{mouse} = ismember(axonInds{mouse},listenerAxons{mouse});
-        controllerAxonLoc{mouse} = ismember(axonInds{mouse},controllerAxons{mouse});
-        bothAxonLoc{mouse} = ismember(axonInds{mouse},bothAxons{mouse});
-        % identify close vs far listeners, controllers, and both axons 
-        closeListenerAxonLocs{mouse} = (closeAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
-        farListenerAxonLocs{mouse} = (farAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
-        closeControllerAxonLocs{mouse} = (closeAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2;
-        farControllerAxonLocs{mouse} = (farAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2; 
-        closeBothAxonLocs{mouse} = (closeAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
-        farBothAxonLocs{mouse} = (farAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
-        closeListenerAxons{mouse} = intersect(closeAxons{mouse},listenerAxons{mouse});
-        closeControllerAxons{mouse} = intersect(closeAxons{mouse},controllerAxons{mouse});
-        closeBothAxons{mouse} = intersect(closeAxons{mouse},bothAxons{mouse}); 
-        farListenerAxons{mouse} = intersect(farAxons{mouse},listenerAxons{mouse});
-        farControllerAxons{mouse} = intersect(farAxons{mouse},controllerAxons{mouse});
-        farBothAxons{mouse} = intersect(farAxons{mouse},bothAxons{mouse}); 
-        avClocFrameCloseListener{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeListenerAxons{mouse}),:);
-        avClocFrameCloseController{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeControllerAxons{mouse}),:);
-        avClocFrameCloseBoth{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeBothAxons{mouse}),:);
-        avClocFrameFarListener{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farListenerAxons{mouse}),:);
-        avClocFrameFarController{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farControllerAxons{mouse}),:);
-        avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farBothAxons{mouse}),:);
+    if distQ2 == 0 % group data by axon distance from vessel 
+        for mouse = 1:mouseNum
+            % identify what axons are close (<10 microns) and far (>10 microns)
+            % from vessel
+            if distQ == 0
+                closeAxons{mouse} = find(minVAdists{mouse} <= 10);
+                farAxons{mouse} = find(minVAdists{mouse} > 10);
+                avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} <= 10),:))/FPS{mouse})-windSize/2;
+                avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} > 10),:))/FPS{mouse})-windSize/2;
+            elseif distQ == 1
+                % specify what distance range you want to look at specifically 
+                if mouse == 1 
+                    distRange = input('What is the range of distances (in microns) that you specifically want to see? Input [min,max]. ');
+                end 
+                closeAxons{mouse} = find(minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2));
+                farAxons{mouse} = find(minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2));
+                avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2)),:))/FPS{mouse})-windSize/2;
+                avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2)),:))/FPS{mouse})-windSize/2;
+            end     
+            closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
+            farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
+            % identify the locs for listener, controller, and both axons 
+            listenerAxonLoc{mouse} = ismember(axonInds{mouse},listenerAxons{mouse});
+            controllerAxonLoc{mouse} = ismember(axonInds{mouse},controllerAxons{mouse});
+            bothAxonLoc{mouse} = ismember(axonInds{mouse},bothAxons{mouse});
+            % identify close vs far listeners, controllers, and both axons 
+            closeListenerAxonLocs{mouse} = (closeAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
+            farListenerAxonLocs{mouse} = (farAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
+            closeControllerAxonLocs{mouse} = (closeAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2;
+            farControllerAxonLocs{mouse} = (farAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2; 
+            closeBothAxonLocs{mouse} = (closeAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+            farBothAxonLocs{mouse} = (farAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+            closeListenerAxons{mouse} = intersect(closeAxons{mouse},listenerAxons{mouse});
+            closeControllerAxons{mouse} = intersect(closeAxons{mouse},controllerAxons{mouse});
+            closeBothAxons{mouse} = intersect(closeAxons{mouse},bothAxons{mouse}); 
+            farListenerAxons{mouse} = intersect(farAxons{mouse},listenerAxons{mouse});
+            farControllerAxons{mouse} = intersect(farAxons{mouse},controllerAxons{mouse});
+            farBothAxons{mouse} = intersect(farAxons{mouse},bothAxons{mouse}); 
+            avClocFrameCloseListener{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeListenerAxons{mouse}),:);
+            avClocFrameCloseController{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeControllerAxons{mouse}),:);
+            avClocFrameCloseBoth{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeBothAxons{mouse}),:);
+            avClocFrameFarListener{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farListenerAxons{mouse}),:);
+            avClocFrameFarController{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farControllerAxons{mouse}),:);
+            avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farBothAxons{mouse}),:);
+        end 
+    elseif distQ2 == 1 % group data by BBB plume distance from axon 
+        dists = cell(1,mouseNum);
+        reshapedClocFrame = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
+            clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
+            clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
+            % identify what BBB plumes are close (<= 10 microns) or far (>
+            % 10 microns) from their axon 
+            if distQ == 0
+                % the below locs organize the cluster by axon 
+                closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
+                farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                % select close and far clusters, but keep avClocFrameClose and Far rows organized by axon
+                % find the index of non-NaNs 
+                [r,c] = find(~isnan(avClocFrame{mouse}));
+                
+                
+    
+
+                % remove NaNs B = A(~isnan(A))
+                avClocFrameClose{mouse} = ((reshapedClocFrame{mouse}(closeClustLoc{mouse}))/FPS{mouse})-windSize/2;
+                avClocFrameFar{mouse} = ((reshapedClocFrame{mouse}(farClustLoc{mouse}))/FPS{mouse})-windSize/2;
+            elseif distQ == 1
+
+                % specify what distance range you want to look at specifically 
+                if mouse == 1 
+                    distRange = input('What is the range of distances (in microns) that you specifically want to see? Input [min,max]. ');
+                end 
+                closeAxons{mouse} = find(minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2));
+                farAxons{mouse} = find(minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2));
+                avClocFrameClose{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} >= distRange(1) & minVAdists{mouse} <= distRange(2)),:))/FPS{mouse})-windSize/2;
+                avClocFrameFar{mouse} = ((avClocFrame{mouse}((minVAdists{mouse} < distRange(1) | minVAdists{mouse} > distRange(2)),:))/FPS{mouse})-windSize/2;
+            end     
+
+
+
+
+
+            closeAxonLoc{mouse} = ismember(axonInds{mouse},closeAxons{mouse});
+            farAxonLoc{mouse} = ismember(axonInds{mouse},farAxons{mouse});
+            % identify what clusters are close (<10 microns) and far (>10 microns)
+            % from axon 
+            [r,~] = find(~isnan(timeDistArray{mouse}(:,1)));
+            clustDistsAndAxon{mouse}(:,1) = timeDistArray{mouse}(r,2); 
+            clustDistsAndAxon{mouse}(:,2) = timeDistArray{mouse}(r,3); 
+            closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
+            farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
+            % identify the locs for listener, controller, and both axons 
+            listenerAxonLoc{mouse} = ismember(axonInds{mouse},listenerAxons{mouse});
+            controllerAxonLoc{mouse} = ismember(axonInds{mouse},controllerAxons{mouse});
+            bothAxonLoc{mouse} = ismember(axonInds{mouse},bothAxons{mouse});
+            % identify close vs far listeners, controllers, and both axons 
+            closeListenerAxonLocs{mouse} = (closeAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
+            farListenerAxonLocs{mouse} = (farAxonLoc{mouse}+listenerAxonLoc{mouse}) == 2;
+            closeControllerAxonLocs{mouse} = (closeAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2;
+            farControllerAxonLocs{mouse} = (farAxonLoc{mouse}+controllerAxonLoc{mouse}) == 2; 
+            closeBothAxonLocs{mouse} = (closeAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+            farBothAxonLocs{mouse} = (farAxonLoc{mouse}+bothAxonLoc{mouse}) == 2;
+            closeListenerAxons{mouse} = intersect(closeAxons{mouse},listenerAxons{mouse});
+            closeControllerAxons{mouse} = intersect(closeAxons{mouse},controllerAxons{mouse});
+            closeBothAxons{mouse} = intersect(closeAxons{mouse},bothAxons{mouse}); 
+            farListenerAxons{mouse} = intersect(farAxons{mouse},listenerAxons{mouse});
+            farControllerAxons{mouse} = intersect(farAxons{mouse},controllerAxons{mouse});
+            farBothAxons{mouse} = intersect(farAxons{mouse},bothAxons{mouse}); 
+            avClocFrameCloseListener{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeListenerAxons{mouse}),:);
+            avClocFrameCloseController{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeControllerAxons{mouse}),:);
+            avClocFrameCloseBoth{mouse} =  avClocFrameClose{mouse}(ismember(closeAxons{mouse},closeBothAxons{mouse}),:);
+            avClocFrameFarListener{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farListenerAxons{mouse}),:);
+            avClocFrameFarController{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farControllerAxons{mouse}),:);
+            avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(ismember(farAxons{mouse},farBothAxons{mouse}),:);
+        end 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     end 
     % sort data 
     binClustTSsizeData = cell(1,3);
