@@ -20476,8 +20476,7 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% IMPORTANT: REMAKE THESE FIGURES BECAUSE I FORGOT TO CONVERT AVCLOCFRAMES
-% TO SECONDS 
+% PICK UP HERE- CHANGE THE COLOR CODE TO MATCH 
 
 if ETAorSTAq == 0 % STA data  
     % identify what specific axons are listeners, controllers, or both 
@@ -20489,7 +20488,7 @@ if ETAorSTAq == 0 % STA data
         % identify clusters that come before the spike 
         [rPre,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) < 0);
         % identify clusters that come after the spike 
-        [rPost,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) >= threshFrame);
+        [rPost,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) >= 0);
         % figure out what axon the clusters belong to 
         count1 = 1; count2 = 1; count3 = 1;
         for ccell = 1:length(terminals{mouse})
@@ -20589,6 +20588,7 @@ if ETAorSTAq == 0 % STA data
         end 
     end  
     count = 1 ;
+    clearvars binLabel
     for bin = 1:3
         % determine bin labels 
         for clust = 1:size(binClustTSsizeData{bin},1)
@@ -21092,7 +21092,6 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
     end 
-
  
     if clustSizeQ == 0
         % plot pie chart showing proportion of close vs far listeners, controllers,
@@ -21211,7 +21210,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 2%1:3 % listener, controller, both
+        for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeData{bin}{loc},1)
@@ -21259,7 +21258,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 2%1:3 % listener, controller, both
+        for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -21295,7 +21294,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
         count = 1;
-        for bin = 2%1:3 % listener, controller, both
+        for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin}{loc},1);  
@@ -21326,7 +21325,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
         count = 1;
-        for bin = 2%1:3 % listener, controller, both
+        for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin}{loc},1);  
@@ -21357,7 +21356,7 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
-        for bin = 2%1:3 % listener, controller, both   
+        for bin = 1:3 % listener, controller, both   
             for loc = 1:2 % close axons, far axons
                 [clustLocX, clustLocY] = find(~isnan(binClustTSsizeData{bin}{loc}));
                 clusts = unique(clustLocX);              
@@ -21410,7 +21409,7 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
-        for bin = 21:3 % listener, controller, both  
+        for bin = 1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
                 % align clusters
                 % determine longest cluster 
@@ -21887,10 +21886,6 @@ if ETAorSTAq == 0 % STA data
         xlim([1 minFrameLen])    
     end 
 
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-          % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     for bin = 1:3 % listener, controller, both
         for loc = 1:2 % close axons, far axons
             % plot distribution of cluster start times
@@ -22174,10 +22169,6 @@ if ETAorSTAq == 0 % STA data
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
         end         
-
-
-
-
     end 
 end 
 
