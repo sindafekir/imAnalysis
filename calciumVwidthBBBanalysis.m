@@ -20860,8 +20860,6 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% LATER: MAKE IT POSSIBLE TO SELECT SPECIFIC
-% DISTANCE METRICS FOR SPECIFIC FIGURES 
 
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
@@ -21152,7 +21150,6 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
     end 
- 
     if clustSizeQ == 0
         % plot pie chart showing proportion of close vs far listeners, controllers,
         % and bothers there are 
@@ -21630,9 +21627,7 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
         % remove empty strings 
-        emptyStrings = find(binLabel == '');
-        binLabel(emptyStrings) = []; %#ok<FNDSB>
-        legend(binLabel)
+        legend(axonClusterTypeLabels)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21656,7 +21651,7 @@ if ETAorSTAq == 0 % STA data
                 count = count + 1;
             end 
         end 
-        legend(binLabel)
+        legend(axonClusterTypeLabels)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21834,7 +21829,7 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Change in BBB Plume Pixel Amplitude';titleLabel})
         xlim([1 minFrameLen])
-           
+
         % plot average change in cluster size 
         figure;
         hold all;
@@ -21849,10 +21844,7 @@ if ETAorSTAq == 0 % STA data
                 count = count + 1;
             end 
         end 
-        % remove empty strings 
-        emptyStrings = find(binLabel == '');
-        binLabel(emptyStrings) = [];
-        legend(binLabel)
+        legend(axonClusterTypeLabels)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21861,7 +21853,7 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Average Change in BBB Plume Size';titleLabel})
         xlim([1 minFrameLen])
-        
+
         % plot average change in cluster size 
         figure;
         hold all;
@@ -21876,7 +21868,7 @@ if ETAorSTAq == 0 % STA data
                 count = count + 1;
             end 
         end 
-        legend(binLabel)
+        legend(axonClusterTypeLabels)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21886,6 +21878,17 @@ if ETAorSTAq == 0 % STA data
         title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
         xlim([1 minFrameLen])
         
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % PICK UP HERE - NEED TO FIX LEGEND AND PLOT COLORS FOR ALIGNED AVERAGED PLOTS USING BELOW DATA AND THEN APPLY
+        % TO ALL FIGURES GENERATED IN THIS SECTION 
+
         % plot aligned cluster change in size per bin and total average 
         % determine cluster start frame per bin  
         binClustStartFrame = cell(1,3);
@@ -21895,34 +21898,36 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
-        for bin = 1:3 % listener, controller, both   
+        for bin = 1:3 % listener, controller, both            
             for loc = 1:2 % close axons, far axons
-                [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataLow{bin}{loc}));
-                clusts = unique(clustLocX);              
-                for clust = 1:length(clusts)
-                    binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+                if isempty(binClustTSsizeDataLow{bin}{loc}) == 0
+                    [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataLow{bin}{loc}));
+                    clusts = unique(clustLocX);              
+                    for clust = 1:length(clusts)
+                        binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+                    end 
+                    % align clusters
+                    % determine longest cluster 
+                    [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                    arrayLen = minFrameLen-longestClustStart+1;
+                    for clust = 1:size(binClustTSsizeDataLow{bin}{loc},1)
+                        % get data and buffer end as needed 
+                        data = binClustTSsizeDataLow{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                        data(:,length(data)+1:arrayLen) = NaN;
+                        % align data 
+                        alignedBinClustsSize{bin}{loc}(clust,:) = data;
+                    end 
+                    x = 1:size(alignedBinClustsSize{bin}{loc},2);
+                    % averaged the aligned clusters 
+                    avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
+                    if isempty(binClustTSsizeDataLow{bin}{loc}) == 0 
+                        h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    end 
+                    count = count + 1;
                 end 
-                % align clusters
-                % determine longest cluster 
-                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-                arrayLen = minFrameLen-longestClustStart+1;
-                for clust = 1:size(binClustTSsizeDataLow{bin}{loc},1)
-                    % get data and buffer end as needed 
-                    data = binClustTSsizeDataLow{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                    data(:,length(data)+1:arrayLen) = NaN;
-                    % align data 
-                    alignedBinClustsSize{bin}{loc}(clust,:) = data;
-                end 
-                x = 1:size(alignedBinClustsSize{bin}{loc},2);
-                % averaged the aligned clusters 
-                avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
-                if isempty(binClustTSsizeDataLow{bin}{loc}) == 0 
-                    h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-                end 
-                count = count + 1;
-            end 
+            end           
         end 
-        legend(binLabel)
+        legend(axonClusterTypeLabels)
         Frames_pre_stim_start = -((minFrameLen-1)/2); 
         Frames_post_stim_start = (minFrameLen-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -21946,24 +21951,26 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         for bin = 1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
-                % align clusters
-                % determine longest cluster 
-                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-                arrayLen = minFrameLen-longestClustStart+1;
-                for clust = 1:size(binClustTSpixAmpDataLow{bin}{loc},1)
-                    % get data and buffer end as needed 
-                    data = binClustTSpixAmpDataLow{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                    data(:,length(data)+1:arrayLen) = NaN;
-                    % align data 
-                    alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+                if isempty(binClustTSpixAmpDataLow{bin}{loc}) == 0
+                    % align clusters
+                    % determine longest cluster 
+                    [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                    arrayLen = minFrameLen-longestClustStart+1;
+                    for clust = 1:size(binClustTSpixAmpDataLow{bin}{loc},1)
+                        % get data and buffer end as needed 
+                        data = binClustTSpixAmpDataLow{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                        data(:,length(data)+1:arrayLen) = NaN;
+                        % align data 
+                        alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+                    end 
+                    x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
+                    % averaged the aligned clusters 
+                    avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
+                    if isempty(binClustTSpixAmpDataLow{bin}) == 0 
+                        h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    end 
+                    count = count + 1;
                 end 
-                x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
-                % averaged the aligned clusters 
-                avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
-                if isempty(binClustTSpixAmpDataLow{bin}) == 0 
-                    h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-                end 
-                count = count + 1;
             end 
         end 
         legend(binLabel)
@@ -21975,6 +21982,10 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
         xlim([1 minFrameLen])    
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     end 
 
     for bin = 1:3 % listener, controller, both
