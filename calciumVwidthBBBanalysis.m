@@ -21611,23 +21611,31 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Change in BBB Plume Pixel Amplitude';titleLabel})
         xlim([1 minFrameLen])
-           
+
         % plot average change in cluster size 
         figure;
         hold all;
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
         count = 1;
+        count2 = 1;
+        legendLabel = string(1);
         for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataHigh{bin}{loc},1);  
                 plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                % figure out if the whole row is not a nan to update legend
+                % label 
+                if ~all(isnan(avBinClustSizeTS(count,:)),2)
+                    legendLabel(count2) = axonClusterTypeLabels(count);
+                end 
                 count = count + 1;
+                count2 = count2 + 1;
             end 
         end 
         % remove empty strings 
-        legend(axonClusterTypeLabels)
+        legend(legendLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21637,21 +21645,29 @@ if ETAorSTAq == 0 % STA data
         title({'Average Change in BBB Plume Size';titleLabel})
         xlim([1 minFrameLen])
         
-        % plot average change in cluster size 
+        % plot average change in pixel amp. 
         figure;
         hold all;
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
         count = 1;
+        count2 = 1;
+        legendLabel = string(1);        
         for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataHigh{bin}{loc},1);  
                 plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                % figure out if the whole row is not a nan to update legend
+                % label 
+                if ~all(isnan(avBinClustPixAmpTS(count,:)),2)
+                    legendLabel(count2) = axonClusterTypeLabels(count);
+                end 
                 count = count + 1;
+                count2 = count2 + 1;
             end 
         end 
-        legend(axonClusterTypeLabels)
+        legend(legendLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21670,34 +21686,37 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
+        count2 = 1;
         for bin = 1:3 % listener, controller, both   
             for loc = 1:2 % close axons, far axons
-                [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataHigh{bin}{loc}));
-                clusts = unique(clustLocX);              
-                for clust = 1:length(clusts)
-                    binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
-                end 
-                % align clusters
-                % determine longest cluster 
-                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-                arrayLen = minFrameLen-longestClustStart+1;
-                for clust = 1:size(binClustTSsizeDataHigh{bin}{loc},1)
-                    % get data and buffer end as needed 
-                    data = binClustTSsizeDataHigh{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                    data(:,length(data)+1:arrayLen) = NaN;
-                    % align data 
-                    alignedBinClustsSize{bin}{loc}(clust,:) = data;
-                end 
-                x = 1:size(alignedBinClustsSize{bin}{loc},2);
-                % averaged the aligned clusters 
-                avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
                 if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
+                    [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataHigh{bin}{loc}));
+                    clusts = unique(clustLocX);              
+                    for clust = 1:length(clusts)
+                        binClustStartFrame{bin}{loc}(clust) = min(clustLocY(clustLocX == clust));
+                    end 
+                    % align clusters
+                    % determine longest cluster 
+                    [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                    arrayLen = minFrameLen-longestClustStart+1;
+                    for clust = 1:size(binClustTSsizeDataHigh{bin}{loc},1)
+                        % get data and buffer end as needed 
+                        data = binClustTSsizeDataHigh{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                        data(:,length(data)+1:arrayLen) = NaN;
+                        % align data 
+                        alignedBinClustsSize{bin}{loc}(clust,:) = data;
+                    end 
+                    x = 1:size(alignedBinClustsSize{bin}{loc},2);
+                    % averaged the aligned clusters 
+                    avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
                     h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    legendLabel(count2) = axonClusterTypeLabels(count); 
+                    count2 = count2 + 1;                   
                 end 
-                count = count + 1;
+                count = count + 1;  
             end 
         end 
-        legend(binLabel)
+        legend(legendLabel)
         Frames_pre_stim_start = -((minFrameLen-1)/2); 
         Frames_post_stim_start = (minFrameLen-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -21719,29 +21738,32 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
+        count2 = 1;
         for bin = 1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
-                % align clusters
-                % determine longest cluster 
-                [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
-                arrayLen = minFrameLen-longestClustStart+1;
-                for clust = 1:size(binClustTSpixAmpDataHigh{bin}{loc},1)
-                    % get data and buffer end as needed 
-                    data = binClustTSpixAmpDataHigh{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
-                    data(:,length(data)+1:arrayLen) = NaN;
-                    % align data 
-                    alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
-                end 
-                x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
-                % averaged the aligned clusters 
-                avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
-                if isempty(binClustTSpixAmpDataHigh{bin}) == 0 
+                if isempty(binClustTSpixAmpDataHigh{bin}{loc}) == 0 
+                    % align clusters
+                    % determine longest cluster 
+                    [longestClustStart,longestClust] = min(binClustStartFrame{bin}{loc});
+                    arrayLen = minFrameLen-longestClustStart+1;
+                    for clust = 1:size(binClustTSpixAmpDataHigh{bin}{loc},1)
+                        % get data and buffer end as needed 
+                        data = binClustTSpixAmpDataHigh{bin}{loc}(clust,binClustStartFrame{bin}{loc}(clust):end);
+                        data(:,length(data)+1:arrayLen) = NaN;
+                        % align data 
+                        alignedBinClustsPixAmp{bin}{loc}(clust,:) = data;
+                    end 
+                    x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
+                    % averaged the aligned clusters 
+                    avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
                     h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    legendLabel(count2) = axonClusterTypeLabels(count); 
+                    count2 = count2 + 1;                   
                 end 
-                count = count + 1;
+                count = count + 1;  
             end 
         end 
-        legend(binLabel)
+        legend(legendLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21836,15 +21858,23 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
         count = 1;
+        count2 = 1;
+        legendLabel = string(1);
         for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataLow{bin}{loc},1);  
-                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);   
+                % figure out if the whole row is not a nan to update legend
+                % label 
+                if ~all(isnan(avBinClustSizeTS(count,:)),2)
+                    legendLabel(count2) = axonClusterTypeLabels(count);
+                end 
                 count = count + 1;
+                count2 = count2 + 1;
             end 
         end 
-        legend(axonClusterTypeLabels)
+        legend(legendLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21860,15 +21890,23 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
         count = 1;
+        count2 = 1;
+        legendLabel = string(1);
         for bin = 1:3 % listener, controller, both
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataLow{bin}{loc},1);  
-                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);                      
+                % figure out if the whole row is not a nan to update legend
+                % label 
+                if ~all(isnan(avBinClustPixAmpTS(count,:)),2) 
+                    legendLabel(count2) = axonClusterTypeLabels(count);
+                end 
                 count = count + 1;
+                count2 = count2 + 1;
             end 
         end 
-        legend(axonClusterTypeLabels)
+        legend(legendLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21877,17 +21915,6 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
         xlim([1 minFrameLen])
-        
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % PICK UP HERE - NEED TO FIX LEGEND AND PLOT COLORS FOR ALIGNED AVERAGED PLOTS USING BELOW DATA AND THEN APPLY
-        % TO ALL FIGURES GENERATED IN THIS SECTION 
 
         % plot aligned cluster change in size per bin and total average 
         % determine cluster start frame per bin  
@@ -21898,6 +21925,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
+        count2 = 1;
+        legendLabel = string(1);
         for bin = 1:3 % listener, controller, both            
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSsizeDataLow{bin}{loc}) == 0
@@ -21920,14 +21949,14 @@ if ETAorSTAq == 0 % STA data
                     x = 1:size(alignedBinClustsSize{bin}{loc},2);
                     % averaged the aligned clusters 
                     avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
-                    if isempty(binClustTSsizeDataLow{bin}{loc}) == 0 
-                        h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-                    end 
-                    count = count + 1;
+                    h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    legendLabel(count2) = axonClusterTypeLabels(count); 
+                    count2 = count2 + 1;                   
                 end 
+                count = count + 1;              
             end           
         end 
-        legend(axonClusterTypeLabels)
+        legend(legendLabel)
         Frames_pre_stim_start = -((minFrameLen-1)/2); 
         Frames_post_stim_start = (minFrameLen-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -21949,6 +21978,8 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
+        count2 = 1;
+        legendLabel = string(1);
         for bin = 1:3 % listener, controller, both  
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSpixAmpDataLow{bin}{loc}) == 0
@@ -21966,14 +21997,14 @@ if ETAorSTAq == 0 % STA data
                     x = 1:size(alignedBinClustsPixAmp{bin}{loc},2);
                     % averaged the aligned clusters 
                     avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
-                    if isempty(binClustTSpixAmpDataLow{bin}) == 0 
-                        h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
-                    end 
-                    count = count + 1;
+                    h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    legendLabel(count2) = axonClusterTypeLabels(count); 
+                    count2 = count2 + 1;                      
                 end 
+                count = count + 1;
             end 
         end 
-        legend(binLabel)
+        legend(legendLabel)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21982,10 +22013,6 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
         xlim([1 minFrameLen])    
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     end 
 
     for bin = 1:3 % listener, controller, both
