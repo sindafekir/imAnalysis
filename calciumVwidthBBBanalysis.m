@@ -18862,7 +18862,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -19246,14 +19246,14 @@ if ETAorSTAq == 0 % STA data
             % resort DistArray into one array where column variables relate to
             % animal number not terminal 
             if mouse == 1 
-                allTimeDistArray(:,1) = ((timeDistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
-                allTimeDistArray(:,2) = timeDistArray{mouse}(:,2);
+                allTimeDistArray(:,1) = ((timeDistArray{mouse}(~isnan(timeDistArray{mouse}(:,1)),1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
+                allTimeDistArray(:,2) = timeDistArray{mouse}(~isnan(timeDistArray{mouse}(:,1)),2);
                 allTimeDistArray(:,3) = mouse;
             elseif mouse > 1
                 len = size(allTimeDistArray,1);
-                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,1) = ((timeDistArray{mouse}(:,1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
-                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,2) = timeDistArray{mouse}(:,2);
-                allTimeDistArray(len+1:size(timeDistArray{mouse},1)+len,3) = mouse;
+                allTimeDistArray(len+1:sum(~isnan(timeDistArray{mouse}(:,1)))+len,1) = ((timeDistArray{mouse}(~isnan(timeDistArray{mouse}(:,1)),1))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice 
+                allTimeDistArray(len+1:sum(~isnan(timeDistArray{mouse}(:,1)))+len,2) = timeDistArray{mouse}(~isnan(timeDistArray{mouse}(:,1)),2);
+                allTimeDistArray(len+1:sum(~isnan(timeDistArray{mouse}(:,1)))+len,3) = mouse;
             end 
         end 
     end 
@@ -19307,7 +19307,7 @@ if ETAorSTAq == 0 % STA data
     figure;
     ax=gca;
     histogram(allTimeDistArray(:,2),61)
-    set(gca,'XTick',0:10:310,'XTickLabelRotation',45)
+    set(gca,'XTick',0:10:ceil(max(allTimeDistArray(:,2))),'XTickLabelRotation',45)
     avCAdists = nanmean(allTimeDistArray(:,2)); 
     medCAdists = nanmedian(allTimeDistArray(:,2)); %#ok<*NANMEDIAN>
     avCAdistsLabel = sprintf('Average BBB plume distance from axon: %.3f',avCAdists);
@@ -19317,7 +19317,7 @@ if ETAorSTAq == 0 % STA data
     title({'Distribution of BBB Plume Distance from Axon';avCAdistsLabel;medCAdistsLabel});
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
-    
+
     figure;
     ax=gca;
     if exist('allTimeODistArray','var') == 0
@@ -22387,62 +22387,58 @@ if ETAorSTAq == 0 % STA data
     end 
 end 
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot distribution of axon distances from the vessel and distribution of BBB plume distance from axon color coded by axon type and BBB plume timing 
 if ETAorSTAq == 0 % STA data 
-    % plot distribution of axon distance from vessel 
     % determine what the max and min values are for axon dists from vessel
     minAVdist = min(floor(allMinVAdists));
     maxAVdist = max(ceil(allMinVAdists));
-    % determine the number of time bins for creating histogram so that each
+    % determine the number of bins for creating histogram so that each
     % bin = 5 microns 
     numBins = ceil(maxAVdist/5);
     edge = [0,5];
-    tBinEdges = nan(1,2);
+    BinEdges = nan(1,2);
     AdistsByAtype = nan(numBins,3);
-    for tBin = 1:numBins
-        % determine time bin edges 
-        tBinEdges(tBin,:) = edge;
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
         edge = edge+[5,5];
         for mouse = 1:mouseNum
-            % sort data into time bins organized by axon type (listener,
+            % sort data into bins organized by axon type (listener,
             % controller, both) 
             if mouse == 1 
                 for aType = 1:3
                     if aType == 1
-                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
-                        AdistsByAtype(tBin,aType) = sum(ismember(listenerAxons{mouse},c));
+                        [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        AdistsByAtype(bin,aType) = sum(ismember(listenerAxons{mouse},c));
                     elseif aType == 2 
-                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
-                        AdistsByAtype(tBin,aType) = sum(ismember(controllerAxons{mouse},c));
+                        [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        AdistsByAtype(bin,aType) = sum(ismember(controllerAxons{mouse},c));
                     elseif aType == 3 
-                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
-                        AdistsByAtype(tBin,aType) = sum(ismember(bothAxons{mouse},c));
+                        [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        AdistsByAtype(bin,aType) = sum(ismember(bothAxons{mouse},c));
                     end                 
                 end 
             elseif mouse > 1 
                 for aType = 1:3
                     if aType == 1
-                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
                         data = sum(ismember(listenerAxons{mouse},c));
-                        AdistsByAtype(tBin,aType) = data + AdistsByAtype(tBin,aType);
+                        AdistsByAtype(bin,aType) = data + AdistsByAtype(bin,aType);
                     elseif aType == 2 
-                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
                         data = sum(ismember(controllerAxons{mouse},c));
-                        AdistsByAtype(tBin,aType) = data + AdistsByAtype(tBin,aType);
+                        AdistsByAtype(bin,aType) = data + AdistsByAtype(bin,aType);
                     elseif aType == 3 
-                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
                         data = sum(ismember(bothAxons{mouse},c));
-                        AdistsByAtype(tBin,aType) = data + AdistsByAtype(tBin,aType);
+                        AdistsByAtype(bin,aType) = data + AdistsByAtype(bin,aType);
                     end                 
                 end                 
             end 
         end 
     end 
+    % plot distribution of axon distance from vessel, color coded by axon
+    % type 
     figure;
     ax=gca;
     ba = bar(AdistsByAtype,'stacked','FaceColor','flat');
@@ -22462,36 +22458,102 @@ if ETAorSTAq == 0 % STA data
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - ABOVE WORKS NEXT EDIT BELOW TO COLOR CODE PLUME DIST BY
-% AXON TYPE 
-
     % create dists{mouse} array that contains plume dist data for each
     % mouse 
-    dists = cell(1,mouseNum);
+    BAdists = cell(1,mouseNum);
     for mouse = 1:mouseNum
-        dists{mouse} = timeDistArray{mouse}(~isnan(timeDistArray{mouse}(:,1)),2);
+        BAdists{mouse} = (timeDistArray{mouse}(~isnan(timeDistArray{mouse}(:,1)),2))';
     end 
-
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-    % plot the distribution of cluster distances from axon 
+    % determine what the max and min values are for BBB plume dists from
+    % axon 
+    minBAdist = min(floor(allTimeDistArray(:,2)));
+    maxBAdist = max(ceil(allTimeDistArray(:,2)));
+    % determine the number of bins for creating histogram so that each
+    % bin = 5 microns 
+    numBins = ceil(maxBAdist/5);
+    edge = [0,5];
+    BinEdges = nan(1,2);
+    BdistsByAtype = nan(numBins,3);
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum           
+            % sort data into bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,listenerAxons{mouse}));
+                    elseif aType == 2 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,controllerAxons{mouse}));
+                    elseif aType == 3 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,bothAxons{mouse}));
+                    end                 
+                end                   
+            elseif mouse > 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,listenerAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    elseif aType == 2 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,controllerAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    elseif aType == 3 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,bothAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    % plot distribution of BBB plume from axon, color coded by axon
+    % type 
     figure;
     ax=gca;
-    histogram(allTimeDistArray(:,2),61)
-    set(gca,'XTick',0:10:310,'XTickLabelRotation',45)
-    avCAdists = nanmean(allTimeDistArray(:,2)); 
-    medCAdists = nanmedian(allTimeDistArray(:,2)); %#ok<*NANMEDIAN>
-    avCAdistsLabel = sprintf('Average BBB plume distance from axon: %.3f',avCAdists);
-    medCAdistsLabel = sprintf('Median BBB plume distance from axon: %.3f',medCAdists);
+    ba = bar(BdistsByAtype,'stacked','FaceColor','flat');
+    ba(1).CData = [0 0.4470 0.7410];
+    ba(2).CData = [0.8500 0.3250 0.0980];
+    ba(3).CData = [0.4250 0.386 0.4195];
     ax.FontSize = 15;
-    % ax.FontName = 'Times';
-    title({'Distribution of BBB Plume Distance from Axon';avCAdistsLabel;medCAdistsLabel});
+    ax.FontName = 'Arial';
+    title({'Distribution of BBB Plume Distance from Axon'});
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
+    legend("Listener Axons","Controller Axons","Axons that do Both")
+    set(gca,'XTick',minBAdist:3:maxBAdist)
+    xticks = get(gca,'xtick'); 
+    x = minBAdist:10:maxBAdist;
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)
+
+
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    % plot the distribution of plume distances from axon color coded by plume
+    % timing before or after the spike/event 
+    % PICK UP HERE- USE BADISTS AND ALLAVCLOCFRAMEBOXPLOT  
+
 end 
+
+
+
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
