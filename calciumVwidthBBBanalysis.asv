@@ -20851,16 +20851,6 @@ if ETAorSTAq == 0 % STA data
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for axons grouped by axon distance from vessel and cluster distance from axon  
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
     distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set a distance range . ');
@@ -22140,8 +22130,7 @@ if ETAorSTAq == 0 % STA data
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
         end 
-    elseif
-    if clustSizeQ == 1
+    elseif clustSizeQ == 1
         titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
         for bin = 1:3 % listener, controller, both
             for loc = 1:2 % close axons, far axons
@@ -22403,6 +22392,99 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%% plot distribution of axon distances from the vessel and distribution of BBB plume distance from axon color coded by axon type and BBB plume timing 
+if ETAorSTAq == 0 % STA data 
+    % plot distribution of axon distance from vessel 
+    % determine what the max and min values are for axon dists from vessel
+    minAVdist = min(floor(allMinVAdists));
+    maxAVdist = max(ceil(allMinVAdists));
+    % determine the number of time bins for creating histogram so that each
+    % bin = 5 microns 
+    numBins = ceil(maxAVdist/5);
+    edge = [0,5];
+    tBinEdges = nan(1,2);
+    AdistsByAtype = nan(numBins,3);
+    for tBin = 1:numBins
+        % determine time bin edges 
+        tBinEdges(tBin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum
+            % sort data into time bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        AdistsByAtype(tBin,aType) = sum(ismember(listenerAxons{mouse},c));
+                    elseif aType == 2 
+                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        AdistsByAtype(tBin,aType) = sum(ismember(controllerAxons{mouse},c));
+                    elseif aType == 3 
+                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        AdistsByAtype(tBin,aType) = sum(ismember(bothAxons{mouse},c));
+                    end                 
+                end 
+            elseif mouse > 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        data = sum(ismember(listenerAxons{mouse},c));
+                        AdistsByAtype(tBin,aType) = data + AdistsByAtype(tBin,aType);
+                    elseif aType == 2 
+                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        data = sum(ismember(controllerAxons{mouse},c));
+                        AdistsByAtype(tBin,aType) = data + AdistsByAtype(tBin,aType);
+                    elseif aType == 3 
+                        [~, c] = find(minVAdists{mouse} > tBinEdges(tBin,1) & minVAdists{mouse} <= tBinEdges(tBin,2));
+                        data = sum(ismember(bothAxons{mouse},c));
+                        AdistsByAtype(tBin,aType) = data + AdistsByAtype(tBin,aType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    figure;
+    ax=gca;
+    ba = bar(AdistsByAtype,'stacked','FaceColor','flat');
+    ba(1).CData = [0 0.4470 0.7410];
+    ba(2).CData = [0.8500 0.3250 0.0980];
+    ba(3).CData = [0.4250 0.386 0.4195];
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    title({'Distribution of Axon Distance from Vessel'});
+    ylabel("Number of Axons")
+    xlabel("Distance (microns)") 
+    legend("Listener Axons","Controller Axons","Axons that do Both")
+    set(gca,'XTick',minAVdist:3:maxAVdist)
+    xticks = get(gca,'xtick'); 
+    x = minAVdist:10:maxAVdist;
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)
+
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE - ABOVE WORKS NEXT EDIT BELOW TO COLOR CODE PLUME DIST BY
+% AXON TYPE 
+    % 
+
+    % plot the distribution of cluster distances from axon 
+    figure;
+    ax=gca;
+    histogram(allTimeDistArray(:,2),61)
+    set(gca,'XTick',0:10:310,'XTickLabelRotation',45)
+    avCAdists = nanmean(allTimeDistArray(:,2)); 
+    medCAdists = nanmedian(allTimeDistArray(:,2)); %#ok<*NANMEDIAN>
+    avCAdistsLabel = sprintf('Average BBB plume distance from axon: %.3f',avCAdists);
+    medCAdistsLabel = sprintf('Median BBB plume distance from axon: %.3f',medCAdists);
+    ax.FontSize = 15;
+    % ax.FontName = 'Times';
+    title({'Distribution of BBB Plume Distance from Axon';avCAdistsLabel;medCAdistsLabel});
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+end 
+
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
