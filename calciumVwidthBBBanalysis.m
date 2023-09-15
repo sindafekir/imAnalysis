@@ -22014,22 +22014,87 @@ if ETAorSTAq == 0 % STA data
         title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
         xlim([1 minFrameLen])    
     end 
-
-    for bin = 1:3 % listener, controller, both
+    if clustSizeQ == 0
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons
+                % plot distribution of cluster start times
+                figure;
+                ax=gca;
+                histogram(binClocFrame{bin}{loc},20)
+                ax.FontSize = 15;
+                ax.FontName = 'Arial';
+                if bin == 1 
+                    binLabel = 'Listener Axons';
+                elseif bin == 2
+                    binLabel = 'Controller Axons';
+                elseif bin == 3
+                    binLabel = 'Both Axons';
+                end 
+                if distQ2 == 0 % group data by axon distance from vessel 
+                    if distQ == 0
+                        if loc == 1
+                            locLabel = 'Close Axons';
+                        elseif loc == 2
+                            locLabel = 'Far Axons';
+                        end 
+                    elseif distQ == 1
+                        if loc == 1
+                            locLabel = 'In Range Axons';
+                        elseif loc == 2
+                            locLabel = 'Out of Range Axons';
+                        end                 
+                    end                 
+                elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                    if distQ == 0
+                        if loc == 1
+                            locLabel = 'Close BBB Plumes';
+                        elseif loc == 2
+                            locLabel = 'Far BBB Plumes';
+                        end 
+                    elseif distQ == 1
+                        if loc == 1
+                            locLabel = 'In Range BBB Plumes';
+                        elseif loc == 2
+                            locLabel = 'Out of Range BBB Plumes';
+                        end                 
+                    end                 
+                end 
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel});
+                    end          
+                end 
+                ylabel("Number of BBB Plumes")
+                xlabel("Time (s)") 
+            end 
+        end 
+        % combine across axon types 
+        closeFarBinClocFrame = cell(1,2);
+        for bin = 1:3 % listener, controller, both
+            for loc = 1:2 % close axons, far axons
+                if bin == 1 
+                    closeFarBinClocFrame{loc} = binClocFrame{bin}{loc};
+                elseif bin > 1 
+                    len = length(closeFarBinClocFrame{loc});
+                    closeFarBinClocFrame{loc}(len+1:len+length(binClocFrame{bin}{loc})) = binClocFrame{bin}{loc};
+                end 
+            end 
+        end 
         for loc = 1:2 % close axons, far axons
             % plot distribution of cluster start times
             figure;
             ax=gca;
-            histogram(binClocFrame{bin}{loc},20)
+            histogram(closeFarBinClocFrame{loc},20)
             ax.FontSize = 15;
             ax.FontName = 'Arial';
-            if bin == 1 
-                binLabel = 'Listener Axons';
-            elseif bin == 2
-                binLabel = 'Controller Axons';
-            elseif bin == 3
-                binLabel = 'Both Axons';
-            end 
             if distQ2 == 0 % group data by axon distance from vessel 
                 if distQ == 0
                     if loc == 1
@@ -22043,7 +22108,7 @@ if ETAorSTAq == 0 % STA data
                     elseif loc == 2
                         locLabel = 'Out of Range Axons';
                     end                 
-                end                 
+                end             
             elseif distQ2 == 1 % group data by BBB plume distance from axon 
                 if distQ == 0
                     if loc == 1
@@ -22057,90 +22122,25 @@ if ETAorSTAq == 0 % STA data
                     elseif loc == 2
                         locLabel = 'Out of Range BBB Plumes';
                     end                 
-                end                 
+                end                    
             end 
             if distQ == 0
                 if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel});
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel});
                 elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel});
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel});
                 end         
             elseif distQ == 1 
                 if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel});
+                    title({'Distribution of BBB Plume Timing';'Average Time';rangeLabel});
                 elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel});
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel});
                 end          
             end 
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
         end 
-    end 
-    % combine across axon types 
-    closeFarBinClocFrame = cell(1,2);
-    for bin = 1:3 % listener, controller, both
-        for loc = 1:2 % close axons, far axons
-            if bin == 1 
-                closeFarBinClocFrame{loc} = binClocFrame{bin}{loc};
-            elseif bin > 1 
-                len = length(closeFarBinClocFrame{loc});
-                closeFarBinClocFrame{loc}(len+1:len+length(binClocFrame{bin}{loc})) = binClocFrame{bin}{loc};
-            end 
-        end 
-    end 
-    for loc = 1:2 % close axons, far axons
-        % plot distribution of cluster start times
-        figure;
-        ax=gca;
-        histogram(closeFarBinClocFrame{loc},20)
-        ax.FontSize = 15;
-        ax.FontName = 'Arial';
-        if distQ2 == 0 % group data by axon distance from vessel 
-            if distQ == 0
-                if loc == 1
-                    locLabel = 'Close Axons';
-                elseif loc == 2
-                    locLabel = 'Far Axons';
-                end 
-            elseif distQ == 1
-                if loc == 1
-                    locLabel = 'In Range Axons';
-                elseif loc == 2
-                    locLabel = 'Out of Range Axons';
-                end                 
-            end             
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                if loc == 1
-                    locLabel = 'Close BBB Plumes';
-                elseif loc == 2
-                    locLabel = 'Far BBB Plumes';
-                end 
-            elseif distQ == 1
-                if loc == 1
-                    locLabel = 'In Range BBB Plumes';
-                elseif loc == 2
-                    locLabel = 'Out of Range BBB Plumes';
-                end                 
-            end                    
-        end 
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';locLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';rangeLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel});
-            end          
-        end 
-        ylabel("Number of BBB Plumes")
-        xlabel("Time (s)") 
-    end 
-    if clustSizeQ == 1
+    elseif clustSizeQ == 1
         titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
         for bin = 1:3 % listener, controller, both
             for loc = 1:2 % close axons, far axons
