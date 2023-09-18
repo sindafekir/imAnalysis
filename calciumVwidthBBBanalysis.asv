@@ -19238,7 +19238,6 @@ if ETAorSTAq == 0 % STA data
     end 
 end 
 %% plot distance from axon and VR space as a function of cluster timing
-
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -22459,6 +22458,10 @@ if ETAorSTAq == 0 % STA data
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
 
+    sizeQhist = input('Input 1 to set a size threshold for the BBB plume distance from axon histograms. Input 0 otherwise. ');
+    if sizeQhist == 1
+        histSizeThresh = input('Input the histogram size threshold for BBB plumes (microns): ');
+    end 
     % create dists{mouse} array that contains plume dist data for each
     % mouse 
     BAdists = cell(1,mouseNum);
@@ -22486,14 +22489,26 @@ if ETAorSTAq == 0 % STA data
                 for aType = 1:3
                     if aType == 1
                         [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         ccell = axonInds{mouse}(c);
                         BdistsByAtype(bin,aType) = sum(ismember(ccell,listenerAxons{mouse}));
                     elseif aType == 2 
                         [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         ccell = axonInds{mouse}(c);
                         BdistsByAtype(bin,aType) = sum(ismember(ccell,controllerAxons{mouse}));
                     elseif aType == 3 
                         [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         ccell = axonInds{mouse}(c);
                         BdistsByAtype(bin,aType) = sum(ismember(ccell,bothAxons{mouse}));
                     end                 
@@ -22502,16 +22517,28 @@ if ETAorSTAq == 0 % STA data
                 for aType = 1:3
                     if aType == 1
                         [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         ccell = axonInds{mouse}(c);
                         data = sum(ismember(ccell,listenerAxons{mouse}));
                         BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
                     elseif aType == 2 
                         [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         ccell = axonInds{mouse}(c);
                         data = sum(ismember(ccell,controllerAxons{mouse}));
                         BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
                     elseif aType == 3 
                         [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         ccell = axonInds{mouse}(c);
                         data = sum(ismember(ccell,bothAxons{mouse}));
                         BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
@@ -22530,7 +22557,12 @@ if ETAorSTAq == 0 % STA data
     ba(3).CData = [0.4250 0.386 0.4195];
     ax.FontSize = 15;
     ax.FontName = 'Arial';
-    title({'Distribution of BBB Plume Distance from Axon'});
+    if sizeQhist == 1
+        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+        title({'Distribution of BBB Plume Distance from Axon';titleLabel});
+    elseif sizeQhist == 0
+        title({'Distribution of BBB Plume Distance from Axon'});
+    end 
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
     legend("Listener Axons","Controller Axons","Axons that do Both")
@@ -22541,10 +22573,178 @@ if ETAorSTAq == 0 % STA data
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
 
-
-    
+    % plot the distribution of plume distances from axon color coded by plume
+    % timing before or after the spike/event 
+    edge = [0,5];
+    BinEdges = nan(1,2);
+    BdistsByTtype = nan(numBins,2);
+    reshpdAvClocFrame = cell(1,mouseNum);
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum   
+            data = (avClocFrame{mouse}/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice
+            % reshape avClocFrame so clusters are in order of axons 
+            for ccell = 1:size(avClocFrame{mouse},1)
+                if ccell == 1 
+                    reshpdAvClocFrame{mouse} =  data(ccell,~isnan(data(ccell,:)));
+                elseif ccell > 1 
+                    len = length(reshpdAvClocFrame{mouse});
+                    reshpdAvClocFrame{mouse}(len+1:len+sum(~isnan(avClocFrame{mouse}(ccell,:)))) =  data(ccell,~isnan(avClocFrame{mouse}(ccell,:))) ;
+                end 
+            end     
+            % sort data into bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for tType = 1:2
+                    if tType == 1 % before event/spike
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        BdistsByTtype(bin,tType) = sum(reshpdAvClocFrame{mouse}(c) < 0);
+                    elseif tType == 2 % after event/spike 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        BdistsByTtype(bin,tType) = sum(reshpdAvClocFrame{mouse}(c) >= 0);
+                    end                 
+                end                   
+            elseif mouse > 1 
+                for tType = 1:2
+                    if tType == 1 % before event/spike
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        data = sum(reshpdAvClocFrame{mouse}(c) < 0);
+                        BdistsByTtype(bin,tType) = data + BdistsByTtype(bin,tType);
+                    elseif tType == 2 % after event/spike  
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        data = sum(reshpdAvClocFrame{mouse}(c) >= 0);
+                        BdistsByTtype(bin,tType) = data + BdistsByTtype(bin,tType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    % plot distribution of BBB plume from axon, color coded by axon
+    % type 
+    figure;
+    ax=gca;
+    ba = bar(BdistsByTtype,'stacked','FaceColor','flat');
+    bar2Clr = hsv(2);
+    ba(1).CData = bar2Clr(1,:);
+    ba(2).CData = bar2Clr(2,:);
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    if sizeQhist == 1
+        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+        title({'Distribution of BBB Plume Distance from Axon';titleLabel});
+    elseif sizeQhist == 0
+        title({'Distribution of BBB Plume Distance from Axon'});
+    end 
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+    legend("Before 0 sec","After 0 sec")
+    set(gca,'XTick',minBAdist:3:maxBAdist)
+    xticks = get(gca,'xtick'); 
+    x = minBAdist:10:maxBAdist;
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)
 end 
 
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% plot 3D scatter plots showing relationships between 
+% 1) axon distance from vessel, BBB plume distance from axon, time 
+% 2) axon distance from vessel, BBB plume distance from axon, BBB plume
+% size 
+
+
+clearvars VAdistBAdistCloc resrtdClustSize VAdistBAdistClocThresh
+minVAdistsPerC = cell(1,mouseNum);
+resrtdClustSize = cell(1,mouseNum);
+% add in option to threshold by size 
+scatter3DClustSizeQ = input('Input 1 to set a BBB plume size threshold for the scatter plot. Input 0 otherwise. ');
+if scatter3DClustSizeQ == 1 
+    scatter3DClustSizeThresh = input('Input the BBB plume size threshold (microns) for the 3D scatter plot. ');
+end 
+for mouse = 1:mouseNum
+    % create a version of minVAdists where axon dist to vessel is given per
+    % cluster (use axonInds)
+    for clust = 1:length(axonInds{mouse})
+        minVAdistsPerC{mouse}(clust) = minVAdists{mouse}(axonInds{mouse}(clust));
+        % resort clustSize to get rid of NaNs and have cluster sizes organized
+        % by axon 
+    end 
+    % resort average cluster size (collapsed across time)
+    for ccell = 1:size(clustSize{mouse},1)
+        if ccell == 1 
+            resrtdClustSize{mouse} = clustSize{mouse}(ccell,(~isnan(clustSize{mouse}(ccell,:))));
+        elseif ccell > 1 
+            len = length(resrtdClustSize{mouse});
+            resrtdClustSize{mouse}(len+1:len+length(clustSize{mouse}(ccell,(~isnan(clustSize{mouse}(ccell,:)))))) = clustSize{mouse}(ccell,(~isnan(clustSize{mouse}(ccell,:))));
+        end 
+    end 
+    % sort data for 3D scatter plot 
+    if mouse == 1
+        VAdistBAdistCloc(:,1) = minVAdistsPerC{mouse};
+        VAdistBAdistCloc(:,2) = BAdists{mouse};
+        VAdistBAdistCloc(:,3) = reshpdAvClocFrame{mouse};
+    elseif mouse > 1 
+        len = size(VAdistBAdistCloc,1);
+        VAdistBAdistCloc(len+1:len+length(minVAdistsPerC{mouse}),1) = minVAdistsPerC{mouse};
+        VAdistBAdistCloc(len+1:len+length(minVAdistsPerC{mouse}),2) = BAdists{mouse};
+        VAdistBAdistCloc(len+1:len+length(minVAdistsPerC{mouse}),3) = reshpdAvClocFrame{mouse};        
+    end 
+    % sort data using the size threshold 
+    % figure out what clusters meet the size threshold 
+    theseClusts = any(downAllAxonsClustSizeTS{mouse} >= scatter3DClustSizeThresh,2);
+    if mouse == 1
+        VAdistBAdistClocThresh(:,1) = minVAdistsPerC{mouse}(theseClusts);
+        VAdistBAdistClocThresh(:,2) = BAdists{mouse}(theseClusts);
+        VAdistBAdistClocThresh(:,3) = reshpdAvClocFrame{mouse}(theseClusts);
+    elseif mouse > 1 
+        len = size(VAdistBAdistCloc,1);
+        VAdistBAdistClocThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),1) = minVAdistsPerC{mouse}(theseClusts);
+        VAdistBAdistClocThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),2) = BAdists{mouse}(theseClusts);
+        VAdistBAdistClocThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),3) = reshpdAvClocFrame{mouse}(theseClusts);        
+    end 
+end 
+% plot scatter plot of axon distance from vessel (minVAdists), BBB plume distance from axon, time
+figure;
+ax = gca;
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+scatter3(VAdistBAdistCloc(:,1),VAdistBAdistCloc(:,2),VAdistBAdistCloc(:,3),'filled')
+if scatter3DClustSizeQ == 1 
+    hold on;
+    ThreshLegLabel1 = sprintf('BBB Plumes >= %d microns squared.',scatter3DClustSizeThresh);
+    
+    scatter3(VAdistBAdistClocThresh(:,1),VAdistBAdistClocThresh(:,2),VAdistBAdistClocThresh(:,3),'filled')
+    legend((ThreshLegLabel;)
+end 
+xlabel('Axon Distance from Vessel (microns)')
+ylabel('BBB Plume Distance from Axon (microns)')
+zlabel('Time (sec)')
+
+
+% plot scatter plot of axon distance from vessel (minVAdists), BBB plume
+% distance from axon, average BBB plume size 
 
 
 
@@ -22553,6 +22753,10 @@ end
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% NEXT: 
+%) 1) plot TS data grouped by clusters found in 3D scatter plots 
+%) 2) replot box and whisker plots using metrics that make more sense (max
+%size/pixel amplitude) 
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
