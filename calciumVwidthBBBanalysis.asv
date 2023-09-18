@@ -22453,7 +22453,7 @@ if ETAorSTAq == 0 % STA data
     legend("Listener Axons","Controller Axons","Axons that do Both")
     set(gca,'XTick',minAVdist:3:maxAVdist)
     xticks = get(gca,'xtick'); 
-    x = minAVdist:10:maxAVdist;
+    % x = minAVdist:10:maxAVdist;
     scaling  = 5;
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
@@ -22568,7 +22568,7 @@ if ETAorSTAq == 0 % STA data
     legend("Listener Axons","Controller Axons","Axons that do Both")
     set(gca,'XTick',minBAdist:3:maxBAdist)
     xticks = get(gca,'xtick'); 
-    x = minBAdist:10:maxBAdist;
+    % x = minBAdist:10:maxBAdist;
     scaling  = 5;
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
@@ -22674,7 +22674,6 @@ end
 % 2) axon distance from vessel, BBB plume distance from axon, BBB plume
 % size 
 
-
 clearvars VAdistBAdistCloc resrtdClustSize VAdistBAdistClocThresh
 minVAdistsPerC = cell(1,mouseNum);
 resrtdClustSize = cell(1,mouseNum);
@@ -22733,18 +22732,42 @@ ax.FontName = 'Arial';
 scatter3(VAdistBAdistCloc(:,1),VAdistBAdistCloc(:,2),VAdistBAdistCloc(:,3),'filled')
 if scatter3DClustSizeQ == 1 
     hold on;
-    ThreshLegLabel1 = sprintf('BBB Plumes >= %d microns squared.',scatter3DClustSizeThresh);
-    
+    ThreshLegLabel1 = sprintf('BBB Plumes < %d microns squared.',scatter3DClustSizeThresh);
+    ThreshLegLabel2 = sprintf('BBB Plumes >= %d microns squared.',scatter3DClustSizeThresh);
     scatter3(VAdistBAdistClocThresh(:,1),VAdistBAdistClocThresh(:,2),VAdistBAdistClocThresh(:,3),'filled')
-    legend((ThreshLegLabel;)
+    legend(ThreshLegLabel1,ThreshLegLabel2)
 end 
 xlabel('Axon Distance from Vessel (microns)')
 ylabel('BBB Plume Distance from Axon (microns)')
 zlabel('Time (sec)')
 
-
-% plot scatter plot of axon distance from vessel (minVAdists), BBB plume
-% distance from axon, average BBB plume size 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% plot scatter plot of axon distance from vessel, BBB plume distance from axon, BBB plume
+% size 
+clearvars VAdistBAdistCsize 
+resrtdClustSize = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    % sort data for 3D scatter plot 
+    if mouse == 1
+        VAdistBAdistCsize(:,1) = minVAdistsPerC{mouse};
+        VAdistBAdistCsize(:,2) = BAdists{mouse};
+        VAdistBAdistCloc(:,3) = reshpdAvClocFrame{mouse};
+    elseif mouse > 1 
+        len = size(VAdistBAdistCloc,1);
+        VAdistBAdistCloc(len+1:len+length(minVAdistsPerC{mouse}),1) = minVAdistsPerC{mouse};
+        VAdistBAdistCloc(len+1:len+length(minVAdistsPerC{mouse}),2) = BAdists{mouse};
+        VAdistBAdistCloc(len+1:len+length(minVAdistsPerC{mouse}),3) = reshpdAvClocFrame{mouse};        
+    end 
+end 
+% plot scatter plot of axon distance from vessel (minVAdists), BBB plume distance from axon, time
+figure;
+ax = gca;
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+scatter3(VAdistBAdistCloc(:,1),VAdistBAdistCloc(:,2),VAdistBAdistCloc(:,3),'filled')
+xlabel('Axon Distance from Vessel (microns)')
+ylabel('BBB Plume Distance from Axon (microns)')
+zlabel('Time (sec)')
 
 
 

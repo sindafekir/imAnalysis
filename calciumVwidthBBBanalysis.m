@@ -22664,16 +22664,10 @@ if ETAorSTAq == 0 % STA data
     set(gca,'xticklabel',newlabels)
 end 
 
-%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% plot 3D scatter plots showing relationships between 
+%% plot 3D scatter plots showing relationships between 
 % 1) axon distance from vessel, BBB plume distance from axon, time 
 % 2) axon distance from vessel, BBB plume distance from axon, BBB plume
 % size 
-
 
 clearvars VAdistBAdistCloc resrtdClustSize VAdistBAdistClocThresh
 minVAdistsPerC = cell(1,mouseNum);
@@ -22742,21 +22736,32 @@ xlabel('Axon Distance from Vessel (microns)')
 ylabel('BBB Plume Distance from Axon (microns)')
 zlabel('Time (sec)')
 
-% plot scatter plot of axon distance from vessel (minVAdists), BBB plume
-% distance from axon, average BBB plume size 
+% plot scatter plot of axon distance from vessel, BBB plume distance from axon, BBB plume
+% size 
+clearvars VAdistBAdistCsize 
+for mouse = 1:mouseNum
+    % sort data for 3D scatter plot 
+    if mouse == 1
+        VAdistBAdistCsize(:,1) = minVAdistsPerC{mouse};
+        VAdistBAdistCsize(:,2) = BAdists{mouse};
+        VAdistBAdistCsize(:,3) = resrtdClustSize{mouse};
+    elseif mouse > 1 
+        len = size(VAdistBAdistCsize,1);
+        VAdistBAdistCsize(len+1:len+length(minVAdistsPerC{mouse}),1) = minVAdistsPerC{mouse};
+        VAdistBAdistCsize(len+1:len+length(minVAdistsPerC{mouse}),2) = BAdists{mouse};
+        VAdistBAdistCsize(len+1:len+length(minVAdistsPerC{mouse}),3) = resrtdClustSize{mouse};        
+    end 
+end 
+% plot scatter plot of axon distance from vessel (minVAdists), BBB plume distance from axon, time
+figure;
+ax = gca;
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+scatter3(VAdistBAdistCsize(:,1),VAdistBAdistCsize(:,2),VAdistBAdistCsize(:,3),'filled')
+xlabel('Axon Distance from Vessel (microns)')
+ylabel('BBB Plume Distance from Axon (microns)')
+zlabel('Average BBB Plume Size (microns squared)')
 
-
-
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% NEXT: 
-%) 1) plot TS data grouped by clusters found in 3D scatter plots 
-%) 2) replot box and whisker plots using metrics that make more sense (max
-%size/pixel amplitude) 
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
