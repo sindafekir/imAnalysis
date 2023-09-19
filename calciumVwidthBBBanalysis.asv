@@ -20052,16 +20052,12 @@ xlabel("Time (s)")
 title('Average Change in BBB Plume Pixel Amplitude')
 xlim([1 minFrameLen])
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% FIX THE 95% CI 
-
 % plot average change in cluster size of all animals w/95% CI 
 figure;
 hold all;
 ax=gca;
 % determine average 
-avAllClustSizeTS = nanmean(allAnmlsDownClustSizeTS);
+avAllClustSizeTS = nanmean(avAxonClustSizeTS);
 % determine 95% CI 
 SEM = (nanstd(avAxonClustSizeTS))/(sqrt(size(avAxonClustSizeTS,1))); %#ok<*NANSTD> % Standard Error            
 ts_Low = tinv(0.025,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
@@ -20117,9 +20113,6 @@ ylabel("BBB Plume Pixel Amplitude")
 xlabel("Time (s)")
 title({'Average Change in BBB Plume Plume Pixel Amplitude';'Across Animals'})
 xlim([1 minFrameLen])
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 %% plot average BBB plume change in size and pixel amplitude over time for however many groups you want
 % plot change in cluster size color coded by axon 
 x = 1:minFrameLen;
@@ -20316,13 +20309,39 @@ for bin = 1:clustTimeNumGroups
     if isempty(binClustTSsizeData{bin}) == 0
         avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin},1);  
         plot(x,avBinClustSizeTS(count,:),'Color',clr(bin,:),'LineWidth',2);      
+        % determine 95% CI 
+        SEM = (nanstd(binClustTSsizeData{bin}))/(sqrt(size(binClustTSsizeData{bin},1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(binClustTSsizeData{bin},1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(binClustTSsizeData{bin},1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(binClustTSsizeData{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(binClustTSsizeData{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+        % plot the 95% CI 
+        clear v f 
+        v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+        v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+        % remove NaNs so face can be made and colored 
+        nanRows = isnan(v(:,2));
+        v(nanRows,:) = []; f = 1:size(v,1);
+        patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+        alpha(0.2)
         count = count + 1;
     end 
 end 
 % remove empty strings 
 emptyStrings = find(binLabel == '');
 binLabel(emptyStrings) = [];
-legend(binLabel)
+count = 1;
+binLabel2 = string(1);
+for bin = 1:size(avBinClustSizeTS,1)
+    if bin == 1 
+        binLabel2(bin) = binLabel(count);
+        count = count + 2;
+    elseif bin > 1 
+        binLabel2(count) = binLabel(bin);
+        count = count + 2;
+    end 
+end 
+legend(binLabel2)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -20342,10 +20361,25 @@ for bin = 1:clustTimeNumGroups
     if isempty(binClustTSpixAmpData{bin}) == 0
         avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin},1);  
         plot(x,avBinClustPixAmpTS(count,:),'Color',clr(bin,:),'LineWidth',2);      
+        % determine 95% CI 
+        SEM = (nanstd(binClustTSpixAmpData{bin}))/(sqrt(size(binClustTSpixAmpData{bin},1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(binClustTSpixAmpData{bin},1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(binClustTSpixAmpData{bin},1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(binClustTSpixAmpData{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(binClustTSpixAmpData{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+        % plot the 95% CI 
+        clear v f 
+        v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+        v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+        % remove NaNs so face can be made and colored 
+        nanRows = isnan(v(:,2));
+        v(nanRows,:) = []; f = 1:size(v,1);
+        patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+        alpha(0.2)
         count = count + 1;
     end 
 end 
-legend(binLabel)
+legend(binLabel2)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -20354,6 +20388,9 @@ ylabel("BBB Plume Pixel Amplitude")
 xlabel("Time (s)")
 title({'Average Change in';'BBB Plume Pixel Amplitude'})
 xlim([1 minFrameLen])
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % plot aligned cluster change in size per bin and total average 
 % determine cluster start frame per bin  
@@ -20385,9 +20422,24 @@ for bin = 1:clustTimeNumGroups
     avAlignedClustsSize{bin} = nanmean(alignedBinClustsSize{bin},1);
     if isempty(binClustTSsizeData{bin}) == 0 
         h = plot(x,avAlignedClustsSize{bin},'Color',clr(bin,:),'LineWidth',2); 
+        % determine 95% CI 
+        SEM = (nanstd(alignedBinClustsSize{bin}))/(sqrt(size(alignedBinClustsSize{bin},1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(alignedBinClustsSize{bin},1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(alignedBinClustsSize{bin},1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(alignedBinClustsSize{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(alignedBinClustsSize{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+        % plot the 95% CI 
+        clear v f 
+        v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+        v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+        % remove NaNs so face can be made and colored 
+        nanRows = isnan(v(:,2));
+        v(nanRows,:) = []; f = 1:size(v,1);
+        patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+        alpha(0.2)
     end 
 end 
-legend(binLabel)
+legend(binLabel2)
 Frames_pre_stim_start = -((minFrameLen-1)/2); 
 Frames_post_stim_start = (minFrameLen-1)/2; 
 sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -20425,9 +20477,24 @@ for bin = 1:clustTimeNumGroups
     avAlignedClustsPixAmp{bin} = nanmean(alignedBinClustsPixAmp{bin},1);
     if isempty(binClustTSpixAmpData{bin}) == 0 
         h = plot(x,avAlignedClustsPixAmp{bin},'Color',clr(bin,:),'LineWidth',2); 
+        % determine 95% CI 
+        SEM = (nanstd(alignedBinClustsPixAmp{bin}))/(sqrt(size(alignedBinClustsPixAmp{bin},1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(alignedBinClustsPixAmp{bin},1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(alignedBinClustsPixAmp{bin},1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(alignedBinClustsPixAmp{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(alignedBinClustsPixAmp{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+        % plot the 95% CI 
+        clear v f 
+        v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+        v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+        % remove NaNs so face can be made and colored 
+        nanRows = isnan(v(:,2));
+        v(nanRows,:) = []; f = 1:size(v,1);
+        patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+        alpha(0.2)
     end 
 end 
-legend(binLabel)
+legend(binLabel2)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -20699,14 +20766,40 @@ if ETAorSTAq == 0 % STA data
     for bin = 1:3
         if isempty(binClustTSsizeData{bin}) == 0
             avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin},1);  
-            plot(x,avBinClustSizeTS(count,:),'Color',clr(bin,:),'LineWidth',2);      
+            plot(x,avBinClustSizeTS(count,:),'Color',clr(bin,:),'LineWidth',2); 
+            % determine 95% CI 
+            SEM = (nanstd(binClustTSsizeData{bin}))/(sqrt(size(binClustTSsizeData{bin},1))); %#ok<*NANSTD> % Standard Error            
+            ts_Low = tinv(0.025,size(binClustTSsizeData{bin},1)-1);% T-Score for 95% CI
+            ts_High = tinv(0.975,size(binClustTSsizeData{bin},1)-1);% T-Score for 95% CI
+            CI_Low = (nanmean(binClustTSsizeData{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+            CI_High = (nanmean(binClustTSsizeData{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+            % plot the 95% CI 
+            clear v f 
+            v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+            v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+            % remove NaNs so face can be made and colored 
+            nanRows = isnan(v(:,2));
+            v(nanRows,:) = []; f = 1:size(v,1);
+            patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+            alpha(0.2)
             count = count + 1;
         end 
     end 
     % remove empty strings 
     emptyStrings = find(binLabel == '');
     binLabel(emptyStrings) = [];
-    legend(binLabel)
+    count = 1;
+    binLabel2 = string(1);
+    for bin = 1:size(avBinClustSizeTS,1)
+        if bin == 1 
+            binLabel2(bin) = binLabel(count);
+            count = count + 2;
+        elseif bin > 1 
+            binLabel2(count) = binLabel(bin);
+            count = count + 2;
+        end 
+    end 
+    legend(binLabel2)
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
@@ -20725,11 +20818,26 @@ if ETAorSTAq == 0 % STA data
     for bin = 1:3
         if isempty(binClustTSpixAmpData{bin}) == 0
             avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin},1);  
-            plot(x,avBinClustPixAmpTS(count,:),'Color',clr(bin,:),'LineWidth',2);      
+            plot(x,avBinClustPixAmpTS(count,:),'Color',clr(bin,:),'LineWidth',2);     
+            % determine 95% CI 
+            SEM = (nanstd(binClustTSpixAmpData{bin}))/(sqrt(size(binClustTSpixAmpData{bin},1))); %#ok<*NANSTD> % Standard Error            
+            ts_Low = tinv(0.025,size(binClustTSpixAmpData{bin},1)-1);% T-Score for 95% CI
+            ts_High = tinv(0.975,size(binClustTSpixAmpData{bin},1)-1);% T-Score for 95% CI
+            CI_Low = (nanmean(binClustTSpixAmpData{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+            CI_High = (nanmean(binClustTSpixAmpData{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+            % plot the 95% CI 
+            clear v f 
+            v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+            v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+            % remove NaNs so face can be made and colored 
+            nanRows = isnan(v(:,2));
+            v(nanRows,:) = []; f = 1:size(v,1);
+            patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+            alpha(0.2)
             count = count + 1;
         end 
     end 
-    legend(binLabel)
+    legend(binLabel2)
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
@@ -20769,9 +20877,24 @@ if ETAorSTAq == 0 % STA data
         avAlignedClustsSize{bin} = nanmean(alignedBinClustsSize{bin},1);
         if isempty(binClustTSsizeData{bin}) == 0 
             h = plot(x,avAlignedClustsSize{bin},'Color',clr(bin,:),'LineWidth',2); 
+            % determine 95% CI 
+            SEM = (nanstd(alignedBinClustsSize{bin}))/(sqrt(size(alignedBinClustsSize{bin},1))); %#ok<*NANSTD> % Standard Error            
+            ts_Low = tinv(0.025,size(alignedBinClustsSize{bin},1)-1);% T-Score for 95% CI
+            ts_High = tinv(0.975,size(alignedBinClustsSize{bin},1)-1);% T-Score for 95% CI
+            CI_Low = (nanmean(alignedBinClustsSize{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+            CI_High = (nanmean(alignedBinClustsSize{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+            % plot the 95% CI 
+            clear v f 
+            v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+            v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+            % remove NaNs so face can be made and colored 
+            nanRows = isnan(v(:,2));
+            v(nanRows,:) = []; f = 1:size(v,1);
+            patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+            alpha(0.2)
         end 
     end 
-    legend(binLabel)
+    legend(binLabel2)
     Frames_pre_stim_start = -((minFrameLen-1)/2); 
     Frames_post_stim_start = (minFrameLen-1)/2; 
     sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -20809,6 +20932,22 @@ if ETAorSTAq == 0 % STA data
         avAlignedClustsPixAmp{bin} = nanmean(alignedBinClustsPixAmp{bin},1);
         if isempty(binClustTSpixAmpData{bin}) == 0 
             h = plot(x,avAlignedClustsPixAmp{bin},'Color',clr(bin,:),'LineWidth',2); 
+            % determine 95% CI 
+            SEM = (nanstd(alignedBinClustsPixAmp{bin}))/(sqrt(size(alignedBinClustsPixAmp{bin},1))); %#ok<*NANSTD> % Standard Error            
+            ts_Low = tinv(0.025,size(alignedBinClustsPixAmp{bin},1)-1);% T-Score for 95% CI
+            ts_High = tinv(0.975,size(alignedBinClustsPixAmp{bin},1)-1);% T-Score for 95% CI
+            CI_Low = (nanmean(alignedBinClustsPixAmp{bin},1)) + (ts_Low*SEM);  % Confidence Intervals
+            CI_High = (nanmean(alignedBinClustsPixAmp{bin},1)) + (ts_High*SEM);  % Confidence Intervals
+            % plot the 95% CI 
+            clear v f 
+            v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+            v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+            % remove NaNs so face can be made and colored 
+            nanRows = isnan(v(:,2));
+            v(nanRows,:) = []; f = 1:size(v,1);
+            patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+            alpha(0.2)
+            count = count + 1;
         end 
     end 
     legend(binLabel)
@@ -21434,14 +21573,40 @@ if ETAorSTAq == 0 % STA data
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin}{loc},1);  
-                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2); 
+                % determine 95% CI 
+                SEM = (nanstd(binClustTSsizeData{bin}{loc}))/(sqrt(size(binClustTSsizeData{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                ts_Low = tinv(0.025,size(binClustTSsizeData{bin}{loc},1)-1);% T-Score for 95% CI
+                ts_High = tinv(0.975,size(binClustTSsizeData{bin}{loc},1)-1);% T-Score for 95% CI
+                CI_Low = (nanmean(binClustTSsizeData{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                CI_High = (nanmean(binClustTSsizeData{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                % plot the 95% CI 
+                clear v f 
+                v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                % remove NaNs so face can be made and colored 
+                nanRows = isnan(v(:,2));
+                v(nanRows,:) = []; f = 1:size(v,1);
+                patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+                alpha(0.2)
                 count = count + 1;
             end 
         end 
         % remove empty strings 
         emptyStrings = find(binLabel == '');
         binLabel(emptyStrings) = [];
-        legend(binLabel)
+        count = 1;
+        binLabel2 = string(1);
+        for bin = 1:size(avBinClustSizeTS,1)
+            if bin == 1 
+                binLabel2(bin) = binLabel(count);
+                count = count + 2;
+            elseif bin > 1 
+                binLabel2(count) = binLabel(bin);
+                count = count + 2;
+            end 
+        end 
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21453,7 +21618,7 @@ if ETAorSTAq == 0 % STA data
         elseif distQ == 1 
             title({'Average Change in BBB Plume Size';rangeLabel})
         end   
-        xlim([1 minFrameLen])
+        xlim([1 minFrameLen])      
         
         % plot average change in cluster size 
         figure;
@@ -21465,11 +21630,26 @@ if ETAorSTAq == 0 % STA data
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin}{loc},1);  
-                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);    
+                % determine 95% CI 
+                SEM = (nanstd(binClustTSpixAmpData{bin}{loc}))/(sqrt(size(binClustTSpixAmpData{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                ts_Low = tinv(0.025,size(binClustTSpixAmpData{bin}{loc},1)-1);% T-Score for 95% CI
+                ts_High = tinv(0.975,size(binClustTSpixAmpData{bin}{loc},1)-1);% T-Score for 95% CI
+                CI_Low = (nanmean(binClustTSpixAmpData{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                CI_High = (nanmean(binClustTSpixAmpData{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                % plot the 95% CI 
+                clear v f 
+                v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                % remove NaNs so face can be made and colored 
+                nanRows = isnan(v(:,2));
+                v(nanRows,:) = []; f = 1:size(v,1);
+                patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+                alpha(0.2)
                 count = count + 1;
             end 
         end 
-        legend(binLabel)
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21481,7 +21661,7 @@ if ETAorSTAq == 0 % STA data
         elseif distQ == 1 
             title({'Average Change in BBB Plume Pixel Amplitude';rangeLabel})
         end           
-        xlim([1 minFrameLen])
+        xlim([1 minFrameLen])      
         
         % plot aligned cluster change in size per bin and total average 
         % determine cluster start frame per bin  
@@ -21515,11 +21695,26 @@ if ETAorSTAq == 0 % STA data
                 avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
                 if isempty(binClustTSsizeData{bin}{loc}) == 0 
                     h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    % determine 95% CI 
+                    SEM = (nanstd(alignedBinClustsSize{bin}{loc}))/(sqrt(size(alignedBinClustsSize{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                    ts_Low = tinv(0.025,size(alignedBinClustsSize{bin}{loc},1)-1);% T-Score for 95% CI
+                    ts_High = tinv(0.975,size(alignedBinClustsSize{bin}{loc},1)-1);% T-Score for 95% CI
+                    CI_Low = (nanmean(alignedBinClustsSize{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                    CI_High = (nanmean(alignedBinClustsSize{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                    % plot the 95% CI 
+                    clear v f 
+                    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                    % remove NaNs so face can be made and colored 
+                    nanRows = isnan(v(:,2));
+                    v(nanRows,:) = []; f = 1:size(v,1);
+                    patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+                    alpha(0.2)
                 end 
                 count = count + 1;
             end 
         end 
-        legend(binLabel)
+        legend(binLabel2)
         Frames_pre_stim_start = -((minFrameLen-1)/2); 
         Frames_post_stim_start = (minFrameLen-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -21563,11 +21758,26 @@ if ETAorSTAq == 0 % STA data
                 avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
                 if isempty(binClustTSpixAmpData{bin}) == 0 
                     h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    % determine 95% CI 
+                    SEM = (nanstd(alignedBinClustsPixAmp{bin}{loc}))/(sqrt(size(alignedBinClustsPixAmp{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                    ts_Low = tinv(0.025,size(alignedBinClustsPixAmp{bin}{loc},1)-1);% T-Score for 95% CI
+                    ts_High = tinv(0.975,size(alignedBinClustsPixAmp{bin}{loc},1)-1);% T-Score for 95% CI
+                    CI_Low = (nanmean(alignedBinClustsPixAmp{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                    CI_High = (nanmean(alignedBinClustsPixAmp{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                    % plot the 95% CI 
+                    clear v f 
+                    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                    % remove NaNs so face can be made and colored 
+                    nanRows = isnan(v(:,2));
+                    v(nanRows,:) = []; f = 1:size(v,1);
+                    patch('Faces',f,'Vertices',v,'FaceColor',clr(bin,:),'EdgeColor','none');
+                    alpha(0.2)
                 end 
                 count = count + 1;
             end 
         end 
-        legend(binLabel)
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21580,7 +21790,9 @@ if ETAorSTAq == 0 % STA data
             title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';rangeLabel})
         end          
         xlim([1 minFrameLen])
-    elseif clustSizeQ == 1 
+
+    elseif clustSizeQ == 1  
+
         % plot the clusters that meet or exceed the threshold 
         % plot change in cluster size grouped by axon type and distance 
         count = 1 ;
@@ -21672,7 +21884,22 @@ if ETAorSTAq == 0 % STA data
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataHigh{bin}{loc},1);  
-                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);  
+                % determine 95% CI 
+                SEM = (nanstd(binClustTSsizeDataHigh{bin}{loc}))/(sqrt(size(binClustTSsizeDataHigh{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                ts_Low = tinv(0.025,size(binClustTSsizeDataHigh{bin}{loc},1)-1);% T-Score for 95% CI
+                ts_High = tinv(0.975,size(binClustTSsizeDataHigh{bin}{loc},1)-1);% T-Score for 95% CI
+                CI_Low = (nanmean(binClustTSsizeDataHigh{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                CI_High = (nanmean(binClustTSsizeDataHigh{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                % plot the 95% CI 
+                clear v f 
+                v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                % remove NaNs so face can be made and colored 
+                nanRows = isnan(v(:,2));
+                v(nanRows,:) = []; f = 1:size(v,1);
+                patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                alpha(0.2)
                 % figure out if the whole row is not a nan to update legend
                 % label 
                 if ~all(isnan(avBinClustSizeTS(count,:)),2)
@@ -21683,7 +21910,18 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
         % remove empty strings 
-        legend(legendLabel)
+        count = 1;
+        binLabel2 = string(1);
+        for bin = 1:size(avBinClustSizeTS,1)
+            if bin == 1 
+                binLabel2(bin) = legendLabel(count);
+                count = count + 2;
+            elseif bin > 1 
+                binLabel2(count) = legendLabel(bin);
+                count = count + 2;
+            end 
+        end 
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21691,7 +21929,7 @@ if ETAorSTAq == 0 % STA data
         ylabel("BBB Plume Size (microns squared)") 
         xlabel("Time (s)")
         title({'Average Change in BBB Plume Size';titleLabel})
-        xlim([1 minFrameLen])
+        xlim([1 minFrameLen]) 
         
         % plot average change in pixel amp. 
         figure;
@@ -21705,7 +21943,22 @@ if ETAorSTAq == 0 % STA data
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataHigh{bin}{loc},1);  
-                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);      
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);  
+                % determine 95% CI 
+                SEM = (nanstd(binClustTSpixAmpDataHigh{bin}{loc}))/(sqrt(size(binClustTSpixAmpDataHigh{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                ts_Low = tinv(0.025,size(binClustTSpixAmpDataHigh{bin}{loc},1)-1);% T-Score for 95% CI
+                ts_High = tinv(0.975,size(binClustTSpixAmpDataHigh{bin}{loc},1)-1);% T-Score for 95% CI
+                CI_Low = (nanmean(binClustTSpixAmpDataHigh{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                CI_High = (nanmean(binClustTSpixAmpDataHigh{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                % plot the 95% CI 
+                clear v f 
+                v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                % remove NaNs so face can be made and colored 
+                nanRows = isnan(v(:,2));
+                v(nanRows,:) = []; f = 1:size(v,1);
+                patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                alpha(0.2)
                 % figure out if the whole row is not a nan to update legend
                 % label 
                 if ~all(isnan(avBinClustPixAmpTS(count,:)),2)
@@ -21715,7 +21968,7 @@ if ETAorSTAq == 0 % STA data
                 count2 = count2 + 1;
             end 
         end 
-        legend(legendLabel)
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21723,8 +21976,8 @@ if ETAorSTAq == 0 % STA data
         ylabel("BBB Plume Pixel Amplitude") 
         xlabel("Time (s)")
         title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
-        xlim([1 minFrameLen])
-        
+        xlim([1 minFrameLen]) 
+
         % plot aligned cluster change in size per bin and total average 
         % determine cluster start frame per bin  
         binClustStartFrame = cell(1,3);
@@ -21735,6 +21988,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         count = 1;
         count2 = 1;
+        clearvars legendLabel
         for bin = 1:3 % listener, controller, both   
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
@@ -21758,13 +22012,39 @@ if ETAorSTAq == 0 % STA data
                     % averaged the aligned clusters 
                     avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
                     h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    % determine 95% CI 
+                    SEM = (nanstd(alignedBinClustsSize{bin}{loc}))/(sqrt(size(alignedBinClustsSize{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                    ts_Low = tinv(0.025,size(alignedBinClustsSize{bin}{loc},1)-1);% T-Score for 95% CI
+                    ts_High = tinv(0.975,size(alignedBinClustsSize{bin}{loc},1)-1);% T-Score for 95% CI
+                    CI_Low = (nanmean(alignedBinClustsSize{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                    CI_High = (nanmean(alignedBinClustsSize{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                    % plot the 95% CI 
+                    clear v f 
+                    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                    % remove NaNs so face can be made and colored 
+                    nanRows = isnan(v(:,2));
+                    v(nanRows,:) = []; f = 1:size(v,1);
+                    patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                    alpha(0.2)
                     legendLabel(count2) = axonClusterTypeLabels(count); 
                     count2 = count2 + 1;                   
                 end 
                 count = count + 1;  
             end 
         end 
-        legend(legendLabel)
+        count = 1;
+        binLabel2 = string(1);
+        for bin = 1:length(legendLabel)
+            if bin == 1 
+                binLabel2(bin) = legendLabel(count);
+                count = count + 2;
+            elseif bin > 1 
+                binLabel2(count) = legendLabel(bin);
+                count = count + 2;
+            end 
+        end 
+        legend(binLabel2)
         Frames_pre_stim_start = -((minFrameLen-1)/2); 
         Frames_post_stim_start = (minFrameLen-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
@@ -21805,13 +22085,28 @@ if ETAorSTAq == 0 % STA data
                     % averaged the aligned clusters 
                     avAlignedClustsPixAmp{bin}{loc} = nanmean(alignedBinClustsPixAmp{bin}{loc},1);
                     h = plot(x,avAlignedClustsPixAmp{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    % determine 95% CI 
+                    SEM = (nanstd(alignedBinClustsPixAmp{bin}{loc}))/(sqrt(size(alignedBinClustsPixAmp{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                    ts_Low = tinv(0.025,size(alignedBinClustsPixAmp{bin}{loc},1)-1);% T-Score for 95% CI
+                    ts_High = tinv(0.975,size(alignedBinClustsPixAmp{bin}{loc},1)-1);% T-Score for 95% CI
+                    CI_Low = (nanmean(alignedBinClustsPixAmp{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                    CI_High = (nanmean(alignedBinClustsPixAmp{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                    % plot the 95% CI 
+                    clear v f 
+                    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                    % remove NaNs so face can be made and colored 
+                    nanRows = isnan(v(:,2));
+                    v(nanRows,:) = []; f = 1:size(v,1);
+                    patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                    alpha(0.2)
                     legendLabel(count2) = axonClusterTypeLabels(count); 
                     count2 = count2 + 1;                   
                 end 
                 count = count + 1;  
             end 
         end 
-        legend(legendLabel)
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21820,7 +22115,7 @@ if ETAorSTAq == 0 % STA data
         xlabel("Time (s)")
         title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
         xlim([1 minFrameLen])
- 
+
         % plot the clusters that are below the threshold 
         % plot change in cluster size grouped by axon type and distance 
         x = 1:minFrameLen;
@@ -21913,6 +22208,21 @@ if ETAorSTAq == 0 % STA data
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataLow{bin}{loc},1);  
                 plot(x,avBinClustSizeTS(count,:),'Color',customColors(count,:),'LineWidth',2);   
+                % determine 95% CI 
+                SEM = (nanstd(binClustTSsizeDataLow{bin}{loc}))/(sqrt(size(binClustTSsizeDataLow{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                ts_Low = tinv(0.025,size(binClustTSsizeDataLow{bin}{loc},1)-1);% T-Score for 95% CI
+                ts_High = tinv(0.975,size(binClustTSsizeDataLow{bin}{loc},1)-1);% T-Score for 95% CI
+                CI_Low = (nanmean(binClustTSsizeDataLow{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                CI_High = (nanmean(binClustTSsizeDataLow{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                % plot the 95% CI 
+                clear v f 
+                v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                % remove NaNs so face can be made and colored 
+                nanRows = isnan(v(:,2));
+                v(nanRows,:) = []; f = 1:size(v,1);
+                patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                alpha(0.2)
                 % figure out if the whole row is not a nan to update legend
                 % label 
                 if ~all(isnan(avBinClustSizeTS(count,:)),2)
@@ -21922,7 +22232,18 @@ if ETAorSTAq == 0 % STA data
                 count2 = count2 + 1;
             end 
         end 
-        legend(legendLabel)
+        count = 1;
+        binLabel2 = string(1);
+        for bin = 1:size(avBinClustSizeTS,1)
+            if bin == 1 
+                binLabel2(bin) = legendLabel(count);
+                count = count + 2;
+            elseif bin > 1 
+                binLabel2(count) = legendLabel(bin);
+                count = count + 2;
+            end 
+        end 
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21944,7 +22265,22 @@ if ETAorSTAq == 0 % STA data
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataLow{bin}{loc},1);  
-                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);                      
+                plot(x,avBinClustPixAmpTS(count,:),'Color',customColors(count,:),'LineWidth',2);   
+                % determine 95% CI 
+                SEM = (nanstd(binClustTSpixAmpDataLow{bin}{loc}))/(sqrt(size(binClustTSpixAmpDataLow{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                ts_Low = tinv(0.025,size(binClustTSpixAmpDataLow{bin}{loc},1)-1);% T-Score for 95% CI
+                ts_High = tinv(0.975,size(binClustTSpixAmpDataLow{bin}{loc},1)-1);% T-Score for 95% CI
+                CI_Low = (nanmean(binClustTSpixAmpDataLow{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                CI_High = (nanmean(binClustTSpixAmpDataLow{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                % plot the 95% CI 
+                clear v f 
+                v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                % remove NaNs so face can be made and colored 
+                nanRows = isnan(v(:,2));
+                v(nanRows,:) = []; f = 1:size(v,1);
+                patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                alpha(0.2)
                 % figure out if the whole row is not a nan to update legend
                 % label 
                 if ~all(isnan(avBinClustPixAmpTS(count,:)),2) 
@@ -21954,7 +22290,7 @@ if ETAorSTAq == 0 % STA data
                 count2 = count2 + 1;
             end 
         end 
-        legend(legendLabel)
+        legend(binLabel2)
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 12;
@@ -21998,13 +22334,39 @@ if ETAorSTAq == 0 % STA data
                     % averaged the aligned clusters 
                     avAlignedClustsSize{bin}{loc} = nanmean(alignedBinClustsSize{bin}{loc},1);
                     h = plot(x,avAlignedClustsSize{bin}{loc},'Color',customColors(count,:),'LineWidth',2); 
+                    % determine 95% CI 
+                    SEM = (nanstd(alignedBinClustsSize{bin}{loc}))/(sqrt(size(alignedBinClustsSize{bin}{loc},1))); %#ok<*NANSTD> % Standard Error            
+                    ts_Low = tinv(0.025,size(alignedBinClustsSize{bin}{loc},1)-1);% T-Score for 95% CI
+                    ts_High = tinv(0.975,size(alignedBinClustsSize{bin}{loc},1)-1);% T-Score for 95% CI
+                    CI_Low = (nanmean(alignedBinClustsSize{bin}{loc},1)) + (ts_Low*SEM);  % Confidence Intervals
+                    CI_High = (nanmean(alignedBinClustsSize{bin}{loc},1)) + (ts_High*SEM);  % Confidence Intervals
+                    % plot the 95% CI 
+                    clear v f 
+                    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+                    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+                    % remove NaNs so face can be made and colored 
+                    nanRows = isnan(v(:,2));
+                    v(nanRows,:) = []; f = 1:size(v,1);
+                    patch('Faces',f,'Vertices',v,'FaceColor',customColors(count,:),'EdgeColor','none');
+                    alpha(0.2)
                     legendLabel(count2) = axonClusterTypeLabels(count); 
                     count2 = count2 + 1;                   
                 end 
                 count = count + 1;              
             end           
         end 
-        legend(legendLabel)
+        count = 1;
+        binLabel2 = string(1);
+        for bin = 1:size(avBinClustSizeTS,1)
+            if bin == 1 
+                binLabel2(bin) = binLabel(count);
+                count = count + 2;
+            elseif bin > 1 
+                binLabel2(count) = binLabel(bin);
+                count = count + 2;
+            end 
+        end 
+        legend(binLabel2)
         Frames_pre_stim_start = -((minFrameLen-1)/2); 
         Frames_post_stim_start = (minFrameLen-1)/2; 
         sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+0.5+timeEnd;
