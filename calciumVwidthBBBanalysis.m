@@ -19970,20 +19970,44 @@ xlabel("Time (s)")
 title('Change in BBB Plume Pixel Amplitude')
 xlim([1 minFrameLen])
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%  ADD IN 95% CI TO AVERAGED FIGS A
-
 % plot change in average cluster size per mouse
 figure;
 hold all;
 ax=gca;
 avAxonClustSizeTS = nan(mouseNum,minFrameLen);
+mouseLabelAvPlot = string(1);
 for mouse = 1:mouseNum
     avAxonClustSizeTS(mouse,:) = nanmean(downAllAxonsClustSizeTS{mouse},1);  %#ok<*NANMEAN> 
-    plot(x,avAxonClustSizeTS(mouse,:),'Color',clr(mouse,:),'LineWidth',2);      
+    plot(x,avAxonClustSizeTS(mouse,:),'Color',clr(mouse,:),'LineWidth',2);  
+    % determine 95% CI 
+    SEM = (nanstd(downAllAxonsClustSizeTS{mouse}))/(sqrt(size(downAllAxonsClustSizeTS{mouse},1))); %#ok<*NANSTD> % Standard Error            
+    ts_Low = tinv(0.025,size(downAllAxonsClustSizeTS{mouse},1)-1);% T-Score for 95% CI
+    ts_High = tinv(0.975,size(downAllAxonsClustSizeTS{mouse},1)-1);% T-Score for 95% CI
+    CI_Low = (nanmean(downAllAxonsClustSizeTS{mouse},1)) + (ts_Low*SEM);  % Confidence Intervals
+    CI_High = (nanmean(downAllAxonsClustSizeTS{mouse},1)) + (ts_High*SEM);  % Confidence Intervals
+    % plot the 95% CI 
+    clear v f 
+    v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
+    v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
+    % remove NaNs so face can be made and colored 
+    nanRows = isnan(v(:,2));
+    v(nanRows,:) = []; f = 1:size(v,1);
+    patch('Faces',f,'Vertices',v,'FaceColor',clr(mouse,:),'EdgeColor','none');
+    alpha(0.2)
+    if mouse == 1 
+        mouseLabelAvPlot(mouse) = mouseNumLabelString(mouse);
+        count = 3;
+        allAnmlsDownClustSizeTS = downAllAxonsClustSizeTS{mouse};
+        allAnmlsDownClustAmpTS = downAllAxonsClustAmpTS{mouse};
+    elseif mouse > 1 
+        mouseLabelAvPlot(count) = mouseNumLabelString(mouse);
+        count = count + 2;
+        len = size(allAnmlsDownClustSizeTS,1);
+        allAnmlsDownClustSizeTS(len+1:len+size(downAllAxonsClustSizeTS{mouse},1),:) = downAllAxonsClustSizeTS{mouse};
+        allAnmlsDownClustAmpTS(len+1:len+size(downAllAxonsClustAmpTS{mouse},1),:) = downAllAxonsClustAmpTS{mouse};
+    end 
 end 
-legend(mouseNumLabelString)
+legend(mouseLabelAvPlot)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -19994,9 +20018,6 @@ title('Average Change in BBB Plume Size')
 xlim([1 minFrameLen])
 % set(gca, 'YScale', 'log')
 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE- FIX THE LEGEND 
 % plot change in average pixel amplitude per mouse
 figure;
 hold all;
@@ -20019,9 +20040,9 @@ for mouse = 1:mouseNum
     nanRows = isnan(v(:,2));
     v(nanRows,:) = []; f = 1:size(v,1);
     patch('Faces',f,'Vertices',v,'FaceColor',clr(mouse,:),'EdgeColor','none');
-    alpha(0.1)
+    alpha(0.2)
 end 
-legend(mouseNumLabelString)
+legend(mouseLabelAvPlot)
 ax.XTick = FrameVals;
 ax.XTickLabel = sec_TimeVals;  
 ax.FontSize = 15;
@@ -20030,9 +20051,6 @@ ylabel("BBB Plume Pixel Amplitude")
 xlabel("Time (s)")
 title('Average Change in BBB Plume Pixel Amplitude')
 xlim([1 minFrameLen])
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 % plot average change in cluster size of all animals w/95% CI 
 figure;
