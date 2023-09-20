@@ -20590,45 +20590,74 @@ if clustTimeNumGroups == 2
     title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons'})
     xlim([1 minFrameLen])
 end 
-%% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both 
+%% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both or grouped by cluster start time 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% EDIT THIS SO THAT AXON TYPE IS EITHER THE THREE (LISTENER, CONTROLLER,
+% BOTH) OR CLUSTERS ARE GROUPED BY BEFORE OR AFTER 0 
+
 if ETAorSTAq == 0 % STA data  
-    % identify what specific axons are listeners, controllers, or both 
-    axonTypeList = cell(1,mouseNum);
-    listenerAxons = cell(1,mouseNum);
-    controllerAxons = cell(1,mouseNum);
-    bothAxons = cell(1,mouseNum);
-    for mouse = 1:mouseNum
-        % identify clusters that come before the spike 
-        [rPre,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) < 0);
-        % identify clusters that come after the spike 
-        [rPost,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) >= 0);
-        % figure out what axon the clusters belong to 
-        count1 = 1; count2 = 1; count3 = 1;
-        for ccell = 1:length(terminals{mouse})
-            % first column tells you what specific axon it is 
-            axonTypeList{mouse}(ccell,1) = terminals{mouse}(ccell);
-            % second column tells you how many pre spike clusters there are
-            axonTypeList{mouse}(ccell,2) = sum(rPre == ccell);
-            % third column tells you how many post spike clusters there are
-            axonTypeList{mouse}(ccell,3) = sum(rPost == ccell);
-            % if an axon is a listener 
-            if axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) > 0.5
-                listenerAxons{mouse}(count1) = ccell;
-                count1 = count1 + 1;
-            elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) < 0.5
-                controllerAxons{mouse}(count2) = ccell;
-                count2 = count2 + 1;  
-            elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) == 0.5
-                bothAxons{mouse}(count3) = ccell;
-                count3 = count3 + 1;                   
+    aTypeQ = input('Input 0 to sort data by axon type. Input 1 to sort data by cluster timing before or after 0 sec. ');
+    if aTypeQ == 0
+        clr = [0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195];   
+        binString = ["Listener","Controller","Both"];
+        % identify what specific axons are listeners, controllers, or both 
+        axonTypeList = cell(1,mouseNum);
+        listenerAxons = cell(1,mouseNum);
+        controllerAxons = cell(1,mouseNum);
+        bothAxons = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            % identify clusters that come before the spike 
+            [rPre,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) < 0);
+            % identify clusters that come after the spike 
+            [rPost,~] = find(((avClocFrame{mouse}/FPS{mouse})-windSize/2) >= 0);
+            % figure out what axon the clusters belong to 
+            count1 = 1; count2 = 1; count3 = 1;
+            for ccell = 1:length(terminals{mouse})
+                % first column tells you what specific axon it is 
+                axonTypeList{mouse}(ccell,1) = terminals{mouse}(ccell);
+                % second column tells you how many pre spike clusters there are
+                axonTypeList{mouse}(ccell,2) = sum(rPre == ccell);
+                % third column tells you how many post spike clusters there are
+                axonTypeList{mouse}(ccell,3) = sum(rPost == ccell);
+                % if an axon is a listener 
+                if axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) > 0.5
+                    listenerAxons{mouse}(count1) = ccell;
+                    count1 = count1 + 1;
+                elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) < 0.5
+                    controllerAxons{mouse}(count2) = ccell;
+                    count2 = count2 + 1;  
+                elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) == 0.5
+                    bothAxons{mouse}(count3) = ccell;
+                    count3 = count3 + 1;                   
+                end 
             end 
         end 
+    elseif aTypeQ == 1 
+        clr = hsv(2);
+        binString = ["Pre-Spike Clusters","Post-Spike Clusters"];        
+        beforeLoc = cell(1,mouseNum);
+        afterLoc = cell(1,mouseNum);
+        reshpdAvClocFrame = cell(1,mouseNum);
+        for mouse = 1:mouseNum   
+            data = (avClocFrame{mouse}/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice
+            % reshape avClocFrame so clusters are in order of axons 
+            for ccell = 1:size(avClocFrame{mouse},1)
+                if ccell == 1 
+                    reshpdAvClocFrame{mouse} =  data(ccell,~isnan(data(ccell,:)));
+                elseif ccell > 1 
+                    len = length(reshpdAvClocFrame{mouse});
+                    reshpdAvClocFrame{mouse}(len+1:len+sum(~isnan(avClocFrame{mouse}(ccell,:)))) =  data(ccell,~isnan(avClocFrame{mouse}(ccell,:))) ;
+                end 
+            end 
+            % use reshpdAvClocFrame to get the loc of clusters < 0 and >= 0 sec
+            beforeLoc{mouse} = find(reshpdAvClocFrame{mouse} < 0);
+            afterLoc{mouse} = find(reshpdAvClocFrame{mouse} >= 0);
+        end 
     end 
-
     % plot change in cluster size color coded by axon 
     x = 1:minFrameLen;
-    clr = [0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195];   
-    binString = ["Listener","Controller","Both"];
     figure;
     hold all;
     ax=gca; 
@@ -20647,80 +20676,135 @@ if ETAorSTAq == 0 % STA data
         end 
     end 
     % sort data 
-    binClustTSsizeData = cell(1,3);
-    binClustTSpixAmpData = cell(1,3);
-    for bin = 1:3
-        for mouse = 1:mouseNum
-            if mouse == 1 
-                if bin == 1 % sort listeners
-                    % find the indeces for the specific axons needed by type 
-                    loc = ismember(axonInds{mouse},listenerAxons{mouse});
-                    % sort data 
-                    binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
-                    binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
-                elseif bin == 2 % sort controllers 
-                    % find the indeces for the specific axons needed by type 
-                    loc = ismember(axonInds{mouse},controllerAxons{mouse});
-                    % sort data 
-                    binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
-                    binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
-                elseif bin == 3 % sort bothers  
-                    % find the indeces for the specific axons needed by type 
-                    loc = ismember(axonInds{mouse},bothAxons{mouse});
-                    % sort data 
-                    binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
-                    binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
-                end 
-            elseif mouse > 1
-                if bin == 1 % sort listeners
-                    % find the indeces for the specific axons needed by type 
-                    loc = ismember(axonInds{mouse},listenerAxons{mouse});
-                    len1 = size(binClustTSsizeData{bin},1);
-                    len2 = nnz(loc);
-                    % sort data 
-                    binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(loc,:);
-                    binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(loc,:);
-                elseif bin == 2 % sort controllers 
-                    % find the indeces for the specific axons needed by type 
-                    loc = ismember(axonInds{mouse},controllerAxons{mouse});
-                    len1 = size(binClustTSsizeData{bin},1);
-                    len2 = nnz(loc);
-                    % sort data 
-                    binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(loc,:);
-                    binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(loc,:);
-                elseif bin == 3 % sort bothers  
-                    % find the indeces for the specific axons needed by type 
-                    loc = ismember(axonInds{mouse},bothAxons{mouse});
-                    len1 = size(binClustTSsizeData{bin},1);
-                    len2 = nnz(loc);
-                    % sort data 
-                    binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(loc,:);
-                    binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(loc,:);
+    if aTypeQ == 0 % sort data by axon type
+        binClustTSsizeData = cell(1,3);
+        binClustTSpixAmpData = cell(1,3);
+        for bin = 1:3
+            for mouse = 1:mouseNum
+                if mouse == 1 
+                    if bin == 1 % sort listeners
+                        % find the indeces for the specific axons needed by type 
+                        loc = ismember(axonInds{mouse},listenerAxons{mouse});
+                        % sort data 
+                        binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
+                        binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
+                    elseif bin == 2 % sort controllers 
+                        % find the indeces for the specific axons needed by type 
+                        loc = ismember(axonInds{mouse},controllerAxons{mouse});
+                        % sort data 
+                        binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
+                        binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
+                    elseif bin == 3 % sort bothers  
+                        % find the indeces for the specific axons needed by type 
+                        loc = ismember(axonInds{mouse},bothAxons{mouse});
+                        % sort data 
+                        binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(loc,:);
+                        binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(loc,:);
+                    end 
+                elseif mouse > 1
+                    if bin == 1 % sort listeners
+                        % find the indeces for the specific axons needed by type 
+                        loc = ismember(axonInds{mouse},listenerAxons{mouse});
+                        len1 = size(binClustTSsizeData{bin},1);
+                        len2 = nnz(loc);
+                        % sort data 
+                        binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(loc,:);
+                        binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(loc,:);
+                    elseif bin == 2 % sort controllers 
+                        % find the indeces for the specific axons needed by type 
+                        loc = ismember(axonInds{mouse},controllerAxons{mouse});
+                        len1 = size(binClustTSsizeData{bin},1);
+                        len2 = nnz(loc);
+                        % sort data 
+                        binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(loc,:);
+                        binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(loc,:);
+                    elseif bin == 3 % sort bothers  
+                        % find the indeces for the specific axons needed by type 
+                        loc = ismember(axonInds{mouse},bothAxons{mouse});
+                        len1 = size(binClustTSsizeData{bin},1);
+                        len2 = nnz(loc);
+                        % sort data 
+                        binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(loc,:);
+                        binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(loc,:);
+                    end 
                 end 
             end 
-        end 
-    end  
-    count = 1 ;
-    clearvars binLabel
-    for bin = 1:3
-        % determine bin labels 
-        for clust = 1:size(binClustTSsizeData{bin},1)
-            if clust == 1 
-                if isempty(binClustTSsizeData{bin}) == 0                     
-                    binLabel(count) = binString(bin);
-                    count = count + 1;
+        end  
+        count = 1 ;
+        clearvars binLabel
+        for bin = 1:3
+            % determine bin labels 
+            for clust = 1:size(binClustTSsizeData{bin},1)
+                if clust == 1 
+                    if isempty(binClustTSsizeData{bin}) == 0                     
+                        binLabel(count) = binString(bin);
+                        count = count + 1;
+                    end 
+                elseif clust > 1
+                    if isempty(binClustTSsizeData{bin}) == 0 
+                        binLabel(count) = '';
+                        count = count + 1;                        
+                    end                 
                 end 
-            elseif clust > 1
-                if isempty(binClustTSsizeData{bin}) == 0 
-                    binLabel(count) = '';
-                    count = count + 1;                        
-                end                 
             end 
-        end 
-        if isempty(binClustTSsizeData{bin}) == 0 
-            h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
-        end 
-    end
+            if isempty(binClustTSsizeData{bin}) == 0 
+                h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
+            end 
+        end
+    elseif aTypeQ == 1 % sort data by cluster start time 
+        binClustTSsizeData = cell(1,2);
+        binClustTSpixAmpData = cell(1,2);
+        for bin = 1:2
+            for mouse = 1:mouseNum
+                if mouse == 1 
+                    if bin == 1 % sort pre event/spike clusters 
+                        % sort data 
+                        binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(beforeLoc{mouse},:);
+                        binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(beforeLoc{mouse},:);
+                    elseif bin == 2 % sort post event/spike clusters 
+                        % sort data 
+                        binClustTSsizeData{bin} = downAllAxonsClustSizeTS{mouse}(afterLoc{mouse},:);
+                        binClustTSpixAmpData{bin} = downAllAxonsClustAmpTS{mouse}(afterLoc{mouse},:);
+                    end 
+                elseif mouse > 1
+                    if bin == 1 % sort pre event/spike clusters 
+                        len1 = size(binClustTSsizeData{bin},1);
+                        len2 = length(beforeLoc{mouse});
+                        % sort data 
+                        binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(beforeLoc{mouse},:);
+                        binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(beforeLoc{mouse},:);
+                    elseif bin == 2 % sort post event/spike clusters 
+                        len1 = size(binClustTSsizeData{bin},1);
+                        len2 = length(afterLoc{mouse});
+                        % sort data 
+                        binClustTSsizeData{bin}(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}(afterLoc{mouse},:);
+                        binClustTSpixAmpData{bin}(len1+1:len1+len2,:) = downAllAxonsClustAmpTS{mouse}(afterLoc{mouse},:);
+                    end 
+                end 
+            end 
+        end  
+        count = 1 ;
+        clearvars binLabel
+        for bin = 1:length(binClustTSsizeData)
+            % determine bin labels 
+            for clust = 1:size(binClustTSsizeData{bin},1)
+                if clust == 1 
+                    if isempty(binClustTSsizeData{bin}) == 0                     
+                        binLabel(count) = binString(bin);
+                        count = count + 1;
+                    end 
+                elseif clust > 1
+                    if isempty(binClustTSsizeData{bin}) == 0 
+                        binLabel(count) = '';
+                        count = count + 1;                        
+                    end                 
+                end 
+            end 
+            if isempty(binClustTSsizeData{bin}) == 0 
+                h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
+            end 
+        end
+    end 
     sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
     FrameVals(3) = threshFrame;
     FrameVals(2) = threshFrame - (minFrameLen/5);
@@ -20741,7 +20825,7 @@ if ETAorSTAq == 0 % STA data
     figure;
     hold all;
     ax=gca;
-    for bin = 1:3
+    for bin = 1:length(binClustTSsizeData)
        h = plot(x,binClustTSpixAmpData{bin},'Color',clr(bin,:),'LineWidth',2); 
     end 
     legend(binLabel)
@@ -20760,7 +20844,7 @@ if ETAorSTAq == 0 % STA data
     ax=gca;
     avBinClustSizeTS = NaN(3,minFrameLen);
     count = 1;
-    for bin = 1:3
+    for bin = 1:length(binClustTSsizeData)
         if isempty(binClustTSsizeData{bin}) == 0
             avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin},1);  
             plot(x,avBinClustSizeTS(count,:),'Color',clr(bin,:),'LineWidth',2); 
@@ -20812,7 +20896,7 @@ if ETAorSTAq == 0 % STA data
     ax=gca;
     avBinClustPixAmpTS = NaN(3,minFrameLen);
     count = 1;
-    for bin = 1:3
+    for bin = 1:length(binClustTSsizeData)
         if isempty(binClustTSpixAmpData{bin}) == 0
             avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin},1);  
             plot(x,avBinClustPixAmpTS(count,:),'Color',clr(bin,:),'LineWidth',2);     
@@ -20852,7 +20936,7 @@ if ETAorSTAq == 0 % STA data
     figure;
     hold all;
     ax=gca;
-    for bin = 1:3             
+    for bin = 1:length(binClustTSsizeData)             
         [clustLocX, clustLocY] = find(~isnan(binClustTSsizeData{bin}));
         clusts = unique(clustLocX);              
         for clust = 1:length(clusts)
@@ -20912,7 +20996,7 @@ if ETAorSTAq == 0 % STA data
     figure;
     hold all;
     ax=gca;
-    for bin = 1:3             
+    for bin = 1:length(binClustTSsizeData)             
         % align clusters
         % determine longest cluster 
         [longestClustStart,longestClust] = min(binClustStartFrame{bin});
@@ -20960,7 +21044,7 @@ if ETAorSTAq == 0 % STA data
     % plot total aligned cluster size average 
     [~,c] = cellfun(@size,alignedBinClustsSize);
     maxLen = max(c);
-    for bin = 1:3           
+    for bin = 1:length(binClustTSsizeData)           
         % put data together with appropriate buffering to get total average 
         data = alignedBinClustsSize{bin};
         data(:,size(data,2)+1:maxLen) = NaN;        
@@ -21002,7 +21086,7 @@ if ETAorSTAq == 0 % STA data
     xlim([1 minFrameLen]) 
     
     % plot total aligned cluster pixel amplitude average 
-    for bin = 1:3           
+    for bin = 1:length(binClustTSsizeData)           
         % put data together with appropriate buffering to get total average 
         data = alignedBinClustsPixAmp{bin};
         data(:,size(data,2)+1:maxLen) = NaN;        
@@ -21045,6 +21129,20 @@ if ETAorSTAq == 0 % STA data
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for axons grouped by axon distance from vessel and cluster distance from axon  
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% FUDGE PICK UP HERE - UNDO THE CHANGES MADE TO THE ABOVE SECTION AND EDIT
+% THE BELOW CODE SO YOU CAN PLOT ALL DISTANCE/SIZE METRICS RELATIVE TO AXON
+% TYPE AND CLUSTER TIMING 
+
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
     distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set a distance range . ');
@@ -23021,22 +23119,11 @@ if ETAorSTAq == 0 % STA data
     edge = [0,5];
     BinEdges = nan(1,2);
     BdistsByTtype = nan(numBins,2);
-    reshpdAvClocFrame = cell(1,mouseNum);
     for bin = 1:numBins
         % determine bin edges 
         BinEdges(bin,:) = edge;
         edge = edge+[5,5];
         for mouse = 1:mouseNum   
-            data = (avClocFrame{mouse}/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice
-            % reshape avClocFrame so clusters are in order of axons 
-            for ccell = 1:size(avClocFrame{mouse},1)
-                if ccell == 1 
-                    reshpdAvClocFrame{mouse} =  data(ccell,~isnan(data(ccell,:)));
-                elseif ccell > 1 
-                    len = length(reshpdAvClocFrame{mouse});
-                    reshpdAvClocFrame{mouse}(len+1:len+sum(~isnan(avClocFrame{mouse}(ccell,:)))) =  data(ccell,~isnan(avClocFrame{mouse}(ccell,:))) ;
-                end 
-            end     
             % sort data into bins organized by axon type (listener,
             % controller, both) 
             if mouse == 1 
@@ -23121,14 +23208,6 @@ resrtdClustSize = cell(1,mouseNum);
 scatter3DClustSizeQ = input('Input 1 to set a BBB plume size threshold for the scatter plot. Input 0 to set time (0 sec) threshold. ');
 if scatter3DClustSizeQ == 1 
     scatter3DClustSizeThresh = input('Input the BBB plume size threshold (microns) for the 3D scatter plot. ');
-elseif scatter3DClustSizeQ == 0
-    % use reshpdAvClocFrame to get the loc of clusters < 0 and >= 0 sec
-    beforeLoc = cell(1,mouseNum);
-    afterLoc = cell(1,mouseNum);
-    for mouse = 1:mouseNum
-        beforeLoc{mouse} = find(reshpdAvClocFrame{mouse} < 0);
-        afterLoc{mouse} = find(reshpdAvClocFrame{mouse} >= 0);
-    end 
 end 
 for mouse = 1:mouseNum
     % create a version of minVAdists where axon dist to vessel is given per
