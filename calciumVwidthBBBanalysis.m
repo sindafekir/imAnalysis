@@ -23114,6 +23114,7 @@ end
 % 1) axon distance from vessel, BBB plume distance from axon, time 
 % 2) axon distance from vessel, BBB plume distance from axon, BBB plume
 % size 
+% 3) axon distance from vessel, BBB plume distance from axon, BBB plume pixel amplitude  
 
 clearvars VAdistBAdistCloc resrtdClustSize VAdistBAdistClocThresh
 minVAdistsPerC = cell(1,mouseNum);
@@ -23207,6 +23208,63 @@ scatter3(VAdistBAdistCsize(:,1),VAdistBAdistCsize(:,2),VAdistBAdistCsize(:,3),'f
 xlabel('Axon Distance from Vessel (microns)')
 ylabel('BBB Plume Distance from Axon (microns)')
 zlabel('Average BBB Plume Size (microns squared)')
+
+% plot scatter plot of axon distance from vessel, BBB plume distance from
+% axon, BBB plume pixel amplitude 
+clearvars VAdistBAdistCamp 
+resrtdClustAmp = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    % resort average cluster size (collapsed across time)
+    for ccell = 1:size(clustAmp{mouse},1)
+        if ccell == 1 
+            resrtdClustAmp{mouse} = clustAmp{mouse}(ccell,(~isnan(clustAmp{mouse}(ccell,:))));
+        elseif ccell > 1 
+            len = length(resrtdClustAmp{mouse});
+            resrtdClustAmp{mouse}(len+1:len+length(clustAmp{mouse}(ccell,(~isnan(clustAmp{mouse}(ccell,:)))))) = clustAmp{mouse}(ccell,(~isnan(clustAmp{mouse}(ccell,:))));
+        end 
+    end 
+    % sort data for 3D scatter plot 
+    if mouse == 1
+        VAdistBAdistCamp(:,1) = minVAdistsPerC{mouse};
+        VAdistBAdistCamp(:,2) = BAdists{mouse};
+        VAdistBAdistCamp(:,3) = resrtdClustAmp{mouse};
+    elseif mouse > 1 
+        len = size(VAdistBAdistCamp,1);
+        VAdistBAdistCamp(len+1:len+length(minVAdistsPerC{mouse}),1) = minVAdistsPerC{mouse};
+        VAdistBAdistCamp(len+1:len+length(minVAdistsPerC{mouse}),2) = BAdists{mouse};
+        VAdistBAdistCamp(len+1:len+length(minVAdistsPerC{mouse}),3) = resrtdClustAmp{mouse};        
+    end 
+
+    % sort data using the size threshold 
+    % figure out what clusters meet the size threshold 
+    theseClusts = any(downAllAxonsClustSizeTS{mouse} >= scatter3DClustSizeThresh,2);
+    if mouse == 1
+        VAdistBAdistCampThresh(:,1) = minVAdistsPerC{mouse}(theseClusts);
+        VAdistBAdistCampThresh(:,2) = BAdists{mouse}(theseClusts);
+        VAdistBAdistCampThresh(:,3) = resrtdClustAmp{mouse}(theseClusts);
+    elseif mouse > 1 
+        len = size(VAdistBAdistCamp,1);
+        VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),1) = minVAdistsPerC{mouse}(theseClusts);
+        VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),2) = BAdists{mouse}(theseClusts);
+        VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),3) = resrtdClustAmp{mouse}(theseClusts);        
+    end 
+
+end 
+% plot scatter plot of axon distance from vessel (minVAdists), BBB plume distance from axon, time
+figure;
+ax = gca;
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+scatter3(VAdistBAdistCamp(:,1),VAdistBAdistCamp(:,2),VAdistBAdistCamp(:,3),'filled')
+xlabel('Axon Distance from Vessel (microns)')
+ylabel('BBB Plume Distance from Axon (microns)')
+zlabel('Average BBB Plume Pixel Amplitude')
+if scatter3DClustSizeQ == 1 
+    hold on;
+    scatter3(VAdistBAdistCampThresh(:,1),VAdistBAdistCampThresh(:,2),VAdistBAdistCampThresh(:,3),'filled')
+    legend(ThreshLegLabel1,ThreshLegLabel2)
+end 
+
 
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
