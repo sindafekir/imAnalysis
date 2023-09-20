@@ -23111,7 +23111,8 @@ end
 % 1) axon distance from vessel, BBB plume distance from axon, time 
 % 2) axon distance from vessel, BBB plume distance from axon, BBB plume
 % size 
-% 3) axon distance from vessel, BBB plume distance from axon, BBB plume pixel amplitude  
+% 3) axon distance from vessel, BBB plume distance from axon, average BBB plume pixel amplitude  
+% 4) axon distance from vessel, BBB plume distance from axon, max BBB plume pixel amplitude 
 
 clearvars VAdistBAdistCloc resrtdClustSize VAdistBAdistClocThresh VAdistBAdistClocBefore VAdistBAdistClocAfter
 minVAdistsPerC = cell(1,mouseNum);
@@ -23261,14 +23262,8 @@ xlabel('Axon Distance from Vessel (microns)')
 ylabel('BBB Plume Distance from Axon (microns)')
 zlabel('Average BBB Plume Size (microns squared)')
 
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - EDIT BELOW TO COLOR CODE BY PLUME START TIME 
-
 % plot scatter plot of axon distance from vessel, BBB plume distance from
-% axon, BBB plume pixel amplitude 
+% axon, average BBB plume pixel amplitude 
 clearvars VAdistBAdistCamp 
 resrtdClustAmp = cell(1,mouseNum);
 for mouse = 1:mouseNum
@@ -23292,21 +23287,39 @@ for mouse = 1:mouseNum
         VAdistBAdistCamp(len+1:len+length(minVAdistsPerC{mouse}),2) = BAdists{mouse};
         VAdistBAdistCamp(len+1:len+length(minVAdistsPerC{mouse}),3) = resrtdClustAmp{mouse};        
     end 
-
-    % sort data using the size threshold 
-    % figure out what clusters meet the size threshold 
-    theseClusts = any(downAllAxonsClustSizeTS{mouse} >= scatter3DClustSizeThresh,2);
-    if mouse == 1
-        VAdistBAdistCampThresh(:,1) = minVAdistsPerC{mouse}(theseClusts);
-        VAdistBAdistCampThresh(:,2) = BAdists{mouse}(theseClusts);
-        VAdistBAdistCampThresh(:,3) = resrtdClustAmp{mouse}(theseClusts);
-    elseif mouse > 1 
-        len = size(VAdistBAdistCamp,1);
-        VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),1) = minVAdistsPerC{mouse}(theseClusts);
-        VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),2) = BAdists{mouse}(theseClusts);
-        VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),3) = resrtdClustAmp{mouse}(theseClusts);        
+    if scatter3DClustSizeQ == 1 % size threshold 
+        % sort data using the size threshold 
+        % figure out what clusters meet the size threshold 
+        theseClusts = any(downAllAxonsClustSizeTS{mouse} >= scatter3DClustSizeThresh,2);
+        if mouse == 1
+            VAdistBAdistCampThresh(:,1) = minVAdistsPerC{mouse}(theseClusts);
+            VAdistBAdistCampThresh(:,2) = BAdists{mouse}(theseClusts);
+            VAdistBAdistCampThresh(:,3) = resrtdClustAmp{mouse}(theseClusts);
+        elseif mouse > 1 
+            len = size(VAdistBAdistCamp,1);
+            VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),1) = minVAdistsPerC{mouse}(theseClusts);
+            VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),2) = BAdists{mouse}(theseClusts);
+            VAdistBAdistCampThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),3) = resrtdClustAmp{mouse}(theseClusts);        
+        end 
+    elseif scatter3DClustSizeQ == 0 % time (before or after 0 sec)
+        if mouse == 1
+            VAdistBAdistCampBefore(:,1) = minVAdistsPerC{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampBefore(:,2) = BAdists{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampBefore(:,3) = resrtdClustAmp{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampAfter(:,1) = minVAdistsPerC{mouse}(afterLoc{mouse});
+            VAdistBAdistCampAfter(:,2) = BAdists{mouse}(afterLoc{mouse});
+            VAdistBAdistCampAfter(:,3) = resrtdClustAmp{mouse}(afterLoc{mouse});
+        elseif mouse > 1 
+            len = size(VAdistBAdistCampBefore,1);
+            VAdistBAdistCampBefore(len+1:len+length(minVAdistsPerC{mouse}(beforeLoc{mouse})),1) = minVAdistsPerC{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampBefore(len+1:len+length(minVAdistsPerC{mouse}(beforeLoc{mouse})),2) = BAdists{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampBefore(len+1:len+length(minVAdistsPerC{mouse}(beforeLoc{mouse})),3) = resrtdClustAmp{mouse}(beforeLoc{mouse});    
+            len2 = size(VAdistBAdistCampAfter,1);
+            VAdistBAdistCampAfter(len2+1:len2+length(minVAdistsPerC{mouse}(afterLoc{mouse})),1) = minVAdistsPerC{mouse}(afterLoc{mouse});
+            VAdistBAdistCampAfter(len2+1:len2+length(minVAdistsPerC{mouse}(afterLoc{mouse})),2) = BAdists{mouse}(afterLoc{mouse});
+            VAdistBAdistCampAfter(len2+1:len2+length(minVAdistsPerC{mouse}(afterLoc{mouse})),3) = resrtdClustAmp{mouse}(afterLoc{mouse}); 
+        end  
     end 
-
 end 
 % plot scatter plot of axon distance from vessel (minVAdists), BBB plume distance from axon, time
 figure;
@@ -23321,11 +23334,87 @@ if scatter3DClustSizeQ == 1
     hold on;
     scatter3(VAdistBAdistCampThresh(:,1),VAdistBAdistCampThresh(:,2),VAdistBAdistCampThresh(:,3),'filled')
     legend(ThreshLegLabel1,ThreshLegLabel2)
+elseif scatter3DClustSizeQ == 0 
+    hold on;
+    scatter3(VAdistBAdistCampBefore(:,1),VAdistBAdistCampBefore(:,2),VAdistBAdistCampBefore(:,3),'filled','MarkerFaceColor',clr(1,:))
+    scatter3(VAdistBAdistCampAfter(:,1),VAdistBAdistCampAfter(:,2),VAdistBAdistCampAfter(:,3),'filled','MarkerFaceColor',clr(2,:))
+    legend('','Pre-Spike Clusters','Post-Spike Clusters')
 end 
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% plot scatter plot of axon distance from vessel, BBB plume distance from
+% axon, max BBB plume pixel amplitude 
+clearvars VAdistBAdistCampMax 
+maxClustAmp = cell(1,mouseNum);
+for mouse = 1:mouseNum
+    % determine the maximum cluster amp
+    for ccell = 1:size(downAllAxonsClustAmpTS{mouse},1)
+        maxClustAmp{mouse} = (max(downAllAxonsClustAmpTS{mouse},[],2))';
+    end 
+    % sort data for 3D scatter plot 
+    if mouse == 1
+        VAdistBAdistCampMax(:,1) = minVAdistsPerC{mouse};
+        VAdistBAdistCampMax(:,2) = BAdists{mouse};
+        VAdistBAdistCampMax(:,3) = maxClustAmp{mouse};
+    elseif mouse > 1 
+        len = size(VAdistBAdistCamp,1);
+        VAdistBAdistCampMax(len+1:len+length(minVAdistsPerC{mouse}),1) = minVAdistsPerC{mouse};
+        VAdistBAdistCampMax(len+1:len+length(minVAdistsPerC{mouse}),2) = BAdists{mouse};
+        VAdistBAdistCampMax(len+1:len+length(minVAdistsPerC{mouse}),3) = maxClustAmp{mouse};        
+    end 
+    if scatter3DClustSizeQ == 1 % size threshold 
+        % sort data using the size threshold 
+        % figure out what clusters meet the size threshold 
+        theseClusts = any(downAllAxonsClustSizeTS{mouse} >= scatter3DClustSizeThresh,2);
+        if mouse == 1
+            VAdistBAdistCampMaxThresh(:,1) = minVAdistsPerC{mouse}(theseClusts);
+            VAdistBAdistCampMaxThresh(:,2) = BAdists{mouse}(theseClusts);
+            VAdistBAdistCampMaxThresh(:,3) = maxClustAmp{mouse}(theseClusts);
+        elseif mouse > 1 
+            len = size(VAdistBAdistCampMax,1);
+            VAdistBAdistCampMaxThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),1) = minVAdistsPerC{mouse}(theseClusts);
+            VAdistBAdistCampMaxThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),2) = BAdists{mouse}(theseClusts);
+            VAdistBAdistCampMaxThresh(len+1:len+length(minVAdistsPerC{mouse}(theseClusts)),3) = maxClustAmp{mouse}(theseClusts);        
+        end 
+    elseif scatter3DClustSizeQ == 0 % time (before or after 0 sec)
+        if mouse == 1
+            VAdistBAdistCampMaxBefore(:,1) = minVAdistsPerC{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampMaxBefore(:,2) = BAdists{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampMaxBefore(:,3) = maxClustAmp{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampMaxAfter(:,1) = minVAdistsPerC{mouse}(afterLoc{mouse});
+            VAdistBAdistCampMaxAfter(:,2) = BAdists{mouse}(afterLoc{mouse});
+            VAdistBAdistCampMaxAfter(:,3) = maxClustAmp{mouse}(afterLoc{mouse});
+        elseif mouse > 1 
+            len = size(VAdistBAdistCampMaxBefore,1);
+            VAdistBAdistCampMaxBefore(len+1:len+length(minVAdistsPerC{mouse}(beforeLoc{mouse})),1) = minVAdistsPerC{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampMaxBefore(len+1:len+length(minVAdistsPerC{mouse}(beforeLoc{mouse})),2) = BAdists{mouse}(beforeLoc{mouse});
+            VAdistBAdistCampMaxBefore(len+1:len+length(minVAdistsPerC{mouse}(beforeLoc{mouse})),3) = maxClustAmp{mouse}(beforeLoc{mouse});    
+            len2 = size(VAdistBAdistCampMaxAfter,1);
+            VAdistBAdistCampMaxAfter(len2+1:len2+length(minVAdistsPerC{mouse}(afterLoc{mouse})),1) = minVAdistsPerC{mouse}(afterLoc{mouse});
+            VAdistBAdistCampMaxAfter(len2+1:len2+length(minVAdistsPerC{mouse}(afterLoc{mouse})),2) = BAdists{mouse}(afterLoc{mouse});
+            VAdistBAdistCampMaxAfter(len2+1:len2+length(minVAdistsPerC{mouse}(afterLoc{mouse})),3) = maxClustAmp{mouse}(afterLoc{mouse}); 
+        end  
+    end 
+end 
+% plot scatter plot of axon distance from vessel (minVAdists), BBB plume distance from axon, time
+figure;
+ax = gca;
+ax.FontSize = 15;
+ax.FontName = 'Arial';
+scatter3(VAdistBAdistCampMax(:,1),VAdistBAdistCampMax(:,2),VAdistBAdistCampMax(:,3),'filled')
+xlabel('Axon Distance from Vessel (microns)')
+ylabel('BBB Plume Distance from Axon (microns)')
+zlabel('Maximum BBB Plume Pixel Amplitude')
+if scatter3DClustSizeQ == 1 
+    hold on;
+    scatter3(VAdistBAdistCampMaxThresh(:,1),VAdistBAdistCampMaxThresh(:,2),VAdistBAdistCampMaxThresh(:,3),'filled')
+    legend(ThreshLegLabel1,ThreshLegLabel2)
+elseif scatter3DClustSizeQ == 0 
+    hold on;
+    scatter3(VAdistBAdistCampMaxBefore(:,1),VAdistBAdistCampMaxBefore(:,2),VAdistBAdistCampMaxBefore(:,3),'filled','MarkerFaceColor',clr(1,:))
+    scatter3(VAdistBAdistCampMaxAfter(:,1),VAdistBAdistCampMaxAfter(:,2),VAdistBAdistCampMaxAfter(:,3),'filled','MarkerFaceColor',clr(2,:))
+    legend('','Pre-Spike Clusters','Post-Spike Clusters')
+end 
+
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
