@@ -19863,14 +19863,6 @@ elseif ETAorSTAq == 1 % ETA data
 end 
 xticklabels(avLabels)
 %% plot change in cluster size and pixel amplitude over time
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%  ADD IN 95% CI TO AVERAGED FIGS AND FIX THE CI FOR THE TOTAL AVERAGE 
-
-
 % plot change in cluster size over time for all clusters, color coded by
 % mouse 
 allAxonsClustSizeTS = cell(1,mouseNum);
@@ -19905,13 +19897,54 @@ end
 downAllAxonsClustSizeTS = cell(1,mouseNum);
 downAllAxonsClustAmpTS = cell(1,mouseNum);
 for mouse = 1:mouseNum
-    % down sample data 
+    % up sample data 
     downAllAxonsClustSizeTS{mouse} = resample(allAxonsClustSizeTS{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
     downAllAxonsClustAmpTS{mouse} = resample(allAxonsClustAmpTS{mouse},minFrameLen,frameLen(mouse),'Dimension',2);
     % replace 0s and negative going values with nans 
     downAllAxonsClustSizeTS{mouse}(downAllAxonsClustSizeTS{mouse} <= 0) = NaN;
     downAllAxonsClustAmpTS{mouse}(downAllAxonsClustAmpTS{mouse} <= 0) = NaN;
 end 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% go through each row of the up sampled data and remove artifacts 
+sizeData = downAllAxonsClustSizeTS;
+ampData = downAllAxonsClustAmpTS;
+clearvars downAllAxonsClustSizeTS downAllAxonsClustAmpTS
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE- MUST ADD IN CONDITIONS IF THE VALUE IS IN THE FIRST OR LAST
+% COLUMN - DRAW IT OUT FIRST 
+for mouse = 1:mouseNum
+    % find the indices that are the same across data arrays 
+    sData = ~isnan(sizeData{mouse});
+    aData = ~isnan(ampData{mouse});
+    SAinds = (sData+aData)==2;
+    for r = 1:size(SAinds,1)
+        for c = 1:size(SAinds,2)
+            val = SAinds(r,c);
+            if c == 1
+            elseif c == size(SAinds,2)
+            elseif c ~= 1 && c~= size(SAinds,2)
+                if val == 1
+                    if SAinds(r,c-1) == 0 && SAinds(r,c+1) == 0 % if the cluster is only 1 frame wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c) = NaN;
+                    end 
+                    if SAinds(r,c-1) == 0 && SAinds(r,c+1) == 1 && SAinds(r,c+2) == 0 % if the cluster is 2 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c) = NaN;
+                    end 
+                    if SAinds(r,c-1) == 0 && SAinds(r,c+1) == 1 && SAinds(r,c+2) == 1 && SAinds(r,c+3) == 0 % if the cluster is 3 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c) = NaN;
+                    end 
+                end 
+            end 
+        end 
+    end 
+end 
+%%
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 clr = hsv(mouseNum);
 x = 1:minFrameLen;
 figure;
@@ -21426,9 +21459,9 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
         % sort data 
-        binClustTSsizeData = cell(1,3);
-        binClustTSpixAmpData = cell(1,3);
-        binClocFrame = cell(1,3);
+        binClustTSsizeData = cell(1,2);
+        binClustTSpixAmpData = cell(1,2);
+        binClocFrame = cell(1,2);
         for bin = 1:2
             for loc = 1:2 
                 for mouse = 1:mouseNum
@@ -21505,10 +21538,10 @@ if ETAorSTAq == 0 % STA data
     if clustSizeQ == 1
         clustSizeThresh = input('What is the cluster size threshold? ');
         % remove all cluster data that does not reach the size threshold 
-        binClustTSsizeDataHigh = cell(1,3);
-        binClustTSsizeDataLow = cell(1,3);
-        binClustTSpixAmpDataHigh = cell(1,3);
-        binClustTSpixAmpDataLow = cell(1,3);
+        binClustTSsizeDataHigh = cell(1,2);
+        binClustTSsizeDataLow = cell(1,2);
+        binClustTSpixAmpDataHigh = cell(1,2);
+        binClustTSpixAmpDataLow = cell(1,2);
         for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 % find the clusters that meet or exceed the threshold 
@@ -21596,17 +21629,18 @@ if ETAorSTAq == 0 % STA data
             % organized by distance 
             count = 1;
             axonTypePieData = nan(1);
+            axonTypePieDataBeforeVsAfter = nan(1);
             % resort data for the pie chart 
             for bin = 1:length(binClustTSsizeData)
                 for loc = 1:2 % close axons, far axons 
                     axonTypePieData(count) = size(binClustTSsizeData{bin}{loc},1);
-                    count = count + 1;
+                    count = count + 1;                  
                 end 
+                axonTypePieDataBeforeVsAfter(bin) = size(binClustTSsizeData{bin}{1},1) + size(binClustTSsizeData{bin}{2},1);
             end 
             figure;
             p = pie(axonTypePieData);
-            clr = hsv(2);
-            customColors = [clr(1,:),clr(1,:)+0.4,clr(2,:),clr(2,:)+0.4];
+            customColors = [1 0 0;1 0.7 0.7;0 0.5 0.5;0 1 1];
             colormap(customColors)
             if distQ == 0
                 axonClusterTypeLabels = ["Close Pre-Spike Clusters","Far Pre-Spike Clusters","Close Post-Spike Clusters","Far Post-Spike Clusters"];
@@ -21630,113 +21664,189 @@ if ETAorSTAq == 0 % STA data
                 end            
             end 
             ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8);
+            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15;         
+    
+            % create pie chart showing number of clusters that are before
+            % or after 0 sec (this figure has already been made, but good
+            % to double check) 
+            figure;
+            p = pie(axonTypePieDataBeforeVsAfter);
+            clr = hsv(2);
+            colormap(clr)
+            legend('Pre-Spike BBB Plumes','Post-Spike BBB Plumes')
+            ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4);
+            t1.FontSize = 15; t2.FontSize = 15; 
+        end 
+    elseif clustSizeQ == 1  
+        if aTypeQ == 0 % sort data by axon type 
+            % plot pie chart showing proportion of close vs far listeners, controllers,
+            % and bothers there are 
+            count = 1;
+            axonTypePieDataHigh = nan(1);
+            axonTypePieDataLow = nan(1);
+            % resort data for the pie chart 
+            for bin = 1:3 % listener, controller, both
+                for loc = 1:2 % close axons, far axons 
+                    axonTypePieDataHigh(count) = size(binClustTSsizeDataHigh{bin}{loc},1);
+                    axonTypePieDataLow(count) = size(binClustTSsizeDataLow{bin}{loc},1);
+                    count = count + 1;
+                end 
+            end 
+    
+            % create pie chart for pre, post, and evenly split axons separated by
+            % distance from vessel for plumes that exceed the size threshold
+            % and those that do not 
+            figure;
+            p = pie(axonTypePieDataHigh);
+            customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
+            colormap(customColors)  
+            if distQ == 0
+                axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+            elseif distQ == 1 
+                axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
+            end 
+            legend(axonClusterTypeLabels)
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
+                end            
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
+                end            
+            end 
+            ax=gca; ax.FontSize = 12;
             t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
             t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
-
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % EDIT BELOW CODE TO BE USEFUL FOR SORTING DATA BASED ON CLUSTER
-    % TIMING AND DISTANCE METRICS             
     
-            % create pie chart showing number of axons that are mostly pre, mostly
-            % post, and evenly split
-            allAxonTypes = sum(axonTypes,1);
-            reSortedAllAxonTypes(1) = allAxonTypes(1); reSortedAllAxonTypes(2) = allAxonTypes(3); reSortedAllAxonTypes(3) = allAxonTypes(2);
             figure;
-            p = pie(reSortedAllAxonTypes);
-            colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195])
-            legend('Listener','Controller','Both')
-            title('Axon Type')
-            ax=gca; ax.FontSize = 12;
-            t1 = p(2); t2 = p(4); t3 = p(6);
-            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
-        end 
-
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    elseif clustSizeQ == 1  
-        % plot pie chart showing proportion of close vs far listeners, controllers,
-        % and bothers there are 
-        count = 1;
-        axonTypePieDataHigh = nan(1);
-        axonTypePieDataLow = nan(1);
-        % resort data for the pie chart 
-        for bin = 1:3 % listener, controller, both
-            for loc = 1:2 % close axons, far axons 
-                axonTypePieDataHigh(count) = size(binClustTSsizeDataHigh{bin}{loc},1);
-                axonTypePieDataLow(count) = size(binClustTSsizeDataLow{bin}{loc},1);
-                count = count + 1;
+            p = pie(axonTypePieDataLow);
+            customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
+            colormap(customColors)
+            if distQ == 0
+                axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
+            elseif distQ == 1 
+                axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
             end 
-        end 
+            legend(axonClusterTypeLabels)
+            if distQ2 == 0 % group data by axon distance from vessel \
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
+                end            
+            end 
+            ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
+            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
+       elseif aTypeQ == 1 % sort data by cluster timing before or after 0 sec     
+            % plot pie chart showing proportion of pre vs post 0 sec clusters there are  
+            count = 1;
+            axonTypePieDataHigh = nan(1);
+            axonTypePieDataLow = nan(1);
+            % resort data for the pie chart 
+            for bin = 1:length(binClustTSsizeData)
+                for loc = 1:2 % close axons, far axons 
+                    axonTypePieDataHigh(count) = size(binClustTSsizeDataHigh{bin}{loc},1);
+                    axonTypePieDataLow(count) = size(binClustTSsizeDataLow{bin}{loc},1);
+                    count = count + 1;
+                end 
+            end 
     
-        % create pie chart for pre, post, and evenly split axons separated by
-        % distance from vessel for plumes that exceed the size threshold
-        % and those that do not 
-        figure;
-        p = pie(axonTypePieDataHigh);
-        customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
-        colormap(customColors)  
-        if distQ == 0
-            axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
-        elseif distQ == 1 
-            axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
-        end 
-        legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel 
+            % create pie chart for pre, post, and evenly split axons separated by
+            % distance from vessel for plumes that exceed the size threshold
+            % and those that do not 
+            figure;
+            p = pie(axonTypePieDataHigh);
+            customColors = [1 0 0;1 0.7 0.7;0 0.5 0.5;0 1 1];
+            colormap(customColors)
             if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
+                axonClusterTypeLabels = ["Close Pre-Spike Clusters","Far Pre-Spike Clusters","Close Post-Spike Clusters","Far Post-Spike Clusters"];
             elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end            
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                axonClusterTypeLabels = ["In Range Pre-Spike Clusters","Out of Range Pre-Spike Clusters","In Range Post-Spike Clusters","Out of Range Post-Spike Clusters"];
+            end    
+            legend(axonClusterTypeLabels)
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
+                end            
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
+                end            
+            end 
+            ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8);
+            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; 
+    
+            figure;
+            p = pie(axonTypePieDataLow);
+            customColors = [1 0 0;1 0.7 0.7;0 0.5 0.5;0 1 1];
+            colormap(customColors)
             if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
+                axonClusterTypeLabels = ["Close Pre-Spike Clusters","Far Pre-Spike Clusters","Close Post-Spike Clusters","Far Post-Spike Clusters"];
             elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end            
-        end 
-        ax=gca; ax.FontSize = 12;
-        t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
-        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
-
-        figure;
-        p = pie(axonTypePieDataLow);
-        customColors = [0 0.4470 0.7410; 0.35 0.7970 1; 0.8500 0.3250 0.0980; 1 0.7750 0.5480; 0.4250 0.386 0.4195; 0.7750 0.736 0.7695];
-        colormap(customColors)
-        if distQ == 0
-            axonClusterTypeLabels = ["Close Listener","Far Listener","Close Controller","Far Controller","Close Both","Far Both"];
-        elseif distQ == 1 
-            axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
-        end 
-        legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel \
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end            
-        end 
-        ax=gca; ax.FontSize = 12;
-        t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
-        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; t5.FontSize = 15; t6.FontSize = 15;
+                axonClusterTypeLabels = ["In Range Pre-Spike Clusters","Out of Range Pre-Spike Clusters","In Range Post-Spike Clusters","Out of Range Post-Spike Clusters"];
+            end   
+            legend(axonClusterTypeLabels)
+            if distQ2 == 0 % group data by axon distance from vessel \
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
+                end            
+            end 
+            ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8);
+            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; 
+       end 
+     
     end  
     if clustSizeQ == 0
         clearvars binLabel
@@ -21746,7 +21856,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeData{bin}{loc},1)
@@ -21794,7 +21904,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -21830,7 +21940,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         avBinClustSizeTS = NaN(3,minFrameLen);
         count = 1;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeData{bin}{loc},1);  
@@ -21887,7 +21997,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         avBinClustPixAmpTS = NaN(3,minFrameLen);
         count = 1;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpData{bin}{loc},1);  
@@ -21933,7 +22043,7 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
-        for bin = 1:3 % listener, controller, both   
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 [clustLocX, clustLocY] = find(~isnan(binClustTSsizeData{bin}{loc}));
                 clusts = unique(clustLocX);              
@@ -22001,7 +22111,7 @@ if ETAorSTAq == 0 % STA data
         hold all;
         ax=gca;
         count = 1;
-        for bin = 1:3 % listener, controller, both  
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 % align clusters
                 % determine longest cluster 
@@ -22062,7 +22172,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         hold all;
         clearvars binLabel
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeDataHigh{bin}{loc},1)
@@ -22107,7 +22217,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -22141,7 +22251,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         legendLabel = string(1);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataHigh{bin}{loc},1);  
@@ -22173,7 +22283,7 @@ if ETAorSTAq == 0 % STA data
         % remove empty strings 
         count = 1;
         binLabel2 = string(1);
-        for bin = 1:size(avBinClustSizeTS,1)
+        for bin = 1:length(binClustTSsizeData)
             if bin == 1 
                 binLabel2(bin) = legendLabel(count);
                 count = count + 2;
@@ -22200,7 +22310,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         legendLabel = string(1);        
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataHigh{bin}{loc},1);  
@@ -22250,7 +22360,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         clearvars legendLabel
-        for bin = 1:3 % listener, controller, both   
+        for bin = 1:length(binClustTSsizeData) 
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
                     [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataHigh{bin}{loc}));
@@ -22328,7 +22438,7 @@ if ETAorSTAq == 0 % STA data
         ax=gca;
         count = 1;
         count2 = 1;
-        for bin = 1:3 % listener, controller, both  
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSpixAmpDataHigh{bin}{loc}) == 0 
                     % align clusters
@@ -22385,7 +22495,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 for clust = 1:size(binClustTSsizeDataLow{bin}{loc},1)
@@ -22430,7 +22540,7 @@ if ETAorSTAq == 0 % STA data
         figure;
         ax=gca;
         hold all;
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 % plot change in cluster size color coded by axon 
@@ -22464,7 +22574,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         legendLabel = string(1);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustSizeTS(count,:) = nanmean(binClustTSsizeDataLow{bin}{loc},1);  
@@ -22522,7 +22632,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         legendLabel = string(1);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             % determine bin labels 
             for loc = 1:2 % close axons, far axons
                 avBinClustPixAmpTS(count,:) = nanmean(binClustTSpixAmpDataLow{bin}{loc},1);  
@@ -22572,7 +22682,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         legendLabel = string(1);
-        for bin = 1:3 % listener, controller, both            
+        for bin = 1:length(binClustTSsizeData)    
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSsizeDataLow{bin}{loc}) == 0
                     [clustLocX, clustLocY] = find(~isnan(binClustTSsizeDataLow{bin}{loc}));
@@ -22618,7 +22728,7 @@ if ETAorSTAq == 0 % STA data
         end 
         count = 1;
         binLabel2 = string(1);
-        for bin = 1:size(avBinClustSizeTS,1)
+        for bin = 1:length(binClustTSsizeData)
             if bin == 1 
                 binLabel2(bin) = legendLabel(count);
                 count = count + 2;
@@ -22651,7 +22761,7 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         count2 = 1;
         legendLabel = string(1);
-        for bin = 1:3 % listener, controller, both  
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 if isempty(binClustTSpixAmpDataLow{bin}{loc}) == 0
                     % align clusters
@@ -22712,7 +22822,7 @@ if ETAorSTAq == 0 % STA data
         xlim([1 minFrameLen])    
     end 
     if clustSizeQ == 0
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 % plot distribution of cluster start times
                 figure;
@@ -22720,12 +22830,20 @@ if ETAorSTAq == 0 % STA data
                 histogram(binClocFrame{bin}{loc},20)
                 ax.FontSize = 15;
                 ax.FontName = 'Arial';
-                if bin == 1 
-                    binLabel = 'Listener Axons';
-                elseif bin == 2
-                    binLabel = 'Controller Axons';
-                elseif bin == 3
-                    binLabel = 'Both Axons';
+                if aTypeQ == 0 % sort data by axon type 
+                    if bin == 1 
+                        binLabel = 'Listener Axons';
+                    elseif bin == 2
+                        binLabel = 'Controller Axons';
+                    elseif bin == 3
+                        binLabel = 'Both Axons';
+                    end 
+                elseif aTypeQ == 1 % sort data by cluster timing before or after 0 sec 
+                    if bin == 1 
+                        binLabel = 'Pre-Spike BBB Plumes';
+                    elseif bin == 2
+                        binLabel = 'Post-Spike BBB Plumes';
+                    end                     
                 end 
                 if distQ2 == 0 % group data by axon distance from vessel 
                     if distQ == 0
@@ -22775,7 +22893,7 @@ if ETAorSTAq == 0 % STA data
         end 
         % combine across axon types 
         closeFarBinClocFrame = cell(1,2);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 if bin == 1 
                     closeFarBinClocFrame{loc} = binClocFrame{bin}{loc};
@@ -22839,7 +22957,7 @@ if ETAorSTAq == 0 % STA data
         end 
     elseif clustSizeQ == 1
         titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 % plot distribution of cluster start times
                 figure;
@@ -22847,12 +22965,20 @@ if ETAorSTAq == 0 % STA data
                 histogram(binClocFrameHigh{bin}{loc},20)
                 ax.FontSize = 15;
                 ax.FontName = 'Arial';
-                if bin == 1 
-                    binLabel = 'Listener Axons';
-                elseif bin == 2
-                    binLabel = 'Controller Axons';
-                elseif bin == 3
-                    binLabel = 'Both Axons';
+                if aTypeQ == 0 % sort data by axon type 
+                    if bin == 1 
+                        binLabel = 'Listener Axons';
+                    elseif bin == 2
+                        binLabel = 'Controller Axons';
+                    elseif bin == 3
+                        binLabel = 'Both Axons';
+                    end 
+                elseif aTypeQ == 1 % sort data by cluster timing before or after 0 sec 
+                    if bin == 1 
+                        binLabel = 'Pre-Spike BBB Plumes';
+                    elseif bin == 2
+                        binLabel = 'Post-Spike BBB Plumes';
+                    end                     
                 end 
                 if distQ2 == 0 % group data by axon distance from vessel 
                     if distQ == 0
@@ -22901,7 +23027,7 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
         titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 % plot distribution of cluster start times
                 figure;
@@ -22909,12 +23035,20 @@ if ETAorSTAq == 0 % STA data
                 histogram(binClocFrameLow{bin}{loc},20)
                 ax.FontSize = 15;
                 ax.FontName = 'Arial';
-                if bin == 1 
-                    binLabel = 'Listener Axons';
-                elseif bin == 2
-                    binLabel = 'Controller Axons';
-                elseif bin == 3
-                    binLabel = 'Both Axons';
+                if aTypeQ == 0 % sort data by axon type 
+                    if bin == 1 
+                        binLabel = 'Listener Axons';
+                    elseif bin == 2
+                        binLabel = 'Controller Axons';
+                    elseif bin == 3
+                        binLabel = 'Both Axons';
+                    end 
+                elseif aTypeQ == 1 % sort data by cluster timing before or after 0 sec 
+                    if bin == 1 
+                        binLabel = 'Pre-Spike BBB Plumes';
+                    elseif bin == 2
+                        binLabel = 'Post-Spike BBB Plumes';
+                    end                     
                 end 
                 if distQ2 == 0 % group data by axon distance from vessel 
                     if distQ == 0
@@ -22964,7 +23098,7 @@ if ETAorSTAq == 0 % STA data
         end 
         % combine across axon types 
         closeFarBinClocFrameHigh = cell(1,2);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 if bin == 1 
                     closeFarBinClocFrameHigh{loc} = binClocFrameHigh{bin}{loc};
@@ -22975,7 +23109,7 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
         closeFarBinClocFrameLow = cell(1,2);
-        for bin = 1:3 % listener, controller, both
+        for bin = 1:length(binClustTSsizeData)
             for loc = 1:2 % close axons, far axons
                 if bin == 1 
                     closeFarBinClocFrameLow{loc} = binClocFrameLow{bin}{loc};
