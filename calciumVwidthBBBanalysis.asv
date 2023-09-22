@@ -19904,30 +19904,125 @@ for mouse = 1:mouseNum
     downAllAxonsClustSizeTS{mouse}(downAllAxonsClustSizeTS{mouse} <= 0) = NaN;
     downAllAxonsClustAmpTS{mouse}(downAllAxonsClustAmpTS{mouse} <= 0) = NaN;
 end 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 % go through each row of the up sampled data and remove artifacts 
 sizeData = downAllAxonsClustSizeTS;
 ampData = downAllAxonsClustAmpTS;
 clearvars downAllAxonsClustSizeTS downAllAxonsClustAmpTS
 for mouse = 1:mouseNum
-    % find the indices that are the same across data arrays 
+    % find the indices that are the same 
     sData = ~isnan(sizeData{mouse});
+    for r = 1:size(sData,1)
+        for c = 1:size(sData,2)
+            val = sData(r,c);
+            if c == 1
+                if val == 1
+                    if sData(r,c+1) == 0 % if the cluster is only 1 frame wide 
+                        sizeData{mouse}(r,c) = NaN;
+                    end 
+                    if sData(r,c+1) == 1 && sData(r,c+2) == 0 % if the cluster is 2 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        sizeData{mouse}(r,c+1) = NaN;
+                    end 
+                    if sData(r,c+1) == 1 && sData(r,c+2) == 1 && sData(r,c+3) == 0 % if the cluster is 3 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        sizeData{mouse}(r,c+1) = NaN;
+                        sizeData{mouse}(r,c+2) = NaN;
+                    end 
+                end 
+            elseif c == size(sData,2)
+                if val == 1
+                    if sData(r,c-1) == 0 % if the cluster is only 1 frame wide 
+                        sizeData{mouse}(r,c) = NaN;
+                    end 
+                    if sData(r,c-1) == 1 && sData(r,c-2) == 0 % if the cluster is 2 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        sizeData{mouse}(r,c-1) = NaN;
+                    end 
+
+                    if sData(r,c-1) == 1 && sData(r,c-2) == 1 && sData(r,c-3) == 0% if the cluster is 3 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        sizeData{mouse}(r,c-1) = NaN;
+                        sizeData{mouse}(r,c-2) = NaN;
+                    end 
+                end 
+            elseif c ~= 1 && c~= size(sData,2)
+                if val == 1
+                    if sData(r,c-1) == 0 && sData(r,c+1) == 0 % if the cluster is only 1 frame wide 
+                        sizeData{mouse}(r,c) = NaN;
+                    end 
+                    if sData(r,c-1) == 0 && sData(r,c+1) == 1 && sData(r,c+2) == 0 % if the cluster is 2 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        sizeData{mouse}(r,c+1) = NaN;
+                    end 
+                    if sData(r,c-1) == 0 && sData(r,c+1) == 1 && sData(r,c+2) == 1 && sData(r,c+3) == 0 % if the cluster is 3 frames wide 
+                        sizeData{mouse}(r,c) = NaN;
+                        sizeData{mouse}(r,c+1) = NaN;
+                        sizeData{mouse}(r,c+2) = NaN;
+                    end 
+                end 
+            end 
+        end 
+    end 
+    % find the indices that are the same 
     aData = ~isnan(ampData{mouse});
-    SAinds = (sData+aData)==2;
-    for r = 1:size(SAinds,1)
-        for c = 1:size(SAinds,2)
-            val = SAinds(r,c);
-            if val == 1
-                if SAinds(r,c-1) == 0 && SAinds(r,c+1) == 0 % if the cluster is only 1 frame wide 
-                    sizeData{mouse}(r,c) = NaN;
+    for r = 1:size(aData,1)
+        for c = 1:size(aData,2)
+            val = aData(r,c);
+            if c == 1
+                if val == 1
+                    if aData(r,c+1) == 0 % if the cluster is only 1 frame wide 
+                        ampData{mouse}(r,c) = NaN;
+                    end 
+                    if aData(r,c+1) == 1 && aData(r,c+2) == 0 % if the cluster is 2 frames wide 
+                        ampData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c+1) = NaN;
+                    end 
+                    if aData(r,c+1) == 1 && aData(r,c+2) == 1 && aData(r,c+3) == 0 % if the cluster is 3 frames wide 
+                        ampData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c+1) = NaN;
+                        ampData{mouse}(r,c+2) = NaN;
+                    end 
+                end 
+            elseif c == size(aData,2)
+                if val == 1
+                    if aData(r,c-1) == 0 % if the cluster is only 1 frame wide 
+                        ampData{mouse}(r,c) = NaN;
+                    end 
+                    if aData(r,c-1) == 1 && aData(r,c-2) == 0 % if the cluster is 2 frames wide 
+                        ampData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c-1) = NaN;
+                    end 
+
+                    if aData(r,c-1) == 1 && aData(r,c-2) == 1 && aData(r,c-3) == 0% if the cluster is 3 frames wide 
+                        ampData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c-1) = NaN;
+                        ampData{mouse}(r,c-2) = NaN;
+                    end 
+                end 
+            elseif c ~= 1 && c~= size(aData,2)
+                if val == 1
+                    if aData(r,c-1) == 0 && aData(r,c+1) == 0 % if the cluster is only 1 frame wide 
+                        ampData{mouse}(r,c) = NaN;
+                    end 
+                    if aData(r,c-1) == 0 && aData(r,c+1) == 1 && aData(r,c+2) == 0 % if the cluster is 2 frames wide 
+                        ampData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c+1) = NaN;
+                    end 
+                    if aData(r,c-1) == 0 && aData(r,c+1) == 1 && aData(r,c+2) == 1 && aData(r,c+3) == 0 % if the cluster is 3 frames wide 
+                        ampData{mouse}(r,c) = NaN;
+                        ampData{mouse}(r,c+1) = NaN;
+                        ampData{mouse}(r,c+2) = NaN;
+                    end 
                 end 
             end 
         end 
     end 
 end 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+downAllAxonsClustSizeTS = sizeData;
+downAllAxonsClustAmpTS = ampData;
+clearvars sizeData sData ampData aData
+
 clr = hsv(mouseNum);
 x = 1:minFrameLen;
 figure;
@@ -19992,8 +20087,8 @@ hold all;
 ax=gca;
 avAxonClustSizeTS = nan(mouseNum,minFrameLen);
 mouseLabelAvPlot = string(1);
-clear v f
 for mouse = 1:mouseNum
+    clearvars v f
     avAxonClustSizeTS(mouse,:) = nanmean(downAllAxonsClustSizeTS{mouse},1);  %#ok<*NANMEAN> 
     plot(x,avAxonClustSizeTS(mouse,:),'Color',clr(mouse,:),'LineWidth',2);  
     % determine 95% CI 
@@ -20081,7 +20176,7 @@ ts_High = tinv(0.975,size(avAxonClustSizeTS,1)-1);% T-Score for 95% CI
 CI_Low = (nanmean(avAxonClustSizeTS,1)) + (ts_Low*SEM);  % Confidence Intervals
 CI_High = (nanmean(avAxonClustSizeTS,1)) + (ts_High*SEM);  % Confidence Intervals
 plot(x,avAllClustSizeTS,'k','LineWidth',2);   
-clear v f 
+clearvars v f 
 v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
 v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
 % remove NaNs so face can be made and colored 
@@ -20112,7 +20207,7 @@ ts_High = tinv(0.975,size(avAxonClustAmpTS,1)-1);% T-Score for 95% CI
 CI_Low = (nanmean(avAxonClustAmpTS,1)) + (ts_Low*SEM);  % Confidence Intervals
 CI_High = (nanmean(avAxonClustAmpTS,1)) + (ts_High*SEM);  % Confidence Intervals
 plot(x,avAllClustAmpTS,'k','LineWidth',2);   
-clear v f 
+clearvars v f 
 v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
 v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
 % remove NaNs so face can be made and colored 
@@ -20962,7 +21057,7 @@ if ETAorSTAq == 0 % STA data
             count = count + 1;
         end 
     end 
-    legend(binLabel)
+    legend(binLabel2)
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
@@ -21060,13 +21155,6 @@ if ETAorSTAq == 0 % STA data
 end 
 
 %% plot average BBB plume change in size and pixel amplitude over time for axons grouped by axon distance from vessel and cluster distance from axon  
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% EDIT THE BELOW CODE SO YOU CAN PLOT ALL DISTANCE/SIZE METRICS RELATIVE TO AXON
-% TYPE AND CLUSTER TIMING 
-
 if ETAorSTAq == 0 % STA data  
     x = 1:minFrameLen;
     distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set a distance range . ');
@@ -22172,7 +22260,7 @@ if ETAorSTAq == 0 % STA data
                     end             
                 end 
                 % plot change in cluster size color coded by axon 
-                if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 
+                if isempty(binClustTSsizeDataHigh{bin}{loc}) == 0 BBB plumes that exceed %d microns squared
                     h = plot(x,binClustTSsizeDataHigh{bin}{loc},'Color',customColors(count2,:),'LineWidth',2); 
                 end 
                 count2 = count2 + 1;
@@ -22267,12 +22355,14 @@ if ETAorSTAq == 0 % STA data
         count = 1;
         binLabel2 = string(1);
         for bin = 1:length(binClustTSsizeData)
-            if bin == 1 
-                binLabel2(bin) = legendLabel(count);
-                count = count + 2;
-            elseif bin > 1 
-                binLabel2(count) = legendLabel(bin);
-                count = count + 2;
+            for loc = 1:2 % close axons, far axons
+                if bin == 1 && loc == 1 
+                    binLabel2(bin) = legendLabel(count);
+                    count = count + 2;
+                elseif bin == 1 && loc > 1 || bin 
+                    binLabel2(count) = legendLabel(bin);
+                    count = count + 2;
+                end 
             end 
         end 
         legend(binLabel2)
