@@ -19951,15 +19951,20 @@ for mouse = 1:mouseNum
                     if sData(r,c-1) == 0 && sData(r,c+1) == 0 % if the cluster is only 1 frame wide 
                         sizeData{mouse}(r,c) = NaN;
                     end 
-                    if sData(r,c-1) == 0 && sData(r,c+1) == 1 && sData(r,c+2) == 0 % if the cluster is 2 frames wide 
-                        sizeData{mouse}(r,c) = NaN;
-                        sizeData{mouse}(r,c+1) = NaN;
+                    if c ~= size(sData,2)-1
+                        if sData(r,c-1) == 0 && sData(r,c+1) == 1 && sData(r,c+2) == 0 % if the cluster is 2 frames wide 
+                            sizeData{mouse}(r,c) = NaN;
+                            sizeData{mouse}(r,c+1) = NaN;
+                        end 
+                    end
+                    if c ~= size(sData,2)-1 && c ~= size(sData,2)-2
+                        if sData(r,c-1) == 0 && sData(r,c+1) == 1 && sData(r,c+2) == 1 && sData(r,c+3) == 0 % if the cluster is 3 frames wide 
+                            sizeData{mouse}(r,c) = NaN;
+                            sizeData{mouse}(r,c+1) = NaN;
+                            sizeData{mouse}(r,c+2) = NaN;
+                        end 
                     end 
-                    if sData(r,c-1) == 0 && sData(r,c+1) == 1 && sData(r,c+2) == 1 && sData(r,c+3) == 0 % if the cluster is 3 frames wide 
-                        sizeData{mouse}(r,c) = NaN;
-                        sizeData{mouse}(r,c+1) = NaN;
-                        sizeData{mouse}(r,c+2) = NaN;
-                    end 
+                     
                 end 
             end 
         end 
@@ -20005,14 +20010,18 @@ for mouse = 1:mouseNum
                     if aData(r,c-1) == 0 && aData(r,c+1) == 0 % if the cluster is only 1 frame wide 
                         ampData{mouse}(r,c) = NaN;
                     end 
-                    if aData(r,c-1) == 0 && aData(r,c+1) == 1 && aData(r,c+2) == 0 % if the cluster is 2 frames wide 
-                        ampData{mouse}(r,c) = NaN;
-                        ampData{mouse}(r,c+1) = NaN;
+                    if c ~= size(sData,2)-1
+                        if aData(r,c-1) == 0 && aData(r,c+1) == 1 && aData(r,c+2) == 0 % if the cluster is 2 frames wide 
+                            ampData{mouse}(r,c) = NaN;
+                            ampData{mouse}(r,c+1) = NaN;
+                        end 
                     end 
-                    if aData(r,c-1) == 0 && aData(r,c+1) == 1 && aData(r,c+2) == 1 && aData(r,c+3) == 0 % if the cluster is 3 frames wide 
-                        ampData{mouse}(r,c) = NaN;
-                        ampData{mouse}(r,c+1) = NaN;
-                        ampData{mouse}(r,c+2) = NaN;
+                    if c ~= size(sData,2)-1 && c ~= size(sData,2)-2
+                        if aData(r,c-1) == 0 && aData(r,c+1) == 1 && aData(r,c+2) == 1 && aData(r,c+3) == 0 % if the cluster is 3 frames wide 
+                            ampData{mouse}(r,c) = NaN;
+                            ampData{mouse}(r,c+1) = NaN;
+                            ampData{mouse}(r,c+2) = NaN;
+                        end 
                     end 
                 end 
             end 
@@ -23569,7 +23578,7 @@ if ETAorSTAq == 0 % STA data
     legend("Before 0 sec","After 0 sec")
     set(gca,'XTick',minBAdist:3:maxBAdist)
     xticks = get(gca,'xtick'); 
-    x = minBAdist:10:maxBAdist;
+    x = minBAdist:10:maxBAdist; %#ok<NASGU>
     scaling  = 5;
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
@@ -24273,6 +24282,51 @@ elseif ETAorSTAq == 1 % ETA data
       end 
 end 
 xticklabels(avLabels)
+%% DBSCAN to find clusters of axons grouped together by cluster start time, axon distance from vessel, plume distance from axon, max cluster size, max pixel amplitude 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% use reshpdAvClocFrame, minVAdistsPerC, BAdists, maxSize, maxClustAmp
+if ETAorSTAq == 0 % STA data
+    % sort data into one array 
+    for mouse = 1:mouseNum
+        if mouse == 1 
+            timeDistsSizeAmpArray(:,1) = reshpdAvClocFrame{mouse};
+            timeDistsSizeAmpArray(:,2) = minVAdistsPerC{mouse};
+            timeDistsSizeAmpArray(:,3) = BAdists{mouse};
+            timeDistsSizeAmpArray(:,4) = maxSize{mouse};
+            timeDistsSizeAmpArray(:,5) = maxClustAmp{mouse};
+        elseif mouse > 1 
+            len1 = size(timeDistsSizeAmpArray,1);
+            len2 = length(reshpdAvClocFrame{mouse});
+            timeDistsSizeAmpArray(len1+1:len1+len2,1) = reshpdAvClocFrame{mouse};
+            timeDistsSizeAmpArray(len1+1:len1+len2,2) = minVAdistsPerC{mouse};
+            timeDistsSizeAmpArray(len1+1:len1+len2,3) = BAdists{mouse};
+            timeDistsSizeAmpArray(len1+1:len1+len2,4) = maxSize{mouse};
+            timeDistsSizeAmpArray(len1+1:len1+len2,5) = maxClustAmp{mouse};            
+        end 
+    end 
+end 
+
+% use DBSCAN to identify clusters of BBB plumes that are
+% similar based off of the 5 metrics defined above 
+numP = 1; % number of points a cluster needs to be considered valid
+fixRad = 150; % fixed radius for the search of neighbors 
+[idx,corepts] = dbscan(timeDistsSizeAmpArray,fixRad,numP);
+numGroups = length(unique(idx));
+% how many repeating numbers are there in idx/how many clusters are in the
+% same group? 
+[~,~,ix] = unique(idx);
+repeatingIdx = accumarray(ix,1);
+
+% PICK UP HERE - NEXT WORK ON PLOTTING THE TS DATA GROUPED BY THE CLUSTERS
+% IDENTIFIED BY DBSCAN, IDX 
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
