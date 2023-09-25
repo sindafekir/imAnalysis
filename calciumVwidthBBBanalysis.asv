@@ -23976,8 +23976,8 @@ if logQ == 1
     set(gca, 'yscale','log')   
 end 
 
-%% plot box and whisker plots of max BBB plume pixel amplitude and size
-% grouped by pre and post event/0 sec 
+% pl
+
 
 % determine max number of clusts 
 for mouse = 1:mouseNum
