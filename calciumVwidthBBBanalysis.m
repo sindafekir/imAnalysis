@@ -18862,7 +18862,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
