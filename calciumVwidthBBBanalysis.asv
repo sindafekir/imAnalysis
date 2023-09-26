@@ -24283,6 +24283,11 @@ elseif ETAorSTAq == 1 % ETA data
 end 
 xticklabels(avLabels)
 %% DBSCAN to find clusters of axons grouped together by cluster start time, axon distance from vessel, plume distance from axon, max cluster size, max pixel amplitude 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% use reshpdAvClocFrame, minVAdistsPerC, BAdists, maxSize, maxClustAmp
 if ETAorSTAq == 0 % STA data
     % sort data into one array 
     clearvars timeDistsSizeAmpArray rsrtdDownCampTS rsrtdDownCsizeTS
@@ -24327,7 +24332,7 @@ if ETAorSTAq == 0 % STA data
             rsrtdDownCsizeTS(len1+1:len1+len2,:) = downAllAxonsClustSizeTS{mouse}; 
         end 
     end 
-    dataTypeQ = input("Input 0 to plot all DBSCAN grouped BBB plume data. Input 1 to plot the groups with more than one BBB plume. Input 2 to plot groups with only one BBB plume. ");
+    dataTypeQ = input("Input 0 to plot all DBSCAN grouped BBB plume data. Input 1 to plot the groups with more than one cluster. ");
     % sort data into groups based on DBSCAN clustering 
     if dataTypeQ == 0
         CampTSGroupData = cell(1,numGroups);
@@ -24349,19 +24354,6 @@ if ETAorSTAq == 0 % STA data
                 CsizeTSGroupData{count} = rsrtdDownCsizeTS(r,:);
                 count = count + 1;
             end 
-        end    
-    elseif dataTypeQ == 2 
-        numSmallGroups = length(find(repeatingIdx == 1));
-        CampTSGroupData = cell(1,numSmallGroups);
-        CsizeTSGroupData = cell(1,numSmallGroups);
-        count = 1;
-        for group = 1:numGroups
-            r = find(idx == group);
-            if length(r) == 1
-                CampTSGroupData{count} = rsrtdDownCampTS(r,:);
-                CsizeTSGroupData{count} = rsrtdDownCsizeTS(r,:);
-                count = count + 1;
-            end 
         end         
     end 
 
@@ -24371,8 +24363,6 @@ if ETAorSTAq == 0 % STA data
         clr = hsv(numGroups);
     elseif dataTypeQ == 1 
         clr = hsv(numLargeGroups);
-    elseif dataTypeQ == 2 
-        clr = hsv(numSmallGroups);
     end 
     x = 1:minFrameLen;
     figure;
@@ -24400,11 +24390,9 @@ if ETAorSTAq == 0 % STA data
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     if dataTypeQ == 0
-        titleLabel = 'All DBSCAN Groups';
+        titleLabel = 'All Groups';
     elseif dataTypeQ == 1 
-        titleLabel = 'DBSCAN Groups with > 1 BBB Plumes';
-    elseif dataTypeQ == 2
-        titleLabel = 'DBSCAN Groups with 1 BBB Plume';
+        titleLabel = 'Groups with > 1 BBB Plumes';
     end 
     title({'Change in BBB Plume Size';titleLabel})
     xlim([1 minFrameLen])
@@ -24426,12 +24414,15 @@ if ETAorSTAq == 0 % STA data
     xlabel("Time (s)")
     title({'Change in BBB Plume Pixel Amplitude';titleLabel})
     xlim([1 minFrameLen])
+
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     
-    % plot change in average cluster size per group 
+    % plot change in average cluster size per mouse
     figure;
     hold all;
     ax=gca;
     avAxonClustSizeTS = nan(length(CsizeTSGroupData),minFrameLen);
+    mouseLabelAvPlot = string(1);
     for group = 1:length(CsizeTSGroupData)
         clearvars v f
         avAxonClustSizeTS(group,:) = nanmean(CsizeTSGroupData{group},1);  %#ok<*NANMEAN> 
@@ -24461,21 +24452,22 @@ if ETAorSTAq == 0 % STA data
     xlim([1 minFrameLen])
     % set(gca, 'YScale', 'log')
     
-    % plot change in average cluster pixel amplitude per group
+    % plot change in average cluster size per mouse
     figure;
     hold all;
     ax=gca;
-    avAxonClustAmpTS = nan(length(CampTSGroupData),minFrameLen);
-    for group = 1:length(CampTSGroupData)
+    avAxonClustSizeTS = nan(length(CsizeTSGroupData),minFrameLen);
+    mouseLabelAvPlot = string(1);
+    for group = 1:length(CsizeTSGroupData)
         clearvars v f
-        avAxonClustAmpTS(group,:) = nanmean(CampTSGroupData{group},1);  %#ok<*NANMEAN> 
-        plot(x,avAxonClustAmpTS(group,:),'Color',clr(group,:),'LineWidth',2);  
+        avAxonClustSizeTS(group,:) = nanmean(CsizeTSGroupData{group},1);  %#ok<*NANMEAN> 
+        plot(x,avAxonClustSizeTS(group,:),'Color',clr(group,:),'LineWidth',2);  
         % determine 95% CI 
-        SEM = (nanstd(CampTSGroupData{group}))/(sqrt(size(CampTSGroupData{group},1))); %#ok<*NANSTD> % Standard Error            
-        ts_Low = tinv(0.025,size(CampTSGroupData{group},1)-1);% T-Score for 95% CI
-        ts_High = tinv(0.975,size(CampTSGroupData{group},1)-1);% T-Score for 95% CI
-        CI_Low = (nanmean(CampTSGroupData{group},1)) + (ts_Low*SEM);  % Confidence Intervals
-        CI_High = (nanmean(CampTSGroupData{group},1)) + (ts_High*SEM);  % Confidence Intervals
+        SEM = (nanstd(CsizeTSGroupData{group}))/(sqrt(size(CsizeTSGroupData{group},1))); %#ok<*NANSTD> % Standard Error            
+        ts_Low = tinv(0.025,size(CsizeTSGroupData{group},1)-1);% T-Score for 95% CI
+        ts_High = tinv(0.975,size(CsizeTSGroupData{group},1)-1);% T-Score for 95% CI
+        CI_Low = (nanmean(CsizeTSGroupData{group},1)) + (ts_Low*SEM);  % Confidence Intervals
+        CI_High = (nanmean(CsizeTSGroupData{group},1)) + (ts_High*SEM);  % Confidence Intervals
         % plot the 95% CI 
         v(:,1) = x; v(length(x)+1:length(x)*2) = fliplr(x);
         v(1:length(x),2) = CI_Low; v(length(x)+1:length(x)*2,2) = fliplr(CI_High);
@@ -24489,11 +24481,13 @@ if ETAorSTAq == 0 % STA data
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
+    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Pixel Amplitude';titleLabel})
+    title({'Average Change in BBB Plume Size';titleLabel})
     xlim([1 minFrameLen])
     % set(gca, 'YScale', 'log')
+    
+    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     % plot average change in cluster size of all animals w/95% CI 
     figure;
@@ -24523,7 +24517,7 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size';titleLabel})
+    title({'Average Change in BBB Plume Size';'Across Animals'})
     xlim([1 minFrameLen])
     
     % plot average change in cluster size of all animals w/95% CI 
@@ -24554,9 +24548,14 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Plume Pixel Amplitude';titleLabel})
+    title({'Average Change in BBB Plume Plume Pixel Amplitude';'Across Animals'})
     xlim([1 minFrameLen])
 end 
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
