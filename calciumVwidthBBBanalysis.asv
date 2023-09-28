@@ -19558,11 +19558,11 @@ histogram(allTimeCOVdistArray(:,2),61)
 set(gca,'XTick',0:10:ceil(max(allTimeCOVdistArray(:,2))),'XTickLabelRotation',45)
 avCOVdists = nanmean(allTimeCOVdistArray(:,2)); 
 medCOVdists = nanmedian(allTimeCOVdistArray(:,2)); %#ok<*NANMEDIAN>
-avCOVdistsLabel = sprintf('Average BBB plume origin distance from vessel: %.3f',avCOVdists);
-medCOVdistsLabel = sprintf('Median BBB plume origin distance from vessel: %.3f',medCOVdists);
+avCAdistsLabel = sprintf('Average BBB plume origin distance from vessel: %.3f',avCOVdists);
+medCAdistsLabel = sprintf('Median BBB plume origin distance from vessel: %.3f',medCOVdists);
 ax.FontSize = 15;
 % ax.FontName = 'Times';
-title({'Distribution of BBB Plume Origin Distance from Vessel';avCOVdistsLabel;medCOVdistsLabel});
+title({'Distribution of BBB Plume Distance from Axon';avCAdistsLabel;medCAdistsLabel});
 ylabel("Number of BBB Plumes")
 xlabel("Distance (microns)") 
 
