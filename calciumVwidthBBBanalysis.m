@@ -18862,7 +18862,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -24722,55 +24722,81 @@ end
 xticklabels(avLabels)
 %% DBSCAN to find groups of plumes grouped together by cluster start time, axon distance from vessel, plume distance from axon, max cluster size, max pixel amplitude 
 if ETAorSTAq == 0 % STA data
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
-    % PICK UP HERE - NEED TO FIGURE OUT WHY DISTSCOV IS OFF. MOUSE 1 - 2 IS
-    % GOOD BUT IT BREAKS UP AFTER 
+    dataParamQ = input('Input 0 to cluster data based on all paramaters. Input 1 to cluster data based on distance metrics only. ');
     clearvars timeDistsSizeAmpArray rsrtdDownCampTS rsrtdDownCsizeTS
     distsCOV = cell(1,mouseNum);
     for mouse = 1:mouseNum
-        if mouse == 1 
-            % resort COV dists 
-            distsCOV{mouse} = allTimeCOVdistArray(1:length(BAdists{mouse}),2);
-            % sort data into one array
-            timeDistsSizeAmpArray(:,1) = reshpdAvClocFrame{mouse};
-            timeDistsSizeAmpArray(:,2) = minVAdistsPerC{mouse};
-            timeDistsSizeAmpArray(:,3) = BAdists{mouse};
-            timeDistsSizeAmpArray(:,4) = maxSize{mouse};
-            timeDistsSizeAmpArray(:,5) = maxClustAmp{mouse};
-        elseif mouse > 1 
-            % resort COV dists 
-            len1 = length(BAdists{mouse-1});
-            len2 = length(BAdists{mouse});
-            distsCOV{mouse} = allTimeCOVdistArray(len1+1:len1+len2,2);
-            % sort data into one array
-            len1 = size(timeDistsSizeAmpArray,1);
-            len2 = length(reshpdAvClocFrame{mouse});
-            timeDistsSizeAmpArray(len1+1:len1+len2,1) = reshpdAvClocFrame{mouse};
-            timeDistsSizeAmpArray(len1+1:len1+len2,2) = minVAdistsPerC{mouse};
-            timeDistsSizeAmpArray(len1+1:len1+len2,3) = BAdists{mouse};
-            timeDistsSizeAmpArray(len1+1:len1+len2,4) = maxSize{mouse};
-            timeDistsSizeAmpArray(len1+1:len1+len2,5) = maxClustAmp{mouse};            
+        if dataParamQ == 0
+            if mouse == 1 
+                % resort COV dists 
+                distsCOV{mouse} = allTimeCOVdistArray(1:length(BAdists{mouse}),2);
+                % sort data into one array
+                timeDistsSizeAmpArray(:,1) = reshpdAvClocFrame{mouse};
+                timeDistsSizeAmpArray(:,2) = minVAdistsPerC{mouse};
+                timeDistsSizeAmpArray(:,3) = BAdists{mouse};
+                timeDistsSizeAmpArray(:,4) = maxSize{mouse};
+                timeDistsSizeAmpArray(:,5) = maxClustAmp{mouse};
+                timeDistsSizeAmpArray(:,6) = distsCOV{mouse};
+                len = length(BAdists{mouse});
+            elseif mouse > 1 
+                % resort COV dists 
+                if mouse > 2 
+                    len = length(BAdists{mouse-1}) + len;
+                end 
+                len2 = length(BAdists{mouse});
+                distsCOV{mouse} = allTimeCOVdistArray(len+1:len+len2,2);
+                % sort data into one array
+                len1 = size(timeDistsSizeAmpArray,1);
+                len2 = length(reshpdAvClocFrame{mouse});
+                timeDistsSizeAmpArray(len1+1:len1+len2,1) = reshpdAvClocFrame{mouse};
+                timeDistsSizeAmpArray(len1+1:len1+len2,2) = minVAdistsPerC{mouse};
+                timeDistsSizeAmpArray(len1+1:len1+len2,3) = BAdists{mouse};
+                timeDistsSizeAmpArray(len1+1:len1+len2,4) = maxSize{mouse};
+                timeDistsSizeAmpArray(len1+1:len1+len2,5) = maxClustAmp{mouse};  
+                timeDistsSizeAmpArray(len1+1:len1+len2,6) = distsCOV{mouse};
+            end 
+        elseif dataParamQ == 1 
+            if mouse == 1 
+                % resort COV dists 
+                distsCOV{mouse} = allTimeCOVdistArray(1:length(BAdists{mouse}),2);
+                % sort data into one array
+                timeDistsSizeAmpArray(:,1) = minVAdistsPerC{mouse};
+                timeDistsSizeAmpArray(:,2) = BAdists{mouse};
+                timeDistsSizeAmpArray(:,3) = distsCOV{mouse};
+                len = length(BAdists{mouse});
+            elseif mouse > 1 
+                % resort COV dists 
+                if mouse > 2 
+                    len = length(BAdists{mouse-1}) + len;
+                end 
+                len2 = length(BAdists{mouse});
+                distsCOV{mouse} = allTimeCOVdistArray(len+1:len+len2,2);
+                % sort data into one array
+                len1 = size(timeDistsSizeAmpArray,1);
+                len2 = length(reshpdAvClocFrame{mouse});
+                timeDistsSizeAmpArray(len1+1:len1+len2,1) = minVAdistsPerC{mouse};
+                timeDistsSizeAmpArray(len1+1:len1+len2,2) = BAdists{mouse};
+                timeDistsSizeAmpArray(len1+1:len1+len2,3) = distsCOV{mouse};
+            end             
         end 
     end 
 
     % use DBSCAN to identify clusters of BBB plumes that are
     % similar based off of the 5 metrics defined above 
-    numP = 1; % number of points a cluster needs to be considered valid
-    fixRad = 150; % fixed radius for the search of neighbors 
+    numP = 3; % number of points a cluster needs to be considered valid
+    fixRad = 15; % fixed radius for the search of neighbors 
     [idx,corepts] = dbscan(timeDistsSizeAmpArray,fixRad,numP);
     numGroups = length(unique(idx));
     % how many repeating numbers are there in idx/how many clusters are in the
     % same group? 
     [~,~,ix] = unique(idx);
     repeatingIdx = accumarray(ix,1);
-   
+    if any(idx < 0) == 1 %#ok<COMPNOP>
+        minVal = min(idx);
+        buffer = abs(minVal)+1;
+        idx = idx + buffer;
+    end 
+    groups = unique(idx);
     % resort the downsampled data 
     for mouse = 1:mouseNum
         if mouse == 1
@@ -24789,7 +24815,7 @@ if ETAorSTAq == 0 % STA data
         CampTSGroupData = cell(1,numGroups);
         CsizeTSGroupData = cell(1,numGroups);
         for group = 1:numGroups
-            r = find(idx == group);
+            r = find(idx == groups(group));
             CampTSGroupData{group} = rsrtdDownCampTS(r,:);
             CsizeTSGroupData{group} = rsrtdDownCsizeTS(r,:);
         end 
@@ -24799,7 +24825,7 @@ if ETAorSTAq == 0 % STA data
         CsizeTSGroupData = cell(1,numLargeGroups);
         count = 1;
         for group = 1:numGroups
-            r = find(idx == group);
+            r = find(idx == groups(group));
             if length(r) > 1
                 CampTSGroupData{count} = rsrtdDownCampTS(r,:);
                 CsizeTSGroupData{count} = rsrtdDownCsizeTS(r,:);
@@ -24812,7 +24838,7 @@ if ETAorSTAq == 0 % STA data
         CsizeTSGroupData = cell(1,numSmallGroups);
         count = 1;
         for group = 1:numGroups
-            r = find(idx == group);
+            r = find(idx == groups(group));
             if length(r) == 1
                 CampTSGroupData{count} = rsrtdDownCampTS(r,:);
                 CsizeTSGroupData{count} = rsrtdDownCsizeTS(r,:);
@@ -25013,6 +25039,67 @@ if ETAorSTAq == 0 % STA data
     title({'Average Change in BBB Plume Plume Pixel Amplitude';titleLabel})
     xlim([1 minFrameLen])
 end 
+%% plot histogram of maximum plume pixel amplitudes and size (use maxSize
+% and maxClustAmp)
+
+% resort max arrays 
+for mouse = 1:mouseNum
+    if mouse == 1
+        allMaxSize = maxSize{mouse};
+        allMaxAmp = maxClustAmp{mouse};
+    elseif mouse > 1 
+        len1 = length(allMaxSize);
+        len2 = length(maxSize{mouse});
+        allMaxSize(len1+1:len1+len2) = maxSize{mouse};
+        allMaxAmp(len1+1:len1+len2) = maxClustAmp{mouse};
+    end 
+end 
+
+figure;
+ax=gca;
+avClustSize = nanmean(allMaxSize); 
+medClustSize = nanmedian(allMaxSize); %#ok<*NANMEDIAN> 
+avClustSizeLabel = sprintf('Average max cluster size: %.0f',avClustSize);
+medClustSizeLabel = sprintf('Median max cluster size: %.0f',medClustSize);
+histogram(allMaxSize,100)
+ax.FontSize = 15;
+% ax.FontName = 'Times';
+if clustSpikeQ == 0 
+    title({'Distribution of Max BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title({'Distribution of Max BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+    elseif clustSpikeQ2 == 1
+        title({'Distribution of Max BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+    end 
+end 
+ylabel("Number of BBB Plumes")
+xlabel("Max Size of BBB Plume (microns squared)") 
+
+figure;
+ax=gca;
+histogram(allMaxAmp,100)
+avClustAmp = nanmean(allMaxAmp); 
+medClustAmp = nanmedian(allMaxAmp); %#ok<*NANMEDIAN> 
+avClustAmpLabel = sprintf('Average max cluster pixel amplitude: %.3f',avClustAmp);
+medClustAmpLabel = sprintf('Median max cluster pixel amplitude: %.3f',medClustAmp);
+ax.FontSize = 15;
+% ax.FontName = 'Times';
+if clustSpikeQ == 0 
+    title({'Distribution of Max BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
+elseif clustSpikeQ == 1 
+    if clustSpikeQ2 == 0 
+        title({'Distribution of Max BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+    elseif clustSpikeQ2 == 1
+        title({'Distribution of Max BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+    end 
+end 
+ylabel("Number of BBB Plumes")
+xlabel("Max BBB Plume Pixel Amplitudes") 
+
+
+
+
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
 % average change in vessel width across mice (data is sorted differently
