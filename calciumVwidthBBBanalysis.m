@@ -20877,6 +20877,7 @@ if clustTimeNumGroups == 2
 end 
 %% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both
 if ETAorSTAq == 0 % STA data  
+    axonTypeQ = input('Input 0 to probabilistically sort axon type. Input 1 to do strict absolute axon type sorting. ');
     clr = [0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195];   
     binString = ["Listener","Controller","Both"];
     % identify what specific axons are listeners, controllers, or both 
@@ -20898,16 +20899,34 @@ if ETAorSTAq == 0 % STA data
             axonTypeList{mouse}(ccell,2) = sum(rPre == ccell);
             % third column tells you how many post spike clusters there are
             axonTypeList{mouse}(ccell,3) = sum(rPost == ccell);
-            % if an axon is a listener 
-            if axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) > 0.5
-                listenerAxons{mouse}(count1) = ccell;
-                count1 = count1 + 1;
-            elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) < 0.5
-                controllerAxons{mouse}(count2) = ccell;
-                count2 = count2 + 1;  
-            elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) == 0.5
-                bothAxons{mouse}(count3) = ccell;
-                count3 = count3 + 1;                   
+            if axonTypeQ == 0 % probabilistically sort axon type. Input 1 to do strict absolute axon type sorting. ');
+                % if an axon is a listener 
+                if axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) > 0.5
+                    listenerAxons{mouse}(count1) = ccell;
+                    count1 = count1 + 1;
+                % if an axon is a controller 
+                elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) < 0.5
+                    controllerAxons{mouse}(count2) = ccell;
+                    count2 = count2 + 1;  
+                % if an axon does both
+                elseif axonTypeList{mouse}(ccell,2)/(axonTypeList{mouse}(ccell,2)+axonTypeList{mouse}(ccell,3)) == 0.5
+                    bothAxons{mouse}(count3) = ccell;
+                    count3 = count3 + 1;                   
+                end 
+            elseif axonTypeQ == 1 % do strict absolute axon type sorting. ');
+                % if an axon is a listener 
+                if axonTypeList{mouse}(ccell,2) ~= 0 && axonTypeList{mouse}(ccell,3) == 0 
+                    listenerAxons{mouse}(count1) = ccell;
+                    count1 = count1 + 1;
+                % if an axon is a controller 
+                elseif axonTypeList{mouse}(ccell,2) == 0 && axonTypeList{mouse}(ccell,3) ~= 0 
+                    controllerAxons{mouse}(count2) = ccell;
+                    count2 = count2 + 1;  
+                % if an axon does both
+                elseif axonTypeList{mouse}(ccell,2) ~= 0 && axonTypeList{mouse}(ccell,3) ~= 0 
+                    bothAxons{mouse}(count3) = ccell;
+                    count3 = count3 + 1;                   
+                end    
             end 
         end 
     end 
@@ -21018,7 +21037,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title('Change in BBB Plume Size')
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Size';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Size';'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
     
     % plot change in cluster pixel amplitude color coded by axon  
@@ -21035,7 +21058,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title('Change in BBB Plume Pixel Amplitude')
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Pixel Amplitude';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Pixel Amplitude';'Absolute Axon Types'})
+    end     
     xlim([1 minFrameLen])
     
     % plot average change in cluster size 
@@ -21087,7 +21114,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size'})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Change in BBB Plume Size';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Change in BBB Plume Size';'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
     
     % plot average change in cluster size 
@@ -21125,7 +21156,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Average Change in';'BBB Plume Pixel Amplitude'})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Change in';'BBB Plume Pixel Amplitude';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Change in';'BBB Plume Pixel Amplitude';'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
     
     % plot aligned cluster change in size per bin and total average 
@@ -21186,7 +21221,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';'Absolute Axon Types'})
+    end     
     xlim([1 minFrameLen])
     
     % plot aligned cluster change in pixel amplitude per bin and total average 
@@ -21238,7 +21277,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';'Absolute Axon Types'})
+    end     
     xlim([1 minFrameLen])
     
     % plot total aligned cluster size average 
@@ -21282,7 +21325,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Average Aligned Change in BBB Plume Size';'Across Axons'})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Aligned Change in BBB Plume Size';'Across Axons';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Aligned Change in BBB Plume Size';'Across Axons';'Absolute Axon Types'})
+    end     
     xlim([1 minFrameLen]) 
     
     % plot total aligned cluster pixel amplitude average 
@@ -21324,7 +21371,11 @@ if ETAorSTAq == 0 % STA data
     ax.FontName = 'Times';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons'})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons';'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons';'Absolute Axon Types'})
+    end     
     xlim([1 minFrameLen])
 end 
 
@@ -21959,27 +22010,52 @@ if clustSizeQ == 0
             axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
         end        
         legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel 
-            if distQ == 0
-                title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel'})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel})
-            end
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon'})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel})
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Probabilistic Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Probabilistic Axon Types'})
+                end 
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Probabilistic Axon Types'})
+                end                 
             end 
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
-            if distQ == 0
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel'})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel})
-            end                 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Absolute Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Absolute Axon Types'})
+                end 
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Absolute Axon Types'})
+                end                 
+            end 
         end 
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
@@ -21987,16 +22063,50 @@ if clustSizeQ == 0
 
         % create pie chart showing number of axons that are mostly pre, mostly
         % post, and evenly split
-        allAxonTypes = sum(axonTypes,1);
-        reSortedAllAxonTypes(1) = allAxonTypes(1); reSortedAllAxonTypes(2) = allAxonTypes(3); reSortedAllAxonTypes(3) = allAxonTypes(2);
-        figure;
-        p = pie(reSortedAllAxonTypes);
-        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195])
-        legend('Listener','Controller','Both')
-        title('Axon Type')
-        ax=gca; ax.FontSize = 12;
-        t1 = p(2); t2 = p(4); t3 = p(6);
-        t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
+        if axonTypeQ == 0 % probabilistically sort axon type
+            allAxonTypes = sum(axonTypes,1);
+            reSortedAllAxonTypes(1) = allAxonTypes(1); reSortedAllAxonTypes(2) = allAxonTypes(3); reSortedAllAxonTypes(3) = allAxonTypes(2);
+            figure;
+            p = pie(reSortedAllAxonTypes);
+            colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195])
+            legend('Listener','Controller','Both')
+            if axonTypeQ == 0 % probabilistically sort axon type
+                title({'Axon Type';'Probabilistic Axon Types'})
+            elseif axonTypeQ == 1 % do strict absolute axon type sorting
+                title({'Axon Type';'Absolute Axon Types'})
+            end         
+            ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4); t3 = p(6);
+            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            for mouse = 1:mouseNum
+                if mouse == 1 
+                    reSortedAllAxonTypes(1) = length(listenerAxons{mouse});
+                    reSortedAllAxonTypes(2) = length(controllerAxons{mouse});
+                    reSortedAllAxonTypes(3) = length(bothAxons{mouse});
+                elseif mouse > 1 
+                    len1 = reSortedAllAxonTypes(1);
+                    reSortedAllAxonTypes(1) = len1 + length(listenerAxons{mouse});
+                    len2 = reSortedAllAxonTypes(2);
+                    reSortedAllAxonTypes(2) = len2 + length(controllerAxons{mouse});
+                    len3 = reSortedAllAxonTypes(3);
+                    reSortedAllAxonTypes(3) = len3 + length(bothAxons{mouse});
+                end 
+            end 
+            figure;
+            p = pie(reSortedAllAxonTypes);
+            colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.4250 0.386 0.4195])
+            legend('Listener','Controller','Both')
+            if axonTypeQ == 0 % probabilistically sort axon type
+                title({'Axon Type';'Probabilistic Axon Types'})
+            elseif axonTypeQ == 1 % do strict absolute axon type sorting
+                title({'Axon Type';'Absolute Axon Types'})
+            end         
+            ax=gca; ax.FontSize = 12;
+            t1 = p(2); t2 = p(4); t3 = p(6);
+            t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15;
+        end 
+
     elseif aTypeQ == 1 % sort data by cluster timing before or after 0 sec 
         % plot pie chart showing proportion of pre vs post clusters
         % organized by distance 
@@ -22021,27 +22131,52 @@ if clustSizeQ == 0
             axonClusterTypeLabels = ["In Range Pre-Spike Clusters","Out of Range Pre-Spike Clusters","In Range Post-Spike Clusters","Out of Range Post-Spike Clusters"];
         end        
         legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel 
-            if distQ == 0
-                title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel'})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel})
-            end
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon'})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel})
-            end    
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
-            if distQ == 0
-                title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel'})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel})
-            end                 
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Probabilistic Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Probabilistic Axon Types'})
+                end    
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Probabilistic Axon Types'})
+                end                 
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Absolute Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Absolute Axon Types'})
+                end    
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Absolute Axon Types'})
+                end                 
+            end 
         end 
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8);
@@ -22055,6 +22190,11 @@ if clustSizeQ == 0
         clr = hsv(2);
         colormap(clr)
         legend('Pre-Spike BBB Plumes','Post-Spike BBB Plumes')
+        if axonTypeQ == 0 % probabilistically sort axon type
+            title({'Probabilistic Axon Types'})
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            title({'Absolute Axon Types'})
+        end 
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4);
         t1.FontSize = 15; t2.FontSize = 15; 
@@ -22088,33 +22228,64 @@ elseif clustSizeQ == 1
             axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
         end 
         legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end            
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
-            elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end  
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end                  
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end            
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end  
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end                  
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end            
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end  
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end                  
+            end 
         end 
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
@@ -22130,33 +22301,64 @@ elseif clustSizeQ == 1
             axonClusterTypeLabels = ["In Range Listener","Out of Range Listener","In Range Controller","Out of Range Controller","In Range Both","Out of Range Both"];
         end 
         legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel \
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end            
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel})
-            end                  
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ2 == 0 % group data by axon distance from vessel \
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end            
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end                  
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ2 == 0 % group data by axon distance from vessel \
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end            
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end                  
+            end 
         end 
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8); t5 = p(10); t6 = p(12);
@@ -22188,34 +22390,65 @@ elseif clustSizeQ == 1
             axonClusterTypeLabels = ["In Range Pre-Spike Clusters","Out of Range Pre-Spike Clusters","In Range Post-Spike Clusters","Out of Range Post-Spike Clusters"];
         end    
         legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
-            end            
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
-            elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
-            end         
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
-            end                 
-        end 
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end            
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end         
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end                 
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ2 == 0 % group data by axon distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end            
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end         
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end                 
+            end 
+        end
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8);
         t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; 
@@ -22230,39 +22463,69 @@ elseif clustSizeQ == 1
             axonClusterTypeLabels = ["In Range Pre-Spike Clusters","Out of Range Pre-Spike Clusters","In Range Post-Spike Clusters","Out of Range Post-Spike Clusters"];
         end   
         legend(axonClusterTypeLabels)
-        if distQ2 == 0 % group data by axon distance from vessel \
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
-            end
-        elseif distQ2 == 1 % group data by BBB plume distance from axon 
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
-            end   
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel
-            if distQ == 0
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel})
-            elseif distQ == 1 
-                rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
-                titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel})
-            end   
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ2 == 0 % group data by axon distance from vessel \
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end   
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end   
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ2 == 0 % group data by axon distance from vessel \
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) Axons from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end
+            elseif distQ2 == 1 % group data by BBB plume distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end   
+            elseif distQ2 == 2 % group data by BBB plume distance from vessel
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end   
+            end 
         end 
         ax=gca; ax.FontSize = 12;
         t1 = p(2); t2 = p(4); t3 = p(6); t4 = p(8);
         t1.FontSize = 15; t2.FontSize = 15; t3.FontSize = 15; t4.FontSize = 15; 
    end 
- 
 end  
 if clustSizeQ == 0
     clearvars binLabel
@@ -22308,11 +22571,19 @@ if clustSizeQ == 0
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    if distQ == 0
-        title('Change in BBB Plume Size')
-    elseif distQ == 1 
-        title({'Change in BBB Plume Size';rangeLabel})
-    end        
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if distQ == 0
+            title({'Change in BBB Plume Size';'Probabilistic Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Size';rangeLabel;'Probabilistic Axon Types'})
+        end        
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if distQ == 0
+            title({'Change in BBB Plume Size';'Absolute Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Size';rangeLabel;'Absolute Axon Types'})
+        end 
+    end 
     xlim([1 minFrameLen])
 
     % plot change in cluster pixel amplitude grouped by axon type and distance 
@@ -22343,11 +22614,19 @@ if clustSizeQ == 0
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    if distQ == 0
-        title('Change in BBB Plume Pixel Amplitude')
-    elseif distQ == 1 
-        title({'Change in BBB Plume Pixel Amplitude';rangeLabel})
-    end                   
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if distQ == 0
+            title({'Change in BBB Plume Pixel Amplitude';'Probabilistic Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Pixel Amplitude';rangeLabel;'Probabilistic Axon Types'})
+        end   
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if distQ == 0
+            title({'Change in BBB Plume Pixel Amplitude';'Absolute Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Pixel Amplitude';rangeLabel;'Absolute Axon Types'})
+        end   
+    end               
     xlim([1 minFrameLen])
 
     % plot average change in cluster size 
@@ -22401,11 +22680,19 @@ if clustSizeQ == 0
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    if distQ == 0
-        title('Average Change in BBB Plume Size')
-    elseif distQ == 1 
-        title({'Average Change in BBB Plume Size';rangeLabel})
-    end   
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if distQ == 0
+            title({'Average Change in BBB Plume Size';'Probabilistic Axon Types'})
+        elseif distQ == 1 
+            title({'Average Change in BBB Plume Size';rangeLabel;'Probabilistic Axon Types'})
+        end  
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if distQ == 0
+            title({'Average Change in BBB Plume Size';'Absolute Axon Types'})
+        elseif distQ == 1 
+            title({'Average Change in BBB Plume Size';rangeLabel;'Absolute Axon Types'})
+        end 
+    end 
     xlim([1 minFrameLen])      
     
     % plot average change in cluster size 
@@ -22444,11 +22731,19 @@ if clustSizeQ == 0
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    if distQ == 0
-        title('Average Change in BBB Plume Pixel Amplitude')
-    elseif distQ == 1 
-        title({'Average Change in BBB Plume Pixel Amplitude';rangeLabel})
-    end           
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if distQ == 0
+            title({'Average Change in BBB Plume Pixel Amplitude';'Probabilistic Axon Types'})
+        elseif distQ == 1 
+            title({'Average Change in BBB Plume Pixel Amplitude';rangeLabel;'Probabilistic Axon Types'})
+        end      
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if distQ == 0
+            title({'Average Change in BBB Plume Pixel Amplitude';'Absolute Axon Types'})
+        elseif distQ == 1 
+            title({'Average Change in BBB Plume Pixel Amplitude';rangeLabel;'Absolute Axon Types'})
+        end      
+    end      
     xlim([1 minFrameLen])      
     
     % plot aligned cluster change in size per bin and total average 
@@ -22516,11 +22811,19 @@ if clustSizeQ == 0
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    if distQ == 0
-        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
-    elseif distQ == 1 
-        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';rangeLabel})
-    end           
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if distQ == 0
+            title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';'Probabilistic Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';rangeLabel;'Probabilistic Axon Types'})
+        end   
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if distQ == 0
+            title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';'Absolute Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';rangeLabel;'Absolute Axon Types'})
+        end  
+    end 
     xlim([1 minFrameLen])
     
     % plot aligned cluster change in pixel amplitude per bin and total average 
@@ -22579,11 +22882,19 @@ if clustSizeQ == 0
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    if distQ == 0
-        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged'})
-    elseif distQ == 1 
-        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';rangeLabel})
-    end          
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if distQ == 0
+            title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';'Probabilistic Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';rangeLabel;'Probabilistic Axon Types'})
+        end  
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if distQ == 0
+            title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';'Absolute Axon Types'})
+        elseif distQ == 1 
+            title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';rangeLabel;'Absolute Axon Types'})
+        end  
+    end 
     xlim([1 minFrameLen])
 
 elseif clustSizeQ == 1  
@@ -22633,7 +22944,11 @@ elseif clustSizeQ == 1
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     titleLabel = sprintf('BBB plumes that exceed %d microns squared.',clustSizeThresh);
-    title({'Change in BBB Plume Size';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Size';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Size';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
 
     % plot change in cluster pixel amplitude grouped by axon type and distance 
@@ -22664,7 +22979,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Pixel Amplitude';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Pixel Amplitude';titleLabel;'Absolute Axon Types'})
+    end     
     xlim([1 minFrameLen])
 
     % plot average change in cluster size 
@@ -22722,7 +23041,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Change in BBB Plume Size';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Change in BBB Plume Size';titleLabel;'Absolute Axon Types'})
+    end   
     xlim([1 minFrameLen]) 
     
     % plot average change in pixel amp. 
@@ -22780,7 +23103,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen]) 
 
     % plot aligned cluster change in size per bin and total average 
@@ -22860,7 +23187,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
     
     % plot aligned cluster change in pixel amplitude per bin and total average 
@@ -22918,7 +23249,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
 
     % plot the clusters that are below the threshold 
@@ -22966,7 +23301,11 @@ elseif clustSizeQ == 1
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     titleLabel = sprintf('BBB plumes that do not exceed %d microns squared.',clustSizeThresh);
-    title({'Change in BBB Plume Size';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Size';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Size';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
 
     % plot change in cluster pixel amplitude grouped by axon type and distance 
@@ -22997,7 +23336,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Pixel Amplitude';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Pixel Amplitude';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
 
     % plot average change in cluster size 
@@ -23055,7 +23398,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Change in BBB Plume Size';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Change in BBB Plume Size';titleLabel;'Absolute Axon Types'})
+    end  
     xlim([1 minFrameLen])
 
     % plot average change in cluster pix amp 
@@ -23102,7 +23449,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Average Change in';'BBB Plume Pixel Amplitude';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
 
     % plot aligned cluster change in size per bin and total average 
@@ -23182,7 +23533,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Size';'Clusters Aligned and Averaged';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])
     
     % plot aligned cluster change in pixel amplitude per bin and total average 
@@ -23252,7 +23607,11 @@ elseif clustSizeQ == 1
     ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel})
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel;'Probabilistic Axon Types'})
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Change in BBB Plume Pixel Amplitude';'Clusters Aligned and Averaged';titleLabel;'Absolute Axon Types'})
+    end 
     xlim([1 minFrameLen])    
 end 
 if clustSizeQ == 0
@@ -23322,18 +23681,34 @@ if clustSizeQ == 0
                     end                 
                 end    
             end 
-            if distQ == 0
-                if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel});
-                elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel});
-                end         
-            elseif distQ == 1 
-                if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel});
-                elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel});
-                end          
+            if axonTypeQ == 0 % probabilistically sort axon type
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;'Probabilistic Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;'Probabilistic Axon Types'});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;'Probabilistic Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;'Probabilistic Axon Types'});
+                    end          
+                end 
+            elseif axonTypeQ == 1 % do strict absolute axon type sorting
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;'Absolute Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;'Absolute Axon Types'});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;'Absolute Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;'Absolute Axon Types'});
+                    end          
+                end 
             end 
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
@@ -23401,18 +23776,34 @@ if clustSizeQ == 0
                 end                 
             end    
         end 
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';locLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';rangeLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel});
-            end          
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;'Probabilistic Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;'Probabilistic Axon Types'});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';rangeLabel;'Probabilistic Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;'Probabilistic Axon Types'});
+                end          
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;'Absolute Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;'Absolute Axon Types'});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';rangeLabel;'Absolute Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;'Absolute Axon Types'});
+                end          
+            end 
         end 
         ylabel("Number of BBB Plumes")
         xlabel("Time (s)") 
@@ -23485,18 +23876,34 @@ elseif clustSizeQ == 1
                     end                 
                 end    
             end 
-            if distQ == 0
-                if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel});
-                elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel});
-                end         
-            elseif distQ == 1 
-                if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel});
-                elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel});
-                end          
+            if axonTypeQ == 0 % probabilistically sort axon type
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel;'Probabilistic Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel;'Probabilistic Axon Types'});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                    end          
+                end 
+            elseif axonTypeQ == 1 % do strict absolute axon type sorting
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel;'Absolute Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel;'Absolute Axon Types'});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                    end          
+                end 
             end 
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
@@ -23569,18 +23976,34 @@ elseif clustSizeQ == 1
                     end                 
                 end    
             end 
-            if distQ == 0
-                if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel});
-                elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel});
-                end         
-            elseif distQ == 1 
-                if clustSpikeQ3 == 0 
-                    title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel});
-                elseif clustSpikeQ3 == 1
-                    title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel});
-                end          
+            if axonTypeQ == 0 % probabilistically sort axon type
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel;'Probabilistic Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel;'Probabilistic Axon Types'});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                    end          
+                end 
+            elseif axonTypeQ == 1 % do strict absolute axon type sorting
+                if distQ == 0
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;titleLabel;'Absolute Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;titleLabel;'Absolute Axon Types'});
+                    end         
+                elseif distQ == 1 
+                    if clustSpikeQ3 == 0 
+                        title({'Distribution of BBB Plume Timing';'Average Time';binLabel;locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                    elseif clustSpikeQ3 == 1
+                        title({'Distribution of BBB Plume Timing';'Start Time';binLabel;locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                    end          
+                end 
             end 
             ylabel("Number of BBB Plumes")
             xlabel("Time (s)") 
@@ -23660,18 +24083,34 @@ elseif clustSizeQ == 1
                 end                 
             end    
         end 
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';locLabel;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;titleLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';locLabel;rangeLabel;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;titleLabel});
-            end          
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;titleLabel;'Probabilistic Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;titleLabel;'Probabilistic Axon Types'});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                end          
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;titleLabel;'Absolute Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;titleLabel;'Absolute Axon Types'});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                end          
+            end 
         end 
         ylabel("Number of BBB Plumes")
         xlabel("Time (s)") 
@@ -23727,18 +24166,34 @@ elseif clustSizeQ == 1
                 end                 
             end    
         end 
-        if distQ == 0
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';locLabel;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;titleLabel});
-            end         
-        elseif distQ == 1 
-            if clustSpikeQ3 == 0 
-                title({'Distribution of BBB Plume Timing';'Average Time';locLabel;rangeLabel;titleLabel});
-            elseif clustSpikeQ3 == 1
-                title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;titleLabel});
-            end          
+        if axonTypeQ == 0 % probabilistically sort axon type
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;titleLabel;'Probabilistic Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;titleLabel;'Probabilistic Axon Types'});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;titleLabel;'Probabilistic Axon Types'});
+                end          
+            end 
+        elseif axonTypeQ == 1 % do strict absolute axon type sorting
+            if distQ == 0
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;titleLabel;'Absolute Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;titleLabel;'Absolute Axon Types'});
+                end         
+            elseif distQ == 1 
+                if clustSpikeQ3 == 0 
+                    title({'Distribution of BBB Plume Timing';'Average Time';locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                elseif clustSpikeQ3 == 1
+                    title({'Distribution of BBB Plume Timing';'Start Time';locLabel;rangeLabel;titleLabel;'Absolute Axon Types'});
+                end          
+            end 
         end 
         ylabel("Number of BBB Plumes")
         xlabel("Time (s)") 
@@ -23747,6 +24202,17 @@ end
     
 
 %% plot distribution of axon distances from the vessel and distribution of BBB plume distance from axon color coded by axon type and BBB plume timing 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% PICK UP HERE - THERE'S A MISSING FIGURE - JUST CHECK NOTION 
 if ETAorSTAq == 0 % STA data 
     % determine what the max and min values are for axon dists from vessel
     minAVdist = min(floor(allMinVAdists));
@@ -23806,7 +24272,11 @@ if ETAorSTAq == 0 % STA data
     ba(3).CData = [0.4250 0.386 0.4195];
     ax.FontSize = 15;
     ax.FontName = 'Arial';
-    title({'Distribution of Axon Distance from Vessel'});
+    if axonTypeQ == 0 % probabilistically sort axon type
+        title({'Distribution of Axon Distance from Vessel';'Probabilistic Axon Types'});
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        title({'Distribution of Axon Distance from Vessel';'Absolute Axon Types'});
+    end 
     ylabel("Number of Axons")
     xlabel("Distance (microns)") 
     legend("Listener Axons","Controller Axons","Axons that do Both")
@@ -23916,11 +24386,20 @@ if ETAorSTAq == 0 % STA data
     ba(3).CData = [0.4250 0.386 0.4195];
     ax.FontSize = 15;
     ax.FontName = 'Arial';
-    if sizeQhist == 1
-        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
-        title({'Distribution of BBB Plume Distance from Axon';titleLabel});
-    elseif sizeQhist == 0
-        title({'Distribution of BBB Plume Distance from Axon'});
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of BBB Plume Distance from Axon';titleLabel;'Probabilistic Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of BBB Plume Distance from Axon';'Probabilistic Axon Types'});
+        end 
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of BBB Plume Distance from Axon';titleLabel;'Absolute Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of BBB Plume Distance from Axon';'Absolute Axon Types'});
+        end 
     end 
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
@@ -23995,11 +24474,20 @@ if ETAorSTAq == 0 % STA data
     ba(2).CData = bar2Clr(2,:);
     ax.FontSize = 15;
     ax.FontName = 'Arial';
-    if sizeQhist == 1
-        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
-        title({'Distribution of BBB Plume Distance from Axon';titleLabel});
-    elseif sizeQhist == 0
-        title({'Distribution of BBB Plume Distance from Axon'});
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of BBB Plume Distance from Axon';titleLabel;'Probabilistic Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of BBB Plume Distance from Axon';'Probabilistic Axon Types'});
+        end 
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of BBB Plume Distance from Axon';titleLabel;'Absolute Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of BBB Plume Distance from Axon';'Absolute Axon Types'});
+        end 
     end 
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
