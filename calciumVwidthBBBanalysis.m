@@ -19256,6 +19256,7 @@ if ETAorSTAq == 0 % STA data
 end 
 %% plot distance from axon and VR space as a function of cluster timing
 if ETAorSTAq == 0 % STA data 
+    clr = hsv(mouseNum);
     figure;
     ax=gca;
     if exist('allTimeDistArray','var') == 0
@@ -19334,6 +19335,7 @@ if ETAorSTAq == 0 % STA data
     title({'Distribution of BBB Plume Distance from Axon';avCAdistsLabel;medCAdistsLabel});
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
+    % set(gca, 'XScale', 'log')
 
     figure;
     ax=gca;
@@ -19398,8 +19400,24 @@ if ETAorSTAq == 0 % STA data
         xlabel("BBB Plume Start Time (sec)") 
     end 
     title('BBB Plume Origin Distance From Axon Compared to Timing'); 
-end 
 
+    % plot the distribution of cluster origin distances from axon 
+    figure;
+    ax=gca;
+    histogram(allTimeODistArray(:,2),61)
+    set(gca,'XTick',0:10:ceil(max(allTimeODistArray(:,2))),'XTickLabelRotation',45)
+    avCAdists = nanmean(allTimeODistArray(:,2)); 
+    medCAdists = nanmedian(allTimeODistArray(:,2)); %#ok<*NANMEDIAN>
+    avCAdistsLabel = sprintf('Average BBB plume origin distance from axon: %.3f',avCAdists);
+    medCAdistsLabel = sprintf('Median BBB plume origin distance from axon: %.3f',medCAdists);
+    ax.FontSize = 15;
+    % ax.FontName = 'Times';
+    title({'Distribution of BBB Plume Origin Distance from Axon';avCAdistsLabel;medCAdistsLabel});
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+    % set(gca, 'XScale', 'log')
+
+end 
 figure;
 ax=gca;
 if exist('allTimeVRDistArray','var') == 0
@@ -21378,12 +21396,11 @@ if ETAorSTAq == 0 % STA data
     end     
     xlim([1 minFrameLen])
 end 
-
-%% plot average BBB plume change in size and pixel amplitude over time for TS data grouped by axon distance from vessel, cluster distance from axon, plume distance from vessel, axon type, or cluster timing 
+%% plot average BBB plume change in size and pixel amplitude over time for TS data grouped by axon distance from vessel, shortest cluster distance from axon, plume origin distance from vessel, plume origin distance from axon, axon type, or cluster timing 
 x = 1:minFrameLen;
 distQ = input('Input 0 to plot TS data grouped by close (<10 microns) vs far (>10 microns). Input 1 to set a distance range . ');
 if ETAorSTAq == 0 % STA data 
-    distQ2 = input('Input 0 to sort by axon distance from vessel. Input 1 to sort by BBB plume distance from axon. Input 2 to sort by BBB plume distance from vessel. ');
+    distQ2 = input('Input 0 to sort by axon distance from vessel. Input 1 to sort by shortest BBB plume distance from axon. Input 2 to sort by BBB plume distance from vessel. Input 3 to sort by BBB plume origin distance from axon. ');
     aTypeQ = input('Input 0 to sort data by axon type. Input 1 to sort data by cluster timing before or after 0 sec. ');
 elseif ETAorSTAq == 1 % ETA data 
     distQ2 = 2;
@@ -21540,7 +21557,7 @@ if aTypeQ == 0
             avClocFrameFarController{mouse} =  avClocFrameFar{mouse}(controllerAxons{mouse},:);
             avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(bothAxons{mouse},:);
         end 
-    elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+    elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
         closeClustLocPerAxon = cell(1,mouseNum);
         farClustLocPerAxon = cell(1,mouseNum);
         resortedAvClocFrame = cell(1,mouseNum);
@@ -21595,6 +21612,77 @@ if aTypeQ == 0
                     avClocFrameClose{mouse}(ccell,1:length(clustStartsClose)) = (clustStartsClose);
                     clustStartsFar = resortedAvClocFrame{mouse}{ccell}(farClustLocPerAxon{mouse}{ccell});
                     avClocFrameFar{mouse}(ccell,1:length(clustStartsFar)) = (clustStartsFar);
+                end  
+            end     
+            % identify close vs far listeners, controllers, and both axons 
+            closeListenerAxonLocs{mouse} = (closeClustLoc{mouse}'+listenerAxonLoc{mouse}) == 2;
+            farListenerAxonLocs{mouse} = (farClustLoc{mouse}'+listenerAxonLoc{mouse}) == 2;
+            closeControllerAxonLocs{mouse} = (closeClustLoc{mouse}'+controllerAxonLoc{mouse}) == 2;
+            farControllerAxonLocs{mouse} = (farClustLoc{mouse}'+controllerAxonLoc{mouse}) == 2; 
+            closeBothAxonLocs{mouse} = (closeClustLoc{mouse}'+bothAxonLoc{mouse}) == 2;
+            farBothAxonLocs{mouse} = (farClustLoc{mouse}'+bothAxonLoc{mouse}) == 2; 
+            avClocFrameCloseListener{mouse} =  avClocFrameClose{mouse}(listenerAxons{mouse},:);
+            avClocFrameCloseController{mouse} =  avClocFrameClose{mouse}(controllerAxons{mouse},:);
+            avClocFrameCloseBoth{mouse} =  avClocFrameClose{mouse}(bothAxons{mouse},:);
+            avClocFrameFarListener{mouse} =  avClocFrameFar{mouse}(listenerAxons{mouse},:);
+            avClocFrameFarController{mouse} =  avClocFrameFar{mouse}(controllerAxons{mouse},:);
+            avClocFrameFarBoth{mouse} =  avClocFrameFar{mouse}(bothAxons{mouse},:);
+        end 
+    elseif distQ2 == 3 % group data by BBB plume origin distance from axon  
+        closeClustLocPerAxon = cell(1,mouseNum);
+        farClustLocPerAxon = cell(1,mouseNum);
+        resortedAvClocFrame = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            [r,~] = find(~isnan(timeODistArray{mouse}(:,1)));
+            clustDistsAndAxon{mouse}(:,1) = timeODistArray{mouse}(r,2); 
+            clustDistsAndAxon{mouse}(:,2) = timeODistArray{mouse}(r,3); 
+            % identify what BBB plumes are close (<= 10 microns) or far (>
+            % 10 microns) from their axon 
+            if distQ == 0
+                % the below locs organize the cluster by axon 
+                closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
+                farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;
+                % sort close/farClustLoc and avCloc so that each row is per axon
+                for ccell = 1:size(avClocFrame{mouse},1)
+                    closeClustLocPerAxon{mouse}{ccell} = closeClustLoc{mouse}(axonInds{mouse} == ccell);
+                    farClustLocPerAxon{mouse}{ccell} = farClustLoc{mouse}(axonInds{mouse} == ccell);
+                    data = avClocFrame{mouse}(ccell,:);
+                    resortedAvClocFrame{mouse}{ccell} = data(~isnan(data)); % remove nans B = A(~isnan(A))
+                end 
+                % identify the cluster start frame associated with close
+                % and far cluster locs; keep avClocFrameClose/Far with rows per axon
+                avClocFrameClose{mouse} = nan(size(avClocFrame{mouse},1),size(avClocFrame{mouse},2));
+                avClocFrameFar{mouse} = nan(size(avClocFrame{mouse},1),size(avClocFrame{mouse},2));
+                for ccell = 1:size(avClocFrame{mouse},1)
+                    clustStartsClose = resortedAvClocFrame{mouse}{ccell}(closeClustLocPerAxon{mouse}{ccell});
+                    avClocFrameClose{mouse}(ccell,1:length(clustStartsClose)) = (clustStartsClose/FPS{mouse})-windSize/2;
+                    clustStartsFar = resortedAvClocFrame{mouse}{ccell}(farClustLocPerAxon{mouse}{ccell});
+                    avClocFrameFar{mouse}(ccell,1:length(clustStartsFar)) = (clustStartsFar/FPS{mouse})-windSize/2;
+                end              
+            elseif distQ == 1
+                % specify what distance range you want to look at specifically 
+                if mouse == 1 
+                    distRange = input('What is the range of distances (in microns) that you specifically want to see? Input [min,max]. ');
+                end 
+                % the below locs organize the cluster by axon 
+                closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) >= distRange(1) & clustDistsAndAxon{mouse}(:,1) <= distRange(2); 
+                farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) < distRange(1) | clustDistsAndAxon{mouse}(:,1) > distRange(2);
+                % sort close/farClustLoc and avCloc so that each row is per axon
+                for ccell = 1:size(avClocFrame{mouse},1)
+                    closeClustLocPerAxon{mouse}{ccell} = closeClustLoc{mouse}(axonInds{mouse} == ccell);
+                    farClustLocPerAxon{mouse}{ccell} = farClustLoc{mouse}(axonInds{mouse} == ccell);
+                    data = avClocFrame{mouse}(ccell,:);
+                    resortedAvClocFrame{mouse}{ccell} = data(~isnan(data)); % remove nans B = A(~isnan(A))
+                end 
+                % identify the cluster start frame associated with close
+                % and far cluster locs; keep avClocFrameClose/Far with rows per axon
+                avClocFrameClose{mouse} = nan(size(avClocFrame{mouse},1),size(avClocFrame{mouse},2));
+                avClocFrameFar{mouse} = nan(size(avClocFrame{mouse},1),size(avClocFrame{mouse},2));
+                for ccell = 1:size(avClocFrame{mouse},1)
+                    clustStartsClose = resortedAvClocFrame{mouse}{ccell}(closeClustLocPerAxon{mouse}{ccell});
+                    avClocFrameClose{mouse}(ccell,1:length(clustStartsClose)) = (clustStartsClose/FPS{mouse})-windSize/2;
+                    clustStartsFar = resortedAvClocFrame{mouse}{ccell}(farClustLocPerAxon{mouse}{ccell});
+                    avClocFrameFar{mouse}(ccell,1:length(clustStartsFar)) = (clustStartsFar/FPS{mouse})-windSize/2;
                 end  
             end     
             % identify close vs far listeners, controllers, and both axons 
@@ -21874,6 +21962,52 @@ elseif aTypeQ == 1
             avClocFrameFarBefore{mouse} =  reshpdAvClocFrame{mouse}(farBeforeClustLocs{mouse});
             avClocFrameFarAfter{mouse} =  reshpdAvClocFrame{mouse}(farAfterClustLocs{mouse});            
         end
+    elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+        closeClustLocPerAxon = cell(1,mouseNum);
+        farClustLocPerAxon = cell(1,mouseNum);
+        resortedAvClocFrame = cell(1,mouseNum);
+        for mouse = 1:mouseNum
+            [r,~] = find(~isnan(timeODistArray{mouse}(:,1)));
+            clustDistsAndAxon{mouse}(:,1) = timeODistArray{mouse}(r,2); 
+            clustDistsAndAxon{mouse}(:,2) = timeODistArray{mouse}(r,3); 
+            % identify what BBB plumes are close (<= 10 microns) or far (>
+            % 10 microns) from their axon 
+            if distQ == 0
+                % the below locs organize the cluster by axon 
+                closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) <= 10; 
+                farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) > 10;               
+            elseif distQ == 1
+                % specify what distance range you want to look at specifically 
+                if mouse == 1 
+                    distRange = input('What is the range of distances (in microns) that you specifically want to see? Input [min,max]. ');
+                end 
+                % the below locs organize the cluster by axon 
+                closeClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) >= distRange(1) & clustDistsAndAxon{mouse}(:,1) <= distRange(2); 
+                farClustLoc{mouse} = clustDistsAndAxon{mouse}(:,1) < distRange(1) | clustDistsAndAxon{mouse}(:,1) > distRange(2);
+            end  
+            data = (avClocFrame{mouse}/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice
+            % reshape avClocFrame so clusters are in order of axons 
+            for ccell = 1:size(avClocFrame{mouse},1)
+                if ccell == 1 
+                    reshpdAvClocFrame{mouse} =  data(ccell,~isnan(data(ccell,:)));
+                elseif ccell > 1 
+                    len = length(reshpdAvClocFrame{mouse});
+                    reshpdAvClocFrame{mouse}(len+1:len+sum(~isnan(avClocFrame{mouse}(ccell,:)))) =  data(ccell,~isnan(avClocFrame{mouse}(ccell,:))) ;
+                end 
+            end 
+            % use reshpdAvClocFrame to get the loc of clusters < 0 and >= 0 sec
+            beforeLoc{mouse} = reshpdAvClocFrame{mouse} < 0;
+            afterLoc{mouse} = reshpdAvClocFrame{mouse} >= 0;
+            % identify close vs far clusters that come before and after  
+            closeBeforeClustLocs{mouse} = (closeClustLoc{mouse}'+beforeLoc{mouse}) == 2;
+            farBeforeClustLocs{mouse} = (farClustLoc{mouse}'+beforeLoc{mouse}) == 2;
+            closeAfterClustLocs{mouse} = (closeClustLoc{mouse}'+afterLoc{mouse}) == 2;
+            farAfterClustLocs{mouse} = (farClustLoc{mouse}'+afterLoc{mouse}) == 2; 
+            avClocFrameCloseBefore{mouse} =  reshpdAvClocFrame{mouse}(closeBeforeClustLocs{mouse});
+            avClocFrameCloseAfter{mouse} =  reshpdAvClocFrame{mouse}(closeAfterClustLocs{mouse});
+            avClocFrameFarBefore{mouse} =  reshpdAvClocFrame{mouse}(farBeforeClustLocs{mouse});
+            avClocFrameFarAfter{mouse} =  reshpdAvClocFrame{mouse}(farAfterClustLocs{mouse});            
+        end   
     end 
     % sort data 
     binClustTSsizeData = cell(1,2);
@@ -22025,11 +22159,18 @@ if clustSizeQ == 0
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Probabilistic Axon Types'})
                 end 
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
-                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';'Probabilistic Axon Types'})
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Vessel';'Probabilistic Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Probabilistic Axon Types'})
+                end  
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Axon';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Probabilistic Axon Types'})
                 end                 
             end 
@@ -22048,13 +22189,20 @@ if clustSizeQ == 0
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Absolute Axon Types'})
                 end 
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
-                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';'Absolute Axon Types'})
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Vessel';'Absolute Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;'Absolute Axon Types'})
-                end                 
+                end   
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Axon';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plume Origins by Axon Type';rangeLabel;'Absolute Axon Types'})
+                end 
             end 
         end 
         ax=gca; ax.FontSize = 12;
@@ -22146,13 +22294,20 @@ if clustSizeQ == 0
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Probabilistic Axon Types'})
                 end    
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
-                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';'Probabilistic Axon Types'})
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Vessel';'Probabilistic Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Probabilistic Axon Types'})
-                end                 
+                end      
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Axon';'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Probabilistic Axon Types'})
+                end  
             end 
         elseif axonTypeQ == 1 % do strict absolute axon type sorting
             if distQ2 == 0 % group data by axon distance from vessel 
@@ -22169,13 +22324,20 @@ if clustSizeQ == 0
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Absolute Axon Types'})
                 end    
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
-                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';'Absolute Axon Types'})
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Vessel';'Absolute Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Absolute Axon Types'})
-                end                 
+                end 
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+                if distQ == 0
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Axon';'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;'Absolute Axon Types'})
+                end                  
             end 
         end 
         ax=gca; ax.FontSize = 12;
@@ -22247,15 +22409,24 @@ elseif clustSizeQ == 1
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
                 end  
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
                 elseif distQ == 1 
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
-                end                  
+                end     
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end 
             end 
         elseif axonTypeQ == 1 % do strict absolute axon type sorting
             if distQ2 == 0 % group data by axon distance from vessel 
@@ -22276,13 +22447,22 @@ elseif clustSizeQ == 1
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
                 end  
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
                 elseif distQ == 1 
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end    
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
                 end                  
             end 
@@ -22320,18 +22500,27 @@ elseif clustSizeQ == 1
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
                 end            
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origins distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
-                end                  
+                end      
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end                   
             end 
         elseif axonTypeQ == 1 % do strict absolute axon type sorting
-            if distQ2 == 0 % group data by axon distance from vessel \
+            if distQ2 == 0 % group data by axon distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Axon Type';'Close Axons <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
@@ -22349,15 +22538,24 @@ elseif clustSizeQ == 1
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
                 end            
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
-                end                  
+                end   
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Axon Type';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end  
             end 
         end 
         ax=gca; ax.FontSize = 12;
@@ -22409,15 +22607,24 @@ elseif clustSizeQ == 1
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
                 end         
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
                 elseif distQ == 1 
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
-                end                 
+                end  
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end                  
             end 
         elseif axonTypeQ == 1 % do strict absolute axon type sorting
             if distQ2 == 0 % group data by axon distance from vessel 
@@ -22438,15 +22645,24 @@ elseif clustSizeQ == 1
                     rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Axon',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
                 end         
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
                 elseif distQ == 1 
                     titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
-                end                 
+                end  
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    titleLabel = sprintf('BBB Plumes that exceed %d microns squared.',clustSizeThresh);
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end                     
             end 
         end
         ax=gca; ax.FontSize = 12;
@@ -22464,7 +22680,7 @@ elseif clustSizeQ == 1
         end   
         legend(axonClusterTypeLabels)
         if axonTypeQ == 0 % probabilistically sort axon type
-            if distQ2 == 0 % group data by axon distance from vessel \
+            if distQ2 == 0 % group data by axon distance from vessel 
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Plume Timing';'Close Axons <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
@@ -22482,12 +22698,21 @@ elseif clustSizeQ == 1
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
                 end   
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Probabilistic Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
+                end   
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Probabilistic Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Probabilistic Axon Types'})
                 end   
@@ -22511,15 +22736,24 @@ elseif clustSizeQ == 1
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
                 end   
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel
                 if distQ == 0
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
-                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plumes <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Vessel';titleLabel;'Absolute Axon Types'})
                 elseif distQ == 1 
-                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plumes from Vessel',distRange(1),distRange(2));
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Vessel',distRange(1),distRange(2));
                     titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
                     title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
                 end   
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon
+                if distQ == 0
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';'Close BBB Plume Origins <= 10 microns from Axon';titleLabel;'Absolute Axon Types'})
+                elseif distQ == 1 
+                    rangeLabel = sprintf('In Range (%d-%d microns) BBB Plume Origins from Axon',distRange(1),distRange(2));
+                    titleLabel = sprintf('BBB Plumes that do not exceed %d microns squared.',clustSizeThresh);
+                    title({'Proportion of BBB Plumes by Plume Timing';rangeLabel;titleLabel;'Absolute Axon Types'})
+                end                  
             end 
         end 
         ax=gca; ax.FontSize = 12;
@@ -23666,20 +23900,34 @@ if clustSizeQ == 0
                         locLabel = 'BBB Plumes Out of Range of Axon';
                     end                 
                 end   
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     if loc == 1
-                        locLabel = 'BBB Plumes Close to Vessel';
+                        locLabel = 'BBB Plume Origins Close to Vessel';
                     elseif loc == 2
-                        locLabel = 'BBB Plumes Far from Vessel';
+                        locLabel = 'BBB Plume Origins Far from Vessel';
                     end 
                 elseif distQ == 1
                     if loc == 1
-                        locLabel = 'BBB Plumes In Range of Vessel';
+                        locLabel = 'BBB Plume Origins In Range of Vessel';
                     elseif loc == 2
-                        locLabel = 'BBB Plumes Out of Range of Vessel';
+                        locLabel = 'BBB Plume Origins Out of Range of Vessel';
                     end                 
                 end    
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    if loc == 1
+                        locLabel = 'BBB Plume Origins Close to Axon';
+                    elseif loc == 2
+                        locLabel = 'BBB Plume Origins Far from Axon';
+                    end 
+                elseif distQ == 1
+                    if loc == 1
+                        locLabel = 'BBB Plume Origins In Range of Axon';
+                    elseif loc == 2
+                        locLabel = 'BBB Plume Origins Out of Range of Axon';
+                    end                 
+                end                  
             end 
             if axonTypeQ == 0 % probabilistically sort axon type
                 if distQ == 0
@@ -23761,20 +24009,34 @@ if clustSizeQ == 0
                     locLabel = 'BBB Plumes Out of Range of Axon';
                 end                 
             end   
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+        elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
             if distQ == 0
                 if loc == 1
-                    locLabel = 'BBB Plumes Close to Vessel';
+                    locLabel = 'BBB Plume Origins Close to Vessel';
                 elseif loc == 2
-                    locLabel = 'BBB Plumes Far from Vessel';
+                    locLabel = 'BBB Plume Origins Far from Vessel';
                 end 
             elseif distQ == 1
                 if loc == 1
-                    locLabel = 'BBB Plumes In Range of Vessel';
+                    locLabel = 'BBB Plume Origins In Range of Vessel';
                 elseif loc == 2
-                    locLabel = 'BBB Plumes Out of Range of Vessel';
+                    locLabel = 'BBB Plume Origins Out of Range of Vessel';
                 end                 
             end    
+        elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+            if distQ == 0
+                if loc == 1
+                    locLabel = 'BBB Plume Origins Close to Axon';
+                elseif loc == 2
+                    locLabel = 'BBB Plume Origins Far from Axon';
+                end 
+            elseif distQ == 1
+                if loc == 1
+                    locLabel = 'BBB Plume Origins In Range of Axon';
+                elseif loc == 2
+                    locLabel = 'BBB Plume Origins Out of Range of Axon';
+                end                 
+            end 
         end 
         if axonTypeQ == 0 % probabilistically sort axon type
             if distQ == 0
@@ -23861,20 +24123,34 @@ elseif clustSizeQ == 1
                         locLabel = 'BBB Plumes Out of Range of Axon';
                     end                 
                 end   
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     if loc == 1
-                        locLabel = 'BBB Plumes Close to Vessel';
+                        locLabel = 'BBB Plume Origins Close to Vessel';
                     elseif loc == 2
-                        locLabel = 'BBB Plumes Far from Vessel';
+                        locLabel = 'BBB Plume Origins Far from Vessel';
                     end 
                 elseif distQ == 1
                     if loc == 1
-                        locLabel = 'BBB Plumes In Range of Vessel';
+                        locLabel = 'BBB Plume Origins In Range of Vessel';
                     elseif loc == 2
-                        locLabel = 'BBB Plumes Out of Range of Vessel';
+                        locLabel = 'BBB Plume Origins Out of Range of Vessel';
                     end                 
-                end    
+                end  
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    if loc == 1
+                        locLabel = 'BBB Plume Origins Close to Axon';
+                    elseif loc == 2
+                        locLabel = 'BBB Plume Origins Far from Axon';
+                    end 
+                elseif distQ == 1
+                    if loc == 1
+                        locLabel = 'BBB Plume Origins In Range of Axon';
+                    elseif loc == 2
+                        locLabel = 'BBB Plume Origins Out of Range of Axon';
+                    end                 
+                end                 
             end 
             if axonTypeQ == 0 % probabilistically sort axon type
                 if distQ == 0
@@ -23961,20 +24237,34 @@ elseif clustSizeQ == 1
                         locLabel = 'BBB Plumes Out of Range of Axon';
                     end                 
                 end   
-            elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+            elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
                 if distQ == 0
                     if loc == 1
-                        locLabel = 'BBB Plumes Close to Vessel';
+                        locLabel = 'BBB Plume Origins Close to Vessel';
                     elseif loc == 2
-                        locLabel = 'BBB Plumes Far from Vessel';
+                        locLabel = 'BBB Plume Origins Far from Vessel';
                     end 
                 elseif distQ == 1
                     if loc == 1
-                        locLabel = 'BBB Plumes In Range of Vessel';
+                        locLabel = 'BBB Plume Origins In Range of Vessel';
                     elseif loc == 2
-                        locLabel = 'BBB Plumes Out of Range of Vessel';
+                        locLabel = 'BBB Plume Origins Out of Range of Vessel';
                     end                 
                 end    
+            elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+                if distQ == 0
+                    if loc == 1
+                        locLabel = 'BBB Plume Origins Close to Axon';
+                    elseif loc == 2
+                        locLabel = 'BBB Plume Origins Far from Axon';
+                    end 
+                elseif distQ == 1
+                    if loc == 1
+                        locLabel = 'BBB Plume Origins In Range of Axon';
+                    elseif loc == 2
+                        locLabel = 'BBB Plume Origins Out of Range of Axon';
+                    end                 
+                end                 
             end 
             if axonTypeQ == 0 % probabilistically sort axon type
                 if distQ == 0
@@ -24068,20 +24358,34 @@ elseif clustSizeQ == 1
                         locLabel = 'BBB Plumes Out of Range of Axon';
                     end                 
                 end   
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+        elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
             if distQ == 0
                 if loc == 1
-                    locLabel = 'BBB Plumes Close to Vessel';
+                    locLabel = 'BBB Plume Origins Close to Vessel';
                 elseif loc == 2
-                    locLabel = 'BBB Plumes Far from Vessel';
+                    locLabel = 'BBB Plume Origins Far from Vessel';
                 end 
             elseif distQ == 1
                 if loc == 1
-                    locLabel = 'BBB Plumes In Range of Vessel';
+                    locLabel = 'BBB Plume Origins In Range of Vessel';
                 elseif loc == 2
-                    locLabel = 'BBB Plumes Out of Range of Vessel';
+                    locLabel = 'BBB Plume Origins Out of Range of Vessel';
                 end                 
             end    
+        elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+            if distQ == 0
+                if loc == 1
+                    locLabel = 'BBB Plume Origins Close to Axon';
+                elseif loc == 2
+                    locLabel = 'BBB Plume Origins Far from Axon';
+                end 
+            elseif distQ == 1
+                if loc == 1
+                    locLabel = 'BBB Plume Origins In Range of Axon';
+                elseif loc == 2
+                    locLabel = 'BBB Plume Origins Out of Range of Axon';
+                end                 
+            end             
         end 
         if axonTypeQ == 0 % probabilistically sort axon type
             if distQ == 0
@@ -24151,20 +24455,34 @@ elseif clustSizeQ == 1
                         locLabel = 'BBB Plumes Out of Range of Axon';
                     end                 
                 end   
-        elseif distQ2 == 2 % group data by BBB plume distance from vessel 
+        elseif distQ2 == 2 % group data by BBB plume origin distance from vessel 
             if distQ == 0
                 if loc == 1
-                    locLabel = 'BBB Plumes Close to Vessel';
+                    locLabel = 'BBB Plume Origins Close to Vessel';
                 elseif loc == 2
-                    locLabel = 'BBB Plumes Far from Vessel';
+                    locLabel = 'BBB Plume Origins Far from Vessel';
                 end 
             elseif distQ == 1
                 if loc == 1
-                    locLabel = 'BBB Plumes In Range of Vessel';
+                    locLabel = 'BBB Plume Origins In Range of Vessel';
                 elseif loc == 2
-                    locLabel = 'BBB Plumes Out of Range of Vessel';
+                    locLabel = 'BBB Plume Origins Out of Range of Vessel';
                 end                 
-            end    
+            end 
+        elseif distQ2 == 3 % group data by BBB plume origin distance from axon 
+            if distQ == 0
+                if loc == 1
+                    locLabel = 'BBB Plume Origins Close to Axon';
+                elseif loc == 2
+                    locLabel = 'BBB Plume Origins Far from Axon';
+                end 
+            elseif distQ == 1
+                if loc == 1
+                    locLabel = 'BBB Plume Origins In Range of Axon';
+                elseif loc == 2
+                    locLabel = 'BBB Plume Origins Out of Range of Axon';
+                end                 
+            end             
         end 
         if axonTypeQ == 0 % probabilistically sort axon type
             if distQ == 0
@@ -24198,22 +24516,16 @@ elseif clustSizeQ == 1
         ylabel("Number of BBB Plumes")
         xlabel("Time (s)") 
     end         
-end 
-    
-
+end  
 %% plot distribution of axon distances from the vessel and distribution of BBB plume distance from axon color coded by axon type and BBB plume timing 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% PICK UP HERE - THERE'S A MISSING FIGURE - JUST CHECK NOTION 
 if ETAorSTAq == 0 % STA data 
+    sizeQhist = input('Input 1 to set a size threshold for the BBB plume distance from axon histograms. Input 0 otherwise. ');
+    if sizeQhist == 1
+        histSizeThresh = input('Input the histogram size threshold for BBB plumes (microns): ');
+    end 
+
+    % plot distribution of axon distance from vessel, color coded by axon
+    % type 
     % determine what the max and min values are for axon dists from vessel
     minAVdist = min(floor(allMinVAdists));
     maxAVdist = max(ceil(allMinVAdists));
@@ -24234,12 +24546,24 @@ if ETAorSTAq == 0 % STA data
                 for aType = 1:3
                     if aType == 1
                         [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         AdistsByAtype(bin,aType) = sum(ismember(listenerAxons{mouse},c));
                     elseif aType == 2 
                         [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
                         AdistsByAtype(bin,aType) = sum(ismember(controllerAxons{mouse},c));
                     elseif aType == 3 
                         [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end                         
                         AdistsByAtype(bin,aType) = sum(ismember(bothAxons{mouse},c));
                     end                 
                 end 
@@ -24247,14 +24571,26 @@ if ETAorSTAq == 0 % STA data
                 for aType = 1:3
                     if aType == 1
                         [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end                         
                         data = sum(ismember(listenerAxons{mouse},c));
                         AdistsByAtype(bin,aType) = data + AdistsByAtype(bin,aType);
                     elseif aType == 2 
                         [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end                         
                         data = sum(ismember(controllerAxons{mouse},c));
                         AdistsByAtype(bin,aType) = data + AdistsByAtype(bin,aType);
                     elseif aType == 3 
                         [~, c] = find(minVAdists{mouse} > BinEdges(bin,1) & minVAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end                         
                         data = sum(ismember(bothAxons{mouse},c));
                         AdistsByAtype(bin,aType) = data + AdistsByAtype(bin,aType);
                     end                 
@@ -24273,9 +24609,19 @@ if ETAorSTAq == 0 % STA data
     ax.FontSize = 15;
     ax.FontName = 'Arial';
     if axonTypeQ == 0 % probabilistically sort axon type
-        title({'Distribution of Axon Distance from Vessel';'Probabilistic Axon Types'});
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of Axon Distance from Vessel';titleLabel;'Probabilistic Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of Axon Distance from Vessel';'Probabilistic Axon Types'});
+        end        
     elseif axonTypeQ == 1 % do strict absolute axon type sorting
-        title({'Distribution of Axon Distance from Vessel';'Absolute Axon Types'});
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of Axon Distance from Vessel';titleLabel;'Absolute Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of Axon Distance from Vessel';'Absolute Axon Types'});
+        end 
     end 
     ylabel("Number of Axons")
     xlabel("Distance (microns)") 
@@ -24285,12 +24631,10 @@ if ETAorSTAq == 0 % STA data
     % x = minAVdist:10:maxAVdist;
     scaling  = 5;
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
-    set(gca,'xticklabel',newlabels)
+    set(gca,'xticklabel',newlabels)    
 
-    sizeQhist = input('Input 1 to set a size threshold for the BBB plume distance from axon histograms. Input 0 otherwise. ');
-    if sizeQhist == 1
-        histSizeThresh = input('Input the histogram size threshold for BBB plumes (microns): ');
-    end 
+    % plot distribution of BBB plume from axon, color coded by axon
+    % type 
     % create dists{mouse} array that contains plume dist data for each
     % mouse 
     BAdists = cell(1,mouseNum);
@@ -24464,8 +24808,8 @@ if ETAorSTAq == 0 % STA data
             end 
         end 
     end 
-    % plot distribution of BBB plume from axon, color coded by axon
-    % type 
+    % plot the distribution of plume distances from axon color coded by plume
+    % timing before or after the spike/event 
     figure;
     ax=gca;
     ba = bar(BdistsByTtype,'stacked','FaceColor','flat');
@@ -24474,20 +24818,409 @@ if ETAorSTAq == 0 % STA data
     ba(2).CData = bar2Clr(2,:);
     ax.FontSize = 15;
     ax.FontName = 'Arial';
+    if sizeQhist == 1
+        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+        title({'Distribution of BBB Plume Distance from Axon';titleLabel});
+    elseif sizeQhist == 0
+        title({'Distribution of BBB Plume Distance from Axon'});
+    end 
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+    legend("Before 0 sec","After 0 sec")
+    set(gca,'XTick',minBAdist:3:maxBAdist)
+    xticks = get(gca,'xtick'); 
+    x = minBAdist:10:maxBAdist; %#ok<NASGU>
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)
+
+    % plot distribution of BBB plume origin dist from vessel, color coded by axon
+    % type 
+    % create dists{mouse} array that contains plume dist data for each
+    % mouse 
+    BAdists = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        BAdists{mouse} = (timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2))';
+    end 
+    % determine what the max and min values are for BBB plume dists from
+    % axon 
+    minBAdist = min(floor(allTimeDistArray(:,2)));
+    maxBAdist = max(ceil(allTimeDistArray(:,2)));
+    % determine the number of bins for creating histogram so that each
+    % bin = 5 microns 
+    numBins = ceil(maxBAdist/5);
+    edge = [0,5];
+    BinEdges = nan(1,2);
+    BdistsByAtype = nan(numBins,3);
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum           
+            % sort data into bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,listenerAxons{mouse}));
+                    elseif aType == 2 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,controllerAxons{mouse}));
+                    elseif aType == 3 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,bothAxons{mouse}));
+                    end                 
+                end                   
+            elseif mouse > 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,listenerAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    elseif aType == 2 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,controllerAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    elseif aType == 3 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,bothAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    % plot distribution of BBB plume origin dist from vessel, color coded by axon
+    % type 
+    figure;
+    ax=gca;
+    ba = bar(BdistsByAtype,'stacked','FaceColor','flat');
+    ba(1).CData = [0 0.4470 0.7410];
+    ba(2).CData = [0.8500 0.3250 0.0980];
+    ba(3).CData = [0.4250 0.386 0.4195];
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
     if axonTypeQ == 0 % probabilistically sort axon type
         if sizeQhist == 1
             titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
-            title({'Distribution of BBB Plume Distance from Axon';titleLabel;'Probabilistic Axon Types'});
+            title({'Distribution of BBB Plume Origin Distance from Vessel';titleLabel;'Probabilistic Axon Types'});
         elseif sizeQhist == 0
-            title({'Distribution of BBB Plume Distance from Axon';'Probabilistic Axon Types'});
+            title({'Distribution of BBB Plume Origin Distance from Vessel';'Probabilistic Axon Types'});
         end 
     elseif axonTypeQ == 1 % do strict absolute axon type sorting
         if sizeQhist == 1
             titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
-            title({'Distribution of BBB Plume Distance from Axon';titleLabel;'Absolute Axon Types'});
+            title({'Distribution of BBB Plume Origin Distance from Vessel';titleLabel;'Absolute Axon Types'});
         elseif sizeQhist == 0
-            title({'Distribution of BBB Plume Distance from Axon';'Absolute Axon Types'});
+            title({'Distribution of BBB Plume Origin Distance from Vessel';'Absolute Axon Types'});
         end 
+    end 
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+    legend("Listener Axons","Controller Axons","Axons that do Both")
+    set(gca,'XTick',minBAdist:3:maxBAdist)
+    xticks = get(gca,'xtick'); 
+    % x = minBAdist:10:maxBAdist;
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)
+
+    % plot distribution of BBB plume origin dist from vessel, color coded by timing before or after the spike/event 
+    edge = [0,5];
+    BinEdges = nan(1,2);
+    BdistsByTtype = nan(numBins,2);
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum   
+            % sort data into bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for tType = 1:2
+                    if tType == 1 % before event/spike
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        BdistsByTtype(bin,tType) = sum(reshpdAvClocFrame{mouse}(c) < 0);
+                    elseif tType == 2 % after event/spike 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        BdistsByTtype(bin,tType) = sum(reshpdAvClocFrame{mouse}(c) >= 0);
+                    end                 
+                end                   
+            elseif mouse > 1 
+                for tType = 1:2
+                    if tType == 1 % before event/spike
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        data = sum(reshpdAvClocFrame{mouse}(c) < 0);
+                        BdistsByTtype(bin,tType) = data + BdistsByTtype(bin,tType);
+                    elseif tType == 2 % after event/spike  
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        data = sum(reshpdAvClocFrame{mouse}(c) >= 0);
+                        BdistsByTtype(bin,tType) = data + BdistsByTtype(bin,tType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    % plot distribution of BBB plume origin dist from vessel, color coded by timing before or after the spike/event 
+    figure;
+    ax=gca;
+    ba = bar(BdistsByTtype,'stacked','FaceColor','flat');
+    bar2Clr = hsv(2);
+    ba(1).CData = bar2Clr(1,:);
+    ba(2).CData = bar2Clr(2,:);
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    if sizeQhist == 1
+        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+        title({'Distribution of BBB Plume Origin Distance from Vessel';titleLabel});
+    elseif sizeQhist == 0
+        title({'Distribution of BBB Plume Origin Distance from Vessel'});
+    end 
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+    legend("Before 0 sec","After 0 sec")
+    set(gca,'XTick',minBAdist:3:maxBAdist)
+    xticks = get(gca,'xtick'); 
+    x = minBAdist:10:maxBAdist; %#ok<NASGU>
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)  
+
+    % plot distribution of BBB plume origin dist from axon, color coded by axon
+    % type 
+    % create dists{mouse} array that contains plume dist data for each
+    % mouse 
+    BAdists = cell(1,mouseNum);
+    for mouse = 1:mouseNum
+        BAdists{mouse} = (timeODistArray{mouse}(~isnan(timeODistArray{mouse}(:,1)),2))';
+    end 
+    % determine what the max and min values are for BBB plume dists from
+    % axon 
+    minBAdist = min(floor(allTimeDistArray(:,2)));
+    maxBAdist = max(ceil(allTimeDistArray(:,2)));
+    % determine the number of bins for creating histogram so that each
+    % bin = 5 microns 
+    numBins = ceil(maxBAdist/5);
+    edge = [0,5];
+    BinEdges = nan(1,2);
+    BdistsByAtype = nan(numBins,3);
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum           
+            % sort data into bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,listenerAxons{mouse}));
+                    elseif aType == 2 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,controllerAxons{mouse}));
+                    elseif aType == 3 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        BdistsByAtype(bin,aType) = sum(ismember(ccell,bothAxons{mouse}));
+                    end                 
+                end                   
+            elseif mouse > 1 
+                for aType = 1:3
+                    if aType == 1
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,listenerAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    elseif aType == 2 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,controllerAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    elseif aType == 3 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        ccell = axonInds{mouse}(c);
+                        data = sum(ismember(ccell,bothAxons{mouse}));
+                        BdistsByAtype(bin,aType) = data + BdistsByAtype(bin,aType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    % plot distribution of BBB plume origin dist from axon, color coded by axon
+    % type 
+    figure;
+    ax=gca;
+    ba = bar(BdistsByAtype,'stacked','FaceColor','flat');
+    ba(1).CData = [0 0.4470 0.7410];
+    ba(2).CData = [0.8500 0.3250 0.0980];
+    ba(3).CData = [0.4250 0.386 0.4195];
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    if axonTypeQ == 0 % probabilistically sort axon type
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of BBB Plume Origin Distance from Axon';titleLabel;'Probabilistic Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of BBB Plume Origin Distance from Axon';'Probabilistic Axon Types'});
+        end 
+    elseif axonTypeQ == 1 % do strict absolute axon type sorting
+        if sizeQhist == 1
+            titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+            title({'Distribution of BBB Plume Origin Distance from Axon';titleLabel;'Absolute Axon Types'});
+        elseif sizeQhist == 0
+            title({'Distribution of BBB Plume Origin Distance from Axon';'Absolute Axon Types'});
+        end 
+    end 
+    ylabel("Number of BBB Plumes")
+    xlabel("Distance (microns)") 
+    legend("Listener Axons","Controller Axons","Axons that do Both")
+    set(gca,'XTick',minBAdist:3:maxBAdist)
+    xticks = get(gca,'xtick'); 
+    % x = minBAdist:10:maxBAdist;
+    scaling  = 5;
+    newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
+    set(gca,'xticklabel',newlabels)
+
+    % plot distribution of BBB plume origin dist from axon, color coded by timing before or after the spike/event 
+    edge = [0,5];
+    BinEdges = nan(1,2);
+    BdistsByTtype = nan(numBins,2);
+    for bin = 1:numBins
+        % determine bin edges 
+        BinEdges(bin,:) = edge;
+        edge = edge+[5,5];
+        for mouse = 1:mouseNum   
+            % sort data into bins organized by axon type (listener,
+            % controller, both) 
+            if mouse == 1 
+                for tType = 1:2
+                    if tType == 1 % before event/spike
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end 
+                        BdistsByTtype(bin,tType) = sum(reshpdAvClocFrame{mouse}(c) < 0);
+                    elseif tType == 2 % after event/spike 
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        BdistsByTtype(bin,tType) = sum(reshpdAvClocFrame{mouse}(c) >= 0);
+                    end                 
+                end                   
+            elseif mouse > 1 
+                for tType = 1:2
+                    if tType == 1 % before event/spike
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        data = sum(reshpdAvClocFrame{mouse}(c) < 0);
+                        BdistsByTtype(bin,tType) = data + BdistsByTtype(bin,tType);
+                    elseif tType == 2 % after event/spike  
+                        [~, c] = find(BAdists{mouse} > BinEdges(bin,1) & BAdists{mouse} <= BinEdges(bin,2));
+                        if sizeQhist == 1
+                            [r, ~] = find(any(downAllAxonsClustSizeTS{mouse} >= histSizeThresh,2));
+                            c = intersect(c,r);
+                        end
+                        data = sum(reshpdAvClocFrame{mouse}(c) >= 0);
+                        BdistsByTtype(bin,tType) = data + BdistsByTtype(bin,tType);
+                    end                 
+                end                 
+            end 
+        end 
+    end 
+    % plot distribution of BBB plume origin dist from axon, color coded by timing before or after the spike/event 
+    figure;
+    ax=gca;
+    ba = bar(BdistsByTtype,'stacked','FaceColor','flat');
+    bar2Clr = hsv(2);
+    ba(1).CData = bar2Clr(1,:);
+    ba(2).CData = bar2Clr(2,:);
+    ax.FontSize = 15;
+    ax.FontName = 'Arial';
+    if sizeQhist == 1
+        titleLabel = sprintf('BBB Plumes that exceed %d',histSizeThresh);
+        title({'Distribution of BBB Plume Origin Distance from Axon';titleLabel});
+    elseif sizeQhist == 0
+        title({'Distribution of BBB Plume Origin Distance from Axon'});
     end 
     ylabel("Number of BBB Plumes")
     xlabel("Distance (microns)") 
@@ -25267,12 +26000,17 @@ if ETAorSTAq == 0 % STA data
                 timeDistsSizeAmpArray(len1+1:len1+len2,3) = distsCOV{mouse};
             end             
         end 
+    end
+    if dataParamQ == 0
+        timeDistsSizeAmpArray(:,7) = allTimeODistArray(~isnan(allTimeODistArray(:,1)),2);
+    elseif dataParamQ == 1 
+        timeDistsSizeAmpArray(:,4) = allTimeODistArray(~isnan(allTimeODistArray(:,1)),2);
     end 
 
     % use DBSCAN to identify clusters of BBB plumes that are
     % similar based off of the 5 metrics defined above 
     numP = 3; % number of points a cluster needs to be considered valid
-    fixRad = 15; % fixed radius for the search of neighbors 
+    fixRad = 50; % fixed radius for the search of neighbors 
     [idx,corepts] = dbscan(timeDistsSizeAmpArray,fixRad,numP);
     numGroups = length(unique(idx));
     % how many repeating numbers are there in idx/how many clusters are in the
