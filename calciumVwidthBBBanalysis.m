@@ -19483,7 +19483,31 @@ elseif clustSpikeQ3 == 1
 end 
 title('BBB Plume Distance From VR Space Compared to Timing');
 
-%% plot plume origin distance from vessel histogram and scatter plot relative to time 
+%% plot plume origin distance from vessel histogram and scatter plot relative to time
+if exist('allAvClocFrameBoxPlot','var') == 0
+    % determine the max length of the data per mouse 
+    avClocFrameMouseLen = nan(1,mouseNum);
+    for mouse = 1:mouseNum
+        avClocFrameMouseLen(mouse) = size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2);
+    end 
+    maxClocFrameMouseLen = max(avClocFrameMouseLen);
+    % resort avClocFrame and convert to seconds centered around 0 
+    allAvClocFrameBoxPlot = nan(maxClocFrameMouseLen,mouseNum);
+    allAvClocFrameBoxPlot2 = nan(maxClocFrameMouseLen,mouseNum);
+    for mouse = 1:mouseNum 
+        allAvClocFrameBoxPlot(1:avClocFrameMouseLen(mouse),mouse) = (reshape(avClocFrame{mouse},1,avClocFrameMouseLen(mouse))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
+        for ccell = 1:length(terminals{mouse})
+            if ccell == 1 
+                len = size(avClocFrame{mouse},2); len1 = 1; len2 = size(avClocFrame{mouse},2);  
+                allAvClocFrameBoxPlot2(len1:len2,mouse) = (avClocFrame{mouse}(ccell,:)/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;                              
+            elseif ccell > 1 
+                len1 = len1 + len; len2 = len2 + len;
+                allAvClocFrameBoxPlot2(len1:len2,mouse) = (avClocFrame{mouse}(ccell,:)/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
+            end 
+        end 
+    end 
+end  
+
 % determine plume origin distance from vessel 
 clr = hsv(mouseNum);
 dists = cell(1,mouseNum);
@@ -19491,8 +19515,10 @@ minCOVdists = cell(1,mouseNum);
 COVdists = cell(1,mouseNum);
 timeCOVdistArray = cell(1,mouseNum);
 clearvars allTimeCOVdistArray
+plumeOriginLocs = cell(1,mouseNum);
 for mouse = 1:mouseNum
     for ccell = 1:length(terminals{mouse})
+        count = 1;
         for clust = 1:length(unIdxVals{mouse}{terminals{mouse}(ccell)})
            % find what rows each cluster is located in
             [Crow, ~] = find(plumeIdx{mouse}{terminals{mouse}(ccell)} == unIdxVals{mouse}{terminals{mouse}(ccell)}(clust)); 
@@ -19504,6 +19530,9 @@ for mouse = 1:mouseNum
                 [r,~] = find(cLocs(:,3) == cFirstFrame);
                 % only select indices from the first time the cluster appears 
                 cLocs = cLocs(r,:);
+                % save plume origin locs for later 
+                plumeOriginLocs{mouse}{ccell}{count} = cLocs;
+                count = count + 1;
                 % only look at vessel location where the cluster first
                 % appears 
                 [r,~] = find(indsV{mouse}(:,3) == cFirstFrame);
@@ -19548,11 +19577,11 @@ for mouse = 1:mouseNum
             len2 = size(minCOVdists{mouse}(ccell,:),2);
             COVdists{mouse}(len1+1:len1+len2) = minCOVdists{mouse}(ccell,:);
         end 
-    end
-    timeCOVdistArray{mouse}(:,1) = (avClocFrame{mouse}/FPS{mouse})-((minFrameLen/fps)/2);
+    end  
+    timeCOVdistArray{mouse}(:,1) = (allAvClocFrameBoxPlot2(:,mouse)/FPS{mouse})-((minFrameLen/fps)/2);   
     % timeCOVdistArray{mouse}(:,3) = timeDistArray{mouse}(:,3);
     timeCOVdistArray{mouse}(:,2) = NaN;
-    timeCOVdistArray{mouse}(1:length(COVdists{mouse}),2) = COVdists{mouse}';
+    timeCOVdistArray{mouse}(1:length(COVdists{mouse}),2) = COVdists{mouse};
     % sort data for scatter plot 
     if mouse == 1
         allTimeCOVdistArray(:,1) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),1);
@@ -19721,19 +19750,6 @@ ax=gca; ax.FontSize = 15;
 t1 = p(4); t2 = p(2);
 t1.FontSize = 15; t2.FontSize = 15;
 %% create scatter over box plot of cluster timing per axon
-if exist('allAvClocFrameBoxPlot','var') == 0
-    % determine the max length of the data per mouse 
-    avClocFrameMouseLen = nan(1,mouseNum);
-    for mouse = 1:mouseNum
-        avClocFrameMouseLen(mouse) = size(avClocFrame{mouse},1)*size(avClocFrame{mouse},2);
-    end 
-    maxClocFrameMouseLen = max(avClocFrameMouseLen);
-    % resort avClocFrame and convert to seconds centered around 0 
-    allAvClocFrameBoxPlot = nan(maxClocFrameMouseLen,mouseNum);
-    for mouse = 1:mouseNum 
-        allAvClocFrameBoxPlot(1:avClocFrameMouseLen(mouse),mouse) = (reshape(avClocFrame{mouse},1,avClocFrameMouseLen(mouse))/FPS{mouse})-windSize/2; % converts frame to time in sec for comparison across mice ;
-    end 
-end  
 figure;
 ax = gca;
 % plot box plot 
@@ -26532,6 +26548,20 @@ elseif ETAorSTAq == 1 % if it's ETA data
         end 
     end   
     xlim([1 minFrameLen])
+end 
+%% plot BBB plume origins on vessel width outline 
+for mouse = 1: mouseNum 
+    clr = hsv(length(terminals{mouse}));
+    figure;
+    % plot vessel outline 
+    scatter3(indsV{mouse}(:,1),indsV{mouse}(:,2),indsV{mouse}(:,3),30,'k','filled'); % plot vessel outline 
+    % plot the cluster origins 
+    hold on; 
+    for ccell = 1:length(plumeOriginLocs{mouse})
+        for clust = 1:length(plumeOriginLocs{mouse}{ccell})
+            scatter3(plumeOriginLocs{mouse}{ccell}{clust}(:,1),plumeOriginLocs{mouse}{ccell}{clust}(:,2),plumeOriginLocs{mouse}{ccell}{clust}(:,3),30,'MarkerFaceColor',clr(ccell,:),'MarkerEdgeColor',clr(ccell,:)); % plot clusters 
+        end 
+    end 
 end 
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
