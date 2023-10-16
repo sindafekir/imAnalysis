@@ -19483,7 +19483,7 @@ elseif clustSpikeQ3 == 1
 end 
 title('BBB Plume Distance From VR Space Compared to Timing');
 
-%% plot plume origin distance from vessel histogram and scatter plot relative to time
+%% plot plume origin distance from vessel histogram, scatter plot relative to time, and plume origin location on vessel 
 if exist('allAvClocFrameBoxPlot','var') == 0
     % determine the max length of the data per mouse 
     avClocFrameMouseLen = nan(1,mouseNum);
@@ -19659,6 +19659,33 @@ elseif clustSpikeQ3 == 1
     xlabel("BBB Plume Start Time (sec)") 
 end 
 title('BBB Plume Origin Distance From Vessel Compared to Timing'); 
+
+% plot BBB plume origins on vessel width outline 
+for mouse = 1: mouseNum 
+    if ETAorSTAq == 0 % STA data 
+        clr = hsv(length(terminals{mouse}));
+    end 
+    figure;
+    % plot vessel outline 
+    scatter3(indsV{mouse}(:,1),indsV{mouse}(:,2),indsV{mouse}(:,3),30,'k','filled'); % plot vessel outline 
+    % plot the cluster origins 
+    hold on; 
+    for ccell = 1:length(plumeOriginLocs{mouse})
+        for clust = 1:length(plumeOriginLocs{mouse}{ccell})
+            if ETAorSTAq == 0 % STA data 
+                scatter3(plumeOriginLocs{mouse}{ccell}{clust}(:,1)*XpixDist(mouse),plumeOriginLocs{mouse}{ccell}{clust}(:,2)*YpixDist(mouse),plumeOriginLocs{mouse}{ccell}{clust}(:,3),30,'MarkerFaceColor',clr(ccell,:),'MarkerEdgeColor',clr(ccell,:)); % plot clusters 
+            elseif ETAorSTAq == 1 % ETA data
+                clr = hsv(length(plumeOriginLocs{mouse}{ccell}));
+                if ETAtype == 0 % opto data 
+                    scatter3(plumeOriginLocs{mouse}{ccell}{clust}(:,1),plumeOriginLocs{mouse}{ccell}{clust}(:,2),plumeOriginLocs{mouse}{ccell}{clust}(:,3),30,'MarkerFaceColor',clr(clust,:),'MarkerEdgeColor',clr(clust,:)); % plot clusters 
+                elseif ETAtype == 1 % behavior data 
+                    scatter3(plumeOriginLocs{mouse}{ccell}{clust}(:,1)*XpixDist(mouse),plumeOriginLocs{mouse}{ccell}{clust}(:,2)*YpixDist(mouse),plumeOriginLocs{mouse}{ccell}{clust}(:,3),30,'MarkerFaceColor',clr(clust,:),'MarkerEdgeColor',clr(clust,:)); % plot clusters 
+                end 
+            end                     
+        end 
+    end 
+end 
+
 %% plot distribution of cluster sizes and pixel amplitudes
 figure;
 ax=gca;
@@ -26548,20 +26575,6 @@ elseif ETAorSTAq == 1 % if it's ETA data
         end 
     end   
     xlim([1 minFrameLen])
-end 
-%% plot BBB plume origins on vessel width outline 
-for mouse = 1: mouseNum 
-    clr = hsv(length(terminals{mouse}));
-    figure;
-    % plot vessel outline 
-    scatter3(indsV{mouse}(:,1),indsV{mouse}(:,2),indsV{mouse}(:,3),30,'k','filled'); % plot vessel outline 
-    % plot the cluster origins 
-    hold on; 
-    for ccell = 1:length(plumeOriginLocs{mouse})
-        for clust = 1:length(plumeOriginLocs{mouse}{ccell})
-            scatter3(plumeOriginLocs{mouse}{ccell}{clust}(:,1),plumeOriginLocs{mouse}{ccell}{clust}(:,2),plumeOriginLocs{mouse}{ccell}{clust}(:,3),30,'MarkerFaceColor',clr(ccell,:),'MarkerEdgeColor',clr(ccell,:)); % plot clusters 
-        end 
-    end 
 end 
 %}
 %% Muller wave finder (this section of this code uses Lyle Mullers wave finder https://github.com/mullerlab/wave-matlab)
