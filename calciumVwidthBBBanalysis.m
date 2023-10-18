@@ -19536,6 +19536,7 @@ for mouse = 1:mouseNum
                 % only look at vessel location where the cluster first
                 % appears 
                 [r,~] = find(indsV{mouse}(:,3) == cFirstFrame);
+                clearvars indsVfirst
                 indsVfirst = indsV{mouse}(r,:);
                 % convert cLoc X and Y inds to microns 
                 cLocs(:,1) = cLocs(:,1)*XpixDist(mouse); cLocs(:,2) = cLocs(:,2)*YpixDist(mouse); 
@@ -19585,13 +19586,30 @@ for mouse = 1:mouseNum
     % sort data for scatter plot 
     if mouse == 1
         allTimeCOVdistArray(:,1) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),1);
-        allTimeCOVdistArray(:,2) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2);
+        if ETAorSTAq == 0 % STA data 
+            allTimeCOVdistArray(:,2) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2);
+        elseif ETAorSTAq == 1 % ETA data
+            if ETAtype == 0 % opto data
+                divFactor = ((sum(YpixDist)/length(YpixDist)) + (sum(XpixDist)/length(XpixDist)))/2;
+                allTimeCOVdistArray(:,2) = (timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2))/divFactor;
+            elseif ETAtype == 1 % behavior data 
+                allTimeCOVdistArray(:,2) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2);
+            end 
+        end         
         allTimeCOVdistArray(:,3) = mouse;
     elseif mouse > 1 
         len1 = size(allTimeCOVdistArray,1);
         len2 = sum(~isnan(timeCOVdistArray{mouse}(:,1)));
         allTimeCOVdistArray(len1+1:len1+len2,1) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),1);
-        allTimeCOVdistArray(len1+1:len1+len2,2) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2);
+        if ETAorSTAq == 0 % STA data 
+            allTimeCOVdistArray(len1+1:len1+len2,2) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2);
+        elseif ETAorSTAq == 1 % ETA data
+            if ETAtype == 0 % opto data
+                allTimeCOVdistArray(len1+1:len1+len2,2) = (timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2))/divFactor;
+            elseif ETAtype == 1 % behavior data 
+                allTimeCOVdistArray(len1+1:len1+len2,2) = timeCOVdistArray{mouse}(~isnan(timeCOVdistArray{mouse}(:,1)),2);
+            end 
+        end     
         allTimeCOVdistArray(len1+1:len1+len2,3) = mouse;        
     end 
 end 
@@ -19599,8 +19617,8 @@ end
 % plot the distribution of cluster orign distances from vessel
 figure;
 ax=gca;
-histogram(allTimeCOVdistArray(:,2),61)
-set(gca,'XTick',0:10:ceil(max(allTimeCOVdistArray(:,2))),'XTickLabelRotation',45)
+histogram(allTimeCOVdistArray(:,2),30) % usually bins = 61
+set(gca,'XTick',0:10:ceil(max(allTimeCOVdistArray(:,2))*10),'XTickLabelRotation',45)
 avCOVdists = nanmean(allTimeCOVdistArray(:,2)); 
 medCOVdists = nanmedian(allTimeCOVdistArray(:,2)); %#ok<*NANMEDIAN>
 avCOVdistsLabel = sprintf('Average BBB plume origin distance from vessel: %.3f',avCOVdists);
@@ -19610,6 +19628,7 @@ ax.FontSize = 15;
 title({'Distribution of BBB Plume Origin Distance from Vessel';avCOVdistsLabel;medCOVdistsLabel});
 ylabel("Number of BBB Plumes")
 xlabel("Distance (microns)") 
+xlim([0 100])
 
 % plot scatter plot of COV distances against time 
 figure;
@@ -19756,6 +19775,8 @@ xlabel("Time (s)")
 numPreSpikeStarts = nansum(nansum(allAvClocFrame < 0)); %#ok<*NANSUM>
 numPostSpikeStarts = nansum(nansum(allAvClocFrame >= 0));
 preVsPostSpikeStarts = [numPreSpikeStarts,numPostSpikeStarts];
+xlim([-2.5 2.5])
+
 figure; 
 p = pie(preVsPostSpikeStarts);
 pieClr = hsv(2);
@@ -19776,6 +19797,7 @@ end
 ax=gca; ax.FontSize = 15;
 t1 = p(4); t2 = p(2);
 t1.FontSize = 15; t2.FontSize = 15;
+
 %% create scatter over box plot of cluster timing per axon
 figure;
 ax = gca;
@@ -20297,6 +20319,7 @@ xlabel("Time (s)")
 title('Change in BBB Plume Size')
 xlim([1 minFrameLen])
 % set(gca, 'YScale', 'log')
+ylim([0 8000])
 
 % plot change in cluster size over time for all clusters, color coded by
 % mouse 
@@ -20935,6 +20958,7 @@ if clustTimeNumGroups == 2
     xlabel("Time (s)")
     title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude';'Across Axons'})
     xlim([1 minFrameLen])
+    ylim([0 0.2])
 end 
 %% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both
 if ETAorSTAq == 0 % STA data  
@@ -21095,7 +21119,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21116,7 +21140,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21172,7 +21196,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21214,7 +21238,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21279,7 +21303,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21335,7 +21359,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21383,7 +21407,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -21429,7 +21453,7 @@ if ETAorSTAq == 0 % STA data
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
+    ax.FontName = 'Arial';
     ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
     if axonTypeQ == 0 % probabilistically sort axon type
@@ -25197,6 +25221,7 @@ if ETAorSTAq == 0 % STA data
     scaling  = 5;
     newlabels = arrayfun(@(x) sprintf('%.0f', scaling * x), xticks, 'un', 0);
     set(gca,'xticklabel',newlabels)
+    ylim([0 8])
 
     % plot distribution of BBB plume origin dist from axon, color coded by timing before or after the spike/event 
     edge = [0,5];
@@ -25299,10 +25324,8 @@ if ETAorSTAq == 0 % STA data
         % cluster (use axonInds)
         for clust = 1:length(axonInds{mouse})
             minVAdistsPerC{mouse}(clust) = minVAdists{mouse}(axonInds{mouse}(clust));
-            % resort clustSize to get rid of NaNs and have cluster sizes organized
-            % by axon 
         end 
-        % resort average cluster size (collapsed across time)
+%        resort average cluster size (collapsed across time)
         for ccell = 1:size(clustSize{mouse},1)
             if ccell == 1 
                 resrtdClustSize{mouse} = clustSize{mouse}(ccell,(~isnan(clustSize{mouse}(ccell,:))));
@@ -25379,7 +25402,58 @@ if ETAorSTAq == 0 % STA data
     xlabel('Axon Distance from Vessel (microns)')
     ylabel('BBB Plume Distance from Axon (microns)')
     zlabel('Time (sec)')
-    
+
+    % resort timeODistArray{mouse}(:,2) to look like BAdists, label
+    % it BAdists, comment this out, rerun above code, don't save
+    % this data (this is just for a specific figure for now! will code
+    % better later) 
+    % BAdists = cell(1,mouseNum);
+    % for mouse = 1:mouseNum
+    %     BAdists{mouse} = timeODistArray{mouse}(~isnan(timeODistArray{mouse}(:,1)),2);
+    % end 
+
+    % below code plots 2D scatter plot of plume origin distance from axon (x) over
+    % time (y) with regression lines for pre vs post spike data points 
+    % (for committee meeting)     
+    figure;
+    scatter(VAdistBAdistCloc(:,2),VAdistBAdistCloc(:,3),'filled')
+    if scatter3DClustSizeQ == 1 
+        hold on;
+        ThreshLegLabel1 = sprintf('BBB Plumes < %d microns squared.',scatter3DClustSizeThresh);
+        ThreshLegLabel2 = sprintf('BBB Plumes >= %d microns squared.',scatter3DClustSizeThresh);
+        scatter(VAdistBAdistClocThresh(:,2),VAdistBAdistClocThresh(:,3),'filled')
+        legend(ThreshLegLabel1,ThreshLegLabel2)
+    elseif scatter3DClustSizeQ == 0 
+        % determine the trend lines we want 
+        fBefore = fitlm(VAdistBAdistClocBefore(:,2),VAdistBAdistClocBefore(:,3),'quadratic');
+        fAfter = fitlm(VAdistBAdistClocAfter(:,2),VAdistBAdistClocAfter(:,3),'quadratic');
+        % plot scatter
+        hold on;
+        ax = gca;
+        ax.FontSize = 15;
+        ax.FontName = 'Arial';
+        scatter(VAdistBAdistClocBefore(:,2),VAdistBAdistClocBefore(:,3),'filled','MarkerFaceColor',clr(1,:))
+        scatter(VAdistBAdistClocAfter(:,2),VAdistBAdistClocAfter(:,3),'filled','MarkerFaceColor',clr(2,:))
+        % plot trend line
+        % fitHandle = plot(fBefore);
+        % leg = legend('show');
+        % set(fitHandle,'Color',clr(1,:),'LineWidth',3);
+        % leg.String(end) = [];
+        % rSquaredB = string(round(fBefore.Rsquared.Ordinary,2));
+        % text(400,-2,rSquaredB,'FontSize',20,'Color',clr(1,:))
+        % fitHandle = plot(fAfter);
+        % leg = legend('show');
+        % set(fitHandle,'Color',clr(2,:),'LineWidth',3);
+        % leg.String(end) = [];
+        % rSquaredA = string(round(fAfter.Rsquared.Ordinary,2));
+        % text(400,2,rSquaredA,'FontSize',20,'Color',clr(2,:))
+        legend('','Pre-Spike Clusters','Post-Spike Clusters')
+        title('')
+    end 
+    xlabel('BBB Plume Distance from Axon (microns)')
+    ylabel('Time (sec)')
+    set(gca, 'xscale','log') 
+
     logQ = input('Input 1 to plot BBB plume pixel amplitude and size on log scale. ');
     % plot scatter plot of axon distance from vessel, BBB plume distance from axon, average BBB plume
     % size 
@@ -25985,6 +26059,7 @@ elseif ETAorSTAq == 1 % ETA data
 end 
 xticklabels(avLabels)
 %% DBSCAN to find groups of plumes grouped together by cluster start time, axon distance from vessel, plume distance from axon, max cluster size, max pixel amplitude 
+
 if ETAorSTAq == 0 % STA data
     dataParamQ = input('Input 0 to cluster data based on all paramaters. Input 1 to cluster data based on distance metrics only. ');
     clearvars timeDistsSizeAmpArray rsrtdDownCampTS rsrtdDownCsizeTS
@@ -26307,7 +26382,49 @@ if ETAorSTAq == 0 % STA data
     xlabel("Time (s)")
     title({'Average Change in BBB Plume Plume Pixel Amplitude';titleLabel})
     xlim([1 minFrameLen])
+
+    % resort idx into {mouse}{ccell}{clust} using axonInds 
+    srtIdx1 = cell(1,mouseNum);
+    for mouse = 1: mouseNum 
+        if mouse == 1 
+            len = length(axonInds{mouse});
+            len1 = 1;
+            len2 = len;
+            srtIdx1{mouse} = idx(1:length(axonInds{mouse}));            
+        elseif mouse > 1 
+            len = length(axonInds{mouse});  
+            len1 = len2 + 1;
+            len2 = len1 + len - 1;                               
+            srtIdx1{mouse} = idx(len1:len2);            
+        end 
+    end 
+    clearvars idx 
+    srtIdx2 = cell(1,mouseNum);
+    for mouse = 1: mouseNum 
+        for ccell = 1:length(plumeOriginLocs{mouse})
+            srtIdx2{mouse}{ccell} = srtIdx1{mouse}(axonInds{mouse} == ccell);
+        end 
+    end 
+    clearvars srtIdx1
+    % plot BBB plume origins on vessel width outline color coded by DBSCAN
+    % cluster
+    unGroupLbl = unique(idx);
+    for mouse = 1: mouseNum 
+        figure;
+        % plot vessel outline 
+        scatter3(indsV{mouse}(:,1),indsV{mouse}(:,2),indsV{mouse}(:,3),30,'k','filled'); % plot vessel outline 
+        % plot the cluster origins 
+        hold on; 
+        for ccell = 1:length(plumeOriginLocs{mouse})
+            for clust = 1:length(plumeOriginLocs{mouse}{ccell})
+                if clust <= length(srtIdx2{mouse}{ccell})
+                    scatter3(plumeOriginLocs{mouse}{ccell}{clust}(:,1)*XpixDist(mouse),plumeOriginLocs{mouse}{ccell}{clust}(:,2)*YpixDist(mouse),plumeOriginLocs{mouse}{ccell}{clust}(:,3),30,'MarkerFaceColor',clr((unGroupLbl == srtIdx2{mouse}{ccell}(clust)),:),'MarkerEdgeColor',clr((unGroupLbl == srtIdx2{mouse}{ccell}(clust)),:)); % plot clusters        
+                end 
+            end 
+        end 
+    end 
 end 
+
 %% plot histogram of maximum plume pixel amplitudes and size (use maxSize
 % and maxClustAmp)
 
@@ -26365,9 +26482,6 @@ elseif clustSpikeQ == 1
 end 
 ylabel("Number of BBB Plumes")
 xlabel("Max BBB Plume Pixel Amplitudes") 
-
-
-
 
 %% plot change in vessel width
 % resort data to plot all average change in vessel width per mouse and
