@@ -16138,6 +16138,7 @@ end
 %% plot clusters 
 mouse = 1;
 vidQ2 = input('Input 1 to black out pixels inside of vessel. ');
+dlightQ = input('Input 1 if this is dlight data. Input 0 if this is BBB data. ');
 ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
 if ETAorSTAq == 1 % ETA data 
     ccell = 1; 
@@ -16241,15 +16242,17 @@ for ccell = 1:length(terminals{mouse})
         % find what rows each cluster is located in
         [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
         % identify the x, y, z location of pixels per cluster
-        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);        
-        % determine if cLocs are near the vessel 
-        cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
-        if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
-            % delete cluster that is not near the vessel 
-            inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
-            idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
-            CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
-            count = count + 1;            
+        cLocs = inds{terminals{mouse}(ccell)}(Crow,:);      
+        if dlightQ == 0 % this is BBB data 
+            % determine if cLocs are near the vessel 
+            cLocsNearVes = ismember(indsV2{terminals{mouse}(ccell)},cLocs,'rows');
+            if ~any(cLocsNearVes == 1) == 1 % if the cluster is not near the vessel 
+                % delete cluster that is not near the vessel 
+                inds{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+                idx{terminals{mouse}(ccell)}(Crow,:) = NaN; 
+                CsNotNearVessel{terminals{mouse}(ccell)}(count) = unIdxVals{terminals{mouse}(ccell)}(clust);
+                count = count + 1;            
+            end 
         end 
         % determine cluster size in microns 
         clustSize(ccell,clust) = (sum(idx{terminals{mouse}(ccell)}(:) == unIdxVals{terminals{mouse}(ccell)}(clust)))*XpixDist*YpixDist;
