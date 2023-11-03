@@ -5845,6 +5845,12 @@ if CaFrameQ == 1
         end 
     end            
 end 
+
+% data = mean(mean(ims));
+% for frame = 1:size(data,3)
+%     data2(frame) = data(:,:,frame);
+% end 
+% figure;plot(data2)
 %}
 %% make ETA VID/STACKs per trial (one animal at a time)
 %{
