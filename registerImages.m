@@ -90,6 +90,16 @@ end
 %}
 %% separate volume imaging data into separate stacks per z plane and motion correction
 %{
+templateQ = input('Input 0 if you want the template to be the average of all frames. Not recommended if there is scramble. Input 1 otherwise. ');
+if templateQ == 1
+    if redChanQ == 1 
+        fprintf('    %d red frames. ', size(redImageStack,3));
+    end 
+    if greenChanQ == 1
+        fprintf('    %d green frames. ', size(greenImageStack,3));
+    end 
+    numTemplate = input('    Input the number of frames you want to use for the registration templates. ');
+end 
 if volIm == 1
     disp('Separating Z-planes')
     %reorganize data by zPlane and prep for motion correction 
@@ -133,10 +143,18 @@ if volIm == 1
         end 
     end 
     if redChanQ == 1 
-        rTemplate = mean(rVolStack5,4);
+        if templateQ == 0
+            rTemplate = mean(rVolStack5,4);
+        elseif templateQ == 1 
+            rTemplate = mean(rVolStack5(:,:,1:numTemplate,:),4);
+        end 
     end 
     if greenChanQ == 1 
-        gTemplate = mean(gVolStack5,4);
+        if templateQ == 0
+            gTemplate = mean(gVolStack5,4);
+        elseif templateQ == 1 
+            gTemplate = mean(gVolStack5(:,:,1:numTemplate,:),4);
+        end             
     end
     %create optimizer and metric, setting modality to multimodal because the
     %template and actual images look different (as template is mean = smoothed)
@@ -182,8 +200,12 @@ if volIm == 1
 elseif volIm == 0   
     if redChanQ == 1 
         disp('2D Motion Correction')
-        %2D register imaging data    
-        rTemplate = mean(redImageStack,3);
+        %2D register imaging data  
+        if templateQ == 0
+            rTemplate = mean(redImageStack,3);
+        elseif templateQ == 1 
+            rTemplate = mean(redImageStack(:,:,1:numTemplate),3);
+        end             
 %         rTemplate = mean(redImageStack(:,:,1:42),3);
         [rrRegStack,~] = registerVesStack(redImageStack,rTemplate);  
         rrRegZstacks{1} = rrRegStack;
@@ -194,7 +216,11 @@ elseif volIm == 0
     if greenChanQ == 1
         disp('2D Motion Correction')
         %2D register imaging data    
-        gTemplate = mean(greenImageStack,3);
+        if templateQ == 0
+            gTemplate = mean(greenImageStack,3);
+        elseif templateQ == 1 
+            gTemplate = mean(greenImageStack(:,:,1:numTemplate),3);
+        end   
 %         gTemplate = mean(greenImageStack(:,:,1:42),3);
         [ggRegStack,~] = registerVesStack(greenImageStack,gTemplate);  
         ggRegZstacks{1} = ggRegStack;
