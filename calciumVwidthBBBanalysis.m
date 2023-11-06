@@ -16375,48 +16375,49 @@ safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
-% use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
-% not near vessel)
-nearVsFarPlotData = zeros(length(terminals{mouse}),2);
-% resort data for stacked bar plot 
-unIdxVals2 = cell(1,max(terminals{mouse}));
-labels = strings(1,length(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    unIdxVals2{terminals{mouse}(ccell)} = unique(idx2{terminals{mouse}(ccell)});
-    nearVsFarPlotData(ccell,1) = length(unIdxVals2{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
-    nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
-    labels(ccell) = num2str(terminals{mouse}(ccell));
+if dlightQ == 0 % BBB data 
+    % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
+    % not near vessel)
+    nearVsFarPlotData = zeros(length(terminals{mouse}),2);
+    % resort data for stacked bar plot 
+    unIdxVals2 = cell(1,max(terminals{mouse}));
+    labels = strings(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        unIdxVals2{terminals{mouse}(ccell)} = unique(idx2{terminals{mouse}(ccell)});
+        nearVsFarPlotData(ccell,1) = length(unIdxVals2{terminals{mouse}(ccell)})-length(CsNotNearVessel{terminals{mouse}(ccell)});
+        nearVsFarPlotData(ccell,2) = length(CsNotNearVessel{terminals{mouse}(ccell)});
+        labels(ccell) = num2str(terminals{mouse}(ccell));
+    end 
+    % plot stacked bar plot
+    if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+        figure;
+        subplot(1,2,1)
+        ax=gca;
+        ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
+        ba(1).CData = [0 0.4470 0.7410];
+        ba(2).CData = [0.8500 0.3250 0.0980];
+        ax.FontSize = 15;
+        ax.FontName = 'Times';
+        ylabel("Number of Clusters")
+        xlabel("Axon")
+        legend("Clusters Near Vessel","Clusters Far from Vessel")
+        xticklabels(labels)
+        % plot pie chart 
+        subplot(1,2,2)
+        % resort data for averaged pie chart 
+        AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+        pie(AvNearVsFarPlotData);
+        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+    elseif ETAorSTAq == 1 
+        figure;
+        % plot pie chart 
+        % resort data for averaged pie chart 
+        AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
+        pie(AvNearVsFarPlotData);
+        colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
+        legend("Clusters Near Vessel","Clusters Far from Vessel")
+    end 
 end 
-% plot stacked bar plot
-if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
-    figure;
-    subplot(1,2,1)
-    ax=gca;
-    ba = bar(nearVsFarPlotData,'stacked','FaceColor','flat');
-    ba(1).CData = [0 0.4470 0.7410];
-    ba(2).CData = [0.8500 0.3250 0.0980];
-    ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("Number of Clusters")
-    xlabel("Axon")
-    legend("Clusters Near Vessel","Clusters Far from Vessel")
-    xticklabels(labels)
-    % plot pie chart 
-    subplot(1,2,2)
-    % resort data for averaged pie chart 
-    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
-    pie(AvNearVsFarPlotData);
-    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-elseif ETAorSTAq == 1 
-    figure;
-    % plot pie chart 
-    % resort data for averaged pie chart 
-    AvNearVsFarPlotData = mean(nearVsFarPlotData,1);
-    pie(AvNearVsFarPlotData);
-    colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
-    legend("Clusters Near Vessel","Clusters Far from Vessel")
-end 
-
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
 
 uniqClusts = cell(1,max(terminals{mouse}));
@@ -16853,96 +16854,98 @@ if ETAorSTAq == 0 % STA data
     end
 end 
 
-clear sizeDistArray includeX includY includeXY
-labels = strings(1,length(terminals{mouse}));
-f = cell(1,length(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    if ccell == 1 
-        sizeDistArray(:,1) = minACdists(ccell,:);
-        sizeDistArray(:,2) = clustSize(ccell,:);
-        sizeDistArray(:,3) = ccell;       
-        % determine trend line 
-        includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);  
-        if sum(includeXY) > 1 
-            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
+if dlightQ == 0 % BBB data 
+    clear sizeDistArray includeX includY includeXY
+    labels = strings(1,length(terminals{mouse}));
+    f = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            sizeDistArray(:,1) = minACdists(ccell,:);
+            sizeDistArray(:,2) = clustSize(ccell,:);
+            sizeDistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);  
+            if sum(includeXY) > 1 
+                f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(sizeDistArray,1);   
+            end 
+            len2 = size(sizeDistArray,1);       
+            sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            sizeDistArray(len2+1:len2+len,2) = clustSize(ccell,:);
+            sizeDistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX =~ isnan(sizeDistArray(len2+1:len2+len,1)); includeY =~ isnan(sizeDistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);   
+            if sum(includeXY) > 1 
+                f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+            end 
         end 
-    elseif ccell > 1 
-        if ccell == 2
-            len = size(sizeDistArray,1);   
-        end 
-        len2 = size(sizeDistArray,1);       
-        sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
-        sizeDistArray(len2+1:len2+len,2) = clustSize(ccell,:);
-        sizeDistArray(len2+1:len2+len,3) = ccell;                  
-        % determine trend line 
-        includeX =~ isnan(sizeDistArray(len2+1:len2+len,1)); includeY =~ isnan(sizeDistArray(len2+1:len2+len,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        sizeDistX = sizeDistArray(len2+1:len2+len,1); sizeDistY = sizeDistArray(len2+1:len2+len,2);   
-        if sum(includeXY) > 1 
-            f{ccell} = fit(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+        labels(ccell) = num2str(terminals{mouse}(ccell));
+    end 
+    % determine average trend line for size vs distance 
+    includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fav = fitlm(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
+    end 
+    
+    clear ampDistArray includeX includY includeXY
+    fAmp = cell(1,length(terminals{mouse}));
+    for ccell = 1:length(terminals{mouse})
+        if ccell == 1 
+            ampDistArray(:,1) = minACdists(ccell,:);
+            ampDistArray(:,2) = clustAmp(ccell,:);
+            ampDistArray(:,3) = ccell;       
+            % determine trend line 
+            includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);  
+            if sum(includeXY) > 1 
+                fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');  
+            end 
+        elseif ccell > 1 
+            if ccell == 2
+                len = size(ampDistArray,1);   
+            end 
+            len2 = size(ampDistArray,1);       
+            ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            ampDistArray(len2+1:len2+len,2) = clustAmp(ccell,:);
+            ampDistArray(len2+1:len2+len,3) = ccell;                  
+            % determine trend line 
+            includeX =~ isnan(ampDistArray(len2+1:len2+len,1)); includeY =~ isnan(ampDistArray(len2+1:len2+len,2));
+            % make incude XY that has combined 0 locs 
+            [zeroRow, ~] = find(includeY == 0);
+            includeX(zeroRow) = 0; includeXY = includeX;                
+            ampDistX = ampDistArray(len2+1:len2+len,1); ampDistY = ampDistArray(len2+1:len2+len,2);   
+            if sum(includeXY) > 1 
+                fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
+            end 
         end 
     end 
-    labels(ccell) = num2str(terminals{mouse}(ccell));
-end 
-% determine average trend line for size vs distance 
-includeX =~ isnan(sizeDistArray(:,1)); includeY =~ isnan(sizeDistArray(:,2));
-% make incude XY that has combined 0 locs 
-[zeroRow, ~] = find(includeY == 0);
-includeX(zeroRow) = 0; includeXY = includeX;                
-sizeDistX = sizeDistArray(:,1); sizeDistY = sizeDistArray(:,2);   
-if length(find(includeXY)) > 1
-    fav = fitlm(sizeDistX(includeXY),sizeDistY(includeXY),'poly1');
-end 
-
-clear ampDistArray includeX includY includeXY
-fAmp = cell(1,length(terminals{mouse}));
-for ccell = 1:length(terminals{mouse})
-    if ccell == 1 
-        ampDistArray(:,1) = minACdists(ccell,:);
-        ampDistArray(:,2) = clustAmp(ccell,:);
-        ampDistArray(:,3) = ccell;       
-        % determine trend line 
-        includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);  
-        if sum(includeXY) > 1 
-            fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');  
-        end 
-    elseif ccell > 1 
-        if ccell == 2
-            len = size(ampDistArray,1);   
-        end 
-        len2 = size(ampDistArray,1);       
-        ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
-        ampDistArray(len2+1:len2+len,2) = clustAmp(ccell,:);
-        ampDistArray(len2+1:len2+len,3) = ccell;                  
-        % determine trend line 
-        includeX =~ isnan(ampDistArray(len2+1:len2+len,1)); includeY =~ isnan(ampDistArray(len2+1:len2+len,2));
-        % make incude XY that has combined 0 locs 
-        [zeroRow, ~] = find(includeY == 0);
-        includeX(zeroRow) = 0; includeXY = includeX;                
-        ampDistX = ampDistArray(len2+1:len2+len,1); ampDistY = ampDistArray(len2+1:len2+len,2);   
-        if sum(includeXY) > 1 
-            fAmp{ccell} = fit(ampDistX(includeXY),ampDistY(includeXY),'poly1');
-        end 
+    % determine average trend line for size vs distance 
+    includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
+    % make incude XY that has combined 0 locs 
+    [zeroRow, ~] = find(includeY == 0);
+    includeX(zeroRow) = 0; includeXY = includeX;                
+    ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);   
+    if length(find(includeXY)) > 1
+        fAmpAv = fitlm(ampDistX(includeXY),ampDistY(includeXY),'poly1');
     end 
-end 
-% determine average trend line for size vs distance 
-includeX =~ isnan(ampDistArray(:,1)); includeY =~ isnan(ampDistArray(:,2));
-% make incude XY that has combined 0 locs 
-[zeroRow, ~] = find(includeY == 0);
-includeX(zeroRow) = 0; includeXY = includeX;                
-ampDistX = ampDistArray(:,1); ampDistY = ampDistArray(:,2);   
-if length(find(includeXY)) > 1
-    fAmpAv = fitlm(ampDistX(includeXY),ampDistY(includeXY),'poly1');
 end 
 
 % determine cluster distance from VR space if you want 
@@ -17292,15 +17295,24 @@ if VRQ == 1
             set(fitHandle,'Color',[0 0 0],'LineWidth',3);
             leg.String(end) = [];
             rSquared = string(round(fav3.Rsquared.Ordinary,2));
-            text(30,20,rSquared,'FontSize',20)
+            text(30,18,rSquared,'FontSize',20)
         end 
         ylabel("Distance From VR space (microns)")
-        if clustSpikeQ3 == 0 
-            xlabel("Average BBB Plume Timing") 
-        elseif clustSpikeQ3 == 1
-            xlabel("BBB Plume Start Time") 
+        if dlightQ == 0 % BBB data 
+            title('BBB Plume Distance From VR Space Compared to Timing');
+            if clustSpikeQ3 == 0 
+                xlabel("Average BBB Plume Timing") 
+            elseif clustSpikeQ3 == 1
+                xlabel("BBB Plume Start Time") 
+            end 
+        elseif dlightQ == 1 % dlight data
+            title('dlight Distance From VR Space Compared to Timing');
+            if clustSpikeQ3 == 0 
+                xlabel("Average dlight Timing") 
+            elseif clustSpikeQ3 == 1
+                xlabel("dlight Start Time") 
+            end             
         end 
-        title('BBB Plume Distance From VR Space Compared to Timing');
         Frames = size(im,3);
         Frames_pre_stim_start = -((Frames-1)/2); 
         Frames_post_stim_start = (Frames-1)/2; 
@@ -17316,61 +17328,109 @@ if VRQ == 1
 end 
 
 %% plot distribution of cluster sizes and pixel amplitudes
-figure;
-ax=gca;
-avClustSize = nanmean(sizeDistArray(:,2)); 
-medClustSize = nanmedian(sizeDistArray(:,2)); %#ok<*NANMEDIAN> 
-avClustSizeLabel = sprintf('Average cluster size: %.0f',avClustSize);
-medClustSizeLabel = sprintf('Median cluster size: %.0f',medClustSize);
-histogram(sizeDistArray(:,2),100)
-ax.FontSize = 15;
-% ax.FontName = 'Times';
-if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
-elseif clustSpikeQ == 1 
-    if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
-    elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
-    end 
-end 
-ylabel("Number of BBB Plumes")
-xlabel("Size of BBB Plume (microns squared)") 
 
 figure;
 ax=gca;
-histogram(ampDistArray(:,2),100)
-avClustAmp = nanmean(ampDistArray(:,2)); 
-medClustAmp = nanmedian(ampDistArray(:,2)); %#ok<*NANMEDIAN> 
+avClustSize = nanmean(clustSize); 
+medClustSize = nanmedian(clustSize); %#ok<*NANMEDIAN> 
+avClustSizeLabel = sprintf('Average cluster size: %.0f',avClustSize);
+medClustSizeLabel = sprintf('Median cluster size: %.0f',medClustSize);
+histogram(clustSize,100)
+ax.FontSize = 15;
+% ax.FontName = 'Times';
+if dlightQ == 0 % BBB data 
+    if clustSpikeQ == 0 
+        title({'Distribution of BBB Plume Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title({'Distribution of BBB Plume Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+        elseif clustSpikeQ2 == 1
+            title({'Distribution of BBB Plume Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+        end 
+    end 
+elseif dlightQ == 1 % dlight data
+    if clustSpikeQ == 0 
+        title({'Distribution of dlight Sizes';'All Clusters';avClustSizeLabel;medClustSizeLabel});
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title({'Distribution of dlight Sizes';'Pre-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+        elseif clustSpikeQ2 == 1
+            title({'Distribution of dlight Sizes';'Post-Spike Clusters';avClustSizeLabel;medClustSizeLabel});
+        end 
+    end     
+end 
+if dlightQ == 0 % BBB data 
+    ylabel("Number of BBB Plumes")
+    xlabel("Size of BBB Plume (microns squared)") 
+elseif dlightQ == 1 % dlight data
+    ylabel("Number of dlight Clusters")
+    xlabel("Size of dlight Clusters (microns squared)") 
+end 
+
+
+figure;
+ax=gca;
+histogram(clustAmp,100)
+avClustAmp = nanmean(clustAmp); 
+medClustAmp = nanmedian(clustAmp); %#ok<*NANMEDIAN> 
 avClustAmpLabel = sprintf('Average cluster pixel amplitude: %.3f',avClustAmp);
 medClustAmpLabel = sprintf('Median cluster pixel amplitude: %.3f',medClustAmp);
 ax.FontSize = 15;
 % ax.FontName = 'Times';
-if clustSpikeQ == 0 
-    title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
-elseif clustSpikeQ == 1 
-    if clustSpikeQ2 == 0 
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
-    elseif clustSpikeQ2 == 1
-        title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
-    end 
+if dlightQ == 0 % BBB data 
+    if clustSpikeQ == 0 
+        title({'Distribution of BBB Plume Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title({'Distribution of BBB Plume Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+        elseif clustSpikeQ2 == 1
+            title({'Distribution of BBB Plume Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+        end 
+    end     
+elseif dlightQ == 1 % dlight data
+    if clustSpikeQ == 0 
+        title({'Distribution of dlight Pixel Amplitudes';'All Clusters';avClustAmpLabel;medClustAmpLabel});
+    elseif clustSpikeQ == 1 
+        if clustSpikeQ2 == 0 
+            title({'Distribution of dlight Pixel Amplitudes';'Pre-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+        elseif clustSpikeQ2 == 1
+            title({'Distribution of dlight Pixel Amplitudes';'Post-Spike Clusters';avClustAmpLabel;medClustAmpLabel});
+        end 
+    end     
 end 
-ylabel("Number of BBB Plumes")
-xlabel("BBB Plume Pixel Amplitudes") 
+if dlightQ == 0 % BBB data 
+    ylabel("Number of BBB Plumes")
+    xlabel("BBB Plume Pixel Amplitudes")     
+elseif dlightQ == 1 % dlight data
+    ylabel("Number of dlight Clusters")
+    xlabel("dlight Pixel Amplitudes")     
+end 
+
+
 
 %% plot distribution of cluster times
+
 if clustSpikeQ == 0 
     figure;
     ax=gca;
     histogram(avClocFrame,20)
     ax.FontSize = 15;
 %     ax.FontName = 'Times';
-    if clustSpikeQ3 == 0 
-        title({'Distribution of BBB Plume Timing';'Average Time'});
-    elseif clustSpikeQ3 == 1
-        title({'Distribution of BBB Plume Timing';'Start Time'});
+    if dlightQ == 0 % BBB data
+        if clustSpikeQ3 == 0 
+            title({'Distribution of BBB Plume Timing';'Average Time'});
+        elseif clustSpikeQ3 == 1
+            title({'Distribution of BBB Plume Timing';'Start Time'});
+        end        
+        ylabel("Number of BBB Plumes")
+    elseif dlightQ == 1 % dlight data
+        if clustSpikeQ3 == 0 
+            title({'Distribution of dlight Timing';'Average Time'});
+        elseif clustSpikeQ3 == 1
+            title({'Distribution of dlight Timing';'Start Time'});
+        end      
+        ylabel("Number of dlight Clusters")
     end 
-    ylabel("Number of BBB Plumes")
     xlabel("Time (s)") 
     Frames = size(im,3);
     Frames_pre_stim_start = -((Frames-1)/2); 
@@ -17467,23 +17527,41 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
     yline(threshFrame)
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("Average BBB Plume Timing")
     if ETAorSTAq == 0 % STA data
         xlabel("Axon")
     end 
-    if ETAorSTAq == 0 % STA data
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing By Axon';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing By Axon';'Cluster Start Time'});
-        end     
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        if clustSpikeQ3 == 0
-            title({'BBB Plume Timing';'Average Cluster Time'});
-        elseif clustSpikeQ3 == 1
-            title({'BBB Plume Timing';'Cluster Start Time'});
-        end   
+    if dlightQ == 0 % BBB data 
+        ylabel("Average BBB Plume Timing")
+        if ETAorSTAq == 0 % STA data
+            if clustSpikeQ3 == 0
+                title({'BBB Plume Timing By Axon';'Average Cluster Time'});
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Timing By Axon';'Cluster Start Time'});
+            end     
+        elseif ETAorSTAq == 1 % ETA data
+            set(gca,'XTick',[]) % removes x axis ticks
+            if clustSpikeQ3 == 0
+                title({'BBB Plume Timing';'Average Cluster Time'});
+            elseif clustSpikeQ3 == 1
+                title({'BBB Plume Timing';'Cluster Start Time'});
+            end   
+        end         
+    elseif dlightQ == 1 % dlight data
+        ylabel("Average dlight Timing")
+        if ETAorSTAq == 0 % STA data
+            if clustSpikeQ3 == 0
+                title({'dlight Timing By Axon';'Average Cluster Time'});
+            elseif clustSpikeQ3 == 1
+                title({'dlight Timing By Axon';'Cluster Start Time'});
+            end     
+        elseif ETAorSTAq == 1 % ETA data
+            set(gca,'XTick',[]) % removes x axis ticks
+            if clustSpikeQ3 == 0
+                title({'dlight Timing';'Average Cluster Time'});
+            elseif clustSpikeQ3 == 1
+                title({'dlight Timing';'Cluster Start Time'});
+            end   
+        end         
     end 
     xticklabels(labels)
     Frames = size(im,3);
@@ -17510,13 +17588,24 @@ if clustSpikeQ == 0
     swarmchart(x,CsizeForPlot,[],'red')  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")  
-        title({'BBB Plume Size By Axon';'All Plumes'});
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        title({'BBB Plume Size';'All Plumes'});
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Size (microns squared)")
+        if ETAorSTAq == 0 % STA data
+            xlabel("Axon")  
+            title({'BBB Plume Size By Axon';'All Plumes'});
+        elseif ETAorSTAq == 1 % ETA data
+            set(gca,'XTick',[]) % removes x axis ticks
+            title({'BBB Plume Size';'All Plumes'});
+        end         
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Cluster Size (microns squared)")
+        if ETAorSTAq == 0 % STA data
+            xlabel("Axon")  
+            title({'dlight Cluster Size By Axon';'All Plumes'});
+        elseif ETAorSTAq == 1 % ETA data
+            set(gca,'XTick',[]) % removes x axis ticks
+            title({'dlight Cluster Size';'All Plumes'});
+        end         
     end 
     xticklabels(labels)
 %     set(gca, 'YScale', 'log')
@@ -17533,18 +17622,30 @@ if clustSpikeQ == 0
     swarmchart(x,CampForPlot,[],'red')  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude")
-    if ETAorSTAq == 0 % STA data
-        xlabel("Axon")  
-        title({'BBB Plume Pixel Amplitude By Axon';'All Plumes'});
-    elseif ETAorSTAq == 1 % ETA data
-        set(gca,'XTick',[]) % removes x axis ticks
-        title({'BBB Plume Pixel Amplitude';'All Plumes'});
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Pixel Amplitude")
+        if ETAorSTAq == 0 % STA data
+            xlabel("Axon")  
+            title({'BBB Plume Pixel Amplitude By Axon';'All Plumes'});
+        elseif ETAorSTAq == 1 % ETA data
+            set(gca,'XTick',[]) % removes x axis ticks
+            title({'BBB Plume Pixel Amplitude';'All Plumes'});
+        end         
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Pixel Amplitude")
+        if ETAorSTAq == 0 % STA data
+            xlabel("Axon")  
+            title({'dlight Pixel Amplitude By Axon';'All Plumes'});
+        elseif ETAorSTAq == 1 % ETA data
+            set(gca,'XTick',[]) % removes x axis ticks
+            title({'dlight Pixel Amplitude';'All Plumes'});
+        end         
     end 
     xticklabels(labels)
 %     set(gca, 'YScale', 'log')
 
 elseif clustSpikeQ == 1 
+
     preOrPost = input('Input 0 to update pre-spike array. Input 1 to update post-spike array. ');
     if preOrPost == 0
         CsizeForPlotPre = clustSize'; 
@@ -17564,54 +17665,103 @@ elseif clustSpikeQ == 1
         boxchart(CsizeForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Size (microns squared)")
         if ETAorSTAq == 0 % STA data
             xlabel("Axon")
         end 
-        if ETAorSTAq == 0 % STA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-            end          
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Size (microns squared)")
+            if ETAorSTAq == 0 % STA data
                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});   
+                    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
                 elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});   
-                end  
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
+                    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+                end          
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});   
+                        title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});   
                     elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});   
+                        title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});   
                     end  
-                elseif ETAtype2 == 1 % reward aligned 
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});   
+                        end  
+                    elseif ETAtype2 == 1 % reward aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});   
+                        end                    
+                    end 
+                end 
+            end 
+            if ETAorSTAq == 0 % STA data 
+                legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+            elseif ETAorSTAq == 1 % ETA data
+                set(gca,'XTick',[]) % removes x axis ticks 
+                if ETAtype == 0 % opto data 
+                  legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
+                    end 
+                end 
+            end
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Size (microns squared)")
+            if ETAorSTAq == 0 % STA data
+                if clustSpikeQ3 == 0 
+                    title({'dlight Size By Axon';'Pre And Post Spike Clusters';'Average Cluster Time'});   
+                elseif clustSpikeQ3 == 1
+                    title({'dlight Size By Axon';'Pre And Post Spike Clusters';'Cluster Start Time'});   
+                end          
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});   
+                        title({'dlight Size';'Pre And Post Opto Clusters';'Average Cluster Time'});   
                     elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});   
-                    end                    
+                        title({'dlight Size';'Pre And Post Opto Clusters';'Cluster Start Time'});   
+                    end  
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'dlight Size';'Pre And Post Stim Clusters';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Size';'Pre And Post Stim Clusters';'Cluster Start Time'});   
+                        end  
+                    elseif ETAtype2 == 1 % reward aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'dlight Size';'Pre And Post Reward Clusters';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Size';'Pre And Post Reward Clusters';'Cluster Start Time'});   
+                        end                    
+                    end 
                 end 
             end 
+            if ETAorSTAq == 0 % STA data 
+                legend("Pre-Spike dlight","Post-Spike dlight")
+            elseif ETAorSTAq == 1 % ETA data
+                set(gca,'XTick',[]) % removes x axis ticks 
+                if ETAtype == 0 % opto data 
+                  legend("Pre-Opto dlight","Post-Opto dlight")
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend("Pre-Stim dlight","Post-Stim dlight")
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend("Pre-Reward dlight","Post-Reward dlight")
+                    end 
+                end 
+            end            
         end 
-        if ETAorSTAq == 0 % STA data 
-            legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
-        elseif ETAorSTAq == 1 % ETA data
-            set(gca,'XTick',[]) % removes x axis ticks 
-            if ETAtype == 0 % opto data 
-              legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
-                elseif ETAtype2 == 1 % reward aligned 
-                    legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
-                end 
-            end 
-        end
-        xticklabels(labels)   
+        if dlightQ == 0 % BBB data 
+            xticklabels(labels)   
+        end 
 
         figure;
         ax=gca;
@@ -17622,56 +17772,106 @@ elseif clustSpikeQ == 1
         boxchart(CampForPlotPost,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Pixel Amplitude")
         if ETAorSTAq == 0 % STA data
             xlabel("Axon")
         end 
-        if ETAorSTAq == 0 % STA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
-            end          
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
+        if dlightQ == 0 % BBB data
+            ylabel("BBB Plume Pixel Amplitude")
+            if ETAorSTAq == 0 % STA data
                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});   
+                    title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Average Cluster Time'});   
                 elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});   
-                end      
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
+                    title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Cluster Start Time'});   
+                end          
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});   
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});   
                     elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});   
-                    end    
-                elseif ETAtype2 == 1 % reward aligned 
-                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});   
-                    elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});   
-                    end                    
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});   
+                    end      
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});   
+                        end    
+                    elseif ETAtype2 == 1 % reward aligned 
+                         if clustSpikeQ3 == 0 
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});   
+                        end                    
+                    end 
                 end 
             end 
+            if ETAorSTAq == 0 % STA data 
+                legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
+            elseif ETAorSTAq == 1 % ETA data
+                set(gca,'XTick',[]) % removes x axis ticks
+                if ETAtype == 0 % opto data 
+                  legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
+                    end 
+                end 
+            end
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Pixel Amplitude")
+            if ETAorSTAq == 0 % STA data
+                if clustSpikeQ3 == 0 
+                    title({'dlight Pixel Amplitude By Axon';'Pre And Post Spike Clusters';'Average Cluster Time'});   
+                elseif clustSpikeQ3 == 1
+                    title({'dlight Pixel Amplitude By Axon';'Pre And Post Spike Clusters';'Cluster Start Time'});   
+                end          
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
+                    if clustSpikeQ3 == 0 
+                        title({'dlight Pixel Amplitude';'Pre And Post Opto Clusters';'Average Cluster Time'});   
+                    elseif clustSpikeQ3 == 1
+                        title({'dlight Pixel Amplitude';'Pre And Post Opto Clusters';'Cluster Start Time'});   
+                    end      
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'dlight Pixel Amplitude';'Pre And Post Stim Clusters';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Pixel Amplitude';'Pre And Post Stim Clusters';'Cluster Start Time'});   
+                        end    
+                    elseif ETAtype2 == 1 % reward aligned 
+                         if clustSpikeQ3 == 0 
+                            title({'dlight Pixel Amplitude';'Pre And Post Reward Clusters';'Average Cluster Time'});   
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Pixel Amplitude';'Pre And Post Reward Clusters';'Cluster Start Time'});   
+                        end                    
+                    end 
+                end 
+            end 
+            if ETAorSTAq == 0 % STA data 
+                legend("Pre-Spike dlight","Post-Spike dlight")
+            elseif ETAorSTAq == 1 % ETA data
+                set(gca,'XTick',[]) % removes x axis ticks
+                if ETAtype == 0 % opto data 
+                  legend("Pre-Opto dlight","Post-Opto dlight")
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        legend("Pre-Stim dlight","Post-Stim dlight")
+                    elseif ETAtype2 == 1 % reward aligned 
+                        legend("Pre-Reward dlight","Post-Reward dlight")
+                    end 
+                end 
+            end            
         end 
-        if ETAorSTAq == 0 % STA data 
-            legend("Pre-Spike BBB Plume","Post-Spike BBB Plume")
-        elseif ETAorSTAq == 1 % ETA data
-            set(gca,'XTick',[]) % removes x axis ticks
-            if ETAtype == 0 % opto data 
-              legend("Pre-Opto BBB Plume","Post-Opto BBB Plume")
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
-                    legend("Pre-Stim BBB Plume","Post-Stim BBB Plume")
-                elseif ETAtype2 == 1 % reward aligned 
-                    legend("Pre-Reward BBB Plume","Post-Reward BBB Plume")
-                end 
-            end 
-        end
-        xticklabels(labels) 
+        if dlightQ == 0 % BBB data
+            xticklabels(labels) 
+        end 
     end 
 end 
+
 if  clustSpikeQ == 1 
     if preAndPostQ == 1 
         % reshape data to plot box and whisker plots 
@@ -17689,35 +17889,68 @@ if  clustSpikeQ == 1
         % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Size (microns squared)") 
-        if ETAorSTAq == 0 % STA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-            end     
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Size (microns squared)") 
+            if ETAorSTAq == 0 % STA data
                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+                    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
                 elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});  
-                end    
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
+                    title({'BBB Plume Size By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+                end     
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+                        title({'BBB Plume Size';'Pre And Post Opto Plumes';'Average Cluster Time'});  
                     elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});  
-                    end  
-                elseif ETAtype2 == 1 % reward aligned 
-                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+                        title({'BBB Plume Size';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+                    end    
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'BBB Plume Size';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Size';'Pre And Post Stim Plumes';'Cluster Start Time'});  
+                        end  
+                    elseif ETAtype2 == 1 % reward aligned 
+                         if clustSpikeQ3 == 0 
+                            title({'BBB Plume Size';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});  
+                        end                     
+                    end 
+                end          
+            end             
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Size (microns squared)") 
+            if ETAorSTAq == 0 % STA data
+                if clustSpikeQ3 == 0 
+                    title({'dlight Size By Axon';'Pre And Post Spike Clusters';'Averaged Across Axons';'Average Cluster Time'});  
+                elseif clustSpikeQ3 == 1
+                    title({'dlight Size By Axon';'Pre And Post Spike Clusters';'Averaged Across Axons';'Cluster Start Time'});  
+                end     
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
+                    if clustSpikeQ3 == 0 
+                        title({'dlight Size';'Pre And Post Opto Clusters';'Average Cluster Time'});  
                     elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Size';'Pre And Post Reward Plumes';'Cluster Start Time'});  
-                    end                     
-                end 
-            end          
+                        title({'dlight Size';'Pre And Post Opto Clusters';'Cluster Start Time'});  
+                    end    
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'dlight Size';'Pre And Post Stim Clusters';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Size';'Pre And Post Stim Clusters';'Cluster Start Time'});  
+                        end  
+                    elseif ETAtype2 == 1 % reward aligned 
+                         if clustSpikeQ3 == 0 
+                            title({'dlight Size';'Pre And Post Reward Clusters';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Size';'Pre And Post Reward Clusters';'Cluster Start Time'});  
+                        end                     
+                    end 
+                end          
+            end             
         end 
         if ETAorSTAq == 0 % STA data 
             avLabels = ["Pre-Spike","Post-Spike"];
@@ -17749,35 +17982,68 @@ if  clustSpikeQ == 1
         % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Pixel Amplitude") 
-        if ETAorSTAq == 0 % STA data
-            if clustSpikeQ3 == 0 
-                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
-            elseif clustSpikeQ3 == 1
-                title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
-            end       
-        elseif ETAorSTAq == 1 % ETA data
-            if ETAtype == 0 % opto data 
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Pixel Amplitude") 
+            if ETAorSTAq == 0 % STA data
                 if clustSpikeQ3 == 0 
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});  
+                    title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Average Cluster Time'});  
                 elseif clustSpikeQ3 == 1
-                    title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});  
-                end   
-            elseif ETAtype == 1 % behavior data 
-                if ETAtype2 == 0 % stim aligned 
+                    title({'BBB Plume Pixel Amplitude By Axon';'Pre And Post Spike Plumes';'Averaged Across Axons';'Cluster Start Time'});  
+                end       
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Average Cluster Time'});  
                     elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});  
-                    end                      
-                elseif ETAtype2 == 1 % reward aligned 
-                     if clustSpikeQ3 == 0 
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});  
-                    elseif clustSpikeQ3 == 1
-                        title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});  
-                    end                        
+                        title({'BBB Plume Pixel Amplitude';'Pre And Post Opto Plumes';'Cluster Start Time'});  
+                    end   
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Stim Plumes';'Cluster Start Time'});  
+                        end                      
+                    elseif ETAtype2 == 1 % reward aligned 
+                         if clustSpikeQ3 == 0 
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'BBB Plume Pixel Amplitude';'Pre And Post Reward Plumes';'Cluster Start Time'});  
+                        end                        
+                    end 
                 end 
-            end 
+            end             
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Pixel Amplitude") 
+            if ETAorSTAq == 0 % STA data
+                if clustSpikeQ3 == 0 
+                    title({'dlight Pixel Amplitude By Axon';'Pre And Post Spike Clusters';'Averaged Across Axons';'Average Cluster Time'});  
+                elseif clustSpikeQ3 == 1
+                    title({'dlight Pixel Amplitude By Axon';'Pre And Post Spike Clusters';'Averaged Across Axons';'Cluster Start Time'});  
+                end       
+            elseif ETAorSTAq == 1 % ETA data
+                if ETAtype == 0 % opto data 
+                    if clustSpikeQ3 == 0 
+                        title({'dlight Pixel Amplitude';'Pre And Post Opto Clusters';'Average Cluster Time'});  
+                    elseif clustSpikeQ3 == 1
+                        title({'dlight Pixel Amplitude';'Pre And Post Opto Clusters';'Cluster Start Time'});  
+                    end   
+                elseif ETAtype == 1 % behavior data 
+                    if ETAtype2 == 0 % stim aligned 
+                        if clustSpikeQ3 == 0 
+                            title({'dlight Pixel Amplitude';'Pre And Post Stim Clusters';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Pixel Amplitude';'Pre And Post Stim Clusters';'Cluster Start Time'});  
+                        end                      
+                    elseif ETAtype2 == 1 % reward aligned 
+                         if clustSpikeQ3 == 0 
+                            title({'dlight Pixel Amplitude';'Pre And Post Reward Clusters';'Average Cluster Time'});  
+                        elseif clustSpikeQ3 == 1
+                            title({'dlight Pixel Amplitude';'Pre And Post Reward Clusters';'Cluster Start Time'});  
+                        end                        
+                    end 
+                end 
+            end             
         end 
         if ETAorSTAq == 0 % STA data 
             avLabels = ["Pre-Spike","Post-Spike"];
@@ -17849,13 +18115,27 @@ if clustSpikeQ == 0
     Frames_post_stim_start = (Frames-1)/2; 
     sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
     % FrameVals = round((1:FPSstack{mouse}:Frames))+5; 
+    if dlightQ == 1 % dlight data
+        threshFrame = floor(size(im,3)/2);
+        FrameVals(3) = threshFrame;
+        FrameVals(2) = threshFrame - (Frames/5);
+        FrameVals(1) = FrameVals(2) - (Frames/5);
+        FrameVals(4) = threshFrame + (Frames/5);
+        FrameVals(5) = FrameVals(4) + (Frames/5);        
+    end 
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title('Change in BBB Plume Size Over Time')
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Size (microns squared)") 
+        title('Change in BBB Plume Size Over Time')
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Size (microns squared)") 
+        title('Change in dlight Size Over Time')        
+    end 
+
 
     % plot change in plume pixel amplitude per cluster color coded by axon 
     figure;
@@ -17885,9 +18165,15 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
-    xlabel("Time (s)")
-    title('Change in BBB Plume Pixel Amplitude Over Time')
+    xlabel("Time (s)");
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Pixel Amplitude")
+        title('Change in BBB Plume Pixel Amplitude Over Time')
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Pixel Amplitude")
+        title('Change in dlight Pixel Amplitude Over Time')        
+    end 
+
 
     % resort data to plot change in average cluster size per axon
     figure;
@@ -17919,13 +18205,23 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    if ETAorSTAq == 0 % STA data 
-        title({'Average Change in BBB Plume Size Over Time';'Per Axon'})
-    elseif ETAorSTAq == 1 % ETA data 
-        title('Average Change in BBB Plume Size Over Time')
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Size (microns squared)") 
+        if ETAorSTAq == 0 % STA data 
+            title({'Average Change in BBB Plume Size Over Time';'Per Axon'})
+        elseif ETAorSTAq == 1 % ETA data 
+            title('Average Change in BBB Plume Size Over Time')
+        end 
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Size (microns squared)") 
+        if ETAorSTAq == 0 % STA data 
+            title({'Average Change in dlight Size Over Time';'Per Axon'})
+        elseif ETAorSTAq == 1 % ETA data 
+            title('Average Change in dlight Size Over Time')
+        end         
     end 
+
 
      % resort data to plot change in average cluster pixel amplitude per axon
     figure;
@@ -17949,14 +18245,24 @@ if clustSpikeQ == 0
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
+    ax.FontName = 'Times'; 
     xlabel("Time (s)")
-    if ETAorSTAq == 0 % STA data 
-        title({'Average Change in';'BBB Plume Pixel Amplitude Over Time';'Per Axon'})   
-    elseif ETAorSTAq == 1 % ETA data 
-        title({'Average Change in';'BBB Plume Pixel Amplitude Over Time'}) 
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Pixel Amplitude")
+        if ETAorSTAq == 0 % STA data 
+            title({'Average Change in';'BBB Plume Pixel Amplitude Over Time';'Per Axon'})   
+        elseif ETAorSTAq == 1 % ETA data 
+            title({'Average Change in';'BBB Plume Pixel Amplitude Over Time'}) 
+        end         
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Pixel Amplitude")
+        if ETAorSTAq == 0 % STA data 
+            title({'Average Change in';'dlight Pixel Amplitude Over Time';'Per Axon'})   
+        elseif ETAorSTAq == 1 % ETA data 
+            title({'Average Change in';'dlight Pixel Amplitude Over Time'}) 
+        end         
     end 
+
 
     if ETAorSTAq == 0 % STA data 
         % plot average change in cluster size of all axons w/95% CI 
@@ -17988,10 +18294,15 @@ if clustSpikeQ == 0
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
-        ax.FontName = 'Times';
-        ylabel("BBB Plume Size (microns squared)") 
-        xlabel("Time (s)")
-        title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
+        ax.FontName = 'Times';         
+        xlabel("Time (s)")        
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Size (microns squared)")
+            title({'Average Change in BBB Plume Size Over Time';'Across Axons'})
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Size (microns squared)")
+            title({'Average Change in dlight Size Over Time';'Across Axons'})            
+        end 
     end 
     
     if ETAorSTAq == 0 % STA data
@@ -18024,10 +18335,15 @@ if clustSpikeQ == 0
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
-        ax.FontName = 'Times';
-        ylabel("BBB Plume Pixel Amplitude") 
-        xlabel("Time (s)")
-        title({'Average Change in'; 'BBB Plume Pixel Amplitude Over Time';'Across Axons'})  
+        ax.FontName = 'Times';        
+        xlabel("Time (s)")        
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Pixel Amplitude") 
+            title({'Average Change in'; 'BBB Plume Pixel Amplitude Over Time';'Across Axons'})
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Pixel Amplitude") 
+            title({'Average Change in'; 'dlight Pixel Amplitude Over Time';'Across Axons'})            
+        end 
     end 
 end 
 
@@ -18184,10 +18500,16 @@ if clustSpikeQ == 0
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
-    xlabel("Time (s)")
-    title('Change in BBB Plume Size Over Time')
+    ax.FontName = 'Times';    
+    xlabel("Time (s)")    
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Size (microns squared)") 
+        title('Change in BBB Plume Size Over Time')
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Size (microns squared)") 
+        title('Change in dlight Size Over Time')        
+    end 
+
     
     % plot change in cluster pixel amplitude color coded by axon  
     figure;
@@ -18211,9 +18533,15 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
     xlabel("Time (s)")
-    title('Change in BBB Plume Pixel Amplitude Over Time')
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Pixel Amplitude")     
+        title('Change in BBB Plume Pixel Amplitude Over Time')
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Pixel Amplitude")     
+        title('Change in dlight Pixel Amplitude Over Time')        
+    end 
+    
     
     % plot average change in cluster size 
     figure;
@@ -18235,10 +18563,16 @@ if clustSpikeQ == 0
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
-    xlabel("Time (s)")
-    title({'Average Change in BBB Plume Size Over Time'})
+    ax.FontName = 'Times';    
+    xlabel("Time (s)")    
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Size (microns squared)") 
+        title({'Average Change in BBB Plume Size Over Time'})
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Size (microns squared)") 
+        title({'Average Change in dlight Size Over Time'})        
+    end 
+
     
     % plot average change in cluster size 
     figure;
@@ -18257,10 +18591,16 @@ if clustSpikeQ == 0
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
+    ax.FontName = 'Times';     
     xlabel("Time (s)")
-    title({'Average Change in';'BBB Plume Pixel Amplitude Over Time'})
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Pixel Amplitude")
+        title({'Average Change in';'BBB Plume Pixel Amplitude Over Time'})
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Pixel Amplitude")
+        title({'Average Change in';'dlight Pixel Amplitude Over Time'})        
+    end 
+
     
     % plot aligned cluster change in size per bin and total average 
     % determine cluster start frame per bin  
@@ -18304,9 +18644,15 @@ if clustSpikeQ == 0
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
     ax.FontName = 'Times';
-    ylabel("BBB Plume Size (microns squared)") 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Size Over Time';'Clusters Aligned and Averaged'})
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Size (microns squared)") 
+        title({'Change in BBB Plume Size Over Time';'Clusters Aligned and Averaged'})
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Size (microns squared)") 
+        title({'Change in dlight Size Over Time';'Clusters Aligned and Averaged'})        
+    end 
+
     
     % plot aligned cluster change in pixel amplitude per bin and total average 
     % determine cluster start frame per bin  
@@ -18338,10 +18684,16 @@ if clustSpikeQ == 0
     ax.XTick = FrameVals;
     ax.XTickLabel = sec_TimeVals;  
     ax.FontSize = 15;
-    ax.FontName = 'Times';
-    ylabel("BBB Plume Pixel Amplitude") 
+    ax.FontName = 'Times'; 
     xlabel("Time (s)")
-    title({'Change in BBB Plume Pixel Amplitude Over Time';'Clusters Aligned and Averaged'})
+    if dlightQ == 0 % BBB data 
+        ylabel("BBB Plume Pixel Amplitude")
+        title({'Change in BBB Plume Pixel Amplitude Over Time';'Clusters Aligned and Averaged'})
+    elseif dlightQ == 1 % dlight data
+        ylabel("dlight Pixel Amplitude")
+        title({'Change in dlight Pixel Amplitude Over Time';'Clusters Aligned and Averaged'})
+    end 
+
     
     % plot total aligned cluster size average 
     [~,c] = cellfun(@size,alignedBinClustsSize);
@@ -18387,10 +18739,15 @@ if clustSpikeQ == 0
         ax.XTick = FrameVals;
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
-        ax.FontName = 'Times';
-        ylabel("BBB Plume Size (microns squared)") 
-        xlabel("Time (s)")
-        title({'Average Aligned Change in BBB Plume Size Over Time';'Across Axons'})
+        ax.FontName = 'Times';        
+        xlabel("Time (s)")        
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Size (microns squared)") 
+            title({'Average Aligned Change in BBB Plume Size Over Time';'Across Axons'})
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Size (microns squared)") 
+            title({'Average Aligned Change in dlight Size Over Time';'Across Axons'})            
+        end 
     end 
     
     % plot total aligned cluster pixel amplitude average 
@@ -18431,9 +18788,14 @@ if clustSpikeQ == 0
         ax.XTickLabel = sec_TimeVals;  
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        ylabel("BBB Plume Pixel Amplitude") 
         xlabel("Time (s)")
-        title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude Over Time';'Across Axons'})
+        if dlightQ == 0 % BBB data 
+            ylabel("BBB Plume Pixel Amplitude") 
+            title({'Average Aligned Change in'; 'BBB Plume Pixel Amplitude Over Time';'Across Axons'})
+        elseif dlightQ == 1 % dlight data
+            ylabel("dlight Pixel Amplitude") 
+            title({'Average Aligned Change in'; 'dlight Pixel Amplitude Over Time';'Across Axons'})            
+        end 
     end 
 end 
 
