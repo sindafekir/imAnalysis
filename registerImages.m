@@ -1,5 +1,4 @@
 %% set the paramaters 
-%{
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
     splitType = input('How must the data be split? Serial Split = 0. Alternating Split = 1. '); 
@@ -7,9 +6,7 @@ if volIm == 1
 elseif volIm == 0
     numZplanes = 1; 
 end 
-%}
 %% get the images 
-%{
 disp('Importing Images')
 cd(uigetdir('*.*','WHERE ARE THE PHOTOS? '));    
 fileList = dir('*.tif*');
@@ -87,9 +84,7 @@ elseif frameAvQ == 1
         end 
     end
 end 
-%}
 %% separate volume imaging data into separate stacks per z plane and motion correction
-%{
 templateQ = input('Input 0 if you want the template to be the average of all frames. Not recommended if there is scramble. Input 1 otherwise. ');
 if templateQ == 1
     if redChanQ == 1 
@@ -229,9 +224,7 @@ elseif volIm == 0
         regStacks{2,1} = ggRegZstacks; regStacks{1,1} = 'ggRegZstacks';
     end 
 end 
-%}
 %% check registration 
-%{
 if volIm == 1     
     %check relationship b/w template and 3D registered images
     if redChanQ == 1
@@ -302,13 +295,11 @@ elseif volIm == 0
         title({'Correlation Coefficient of 2D Motion Correction Template and Output';'Red Channel Registered with Red Channel Template'}); 
     end 
 end 
-
 %
 % implay(ggRegZstacks{1});
 % implay(greenImageStack);
 %}
 %% save registered stacks 
-%{
 clearvars -except regStacks
 vid = input('What number video is this? '); 
 
@@ -317,5 +308,5 @@ dir1 = input('What folder are you saving these images in? ');
 dir2 = strrep(dir1,'\','/');
 filename = sprintf('%s/regStacks_vid%d',dir2,vid);
 save(filename)
-%}
+
  
