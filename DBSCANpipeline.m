@@ -3243,8 +3243,42 @@ for ccell = 1:length(terminals{mouse})
     end 
     % zlim([35 37])
 %     set(gca,'XLim',[0 40],'YLim',[10 65])%,'ZLim',[18.5 19.5])
-    % ORIGINAL PLOTTING CODE BELOW 
-%     hold on; scatter3(indsA{terminals{mouse}(ccell)}(:,1),indsA{terminals{mouse}(ccell)}(:,2),indsA{terminals{mouse}(ccell)}(:,3),30,'r'); % plot axon 
+    if ETAorSTAq == 0 % STA data 
+        axonLabel = sprintf('Axon %d.',terminals{mouse}(ccell)); 
+        spikeCountLabel = sprintf('%d spikes.',spikeCount{terminals{mouse}(ccell)}); 
+        title({axonLabel;spikeCountLabel})
+    elseif ETAorSTAq == 1 % ETA data 
+        if ETAtype == 0 % opto data 
+            optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
+            title({'Opto Triggered';optoCountLabel}); 
+        elseif ETAtype == 1 % behavior data 
+            optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
+            if ETAtype2 == 0 % stim aligned 
+                title({'Behavior Stim Aligned';optoCountLabel}); 
+            elseif ETAtype2 == 1 % reward aligned 
+                title({'Behavior Reward Aligned';optoCountLabel}); 
+            end 
+        end 
+    end 
+    % for each cluster (use inds and idx) determine first frame of
+    % appearance and plot a figure showing the first frame of appearance
+    clustIDs = unique(idx{terminals{mouse}(ccell)}); % what are the different individual cluster ID numbers
+    clustIDs = clustIDs(~isnan(unique(idx{terminals{mouse}(ccell)})));
+    figure;
+    for clust = 1:sum(~isnan(unique(idx{terminals{mouse}(ccell)})))
+        % find the inds for the different individual clusters by ID number 
+        cIDinds = find(idx{terminals{mouse}(ccell)} == clustIDs(clust));
+        % determine the inds for the first frame each cluster appears in 
+        minFrame = min(inds{terminals{mouse}(ccell)}(cIDinds,3));
+        minFrameInds = cIDinds(inds{terminals{mouse}(ccell)}(cIDinds,3) == minFrame);
+        minVFrameInds = find(indsV{terminals{mouse}(ccell)}(:,3) == minFrame);
+        % plot the grouped pixels 
+         scatter3(indsV{terminals{mouse}(ccell)}(minVFrameInds,1),indsV{terminals{mouse}(ccell)}(minVFrameInds,2),indsV{terminals{mouse}(ccell)}(minVFrameInds,3),30,'k','filled'); % plot vessel outline 
+        % plot vessel outline 
+        hold on; scatter3(inds{terminals{mouse}(ccell)}(minFrameInds,1),inds{terminals{mouse}(ccell)}(minFrameInds,2),inds{terminals{mouse}(ccell)}(minFrameInds,3),30,idx{terminals{mouse}(ccell)}(minFrameInds),'filled'); % plot clusters 
+        cols = idx{terminals{mouse}(ccell)}(minFrameInds);
+        colormap(parula(cols(1)))
+    end 
     if ETAorSTAq == 0 % STA data 
         axonLabel = sprintf('Axon %d.',terminals{mouse}(ccell)); 
         spikeCountLabel = sprintf('%d spikes.',spikeCount{terminals{mouse}(ccell)}); 
