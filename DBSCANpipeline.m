@@ -311,7 +311,7 @@ dir2 = strrep(dir1,'\','/');
 filename = sprintf('%s/regStacks_vid%d',dir2,vid);
 save(filename)
 %}
-%% get the data you need 
+%% get and save out the data you need 
 % one animal at a time
 %{
 %set the paramaters 
@@ -320,7 +320,7 @@ ETAstackQ = input('Input 1 to import red and green channel stacks to create ETA 
 if STAstackQ == 1 || ETAstackQ == 1 
     BGsubQ = input('Input 1 if you want to do background subtraction on your imported image stacks. Input 0 otherwise. ');
     if BGsubQ == 1
-        BGsubTypeQ = input('Input 0 to do a simple background subtraction. Input 1 if you want to do row by row background subtraction. ');
+        BGsubTypeQ = 0; %input('Input 0 to do a simple background subtraction. Input 1 if you want to do row by row background subtraction. ');
     end 
 end 
 if STAstackQ == 1 || ETAstackQ == 1
@@ -341,7 +341,7 @@ if STAstackQ == 1 || ETAstackQ == 1
     % elseif batchQ == 1 
     %     mouseNum = input('How many mice are you batch processing? ');
     % end 
-    MouseNum = 1; mouse = 1;
+    mouseNum = 1; mouse = 1;
     FPSstack = cell(1,mouseNum);
     vidList = cell(1,mouseNum);
     framePeriod = input(sprintf('What is the frame period for mouse #%d? ',mouse));
@@ -579,6 +579,13 @@ if STAstackQ == 1 || ETAstackQ == 1
         end 
     end 
 end 
+
+% save out the workspace variables 
+dir1 = input('What folder are you saving the data in? ');
+dir2 = strrep(dir1,'\','/');
+filename = sprintf('%s/TAstackData_vid%d',dir2,vid);
+save(filename)
+
 %}
 %% (ETA stacks) create red and green channel stack averages around opto stim (one animal at a time) 
 % z scores the entire stack before sorting into windows for averaging 
@@ -1407,7 +1414,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImageSS4709_ETAvid_20231030zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImageSF113_20210622_ETAvid_20231124zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -1506,6 +1513,20 @@ if spikeQ == 1
     end 
     clearvars data
 end 
+
+% save out the workspace variables 
+if spikeQ == 0 
+    dir1 = input('What folder are you saving the data in? ');
+    dir2 = strrep(dir1,'\','/');
+    filename = sprintf('%s/ETAstackData_realOptoStimLocs',dir2);
+    save(filename)
+elseif spikeQ == 1 
+    dir1 = input('What folder are you saving the data in? ');
+    dir2 = strrep(dir1,'\','/');
+    filename = sprintf('%s/ETAstackData_bootStrapped1kShuffledStimLocs',dir2);
+    save(filename)    
+end 
+
 
 %% conditional statement that ensures you checked the other channel
 
@@ -3796,7 +3817,9 @@ if dlightQ == 0 % BBB data
     f = cell(1,length(terminals{mouse}));
     for ccell = 1:length(terminals{mouse})
         if ccell == 1 
-            sizeDistArray(:,1) = minACdists(ccell,:);
+            if exist('minACdists','var')
+                sizeDistArray(:,1) = minACdists(ccell,:);
+            end 
             sizeDistArray(:,2) = clustSize(ccell,:);
             sizeDistArray(:,3) = ccell;       
             % determine trend line 
@@ -3812,8 +3835,10 @@ if dlightQ == 0 % BBB data
             if ccell == 2
                 len = size(sizeDistArray,1);   
             end 
-            len2 = size(sizeDistArray,1);       
-            sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            len2 = size(sizeDistArray,1);    
+            if exist('minACdists','var')
+                sizeDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            end 
             sizeDistArray(len2+1:len2+len,2) = clustSize(ccell,:);
             sizeDistArray(len2+1:len2+len,3) = ccell;                  
             % determine trend line 
@@ -3842,7 +3867,9 @@ if dlightQ == 0 % BBB data
     fAmp = cell(1,length(terminals{mouse}));
     for ccell = 1:length(terminals{mouse})
         if ccell == 1 
-            ampDistArray(:,1) = minACdists(ccell,:);
+            if exist('minACdists','var')
+                ampDistArray(:,1) = minACdists(ccell,:);
+            end 
             ampDistArray(:,2) = clustAmp(ccell,:);
             ampDistArray(:,3) = ccell;       
             % determine trend line 
@@ -3859,7 +3886,9 @@ if dlightQ == 0 % BBB data
                 len = size(ampDistArray,1);   
             end 
             len2 = size(ampDistArray,1);       
-            ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            if exist('minACdists','var')
+                ampDistArray(len2+1:len2+len,1) = minACdists(ccell,:);
+            end 
             ampDistArray(len2+1:len2+len,2) = clustAmp(ccell,:);
             ampDistArray(len2+1:len2+len,3) = ccell;                  
             % determine trend line 
@@ -3885,137 +3914,141 @@ if dlightQ == 0 % BBB data
 end 
 
 % determine cluster distance from VR space if you want 
-VRQ = input('Input 1 to determine the distance of each axon from the VR space. ');
-if VRQ == 1 
-    drawVRQ = input('Input 1 to draw VR space outline. ');
-    if drawVRQ == 1 
-        clearvars indsVR VRinds
-        figure; imagesc(nanmean(vesChan{terminals{mouse}(1)},3))
-        numVR = input('How many VR areas are there?. ');
-        for VR = 1:numVR
-            if VR == 1
-                vesIm = nanmean(vesChan{terminals{mouse}(1)},3);
-                figure;
-                imshow(vesIm,[0 500])
-                fprintf('Draw the %d VR area.',VR);
-                VRdata = drawfreehand(gca);  % manually draw vessel outline
-                % get VR outline coordinates 
-                VRinds = VRdata.Position;  
-                outLineQ = input(sprintf('Input 1 if you are done drawing the %#d VR outline. ',VR));
-                if outLineQ == 1
-                    close all
+if exist('minACdists','var')
+    VRQ = input('Input 1 to determine the distance of each axon from the VR space. ');
+    if VRQ == 1 
+        drawVRQ = input('Input 1 to draw VR space outline. ');
+        if drawVRQ == 1 
+            clearvars indsVR VRinds
+            figure; imagesc(nanmean(vesChan{terminals{mouse}(1)},3))
+            numVR = input('How many VR areas are there?. ');
+            for VR = 1:numVR
+                if VR == 1
+                    vesIm = nanmean(vesChan{terminals{mouse}(1)},3);
+                    figure;
+                    imshow(vesIm,[0 500])
+                    fprintf('Draw the %d VR area.',VR);
+                    VRdata = drawfreehand(gca);  % manually draw vessel outline
+                    % get VR outline coordinates 
+                    VRinds = VRdata.Position;  
+                    outLineQ = input(sprintf('Input 1 if you are done drawing the %#d VR outline. ',VR));
+                    if outLineQ == 1
+                        close all
+                    end 
+                elseif VR > 1 
+                    len = size(VRinds,1);
+                    figure;
+                    imshow(vesIm,[0 500])
+                    fprintf('Draw the %d VR area.',VR);
+                    VRdata = drawfreehand(gca);  % manually draw vessel outline
+                    % get VR outline coordinates 
+                    VRinds2 = VRdata.Position;  
+                    outLineQ = input(sprintf('Input 1 if you are done drawing the %#d VR outline. ',VR));
+                    if outLineQ == 1
+                        close all
+                    end 
+                    len2 = size(VRinds2,1);
+                    VRinds(len+1:len+len2,:) = VRinds2;
                 end 
-            elseif VR > 1 
-                len = size(VRinds,1);
-                figure;
-                imshow(vesIm,[0 500])
-                fprintf('Draw the %d VR area.',VR);
-                VRdata = drawfreehand(gca);  % manually draw vessel outline
-                % get VR outline coordinates 
-                VRinds2 = VRdata.Position;  
-                outLineQ = input(sprintf('Input 1 if you are done drawing the %#d VR outline. ',VR));
-                if outLineQ == 1
-                    close all
-                end 
-                len2 = size(VRinds2,1);
-                VRinds(len+1:len+len2,:) = VRinds2;
             end 
-        end 
-        len = size(VRinds,1); 
-        % convert VR inds to microns 
-        VRinds(:,1) = VRinds(:,1)*XpixDist; VRinds(:,2) = VRinds(:,2)*YpixDist;
-        for frame = 1:size(im,3)
-            if frame == 1 
-                indsVR(:,1:2) = VRinds;
-                indsVR(:,3) = frame;
-            elseif frame > 1 
-                len2 = size(indsVR,1);
-                indsVR(len2+1:len2+len,1:2) = VRinds;
-                indsVR(len2+1:len2+len,3) = frame;
-            end 
-        end 
-    end 
-    % determine distance of each cluster from the VR space 
-    dists = cell(1,max(terminals{mouse}));
-    minVRCdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
-    for ccell = 1:length(terminals{mouse})
-        for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
-           % find what rows each cluster is located in
-            [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
-            % identify the x, y, z location of pixels per cluster
-            cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
-            % convert cLoc X and Y inds to microns 
-            if isempty(cLocs) == 0 
-                cLocs(:,1) = cLocs(:,1)*XpixDist; cLocs(:,2) = cLocs(:,2)*YpixDist; 
-            end 
-            for VRpoint = 1:size(indsVR,1)
-                for Cpoint = 1:size(cLocs,1)
-                    % get euclidean micron distance between each Ca ROI pixel
-                    % and BBB cluster pixel 
-                    dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)); 
+            len = size(VRinds,1); 
+            % convert VR inds to microns 
+            VRinds(:,1) = VRinds(:,1)*XpixDist; VRinds(:,2) = VRinds(:,2)*YpixDist;
+            for frame = 1:size(im,3)
+                if frame == 1 
+                    indsVR(:,1:2) = VRinds;
+                    indsVR(:,3) = frame;
+                elseif frame > 1 
+                    len2 = size(indsVR,1);
+                    indsVR(len2+1:len2+len,1:2) = VRinds;
+                    indsVR(len2+1:len2+len,3) = frame;
                 end 
             end 
         end 
-    end 
-    for ccell = 1:length(terminals{mouse})
-        for clust = 1:length(dists{terminals{mouse}(ccell)})
-            % determine minimum distance between each Ca ROI and cluster 
-            if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
-                minVRCdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+        % determine distance of each cluster from the VR space 
+        dists = cell(1,max(terminals{mouse}));
+        minVRCdists = NaN(length(terminals{mouse}),length(unIdxVals{terminals{mouse}(ccell)}));
+        for ccell = 1:length(terminals{mouse})
+            for clust = 1:length(unIdxVals{terminals{mouse}(ccell)})
+               % find what rows each cluster is located in
+                [Crow, ~] = find(idx{terminals{mouse}(ccell)} == unIdxVals{terminals{mouse}(ccell)}(clust)); 
+                % identify the x, y, z location of pixels per cluster
+                cLocs = inds{terminals{mouse}(ccell)}(Crow,:);  
+                % convert cLoc X and Y inds to microns 
+                if isempty(cLocs) == 0 
+                    cLocs(:,1) = cLocs(:,1)*XpixDist; cLocs(:,2) = cLocs(:,2)*YpixDist; 
+                end 
+                for VRpoint = 1:size(indsVR,1)
+                    for Cpoint = 1:size(cLocs,1)
+                        % get euclidean micron distance between each Ca ROI pixel
+                        % and BBB cluster pixel 
+                        dists{terminals{mouse}(ccell)}{clust}(VRpoint,Cpoint) = sqrt(((cLocs(Cpoint,1)-indsVR(VRpoint,1))^2)+((cLocs(Cpoint,2)-indsVR(VRpoint,2))^2)); 
+                    end 
+                end 
             end 
         end 
-    end 
-    % make 0s NaNs 
-    minVRCdists(minVRCdists == 0) = NaN;
-    % resort size and distance data for gscatter 
-    if size(minVRCdists,2) < size(clustSize,2)
-        minVRCdists(:,size(minVRCdists,2)+1:size(clustSize,2)) = NaN;
-    end 
-    % resort cluster start time and VR distance data for gscatter 
-    clear timeVRDistArray includeX3 includY3 includeXY3
-    f3 = cell(1,length(terminals{mouse}));
-    for ccell = 1:length(terminals{mouse})
-        if ccell == 1 
-            timeVRDistArray(:,1) = avClocFrame(ccell,:);
-            timeVRDistArray(:,2) = minVRCdists(ccell,:);
-            timeVRDistArray(:,3) = ccell;       
-            % determine trend line 
-            includeX3 =~ isnan(timeVRDistArray(:,1)); includeY3 =~ isnan(timeVRDistArray(:,2));
-            % make incude XY that has combined 0 locs 
-            [zeroRow, ~] = find(includeY3 == 0);
-            includeX3(zeroRow) = 0; includeXY3 = includeX3;                
-            timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);  
-            if sum(includeXY3) > 1 
-                f3{ccell} = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');  
-            end 
-        elseif ccell > 1 
-            if ccell == 2
-                len = size(timeVRDistArray,1);   
-            end 
-            len2 = size(timeVRDistArray,1);       
-            timeVRDistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
-            timeVRDistArray(len2+1:len2+len,2) = minVRCdists(ccell,:);
-            timeVRDistArray(len2+1:len2+len,3) = ccell;                  
-            % determine trend line 
-            includeX3 =~ isnan(timeVRDistArray(len2+1:len2+len,1)); includeY3 =~ isnan(timeVRDistArray(len2+1:len2+len,2));
-            % make incude XY that has combined 0 locs 
-            [zeroRow, ~] = find(includeY3 == 0);
-            includeX3(zeroRow) = 0; includeXY3 = includeX3;                
-            timeVRDistX = timeVRDistArray(len2+1:len2+len,1); timeVRDistY = timeVRDistArray(len2+1:len2+len,2);   
-            if sum(includeXY3) > 1 
-                f3{ccell} = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
+        for ccell = 1:length(terminals{mouse})
+            for clust = 1:length(dists{terminals{mouse}(ccell)})
+                % determine minimum distance between each Ca ROI and cluster 
+                if isempty(dists{terminals{mouse}(ccell)}{clust}) == 0
+                    minVRCdists(ccell,clust) = min(min(dists{terminals{mouse}(ccell)}{clust}));
+                end 
             end 
         end 
+        % make 0s NaNs 
+        minVRCdists(minVRCdists == 0) = NaN;
+        % resort size and distance data for gscatter 
+        if size(minVRCdists,2) < size(clustSize,2)
+            minVRCdists(:,size(minVRCdists,2)+1:size(clustSize,2)) = NaN;
+        end 
+        % resort cluster start time and VR distance data for gscatter 
+        clear timeVRDistArray includeX3 includY3 includeXY3
+        f3 = cell(1,length(terminals{mouse}));
+        for ccell = 1:length(terminals{mouse})
+            if ccell == 1 
+                timeVRDistArray(:,1) = avClocFrame(ccell,:);
+                timeVRDistArray(:,2) = minVRCdists(ccell,:);
+                timeVRDistArray(:,3) = ccell;       
+                % determine trend line 
+                includeX3 =~ isnan(timeVRDistArray(:,1)); includeY3 =~ isnan(timeVRDistArray(:,2));
+                % make incude XY that has combined 0 locs 
+                [zeroRow, ~] = find(includeY3 == 0);
+                includeX3(zeroRow) = 0; includeXY3 = includeX3;                
+                timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);  
+                if sum(includeXY3) > 1 
+                    f3{ccell} = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');  
+                end 
+            elseif ccell > 1 
+                if ccell == 2
+                    len = size(timeVRDistArray,1);   
+                end 
+                len2 = size(timeVRDistArray,1);       
+                timeVRDistArray(len2+1:len2+len,1) = avClocFrame(ccell,:);
+                timeVRDistArray(len2+1:len2+len,2) = minVRCdists(ccell,:);
+                timeVRDistArray(len2+1:len2+len,3) = ccell;                  
+                % determine trend line 
+                includeX3 =~ isnan(timeVRDistArray(len2+1:len2+len,1)); includeY3 =~ isnan(timeVRDistArray(len2+1:len2+len,2));
+                % make incude XY that has combined 0 locs 
+                [zeroRow, ~] = find(includeY3 == 0);
+                includeX3(zeroRow) = 0; includeXY3 = includeX3;                
+                timeVRDistX = timeVRDistArray(len2+1:len2+len,1); timeVRDistY = timeVRDistArray(len2+1:len2+len,2);   
+                if sum(includeXY3) > 1 
+                    f3{ccell} = fit(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
+                end 
+            end 
+        end 
+        % determine average trend line for time vs distance 
+        includeX3 =~ isnan(timeVRDistArray(:,1)); includeY3 =~ isnan(timeVRDistArray(:,2));
+        % make incude XY that has combined 0 locs 
+        [zeroRow, ~] = find(includeY3 == 0);
+        includeX3(zeroRow) = 0; includeXY3 = includeX3;                
+        timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);   
+        if length(find(includeXY3)) > 1
+            fav3 = fitlm(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
+        end 
     end 
-    % determine average trend line for time vs distance 
-    includeX3 =~ isnan(timeVRDistArray(:,1)); includeY3 =~ isnan(timeVRDistArray(:,2));
-    % make incude XY that has combined 0 locs 
-    [zeroRow, ~] = find(includeY3 == 0);
-    includeX3(zeroRow) = 0; includeXY3 = includeX3;                
-    timeVRDistX = timeVRDistArray(:,1); timeVRDistY = timeVRDistArray(:,2);   
-    if length(find(includeXY3)) > 1
-        fav3 = fitlm(timeVRDistX(includeXY3),timeVRDistY(includeXY3),'poly1');
-    end 
+elseif ~exist('minACdists','var')
+    VRQ = 0;
 end 
 
 
@@ -4264,7 +4297,6 @@ if VRQ == 1
 end 
 
 %% plot distribution of cluster sizes and pixel amplitudes
-
 figure;
 ax=gca;
 avClustSize = nanmean(clustSize); 
@@ -4345,7 +4377,17 @@ end
 
 
 %% plot distribution of cluster times
-
+if ~exist('FrameVals','var')
+    Frames = size(im,3);
+    Frames_pre_stim_start = -((Frames-1)/2); 
+    Frames_post_stim_start = (Frames-1)/2; 
+    sec_TimeVals = floor(((Frames_pre_stim_start:FPSstack{mouse}:Frames_post_stim_start)/FPSstack{mouse}))+1;
+    FrameVals(3) = threshFrame;
+    FrameVals(2) = threshFrame - (Frames/5);
+    FrameVals(1) = FrameVals(2) - (Frames/5);
+    FrameVals(4) = threshFrame + (Frames/5);
+    FrameVals(5) = FrameVals(4) + (Frames/5);
+end 
 if clustSpikeQ == 0 
     figure;
     ax=gca;
@@ -5738,6 +5780,9 @@ end
 %% plot change in vessel width
 %remove rows full of 0s if there are any b = a(any(a,2),:)
 mouse = 1;
+if ~exist('threshFrame')
+    threshFrame = floor(size(im,3)/2);
+end 
 % import the data 
 regImDir = uigetdir('*.*',sprintf('WHERE IS THE VESSEL WIDTH DATA FOR MOUSE #%d?',mouse));
 cd(regImDir);
