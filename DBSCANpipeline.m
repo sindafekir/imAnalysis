@@ -1,4 +1,4 @@
-%% register the raw data 
+%% register the raw data (run this for each video) 
 %{
 %% set the paramaters 
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
@@ -314,6 +314,7 @@ save(filename)
 %% get and save out the data you need 
 % one animal at a time
 %{
+clear 
 %set the paramaters 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
 ETAstackQ = input('Input 1 to import red and green channel stacks to create ETA videos. Input 0 otherwise. '); 
@@ -583,11 +584,11 @@ end
 % save out the workspace variables 
 dir1 = input('What folder are you saving the data in? ');
 dir2 = strrep(dir1,'\','/');
-filename = sprintf('%s/TAstackData_vid%d',dir2,vid);
+filename = sprintf('%s/TAstackData_%dvids',dir2,vid);
 save(filename)
 
 %}
-%% (ETA stacks) create red and green channel stack averages around opto stim (one animal at a time) 
+%% (ETA stacks) create red and green channel stack averages around opto stim or behavior (one animal at a time) 
 % z scores the entire stack before sorting into windows for averaging 
 % option to high pass filter the video 
 % can create shuffled and bootrapped x number of spikes (based on input)
@@ -1393,6 +1394,13 @@ elseif blackOutCaROIQ == 0
 end 
 clearvars SNgreenStackAv SNredStackAv
 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
 % create outline of vessel to overlay the %change BBB perm stack 
 segmentVessel = 1;
@@ -1414,7 +1422,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImageSF113_20210622_ETAvid_20231124zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImageSS5262_dlightETAvid_20231106zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -1427,7 +1435,8 @@ while segmentVessel == 1
     %ask about segmentation quality 
     if segQ == 1
         %play segmentation boundaries over images 
-        implay(segOverlays)
+        % implay(segOverlays)
+        implay(BWstacks)
         segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
         if segmentVessel == 1
             clearvars BWthreshold BWopenRadius BW se boundaries
@@ -2498,6 +2507,13 @@ elseif blackOutCaROIQ == 0
 end 
 clearvars SNgreenStackAv SNredStackAv
 AVQ = input('Input 1 to average STA videos. Input 0 otherwise. ');
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if AVQ == 0 
     segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
     % create outline of vessel to overlay the %change BBB perm stack 
@@ -3044,6 +3060,14 @@ if CaFrameQ == 1
         clearvars STAterms STAtermsVesChans STAav STAavVesVid BWstacks BW_perim segOverlays
     end 
 end 
+%}
+%% plot the average change in pixel intensity of the DBSCAN video (RightChan)
+%{
+pixInt = nan(1,size(RightChan{1},3));
+for frame = 1:size(RightChan{1},3)
+    pixInt(frame) = mean(mean(RightChan{1}(:,:,frame)));
+end 
+plot(pixInt)
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (one animal at a time) 
 %{
@@ -5780,7 +5804,7 @@ end
 %% plot change in vessel width
 %remove rows full of 0s if there are any b = a(any(a,2),:)
 mouse = 1;
-if ~exist('threshFrame')
+if ~exist('threshFrame') %#ok<EXIST>
     threshFrame = floor(size(im,3)/2);
 end 
 % import the data 
