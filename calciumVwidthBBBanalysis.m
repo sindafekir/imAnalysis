@@ -11552,7 +11552,6 @@ end
 % option to high pass filter the video 
 % can create shuffled spikes 
 %{
-
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized spikes (based on ISI STD). "); 
