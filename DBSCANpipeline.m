@@ -313,7 +313,7 @@ clearvars -except regStacks
 vid = input('What number video is this? '); 
 
 %make the directory and save the images 
-dir1 = input('What folder are you saving these images in? ');
+dir1 = uigetdir('*.*','WHAT FOLDER ARE YOU SAVING THE DATA IN?'); % get the directory where you want to save your images 
 dir2 = strrep(dir1,'\','/');
 filename = sprintf('%s/regStacks_vid%d',dir2,vid);
 save(filename)
@@ -589,7 +589,7 @@ if STAstackQ == 1 || ETAstackQ == 1
 end 
 
 % save out the workspace variables 
-dir1 = input('What folder are you saving the data in? ');
+dir1 = uigetdir('*.*','WHAT FOLDER ARE YOU SAVING THE DATA IN?'); % get the directory where you want to save your images 
 dir2 = strrep(dir1,'\','/');
 filename = sprintf('%s/TAstackData_%dvids',dir2,vid);
 save(filename)
@@ -1478,10 +1478,6 @@ elseif cMapQ == 1
 %     greenColorMap = [linspace(0, 1, 110),ones(1,146)];
 %     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';    
 end 
-% save the other channel first to ensure that all Ca ROIs show an average
-%peak in the same frame 
-dir1 = uigetdir('*.*','WHERE DO YOU WANT TO SAVE THE IMAGES?'); % get the directory where you want to save your images 
-dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
 
 % create a binarized version of the STA vids
 % 1 means greater than 95% CI and 2 means lower than 95% CI 
@@ -1532,12 +1528,12 @@ end
 
 % save out the workspace variables 
 if spikeQ == 0 
-    dir1 = input('What folder are you saving the data in? ');
-    dir2 = strrep(dir1,'\','/');
+    dir1 = uigetdir('*.*','WHAT FOLDER ARE YOU SAVING THE DATA IN?'); % get the directory where you want to save your images 
+    dir2 = strrep(dir1,'\','/'); % change the direction of the slashes 
     filename = sprintf('%s/ETAstackData_realOptoStimLocs',dir2);
     save(filename)
 elseif spikeQ == 1 
-    dir1 = input('What folder are you saving the data in? ');
+    dir1 = uigetdir('*.*','WHAT FOLDER ARE YOU SAVING THE DATA IN?'); % get the directory where you want to save your images 
     dir2 = strrep(dir1,'\','/');
     filename = sprintf('%s/ETAstackData_bootStrapped1kShuffledStimLocs',dir2);
     save(filename)    
@@ -1559,7 +1555,11 @@ end
 %overlay vessel outline and GCaMP activity of the specific Ca ROI on top of %change images, black out pixels where
 %the vessel is (because they're distracting), and save these images to a
 %folder of your choosing (there will be subFolders per calcium ROI)
-genImQ = input("Input 1 if you need to save out the images. ");                   
+genImQ = input("Input 1 if you need to save out the images. ");   
+if genImQ == 1 
+    dir1 = uigetdir('*.*','WHAT FOLDER ARE YOU SAVING THE PHOTOS IN?'); % get the directory where you want to save your images 
+    dir2 = strrep(dir1,'\','/');
+end 
 %black out pixels that belong to vessels   
 if vesBlackQ == 1 
     if iscell(BWstacks) == 1 
@@ -4131,10 +4131,6 @@ end
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  
 %% plot distribution of axon distances from the vessel 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if ETAorSTAq == 0 % STA data 
     figure;
     ax=gca;
@@ -4626,6 +4622,10 @@ if clustSpikeQ == 0 % if all the spikes are available to look at
 end 
 
 %% plot cluster size and pixel amp grouped by pre and post spike
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 if clustSpikeQ == 0
     clearvars data
     CsizeForPlot = clustSize';
@@ -4660,7 +4660,7 @@ if clustSpikeQ == 0
         end         
     end 
     xticklabels(labels)
-%     set(gca, 'YScale', 'log')
+    set(gca, 'YScale', 'log')
 
     CampForPlot = clustAmp';
     figure;
@@ -4720,6 +4720,7 @@ elseif clustSpikeQ == 1
         if ETAorSTAq == 0 % STA data
             xlabel("Axon")
         end 
+        % set(gca, 'YScale', 'log')
         if dlightQ == 0 % BBB data 
             ylabel("BBB Plume Size (microns squared)")
             if ETAorSTAq == 0 % STA data
@@ -4941,6 +4942,7 @@ if  clustSpikeQ == 1
         % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
+        % set(gca, 'YScale', 'log')
         if dlightQ == 0 % BBB data 
             ylabel("BBB Plume Size (microns squared)") 
             if ETAorSTAq == 0 % STA data
@@ -6351,6 +6353,7 @@ elseif ETAorSTAq == 1 % ETA data
             title({'Reward-Triggered Average.';tempSmoothLabel})
         end 
     end 
+    xlim([1 length(avVWdata)])
 end 
 
 
