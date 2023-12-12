@@ -659,7 +659,7 @@ if exist('dataScrambleCutOffs','var') == 0 && exist('dataScrambleQ','var') == 0
         end 
     end 
 end 
-spikeQ = input("Input 0 to use real opto stim locations. Input 1 to use randomized and bootstrapped opto stim locations (based on ITI STD). "); 
+spikeQ = input("Input 0 to use real opto stim locations (DO THIS FIRST!!). Input 1 to use randomized and bootstrapped opto stim locations (based on ITI STD). "); 
 if spikeQ == 1
     itNum = input('Input the number of bootstrap iterations that you want. ');
 end 
@@ -777,7 +777,7 @@ clearvars randSigLocs
 
 % crop the imaging data if you want to; better to do this up here to
 % maximize computational speed ~ 
-rightChan = input('Input 0 if dynamic (BBB/dlight) data is in the green chanel. Input 1 if dynamic (BBB/dlight) data is in the red channel. ');
+rightChan = input('Input 0 if dynamic (BBB/dlight) data is in the green channel. Input 1 if dynamic (BBB/dlight) data is in the red channel. ');
 dataTypeQ = input('Input 0 if this is standard BBB data. Input 1 if this is dlight data. ');
 if dataTypeQ == 0 
     rightVesChan = rightChan;
@@ -788,19 +788,33 @@ elseif dataTypeQ == 1
         rightVesChan = 0;
     end 
 end 
-cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
-% ask user where to crop image     
-if cropQ == 1 
-    %select the correct channel to view for cropping 
-    if rightChan == 0     
-        hold off;
-        cropIm = nanmean(greenStacksOrigin{1},3); %#ok<*NANMEAN> 
-    elseif rightChan == 1
-        hold off; 
-        cropIm = nanmean(redStacksOrigin{1},3);
-    end         
-    [~, rect] = imcrop(cropIm);
-end  
+
+if spikeQ == 0
+    cropQ = input("Input 1 if you want to crop the image. Input 0 otherwise. ");
+    % ask user where to crop image     
+    if cropQ == 1 
+        %select the correct channel to view for cropping 
+        if rightChan == 0     
+            hold off;
+            cropIm = nanmean(greenStacksOrigin{1},3); %#ok<*NANMEAN> 
+        elseif rightChan == 1
+            hold off; 
+            cropIm = nanmean(redStacksOrigin{1},3);
+        end         
+        [~, rect] = imcrop(cropIm);
+    end      
+elseif spikeQ == 1 % get the rect (crop location data)   
+    % import rect and cropQ 
+    dataDir = uigetdir('*.*','WHERE IS THE NON-SHUFFLED STA VIDEO .MAT FILE?');
+    cd(dataDir);
+    nonShuffledFileName = uigetfile('*.*','GET THE NON-SHUFFLED STA VIDEO .MAT FILE'); 
+    nonShuffledMat = matfile(nonShuffledFileName);
+    cropQ = nonShuffledMat.cropQ;
+    if cropQ == 1 
+        rect = nonShuffledMat.rect;
+    end 
+end 
+
 % crop if necessary  
 greenStacks2 = cell(1,length(vidList{mouse}));
 redStacks2 = cell(1,length(vidList{mouse}));
@@ -1429,7 +1443,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImageSF113_20210622_ETAvid_20231124zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage114_20210629_behaviorETAvid_20231211zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -1468,9 +1482,12 @@ elseif cMapQ == 1
     % Create colormap that is green at max and black at min
     % this is the original green colorbar 
 %     greenColorMap = linspace(0, 1, 256);
-    % green colorbar with less green
-    greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
-%     % steeper green colorbar (SF-57)
+    % green colorbar with less green (what I've been using for z-scored
+    % vids)
+    % greenColorMap = [zeros(1, 60), linspace(0, 1, 196)];
+    % greenColorMap with even less green (SF110 opto for Sabattini talk)
+    greenColorMap = [zeros(1, 170), linspace(0, 1, 86)];
+%     % steeper green colorbar (SF-57) w/more green
 %     greenColorMap = [zeros(1, 60), linspace(0, 1, 100),ones(1,96)];
     cMap = [zeros(1, 256); greenColorMap; zeros(1, 256)]';
 
@@ -1483,10 +1500,6 @@ end
 % 1 means greater than 95% CI and 2 means lower than 95% CI 
 if spikeQ == 1 
     clearvars RightChan
-    dataDir = uigetdir('*.*','WHERE IS THE NON-SHUFFLED STA VIDEO .MAT FILE?');
-    cd(dataDir);
-    nonShuffledFileName = uigetfile('*.*','GET THE NON-SHUFFLED STA VIDEO .MAT FILE'); 
-    nonShuffledMat = matfile(nonShuffledFileName);
     RightChan = nonShuffledMat.RightChan;
 
     % create binary STA vid 
