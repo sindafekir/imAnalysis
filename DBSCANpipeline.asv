@@ -601,7 +601,7 @@ save(filename)
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-%{
+
 mouse = 1;
 % termQ = input('Input 1 to update terminal labels. ');
 % if termQ == 1 
@@ -2057,6 +2057,49 @@ while workFlow == 1
             if spikeQ == 1
                 for ccell = 1:length(terminals{mouse})
                     if rightChan == 0 % BBB data is in green channel 
+                        % bonf correction coded out below 
+                        %{
+                        SEM = (nanstd(avGreenStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avGreenStack{terminals{mouse}(ccell)},3))); % Standard Error 
+%                         % calculate bounds for stricter bonferroni
+%                         % correction (per pixel)
+%                         numPix = size(avGreenStack{terminals{mouse}(ccell)},1)*size(avGreenStack{terminals{mouse}(ccell)},2);                       
+                        % calculate bounds for bonferroni correction (per
+                        % extravascular pixel) 
+                        if rightChan == 0 % if BBB data is in green channel 
+                            avZ = nanmean(VesAvGreenStack{terminals{mouse}(ccell)},3);
+                        elseif rightChan == 1 % if BBB data is in red channel 
+                            avZ = nanmean(VesAvRedStack{terminals{mouse}(ccell)},3);
+                        end 
+                        % figure out how many pixels are roughly in the
+                        % vessel 
+                        % Normalize input data to range in [0,1].
+                        Xmin = min(avZ(:));
+                        Xmax = max(avZ(:));
+                        if isequal(Xmax,Xmin)
+                            avZ = 0*avZ;
+                        else
+                            avZ = (avZ - Xmin) ./ (Xmax - Xmin);
+                        end                 
+                        % Threshold image - global threshold
+                        BW = imbinarize(im2gray(avZ));         
+                        numPix = nnz(~BW);
+                        format long 
+                        lowBound = 0.025/numPix;                      
+                        highBound = 1-lowBound;
+                        ts_High = tinv(highBound,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+                        ts_Low =  tinv(lowBound,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+%                         ts_High = tinv(0.99997244,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_Low =  tinv(0.000027563,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+%                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+                        if HighLowQ == 0
+                            CI_Low{terminals{mouse}(ccell)}(:,:,:,it) = (avGreenStack{terminals{mouse}(ccell)}) + (ts_Low*SEM); 
+                        elseif HighLowQ == 1 
+                            CI_High{terminals{mouse}(ccell)}(:,:,:,it) = (avGreenStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
+                        end 
+                        %}
                         SEM = (nanstd(avGreenStack,0,3))/(sqrt(size(avGreenStack,3))); % Standard Error 
                         ts_High = tinv(0.975,size(avGreenStack,3)-1);% T-Score for 95% CI
                         ts_Low =  tinv(0.025,size(avGreenStack,3)-1);% T-Score for 95% CI
@@ -2068,6 +2111,49 @@ while workFlow == 1
                             CI_High(:,:,:,it) = (avGreenStack) + (ts_High*SEM);  % Confidence Intervals  
                         end    
                     elseif rightChan == 1 % BBB data is in red channel 
+                        % bonf correction coded out below 
+                        %{
+                        SEM = (nanstd(avRedStack{terminals{mouse}(ccell)},0,3))/(sqrt(size(avRedStack{terminals{mouse}(ccell)},3))); % Standard Error 
+%                         % calculate bounds for stricter bonferroni
+%                         % correction (per pixel)
+%                         numPix = size(avGreenStack{terminals{mouse}(ccell)},1)*size(avGreenStack{terminals{mouse}(ccell)},2);                       
+                        % calculate bounds for bonferroni correction (per
+                        % extravascular pixel) 
+                        if rightChan == 0 % if BBB data is in green channel 
+                            avZ = nanmean(VesAvGreenStack{terminals{mouse}(ccell)},3);
+                        elseif rightChan == 1 % if BBB data is in red channel 
+                            avZ = nanmean(VesAvRedStack{terminals{mouse}(ccell)},3);
+                        end 
+                        % figure out how many pixels are roughly in the
+                        % vessel 
+                        % Normalize input data to range in [0,1].
+                        Xmin = min(avZ(:));
+                        Xmax = max(avZ(:));
+                        if isequal(Xmax,Xmin)
+                            avZ = 0*avZ;
+                        else
+                            avZ = (avZ - Xmin) ./ (Xmax - Xmin);
+                        end                 
+                        % Threshold image - global threshold
+                        BW = imbinarize(im2gray(avZ));         
+                        numPix = nnz(~BW);
+                        format long 
+                        lowBound = 0.025/numPix;                      
+                        highBound = 1-lowBound;
+                        ts_High = tinv(highBound,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+                        ts_Low =  tinv(lowBound,size(avRedStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/stricter bonferonni correction per pixel 
+%                         ts_High = tinv(0.99997244,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_Low =  tinv(0.000027563,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI w/bonferonni correction for SF57 term 17
+%                         ts_High = tinv(0.975,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_Low =  tinv(0.025,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 95% CI
+%                         ts_High = tinv(0.995,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+%                         ts_Low =  tinv(0.005,size(avGreenStack{terminals{mouse}(ccell)},3)-1);% T-Score for 99% CI
+                        if HighLowQ == 0
+                            CI_Low{terminals{mouse}(ccell)}(:,:,:,it) = (avRedStack{terminals{mouse}(ccell)}) + (ts_Low*SEM); 
+                        elseif HighLowQ == 1 
+                            CI_High{terminals{mouse}(ccell)}(:,:,:,it) = (avRedStack{terminals{mouse}(ccell)}) + (ts_High*SEM);  % Confidence Intervals  
+                        end      
+                        %}
                         SEM = (nanstd(avRedStack,0,3))/(sqrt(size(avRedStack,3))); % Standard Error 
                         ts_High = tinv(0.975,size(avRedStack,3)-1);% T-Score for 95% CI
                         ts_Low =  tinv(0.025,size(avRedStack,3)-1);% T-Score for 95% CI
