@@ -1357,13 +1357,14 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage114_20210629_behaviorETAvid_20231211zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage115_20210629_stimBehaviorETAvid2_20231214zScored(vesChan(:,:,frame));
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
             %overlay segmentation boundaries on data
             segOverlays(:,:,:,frame) = imoverlay(mat2gray(vesChan(:,:,frame)), BW_perim(:,:,frame), [.3 1 .3]);   
         end           
+        implay(BWstacks)
         continu = 0;
     end 
 
