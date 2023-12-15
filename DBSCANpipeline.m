@@ -1336,7 +1336,9 @@ clearvars SNgreenStackAv SNredStackAv
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. ');
+segAlg = 'segmentImage115_20210629_rewBehaviorETAvid2_20231215zScored'; % UPDATE HERE 
+fprintf('Segmentation algorithm: %s. ',segAlg)
+segQ = input(' Input 1 if you need to create a new vessel segmentation algorithm. Input 0 otherwise. ');
 % create outline of vessel to overlay the %change BBB perm stack 
 segmentVessel = 1;
 while segmentVessel == 1 
@@ -1357,27 +1359,23 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage115_20210629_stimBehaviorETAvid2_20231214zScored(vesChan(:,:,frame));
+            [BW,~] = segmentImage115_20210629_rewBehaviorETAvid2_20231215zScored(vesChan(:,:,frame)); % UPDATE HERE 
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
             %overlay segmentation boundaries on data
             segOverlays(:,:,:,frame) = imoverlay(mat2gray(vesChan(:,:,frame)), BW_perim(:,:,frame), [.3 1 .3]);   
-        end           
+        end      
+        %play segmentation
         implay(BWstacks)
         continu = 0;
     end 
-
-    %ask about segmentation quality 
-    if segQ == 1
-        %play segmentation boundaries over images 
-        % implay(segOverlays)
-        implay(BWstacks)
-        segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
-        if segmentVessel == 1
-            clearvars BWthreshold BWopenRadius BW se boundaries
-        end 
-    elseif segQ == 0 
+    %ask about segmentation quality    
+    segmentVessel = input("Does the vessel need to be segmented again? Yes = 1. No = 0. ");
+    if segmentVessel == 1
+        clearvars BWthreshold BWopenRadius BW se boundaries
+    end 
+    if segQ == 0 
         segmentVessel = 0;
     end 
 end
