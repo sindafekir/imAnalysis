@@ -2960,7 +2960,7 @@ end
 plot(pixInt)
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (one animal at a time) 
-%{
+
 %% get the pixel sizes 
 getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
 if getPixSizeQ == 1 
@@ -4560,7 +4560,7 @@ elseif clustSpikeQ == 1
         if ETAorSTAq == 0 % STA data
             xlabel("Axon")
         end 
-        set(gca, 'YScale', 'log')
+        % set(gca, 'YScale', 'log')
         if dlightQ == 0 % BBB data 
             ylabel("BBB Plume Size (microns squared)")
             if ETAorSTAq == 0 % STA data
@@ -4782,7 +4782,7 @@ if  clustSpikeQ == 1
         % boxchart(reshapedPostPlot,'MarkerStyle','none','BoxFaceColor','b','WhiskerLineColor','b');
         ax.FontSize = 15;
         ax.FontName = 'Times';
-        set(gca, 'YScale', 'log')
+        % set(gca, 'YScale', 'log')
         if dlightQ == 0 % BBB data 
             ylabel("BBB Plume Size (microns squared)") 
             if ETAorSTAq == 0 % STA data

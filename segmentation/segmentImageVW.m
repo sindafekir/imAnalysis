@@ -49,7 +49,7 @@ se = strel('disk', radius, decomposition);
 BW = imclose(BW, se);
 
 % Dilate mask with default
-radius = 3;
+radius = 2;
 decomposition = 0;
 se = strel('disk', radius, decomposition);
 BW = imdilate(BW, se);
