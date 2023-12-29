@@ -1336,8 +1336,6 @@ clearvars SNgreenStackAv SNredStackAv
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-segAlg = 'segmentImage116_20210622_stimBehaviorETA_20231219zScored'; % UPDATE HERE 
-fprintf('Segmentation algorithm: %s. ',segAlg)
 segQ = input(' Input 1 if you need to create a new vessel segmentation algorithm. Input 0 otherwise. ');
 % create outline of vessel to overlay the %change BBB perm stack 
 segmentVessel = 1;
@@ -1359,7 +1357,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage116_20210622_rewBehaviorETA_20231220zScored(vesChan(:,:,frame)); % UPDATE HERE 
+            [BW,~] = segmentImage117_20210622_stimBehaviorETA_20231227zScored(vesChan(:,:,frame)); % UPDATE HERE 
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
