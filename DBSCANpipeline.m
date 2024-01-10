@@ -3355,6 +3355,8 @@ for ccell = 1:length(terminals{mouse})
     end 
 end 
 
+figure('Visible','on'); 
+
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 if dlightQ == 0 % BBB data 
     % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
@@ -3454,6 +3456,7 @@ if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this i
     ax = gca;
     ax.FontSize = 15;
 elseif ETAorSTAq == 1 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    figure
     totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
     totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
     histogram(uniqClustPixNums,10)
@@ -6447,7 +6450,10 @@ if exist('mouseNum','var') == 0
         % near the vessel out of total # of clusters 
         terms = dataMat.terminals; 
         terminals{mouse} = terms{1}; clearvars terms; 
-        nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;   
+        variableInfo = who(dataMat);
+        if ismember("nearVsFarPlotData", variableInfo) == 1 % returns true 
+            nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;                
+        end 
         % import data needed to plot the number of pixels per cluster, the number of total pixels and the number of total clusters
         numPixels{mouse} = dataMat.numPixels; 
         totalNumPixels(mouse) = dataMat.totalNumPixels;       
@@ -6467,7 +6473,9 @@ if exist('mouseNum','var') == 0
             timeDistArray{mouse} = dataMat.timeDistArray;   
             timeODistArray{mouse} = dataMat.timeODistArray;   
         end 
-        timeVRDistArray{mouse} = dataMat.timeVRDistArray;   
+        if ismember("timeVRDistArray", variableInfo) == 1 % returns true 
+            timeVRDistArray{mouse} = dataMat.timeVRDistArray;              
+        end 
         % import data needed to do time conversion (relative to FPS
         % differences across mice) 
         FPS{mouse} = dataMat.FPS; 
@@ -6542,6 +6550,7 @@ pie(totalAvNearVsFarPlotData);
 colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
 % resort data for plotting 
+figure;
 for mouse = 1:mouseNum
     if mouse == 1 
         NumPixels = numPixels{1};

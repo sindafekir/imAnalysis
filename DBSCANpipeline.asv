@@ -1,5 +1,5 @@
 %% register the raw data (run this for each video) 
-%{
+
 %% set the paramaters 
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
@@ -3243,22 +3243,6 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 for ccell = 1:length(terminals{mouse})
     if ccell == 1 
         saveBinVidQ = input('Input 1 to save out binary significance videos. Input 0 otherwise. ');
@@ -3277,29 +3261,27 @@ for ccell = 1:length(terminals{mouse})
                 %create a new folder per calcium ROI 
                 if ETAorSTAq == 0 % STA data
                     newFolder = sprintf('BinaryImages_axon%d',terminals{mouse}(ccell));
-                    mkdir(dir2,newFolder)
                 elseif ETAorSTAq == 1 % ETA data
-                    newFolder = ('BinaryImages');
-                    mkdir(dir2,newFolder)
+                    newFolder = ('BinaryImages');                    
                 end 
+                mkdir(dir2,newFolder)
             end 
             if saveClustVidQ == 1
                 %create a new folder per calcium ROI 
                 if ETAorSTAq == 0 % STA data
-                    newFolder = sprintf('ClusterImages_axon%d',terminals{mouse}(ccell));
-                    mkdir(dir2,newFolder)
+                    newFolder = sprintf('ClusterImages_axon%d',terminals{mouse}(ccell));                    
                 elseif ETAorSTAq == 1 % ETA data
                     newFolder = ('ClusterImages');
-                    mkdir(dir2,newFolder)
                 end 
+                mkdir(dir2,newFolder)
             end 
         end 
     end 
     % option to save out the a binary video 
     if saveBinVidQ == 1
         for frame = 1:size(im,3)
-            figure('Visible','on');  
-            imshow(im(:,:,frame))
+            figure('Visible','off');  
+            imshow(im(:,:,frame),'InitialMagnification', 800)
             % get the x-y coordinates of the vessel outline
             if iscell(BW_perim) == 0
                 [yf, xf] = find(BW_perim(:,:,frame));  % x and y are column vectors.
@@ -3330,35 +3312,51 @@ for ccell = 1:length(terminals{mouse})
             ax = gca;
             ax.Visible = 'off';
             %save current figure to file 
-            if ETAorSTAq == 0 % STA data
-                filename = sprintf('%s/Images/frame%d',dir2,frame);
-            elseif ETAorSTAq == 1 % ETA data
-                filename = sprintf('%s/%s/frame%d',dir2,newFolder.frame);
-            end 
+            filename = sprintf('%s/%s/frame%d',dir2,newFolder,frame);
             saveas(gca,[filename '.png'])
         end 
     end 
     % option to save out the cluster video 
     if saveClustVidQ == 1
+        for frame = 1:size(im,3)
+            figure('Visible','off');  
+            % determine all the cluster data points in each individual frame 
+            dataInds = find(inds{terminals{mouse}(ccell)}(:,3) == frame);
+            % plot the grouped pixels 
+            scatter(inds{terminals{mouse}(ccell)}(dataInds,1),inds{terminals{mouse}(ccell)}(dataInds,2),30,idx{terminals{mouse}(ccell)}(dataInds),'filled'); % plot clusters
+            % determine all the vessel outline data points in each individual frame 
+            dataIndsV = find(indsV{terminals{mouse}(ccell)}(:,3) == frame);
+            % plot vessel outline 
+            hold on; scatter(indsV{terminals{mouse}(ccell)}(dataIndsV,1),indsV{terminals{mouse}(ccell)}(dataIndsV,2),30,'k','filled'); % plot vessel outline 
+            % plot colored border to show when event occurs 
+            if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                %get border coordinates 
+                colLen = size(ims,2);
+                rowLen = size(ims,1);
+                edg1_x = repelem(1,rowLen);
+                edg1_y = 1:rowLen;
+                edg2_x = repelem(colLen,rowLen);
+                edg2_y = 1:rowLen;
+                edg3_x = 1:colLen;
+                edg3_y = repelem(1,colLen);
+                edg4_x = 1:colLen;
+                edg4_y = repelem(rowLen,colLen);
+                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                hold on;
+                scatter(edg_x,edg_y,100,'blue','filled','square');      
+            end 
+            ax = gca;
+            ax.Visible = 'off';
+            %save current figure to file 
+            filename = sprintf('%s/%s/frame%d',dir2,newFolder,frame);
+            saveas(gca,[filename '.png'])
+        end 
     end 
 end 
 
+figure('Visible','on'); 
 
-
-
-
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 if dlightQ == 0 % BBB data 
     % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
@@ -3458,6 +3456,7 @@ if ETAorSTAq == 0 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this i
     ax = gca;
     ax.FontSize = 15;
 elseif ETAorSTAq == 1 %ETAorSTAq = input('Input 0 if this is STA data or 1 if this is ETA data. ');
+    figure
     totalPixelNumLabel = sprintf('%.0f microns squared total.',totalNumPixels);
     totalClustNumLabel = sprintf('%.0f clusters total.',totalNumClusts);
     histogram(uniqClustPixNums,10)
@@ -6386,7 +6385,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-%{
+
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
@@ -6451,7 +6450,10 @@ if exist('mouseNum','var') == 0
         % near the vessel out of total # of clusters 
         terms = dataMat.terminals; 
         terminals{mouse} = terms{1}; clearvars terms; 
-        nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;   
+        variableInfo = who(dataMat);
+        if ismember("nearVsFarPlotData", variableInfo) == 1 % returns true 
+            nearVsFarPlotData{mouse} = dataMat.nearVsFarPlotData;                
+        end 
         % import data needed to plot the number of pixels per cluster, the number of total pixels and the number of total clusters
         numPixels{mouse} = dataMat.numPixels; 
         totalNumPixels(mouse) = dataMat.totalNumPixels;       
@@ -6471,7 +6473,9 @@ if exist('mouseNum','var') == 0
             timeDistArray{mouse} = dataMat.timeDistArray;   
             timeODistArray{mouse} = dataMat.timeODistArray;   
         end 
-        timeVRDistArray{mouse} = dataMat.timeVRDistArray;   
+        if ismember("timeVRDistArray", variableInfo) == 1 % returns true 
+            timeVRDistArray{mouse} = dataMat.timeVRDistArray;              
+        end 
         % import data needed to do time conversion (relative to FPS
         % differences across mice) 
         FPS{mouse} = dataMat.FPS; 
@@ -6546,6 +6550,7 @@ pie(totalAvNearVsFarPlotData);
 colormap([0 0.4470 0.7410; 0.8500 0.3250 0.0980])
 %% plot the number of pixels per cluster, the number of total pixels and the number of total clusters
 % resort data for plotting 
+figure;
 for mouse = 1:mouseNum
     if mouse == 1 
         NumPixels = numPixels{1};
