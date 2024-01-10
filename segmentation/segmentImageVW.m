@@ -18,7 +18,7 @@ else
 end
 
 % Threshold image with manual threshold
-BW = im2gray(X) > 1.800000e-01;
+BW = im2gray(X) > 0.30000e-01;
 
 % Open mask with default
 radius = 1;

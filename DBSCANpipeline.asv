@@ -850,7 +850,7 @@ if highPassQ == 1
         %get sliding baseline 
         [greenSlidingBL]=slidingBaselineVid(greenStacks{vid},floor((FPS)*10),0.5); %0.5 quantile thresh = the median value    
         [redSlidingBL]=slidingBaselineVid(redStacks{vid},floor((FPS)*10),0.5);
-        %subtract sliding baseline from F
+        %subtract sliding baseline from z scored data 
         hpfGreen{vid} = greenStacks{vid}-greenSlidingBL;
         hpfRed{vid} = redStacks{vid}-redSlidingBL;       
     end 
@@ -1357,7 +1357,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage117_20210629_rewBehaviorETA_20240103zScored(vesChan(:,:,frame)); % UPDATE HERE 
+            [BW,~] = segmentImage118_20210629_rewBehaviorETA_20240106zScored(vesChan(:,:,frame)); % UPDATE HERE 
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -3243,6 +3243,122 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+for ccell = 1:length(terminals{mouse})
+    if ccell == 1 
+        saveBinVidQ = input('Input 1 to save out binary significance videos. Input 0 otherwise. ');
+        saveClustVidQ = input('Input 1 to save out DBSCAN cluster videos. Input 0 otherwise. ');
+        if saveBinVidQ == 1 || saveClustVidQ == 1 
+            dir1 = uigetdir('*.*','WHAT FOLDER ARE YOU SAVING THE VIDS/PHOTOS IN?'); % get the directory where you want to save your images 
+            dir2 = strrep(dir1,'\','/');    
+            if iscell(RightChan) == 1 
+                ims = RightChan{1};
+                CaEventFrame = floor(size(RightChan{1},3)/2); % input('What frame does the opto stim start? ');
+            elseif iscell(RightChan) == 0
+                ims = RightChan;
+                CaEventFrame = floor(size(RightChan,3)/2); % input('What frame does the opto stim start? ');    
+            end 
+            if saveBinVidQ == 1
+                %create a new folder per calcium ROI 
+                if ETAorSTAq == 0 % STA data
+                    newFolder = sprintf('BinaryImages_axon%d',terminals{mouse}(ccell));
+                    mkdir(dir2,newFolder)
+                elseif ETAorSTAq == 1 % ETA data
+                    newFolder = ('BinaryImages');
+                    mkdir(dir2,newFolder)
+                end 
+            end 
+            if saveClustVidQ == 1
+                %create a new folder per calcium ROI 
+                if ETAorSTAq == 0 % STA data
+                    newFolder = sprintf('ClusterImages_axon%d',terminals{mouse}(ccell));
+                    mkdir(dir2,newFolder)
+                elseif ETAorSTAq == 1 % ETA data
+                    newFolder = ('ClusterImages');
+                    mkdir(dir2,newFolder)
+                end 
+            end 
+        end 
+    end 
+    % option to save out the a binary video 
+    if saveBinVidQ == 1
+        for frame = 1:size(im,3)
+            figure('Visible','on');  
+            imshow(im(:,:,frame))
+            % get the x-y coordinates of the vessel outline
+            if iscell(BW_perim) == 0
+                [yf, xf] = find(BW_perim(:,:,frame));  % x and y are column vectors.
+            elseif iscell(BW_perim) == 1
+                [yf, xf] = find(BW_perim{1}(:,:,frame));  % x and y are column vectors.
+            end                                          
+            % plot the vessel outline over the image 
+            hold on;
+            scatter(xf,yf,'red','.');
+            % plot colored border to show when event occurs 
+            if frame == CaEventFrame || frame == (CaEventFrame-1) || frame == (CaEventFrame+1)
+                %get border coordinates 
+                colLen = size(ims,2);
+                rowLen = size(ims,1);
+                edg1_x = repelem(1,rowLen);
+                edg1_y = 1:rowLen;
+                edg2_x = repelem(colLen,rowLen);
+                edg2_y = 1:rowLen;
+                edg3_x = 1:colLen;
+                edg3_y = repelem(1,colLen);
+                edg4_x = 1:colLen;
+                edg4_y = repelem(rowLen,colLen);
+                edg_x = [edg1_x,edg2_x,edg3_x,edg4_x];
+                edg_y = [edg1_y,edg2_y,edg3_y,edg4_y];
+                hold on;
+                scatter(edg_x,edg_y,100,'blue','filled','square');      
+            end 
+            ax = gca;
+            ax.Visible = 'off';
+            %save current figure to file 
+            if ETAorSTAq == 0 % STA data
+                filename = sprintf('%s/Images/frame%d',dir2,frame);
+            elseif ETAorSTAq == 1 % ETA data
+                filename = sprintf('%s/%s/frame%d',dir2,newFolder.frame);
+            end 
+            saveas(gca,[filename '.png'])
+        end 
+    end 
+    % option to save out the cluster video 
+    if saveClustVidQ == 1
+    end 
+end 
+
+
+
+
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %% plot the proportion of clusters that are near the vessel out of total # of clusters 
 if dlightQ == 0 % BBB data 
     % use unIdxVals (total # of clusters) and CsNotNearVessel (# of clusters
