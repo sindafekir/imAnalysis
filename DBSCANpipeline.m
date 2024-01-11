@@ -3318,12 +3318,22 @@ for ccell = 1:length(terminals{mouse})
     end 
     % option to save out the cluster video 
     if saveClustVidQ == 1
+        % determine the range of cluster colors that exist 
+        unIdxClr = unique(idx{terminals{mouse}(ccell)});
+        unIdxClrLoc = ~isnan(unique(idx{terminals{mouse}(ccell)}));
+        unIdxClr = unIdxClr(unIdxClrLoc);
+        clrMin = min(unIdxClr);
+        clrMax = max(unIdxClr);
+        % set the color bar based on this range ahead of time to be used
+        % per frame 
         for frame = 1:size(im,3)
-            figure('Visible','off');  
+            figure('Visible','on');  
             % determine all the cluster data points in each individual frame 
             dataInds = find(inds{terminals{mouse}(ccell)}(:,3) == frame);
             % plot the grouped pixels 
             scatter(inds{terminals{mouse}(ccell)}(dataInds,1),inds{terminals{mouse}(ccell)}(dataInds,2),30,idx{terminals{mouse}(ccell)}(dataInds),'filled'); % plot clusters
+            colormap default 
+            clim([clrMin clrMax]);
             % determine all the vessel outline data points in each individual frame 
             dataIndsV = find(indsV{terminals{mouse}(ccell)}(:,3) == frame);
             % plot vessel outline 

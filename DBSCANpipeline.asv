@@ -1,5 +1,5 @@
 %% register the raw data (run this for each video) 
-
+%{
 %% set the paramaters 
 volIm = input("Is this volume imaging data? Yes = 1. No = 0. "); 
 if volIm == 1
@@ -3243,6 +3243,16 @@ safeKeptIdx = idx;
 safeKeptClustSize = clustSize;
 safeKeptClustAmp = clustAmp;
 
+%% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% FIGURE OUT WHY CLUSTER VIDEO COLORS ARE OFF AND FIX 
+% cluster vid colors are plotting correctly, it's just autoscaling per
+% frame - so i need to set the colorscale ahead of time based on the total
+% range of colors 
+
 for ccell = 1:length(terminals{mouse})
     if ccell == 1 
         saveBinVidQ = input('Input 1 to save out binary significance videos. Input 0 otherwise. ');
@@ -3318,8 +3328,18 @@ for ccell = 1:length(terminals{mouse})
     end 
     % option to save out the cluster video 
     if saveClustVidQ == 1
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        % determine the range of cluster colors that exist 
+        unIdxClr = unique(idx{terminals{mouse}(ccell)});
+        unIdxClrLoc = ~isnan(unique(idx{terminals{mouse}(ccell)}));
+        unIdxClr = unIdxClr(unIdxClrLoc);
+        
+        % set the color bar based on this range ahead of time to be used
+        % per frame 
+
+        % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         for frame = 1:size(im,3)
-            figure('Visible','off');  
+            figure('Visible','on');  
             % determine all the cluster data points in each individual frame 
             dataInds = find(inds{terminals{mouse}(ccell)}(:,3) == frame);
             % plot the grouped pixels 
@@ -6385,7 +6405,7 @@ end
 %}
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (Data averaged across mice. Must run each animal data through other DBSCAN code and save .mat first.) 
-
+%{
 % check to see if there's any data loaded in workspace from previous
 % averaging, if so you can add animals to this data set if you want 
 if exist('mouseNum','var') == 0
