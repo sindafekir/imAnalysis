@@ -2996,7 +2996,7 @@ end
 plot(pixInt)
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (one animal at a time) 
-%{
+
 %% get the pixel sizes 
 getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
 if getPixSizeQ == 1 
@@ -3008,9 +3008,7 @@ if getPixSizeQ == 1
     end 
     addDwnSmpQ = input('Input 1 if there is an additional downsample factor from image registration. ');
     if addDwnSmpQ == 1 
-        addDwnSmpFctr = input('Input the additional downsample factor. '); 
-        XpixDist = XpixDist*addDwnSmpFctr;
-        YpixDist = YpixDist*addDwnSmpFctr;
+        a
     end 
 end 
 
