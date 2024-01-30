@@ -3037,7 +3037,7 @@ end
 plot(pixInt)
 %}
 %%  DBSCAN time locked to axon calcium spikes and opto stim (one animal at a time) 
-%{
+
 %% get the pixel sizes 
 getPixSizeQ = input('Input 1 to ask for pixel size. Input 0 otherwise. '); 
 if getPixSizeQ == 1 
@@ -3272,15 +3272,7 @@ for ccell = 1:length(terminals{mouse})
         elseif ETAtype == 1 % behavior data 
             optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
             if ETAtype2 == 0 % stim aligned 
-                if exist('state2Q','var') == 1
-                    if state2 == 0 % HIT 
-                        title({'Behavior Hit Stim Aligned';optoCountLabel}); 
-                    elseif state2 == 1 % MISS
-                        title({'Behavior Miss Stim Aligned';optoCountLabel}); 
-                    end 
-                elseif exist('state2Q','var') == 0
-                    title({'Behavior Stim Aligned';optoCountLabel}); 
-                end 
+                title({'Behavior Stim Aligned';optoCountLabel}); 
             elseif ETAtype2 == 1 % reward aligned 
                 title({'Behavior Reward Aligned';optoCountLabel}); 
             end 
@@ -3316,15 +3308,10 @@ for ccell = 1:length(terminals{mouse})
         elseif ETAtype == 1 % behavior data 
             optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
             if ETAtype2 == 0 % stim aligned 
-                if exist('state2Q','var') == 1
-                    if state2 == 0 % HIT 
-                        title({'Behavior Hit Stim Aligned';optoCountLabel}); 
-                    elseif state2 == 1 % MISS
-                        title({'Behavior Miss Stim Aligned';optoCountLabel}); 
-                    end 
-                elseif exist('state2Q','var') == 0
-                    title({'Behavior Stim Aligned';optoCountLabel}); 
+                if stateQ2 == 0
+                elseif stateQ2 == 1 
                 end 
+                title({'Behavior Stim Aligned';optoCountLabel}); 
             elseif ETAtype2 == 1 % reward aligned 
                 title({'Behavior Reward Aligned';optoCountLabel}); 
             end 
