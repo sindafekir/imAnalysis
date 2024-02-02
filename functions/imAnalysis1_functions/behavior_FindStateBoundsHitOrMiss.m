@@ -16,10 +16,18 @@ end
 % get the hit or miss trials 
 if state2 == 0 % hit trials 
     hitTrials = find(responses == 1);
+    if any(hitTrials > length(state_start_t))
+        removeInds = find(hitTrials >= length(state_start_t));
+        hitTrials(removeInds) = [];
+    end 
     state_start_t = state_start_t(hitTrials);
     state_end_t = state_end_t(hitTrials);
 elseif state2 == 1 % miss trials 
     missTrials = find(responses == 0);
+    if any(missTrials > length(state_start_t))
+        removeInds = find(missTrials >= length(state_start_t));
+        missTrials(removeInds) = [];
+    end 
     state_start_t = state_start_t(missTrials);
     state_end_t = state_end_t(missTrials);
 end 
