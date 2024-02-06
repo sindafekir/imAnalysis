@@ -442,7 +442,7 @@ end
 %% ETA: organize trial data; can select what trials to plot; can separate trials by ITI length
 % smooth, normalize, and plot data (per mouse - optimized for batch
 % processing. saves the data out per mouse)
-%{
+
 % get the data if it already isn't in the workspace 
 workspaceQ = input('Input 1 if batch data is already in the workspace. Input 0 otherwise. ');
 if workspaceQ == 1
@@ -4276,7 +4276,7 @@ set(fig,'position', [100 100 900 900])
 
 %}
 %% make ETA VID/STACK avaerage (one animal at a time)
-%{
+
 dataScrambleQ = input("Input 1 if you need to remove frames due to data scramble. "); 
 if dataScrambleQ == 1 
     for vid = 1:length(greenStacks) 

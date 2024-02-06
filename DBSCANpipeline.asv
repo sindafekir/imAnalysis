@@ -320,7 +320,7 @@ save(filename)
 %}
 %% get and save out the data you need 
 % one animal at a time
-%{
+
 clear 
 %set the paramaters 
 STAstackQ = input('Input 1 to import red and green channel stacks to create STA videos. Input 0 otherwise. ');
@@ -642,7 +642,7 @@ save(filename)
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
+%{
 mouse = 1;
 % termQ = input('Input 1 to update terminal labels. ');
 % if termQ == 1 
@@ -1415,7 +1415,7 @@ clearvars SNgreenStackAv SNredStackAv
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-segQ = input(' Input 1 if you need to create a new vessel segmentation algorithm. Input 0 otherwise. ');
+segQ = input('Input 1 if you need to create a new vessel segmentation algorithm. Input 0 otherwise. ');
 % create outline of vessel to overlay the %change BBB perm stack 
 segmentVessel = 1;
 while segmentVessel == 1 
