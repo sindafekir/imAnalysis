@@ -8153,6 +8153,15 @@ title({'Average Change in BBB Plume Plume Pixel Amplitude';'Across Animals'})
 xlim([1 minFrameLen])
 %% plot average BBB plume change in size and pixel amplitude over time for however many time groups you want
 % plot change in cluster size color coded by axon 
+
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
 x = 1:minFrameLen;
 times = unique(allAvClocFrameBoxPlot);
 timesLoc = ~isnan(unique(allAvClocFrameBoxPlot));
@@ -8231,68 +8240,142 @@ if clustTimeNumGroups == 2
         end    
     end
 elseif clustTimeNumGroups > 2 
-    clr = hsv(clustTimeNumGroups);
-    binFrameSize = floor(minFrameLen/clustTimeNumGroups);
-    binThreshs = (1:binFrameSize:minFrameLen);
-    binStartAndEndFrames = zeros(clustTimeNumGroups,2);   
-    clustStartFrame = cell(1,mouseNum);
-    % determine cluster start frame 
-    for mouse = 1:mouseNum          
-        [clustLocX, clustLocY] = find(~isnan(downAllAxonsClustSizeTS{mouse}));
-        clusts = unique(clustLocX);              
-        for clust = 1:length(clusts)
-            clustStartFrame{mouse}(clust) = min(clustLocY(clustLocX == clust));
+    if ETAtype2 == 0 % data is aligned to stimulus
+        bin3sortQ = 0;
+    end 
+    if clustTimeNumGroups == 3 && ETAtype2 == 1 % data is aligned to reward 
+        bin3sortQ = input('Input 0 to sort the three time bins evenly across time. Input 1 to sort the three time bins specifically. ');
+        if bin3sortQ == 1 % below this sorts time bins specifically 
+            % define the bin time windows in seconds 
+            sensoryBin = [-2.25,-1.25];
+            periRewardBin = [-0.75,0.25];
+            postRewardBin = [0.75,2.25];
+            clr = hsv(clustTimeNumGroups);
+            % determine bin start and end frames
+            % (binStartAndEndFrames(bin,:)
+            binStartAndEndFrames(1,:) = sensoryBin*fps;
+            binStartAndEndFrames(2,:) = periRewardBin*fps;
+            binStartAndEndFrames(3,:) = postRewardBin*fps;
+            binStartAndEndFrames = floor(binStartAndEndFrames + (minFrameLen/2));
+            clustStartFrame = cell(1,mouseNum);
+            % determine cluster start frame 
+            for mouse = 1:mouseNum          
+                [clustLocX, clustLocY] = find(~isnan(downAllAxonsClustSizeTS{mouse}));
+                clusts = unique(clustLocX);              
+                for clust = 1:length(clusts)
+                    clustStartFrame{mouse}(clust) = min(clustLocY(clustLocX == clusts(clust)));
+                end 
+            end 
+            binClustTSsizeData = cell(1,clustTimeNumGroups);
+            binClustTSpixAmpData = cell(1,clustTimeNumGroups);
+            sizeArray = zeros(1,clustTimeNumGroups);
+            pixAmpArray = zeros(1,clustTimeNumGroups);
+            count = 1; 
+            binLabel = string(1);
+            figure;
+            hold all;
+            ax=gca;
+            for bin = 1:clustTimeNumGroups
+                % set the current bin boundaries 
+                curBinBounds = binStartAndEndFrames(bin,:);  
+                for mouse = 1:mouseNum
+                    % determine what clusters go into the current bin 
+                    theseClusts = clustStartFrame{mouse} >= curBinBounds(1) & clustStartFrame{mouse} <= curBinBounds(2);
+                    binClusts = find(theseClusts);                
+                    % sort clusters into time bins 
+                    sizeArray(bin) = size(binClustTSsizeData{bin},1);
+                    binClustTSsizeData{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = downAllAxonsClustSizeTS{mouse}(binClusts,:);
+                    pixAmpArray(bin) = size(binClustTSpixAmpData{bin},1);
+                    binClustTSpixAmpData{bin}(pixAmpArray(bin)+1:pixAmpArray(bin)+length(binClusts),:) = downAllAxonsClustAmpTS{mouse}(binClusts,:);
+                end 
+                % determine bin labels 
+                binString = string(round((binStartAndEndFrames(bin,:)./fps)-(minFrameLen/fps/2),1));
+                for clust = 1:size(binClustTSsizeData{bin},1)
+                    if clust == 1 
+                        if isempty(binClustTSsizeData{bin}) == 0                     
+                            binLabel(count) = append(binString(1),' to ',binString(2));
+                            count = count + 1;
+                        end 
+                    elseif clust > 1
+                        if isempty(binClustTSsizeData{bin}) == 0 
+                            binLabel(count) = '';
+                            count = count + 1;                        
+                        end                 
+                    end 
+                end 
+                if isempty(binClustTSsizeData{bin}) == 0 
+                    h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
+                end 
+            end
         end 
     end 
-    binClustTSsizeData = cell(1,clustTimeNumGroups);
-    binClustTSpixAmpData = cell(1,clustTimeNumGroups);
-    sizeArray = zeros(1,clustTimeNumGroups);
-    pixAmpArray = zeros(1,clustTimeNumGroups);
-    count = 1; 
-    binLabel = string(1);
-    figure;
-    hold all;
-    ax=gca;
-    for bin = 1:clustTimeNumGroups
-        % create time (by frame) bins 
-        if bin < clustTimeNumGroups
-            binStartAndEndFrames(bin,1) = binThreshs(bin);
-            binStartAndEndFrames(bin,2) = binThreshs(bin)+binFrameSize-1;
-        elseif bin == clustTimeNumGroups
-            binStartAndEndFrames(bin,1) = binThreshs(bin);
-            binStartAndEndFrames(bin,2) = minFrameLen;                
-        end 
-        % set the current bin boundaries 
-        curBinBounds = binStartAndEndFrames(bin,:);  
-        for mouse = 1:mouseNum
-            % determine what clusters go into the current bin 
-            theseClusts = clustStartFrame{mouse} >= curBinBounds(1) & clustStartFrame{mouse} <= curBinBounds(2);
-            binClusts = find(theseClusts);                
-            % sort clusters into time bins 
-            sizeArray(bin) = size(binClustTSsizeData{bin},1);
-            binClustTSsizeData{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = downAllAxonsClustSizeTS{mouse}(binClusts,:);
-            pixAmpArray(bin) = size(binClustTSpixAmpData{bin},1);
-            binClustTSpixAmpData{bin}(pixAmpArray(bin)+1:pixAmpArray(bin)+length(binClusts),:) = downAllAxonsClustAmpTS{mouse}(binClusts,:);
-        end 
-        % determine bin labels 
-        binString = string(round((binStartAndEndFrames(bin,:)./fps)-(minFrameLen/fps/2),1));
-        for clust = 1:size(binClustTSsizeData{bin},1)
-            if clust == 1 
-                if isempty(binClustTSsizeData{bin}) == 0                     
-                    binLabel(count) = append(binString(1),' to ',binString(2));
-                    count = count + 1;
-                end 
-            elseif clust > 1
-                if isempty(binClustTSsizeData{bin}) == 0 
-                    binLabel(count) = '';
-                    count = count + 1;                        
-                end                 
+
+    % below will evenly distribute bins across time for however many bins
+    % there are 
+    if clustTimeNumGroups ~= 3 || clustTimeNumGroups == 3 && bin3sortQ == 0 
+        clr = hsv(clustTimeNumGroups);
+        binFrameSize = floor(minFrameLen/clustTimeNumGroups);
+        binThreshs = (1:binFrameSize:minFrameLen);
+        binStartAndEndFrames = zeros(clustTimeNumGroups,2);   
+        clustStartFrame = cell(1,mouseNum);
+        % determine cluster start frame 
+        for mouse = 1:mouseNum          
+            [clustLocX, clustLocY] = find(~isnan(downAllAxonsClustSizeTS{mouse}));
+            clusts = unique(clustLocX);              
+            for clust = 1:length(clusts)
+                clustStartFrame{mouse}(clust) = min(clustLocY(clustLocX == clusts(clust)));
             end 
         end 
-        if isempty(binClustTSsizeData{bin}) == 0 
-            h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
-        end 
-    end
+        binClustTSsizeData = cell(1,clustTimeNumGroups);
+        binClustTSpixAmpData = cell(1,clustTimeNumGroups);
+        sizeArray = zeros(1,clustTimeNumGroups);
+        pixAmpArray = zeros(1,clustTimeNumGroups);
+        count = 1; 
+        binLabel = string(1);
+        figure;
+        hold all;
+        ax=gca;
+        for bin = 1:clustTimeNumGroups
+            % create time (by frame) bins 
+            if bin < clustTimeNumGroups
+                binStartAndEndFrames(bin,1) = binThreshs(bin);
+                binStartAndEndFrames(bin,2) = binThreshs(bin)+binFrameSize-1;
+            elseif bin == clustTimeNumGroups
+                binStartAndEndFrames(bin,1) = binThreshs(bin);
+                binStartAndEndFrames(bin,2) = minFrameLen;                
+            end 
+            % set the current bin boundaries 
+            curBinBounds = binStartAndEndFrames(bin,:);  
+            for mouse = 1:mouseNum
+                % determine what clusters go into the current bin 
+                theseClusts = clustStartFrame{mouse} >= curBinBounds(1) & clustStartFrame{mouse} <= curBinBounds(2);
+                binClusts = find(theseClusts);                
+                % sort clusters into time bins 
+                sizeArray(bin) = size(binClustTSsizeData{bin},1);
+                binClustTSsizeData{bin}(sizeArray(bin)+1:sizeArray(bin)+length(binClusts),:) = downAllAxonsClustSizeTS{mouse}(binClusts,:);
+                pixAmpArray(bin) = size(binClustTSpixAmpData{bin},1);
+                binClustTSpixAmpData{bin}(pixAmpArray(bin)+1:pixAmpArray(bin)+length(binClusts),:) = downAllAxonsClustAmpTS{mouse}(binClusts,:);
+            end 
+            % determine bin labels 
+            binString = string(round((binStartAndEndFrames(bin,:)./fps)-(minFrameLen/fps/2),1));
+            for clust = 1:size(binClustTSsizeData{bin},1)
+                if clust == 1 
+                    if isempty(binClustTSsizeData{bin}) == 0                     
+                        binLabel(count) = append(binString(1),' to ',binString(2));
+                        count = count + 1;
+                    end 
+                elseif clust > 1
+                    if isempty(binClustTSsizeData{bin}) == 0 
+                        binLabel(count) = '';
+                        count = count + 1;                        
+                    end                 
+                end 
+            end 
+            if isempty(binClustTSsizeData{bin}) == 0 
+                h = plot(x,binClustTSsizeData{bin},'Color',clr(bin,:),'LineWidth',2); 
+            end 
+        end
+    end 
 end 
 sec_TimeVals = floor(((Frames_pre_stim_start:fps:Frames_post_stim_start)/fps))+1;
 FrameVals(3) = threshFrame;
@@ -8635,6 +8718,85 @@ if clustTimeNumGroups == 2
     xlim([1 minFrameLen])
     ylim([0 0.2])
 end 
+
+if ETAtype2 == 1 % data is aligned to reward 
+    if clustTimeNumGroups == 3 % if we're separating data into sensory, peri-reward, and post reward. 
+        sizeInt = cell(1,length(binClustTSsizeData));
+        binSz = nan(1,length(binClustTSsizeData));
+        % determine the size integral (size of each plume over time)
+        for bin = 1:length(binClustTSsizeData)
+            sizeInt{bin} = nansum(binClustTSsizeData{bin},2);
+            % turn 0s into nans 
+            sizeInt{bin}(sizeInt{bin} == 0) = NaN;
+            binSz(bin) = length(sizeInt{bin});
+        end 
+        reshapedData = nan(max(binSz),length(binClustTSsizeData));
+        for bin = 1:length(binClustTSsizeData)
+            % reshape the data for plotting 
+            reshapedData(1:length(sizeInt{bin}),bin) = sizeInt{bin};        
+        end 
+        figure;
+        ax=gca;
+        % plot box and whisker plots to compare size across the different time bins 
+        boxchart(reshapedData,'MarkerStyle','none','BoxFaceColor','k','WhiskerLineColor','k');
+        ax.FontSize = 15;
+        ax.FontName = 'Arial';
+        ylabel({"BBB Plume Size Integral"; "(microns squared)"}) 
+        set(gca,'XTicklabel',{'Sensory','Peri-Reward','Post-Reward'})
+
+        % figure out what traces came form what animal and plot the
+        % sensory, peri-reward, and post-reward box plots by animal 
+        sumClusts = cell(1,3);
+        sizeIntByMouse = cell(3,mouseNum);
+        reshapedMsizeInt = cell(1,mouseNum);
+        for bin = 1:3
+            for mouse = 1:mouseNum
+                reshapedMsizeInt{mouse}(1:length(sizeInt{bin}),1:3) = NaN;
+            end 
+        end 
+        for bin = 1:3
+            count = 1;
+            for mouse = 1:mouseNum
+                if isempty(clustStartFrame{mouse}) == 0  
+                    if any(clustStartFrame{mouse} >= binStartAndEndFrames(bin,1)) && any(clustStartFrame{mouse} <= binStartAndEndFrames(bin,2))
+                        % figure out what plumes come from what mouse 
+                        sumClusts{bin}(mouse) = length(find(clustStartFrame{mouse} >= binStartAndEndFrames(bin,1) & clustStartFrame{mouse} <= binStartAndEndFrames(bin,2)));
+                        % sort sizeInt by mouse 
+                        if mouse == 1 
+                            sizeIntByMouse{bin,mouse} = sizeInt{bin}(count:sumClusts{bin}(mouse));
+                            count = count + sumClusts{bin}(mouse);
+                        elseif mouse > 1 
+                            if count+sumClusts{bin}(mouse)-1 <= length(sizeInt{bin})
+                                sizeIntByMouse{bin,mouse} = sizeInt{bin}(count:count+sumClusts{bin}(mouse)-1);
+                            elseif count+sumClusts{bin}(mouse)-1 > length(sizeInt{bin})
+                                sizeIntByMouse{bin,mouse} = sizeInt{bin}(count:length(sizeInt{bin}));
+                            end 
+                            count = count+sumClusts{bin}(mouse);
+                        end 
+                    end 
+                end 
+                % reshape the data for box plotting
+                reshapedMsizeInt{mouse}(1:length(sizeIntByMouse{bin,mouse}),bin) = sizeIntByMouse{bin,mouse};
+            end 
+        end 
+
+        % plot stacked box plots color coded by mouse 
+        clr = hsv(mouseNum);
+        figure;
+        ax=gca;
+        for mouse = 1:mouseNum
+            % plot box plot 
+            boxchart(reshapedMsizeInt{mouse},'MarkerStyle','none','BoxFaceColor',clr(mouse,:),'WhiskerLineColor',clr(mouse,:));
+            % plot swarm chart on top of box plot 
+            hold all;
+            ax.FontSize = 15;
+            ax.FontName = 'Arial';
+            ylabel({"BBB Plume Size Integral"; "(microns squared)"})
+            set(gca,'XTicklabel',{'Sensory','Peri-Reward','Post-Reward'})
+        end 
+    end
+end 
+
 %% plot average BBB plume change in size and pixel amplitude over time for axons categorized as listeners, talkers, and both
 if ETAorSTAq == 0 % STA data  
     axonTypeQ = input('Input 0 to probabilistically sort axon type. Input 1 to do strict absolute axon type sorting. ');
