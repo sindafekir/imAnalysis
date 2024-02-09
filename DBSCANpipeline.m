@@ -8154,14 +8154,6 @@ xlim([1 minFrameLen])
 %% plot average BBB plume change in size and pixel amplitude over time for however many time groups you want
 % plot change in cluster size color coded by axon 
 
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
 x = 1:minFrameLen;
 times = unique(allAvClocFrameBoxPlot);
 timesLoc = ~isnan(unique(allAvClocFrameBoxPlot));
@@ -8449,8 +8441,8 @@ for bin = 1:clustTimeNumGroups
     end 
 end 
 % remove empty strings 
-emptyStrings = find(binLabel == '');
-binLabel(emptyStrings) = [];
+% emptyStrings = find(binLabel == '');
+% binLabel(emptyStrings) = [];
 count = 1;
 binLabel2 = string(1);
 for bin = 1:size(avBinClustSizeTS,1)
@@ -8573,6 +8565,7 @@ ylabel("BBB Plume Size (microns squared)")
 xlabel("Time (s)")
 title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
 xlim([1 minFrameLen])
+% set(gca, 'yscale','log') 
 
 % plot aligned cluster change in pixel amplitude per bin and total average 
 % determine cluster start frame per bin  
@@ -8590,11 +8583,13 @@ for bin = 1:clustTimeNumGroups
     [longestClustStart,longestClust] = min(binClustStartFrame{bin});
     arrayLen = minFrameLen-longestClustStart+1;
     for clust = 1:size(binClustTSpixAmpData{bin},1)
-        % get data and buffer end as needed 
-        data = binClustTSpixAmpData{bin}(clust,binClustStartFrame{bin}(clust):end);
-        data(:,length(data)+1:arrayLen) = NaN;
-        % align data 
-        alignedBinClustsPixAmp{bin}(clust,:) = data;
+        if clust <= length(binClustStartFrame{bin})
+            % get data and buffer end as needed 
+            data = binClustTSpixAmpData{bin}(clust,binClustStartFrame{bin}(clust):end);
+            data(:,length(data)+1:arrayLen) = NaN;
+            % align data 
+            alignedBinClustsPixAmp{bin}(clust,:) = data;
+        end 
     end 
     x = 1:size(alignedBinClustsPixAmp{bin},2);
     % averaged the aligned clusters 
@@ -8794,6 +8789,8 @@ if ETAtype2 == 1 % data is aligned to reward
             ylabel({"BBB Plume Size Integral"; "(microns squared)"})
             set(gca,'XTicklabel',{'Sensory','Peri-Reward','Post-Reward'})
         end 
+        ax.YAxis.Scale ="log";
+        % set(gca, 'xscale','log') 
     end
 end 
 
