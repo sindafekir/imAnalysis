@@ -17,7 +17,7 @@ if blackOutCaROIQ == 1
     CaROImask = CaROImasks;
     % apply the Ca ROI masks to the images   
     threeDCaMask = cell(1,length(CaROImasks));
-    for z = 1:length(CaROImasks)
+    for z = 1%:length(CaROImasks)
         % turn the CaROImasks into binary images by replacing all non zero
         % elements with ones 
         CaROImasks{z}(CaROImasks{z} ~= 0) = 1;    

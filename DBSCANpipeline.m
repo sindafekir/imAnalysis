@@ -343,10 +343,13 @@ if STAstackQ == 1 || ETAstackQ == 1
     elseif optoQ == 0 
         state = input('Input the teensy state you care about. 2 = stim. 4 = reward. ');
         if state == 2
-            state2Q = input('Input 1 if you want to separate stim time locked data by HIT or MISS trials? Input 0 otherwise. ');
+            state2Q = input('Input 1 if you want to separate stimulus time locked data by HIT or MISS trials? Input 0 otherwise. ');
             if state2Q == 1 
-                state2 = input('Input 0 for HIT trials. Input 1 for MISS trials. ');
+                state2 = input('Input 0 for stimulus HIT trials. Input 1 for stimulus MISS trials. ');
             end 
+        end 
+        if state == 4  
+            state4 = input('Input 0 for reward HIT trials. Input 1 for reward MISS trials. ');
         end 
     end 
     % batchQ = input('Input 1 if you want to batch process across mice. Input 0 otherwise. ');
@@ -524,20 +527,37 @@ if ETAstackQ == 1 && optoQ == 1
     end      
 elseif ETAstackQ == 1 && optoQ == 0
     if state == 4 % reward 
-        state_end_f2 = cell(1,length(vidList{mouse}));
-        trialLengths2 = cell(1,length(vidList{mouse}));
-        state_start_f = cell(1,mouseNum);
-        TrialTypes = cell(1,mouseNum);
-        trialLengths = cell(1,mouseNum);
-        state_end_f = cell(1,mouseNum);
-        for vid = 1:length(vidList{mouse})
-            [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod,vidList{mouse}(vid),mouse);
-            state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
-            if isempty(stateendf) == 0
-                state_end_f2{vid} = floor(stateendf/FPSadjust);
-                trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
-            end 
-        end    
+        if state4 == 0 % reward HIT 
+            state_end_f2 = cell(1,length(vidList{mouse}));
+            trialLengths2 = cell(1,length(vidList{mouse}));
+            state_start_f = cell(1,mouseNum);
+            TrialTypes = cell(1,mouseNum);
+            trialLengths = cell(1,mouseNum);
+            state_end_f = cell(1,mouseNum);
+            for vid = 1:length(vidList{mouse})
+                [statestartf,stateendf] = behavior_FindStateBounds(state,framePeriod,vidList{mouse}(vid),mouse);
+                state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
+                if isempty(stateendf) == 0
+                    state_end_f2{vid} = floor(stateendf/FPSadjust);
+                    trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
+                end 
+            end    
+        elseif state4 == 1 % reward MISS 
+            state_end_f2 = cell(1,length(vidList{mouse}));
+            trialLengths2 = cell(1,length(vidList{mouse}));
+            state_start_f = cell(1,mouseNum);
+            TrialTypes = cell(1,mouseNum);
+            trialLengths = cell(1,mouseNum);
+            state_end_f = cell(1,mouseNum);
+            for vid = 1:length(vidList{mouse})
+                [statestartf,stateendf] = behavior_FindStateBoundsRewardMiss(framePeriod,vidList{mouse}(vid),mouse);
+                state_start_f{mouse}{vid} = floor(statestartf/FPSadjust);
+                if isempty(stateendf) == 0
+                    state_end_f2{vid} = floor(stateendf/FPSadjust);
+                    trialLengths2{vid} = state_end_f2{vid}-state_start_f{mouse}{vid};
+                end 
+            end                  
+        end 
     elseif state == 2 % stim 
         if state2Q == 0 % don't separate stim time locked data by HIT or MISS trials 
             state_end_f2 = cell(1,length(vidList{mouse}));
@@ -575,7 +595,7 @@ elseif ETAstackQ == 1 && optoQ == 0
     % this fixes discrete time rounding errors to ensure the stimuli are
     % all the correct number of frames long 
     if mouse == 1 
-        stimTimeLengths = input('How many seconds are the stims on for? ');
+        stimTimeLengths = input('How much time is there between the stim and reward? ');
     end 
     stimFrameLengths = floor(stimTimeLengths*FPSstack{mouse});
     for frameLength = 1:length(stimFrameLengths)
@@ -1436,7 +1456,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage118_20210622_stimBehaviorETA_20240105zScored(vesChan(:,:,frame)); % UPDATE HERE 
+            [BW,~] = segmentImage63_20200222_optoETA_20240221zScored(vesChan(:,:,frame)); % UPDATE HERE 
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -3273,16 +3293,24 @@ for ccell = 1:length(terminals{mouse})
             optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
             if ETAtype2 == 0 % stim aligned 
                 if exist('state2Q','var') == 1
-                    if state2 == 0 % HIT 
-                        title({'Behavior Hit Stim Aligned';optoCountLabel}); 
-                    elseif state2 == 1 % MISS
-                        title({'Behavior Miss Stim Aligned';optoCountLabel}); 
+                    if exist('state2','var') == 1
+                        if state2 == 0 % HIT 
+                            title({'Behavior Hit Stim Aligned';optoCountLabel}); 
+                        elseif state2 == 1 % MISS
+                            title({'Behavior Miss Stim Aligned';optoCountLabel}); 
+                        end 
+                    elseif exist('state2','var') == 0
+                        title({'Behavior Stim Aligned';optoCountLabel}); 
                     end 
                 elseif exist('state2Q','var') == 0
                     title({'Behavior Stim Aligned';optoCountLabel}); 
                 end 
             elseif ETAtype2 == 1 % reward aligned 
-                title({'Behavior Reward Aligned';optoCountLabel}); 
+                if state4 == 0 % reward HIT 
+                    title({'Behavior Reward Hit Aligned';optoCountLabel}); 
+                elseif state4 == 1 % reward MISS 
+                    title({'Behavior Reward Miss Aligned';optoCountLabel}); 
+                end 
             end 
         end 
     end 
@@ -3317,10 +3345,14 @@ for ccell = 1:length(terminals{mouse})
             optoCountLabel = sprintf('%d Trials.',spikeCount{terminals{mouse}(ccell)}); 
             if ETAtype2 == 0 % stim aligned 
                 if exist('state2Q','var') == 1
-                    if state2 == 0 % HIT 
-                        title({'Behavior Hit Stim Aligned';optoCountLabel}); 
-                    elseif state2 == 1 % MISS
-                        title({'Behavior Miss Stim Aligned';optoCountLabel}); 
+                    if exist('state2','var') == 1
+                        if state2 == 0 % HIT 
+                            title({'Behavior Hit Stim Aligned';optoCountLabel}); 
+                        elseif state2 == 1 % MISS
+                            title({'Behavior Miss Stim Aligned';optoCountLabel}); 
+                        end 
+                    elseif exist('state2','var') == 0
+                        title({'Behavior Stim Aligned';optoCountLabel}); 
                     end 
                 elseif exist('state2Q','var') == 0
                     title({'Behavior Stim Aligned';optoCountLabel}); 
@@ -8565,7 +8597,7 @@ ylabel("BBB Plume Size (microns squared)")
 xlabel("Time (s)")
 title({'Change in BBB Plume Size';'Clusters Aligned and Averaged'})
 xlim([1 minFrameLen])
-% set(gca, 'yscale','log') 
+set(gca, 'yscale','log') 
 
 % plot aligned cluster change in pixel amplitude per bin and total average 
 % determine cluster start frame per bin  
@@ -8777,13 +8809,14 @@ if ETAtype2 == 1 % data is aligned to reward
 
         % plot stacked box plots color coded by mouse 
         clr = hsv(mouseNum);
-        figure;
-        ax=gca;
+
         for mouse = 1:mouseNum
+            figure;
+            ax=gca;
             % plot box plot 
             boxchart(reshapedMsizeInt{mouse},'MarkerStyle','none','BoxFaceColor',clr(mouse,:),'WhiskerLineColor',clr(mouse,:));
             % plot swarm chart on top of box plot 
-            hold all;
+            % hold all;
             ax.FontSize = 15;
             ax.FontName = 'Arial';
             ylabel({"BBB Plume Size Integral"; "(microns squared)"})
