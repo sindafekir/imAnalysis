@@ -1,33 +1,9 @@
 function [stackOut,BG_ROIboundData,CaROImask] = backgroundSubtraction(reg__Stacks)
 
-% black out the pixels that are part of calcium ROIs 
-blackOutCaROIQ = input('Input 1 if you want to black out pixels in Ca ROIs. Input 0 otherwise. ');
 if iscell(reg__Stacks) == 0 
     reg__Stacks2{1} = reg__Stacks;
 elseif iscell(reg__Stacks) == 1 
     reg__Stacks2 = reg__Stacks;
-end 
-if blackOutCaROIQ == 1         
-    % get the Ca ROI coordinates 
-    CaROImaskDir = uigetdir('*.*','WHERE ARE THE CA ROI COORDINATES?');
-    cd(CaROImaskDir);
-    CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
-    CaROImaskMat = matfile(CaROImaskFileName); 
-    CaROImasks = CaROImaskMat.CaROImasks; 
-    CaROImask = CaROImasks;
-    % apply the Ca ROI masks to the images   
-    threeDCaMask = cell(1,length(CaROImasks));
-    for z = 1%:length(CaROImasks)
-        % turn the CaROImasks into binary images by replacing all non zero
-        % elements with ones 
-        CaROImasks{z}(CaROImasks{z} ~= 0) = 1;    
-        % convert CaROImasks from double to logical 
-        CaROImasks{z} = logical(CaROImasks{z});
-        % make your Ca ROI masks the right size for applying to a 3D array 
-        threeDCaMask{z} = repmat(CaROImasks{z},1,1,size(reg__Stacks2{z},3));
-        % apply your Ca ROI masks to the images 
-        reg__Stacks2{z}(threeDCaMask{z}) = 0;
-    end    
 end 
 
 % apply mask to each frame to get background pixel intensity per row 

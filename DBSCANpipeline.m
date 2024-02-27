@@ -1343,7 +1343,7 @@ if blackOutCaROIQ == 1
     cd(CaROImaskDir);
     CaROImaskFileName = uigetfile('*.*','GET THE CA ROI COORDINATES'); 
     CaROImaskMat = matfile(CaROImaskFileName); 
-    CaROImasks = CaROImaskMat.CaROImasks; 
+    CaROImasks = CaROImaskMat.CaROImasks;
     % check to see if ROIorders exists in the matfile 
     variableInfo = who(CaROImaskMat);
     if ismember("ROIorders", variableInfo) == 1 % returns true 
@@ -1456,7 +1456,7 @@ while segmentVessel == 1
         BW_perim = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),size(vesChan,3));
         segOverlays = nan(size(vesChan(:,:,1),1),size(vesChan(:,:,1),2),3,size(vesChan,3));   
         for frame = 1:size(vesChan,3)
-            [BW,~] = segmentImage63_20200222_optoETA_20240221zScored(vesChan(:,:,frame)); % UPDATE HERE 
+            [BW,~] = segmentImageWT5_20190401_optoETA_20240220zScored(vesChan(:,:,frame)); % UPDATE HERE 
             BWstacks(:,:,frame) = BW; 
             %get the segmentation boundaries 
             BW_perim(:,:,frame) = bwperim(BW);
@@ -7360,7 +7360,7 @@ if length(find(includeXY)) > 1
     set(fitHandle,'Color',[0 0 0],'LineWidth',3);
     leg.String(end) = [];
     rSquared = string(round(fav2O.Rsquared.Ordinary,2));
-    text(1,30,rSquared,'FontSize',20)
+    text(-2,1,rSquared,'FontSize',20)
 end     
 ylabel("BBB Plume Distance From Vessel (microns)")
 if clustSpikeQ3 == 0 

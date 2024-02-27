@@ -1,5 +1,6 @@
 function [stackOut] = backgroundSubtraction2(stackIn,BG_ROIboundData)
 
+% black out the pixels that are part of calcium ROIs 
 if iscell(stackIn) == 0 
     data{1} = stackIn;
     clearvars stackIn; stackIn = data; clearvars data;
