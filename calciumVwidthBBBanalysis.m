@@ -4814,7 +4814,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-%{
+
 mouse = 1;
 % termQ = input('Input 1 to update terminal labels. ');
 % if termQ == 1 
@@ -4906,7 +4906,7 @@ if spikeQ == 1
                 randISIs{vid}(spike) = floor(r);
             end              
             % plot distribution of real and rand ISIs for sanity check 
-            %{
+            %}
             figure;
             histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
             title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
@@ -11551,7 +11551,7 @@ end
 % original code - does % change
 % option to high pass filter the video 
 % can create shuffled spikes 
-%{
+
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 spikeQ = input("Input 0 to use real calcium spikes. Input 1 to use randomized spikes (based on ISI STD). "); 
