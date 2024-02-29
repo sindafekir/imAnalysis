@@ -4814,7 +4814,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input)
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBscan)
-
+%{
 mouse = 1;
 % termQ = input('Input 1 to update terminal labels. ');
 % if termQ == 1 
@@ -4906,7 +4906,7 @@ if spikeQ == 1
                 randISIs{vid}(spike) = floor(r);
             end              
             % plot distribution of real and rand ISIs for sanity check 
-            %}
+            %{
             figure;
             histogram(spikeISIs{vid}{terminals{mouse}(ccell)});
             title(sprintf("Real Spike ISIs. Vid %d. Axon %d. ",vid,terminals{mouse}(ccell)));
@@ -5734,9 +5734,9 @@ if spikeQ == 1
     end 
     clearvars data
 end 
-
+%}
 %% conditional statement that ensures you checked the other channel
-
+%{
 % to make sure Ca ROIs show an average peak in the same frame, before
 % moving onto the next step 
 CaFrameQ = input('Input 1 if you if you checked to make sure averaged Ca events happened in the same frame per ROI. And the anatomy is correct. ');
@@ -12650,7 +12650,7 @@ end
 % can create shuffled and bootrapped x number of spikes (based on input) 
 % (must save out non-shuffled STA vids before making
 % shuffled and bootstrapped STA vids to create binary vids for DBSCAN)
-%{
+
 greenStacksOrigin = greenStacks;
 redStacksOrigin = redStacks;
 % option to downsample the data 
